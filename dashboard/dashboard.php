@@ -237,17 +237,17 @@
   <header>
     <div class="logo-group">
       <a href="dashboard.php" class="stf-trigger">
-        <img src="AHBALOGO.png" alt="AHBA Development Logo">
+        <img src="../AHBALOGO.png" alt="AHBA Development Logo">
       </a>
 
       <a href="https://www.homeaiddepot.com/" target="_blank" class="stf-trigger">
-        <img src="HOMEAID.png" alt="HomeAid Depot Logo">
+        <img src="../HOMEAID.png" alt="HomeAid Depot Logo">
       </a>
 
       <!-- SkyTruFiber Dropdown -->
       <div class="stf-dropdown" tabindex="0">
         <a href="../SKYTRUFIBER/skytrufiber.php" target="_blank" class="stf-trigger" aria-haspopup="true" aria-expanded="false">
-          <img src="SKYTRUFIBER.png" alt="Sky TruFiber Logo">
+          <img src="../SKYTRUFIBER.png" alt="Sky TruFiber Logo">
           <span class="stf-caret">▼</span>
         </a>
         <div class="stf-menu" role="menu" aria-label="SkyTruFiber menu">
