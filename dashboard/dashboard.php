@@ -246,7 +246,7 @@
 
       <!-- SkyTruFiber Dropdown -->
       <div class="stf-dropdown" tabindex="0">
-        <a href="SKYTRUFIBER/skytrufiber.php" target="_blank" class="stf-trigger" aria-haspopup="true" aria-expanded="false">
+        <a href="../SKYTRUFIBER/skytrufiber.php" target="_blank" class="stf-trigger" aria-haspopup="true" aria-expanded="false">
           <img src="SKYTRUFIBER.png" alt="Sky TruFiber Logo">
           <span class="stf-caret">▼</span>
         </a>
