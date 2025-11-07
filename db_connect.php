@@ -1,9 +1,9 @@
 <?php
-$host = "ep-wandering-recipe-afc37uqg-pooler.c-2.us-west-2.aws.neon.tech";
+$host = "ep-wandering-recipe-afc37ugq-pooler.c-2.us-west-2.aws.neon.tech";
 $port = "5432";
 $dbname = "neondb";
 $user = "neondb_owner";
-$password = "npg_KpGd1ogr8qhM";
+$password = "npg_7EJKqwMVHh9F";  // <-- Exact password from Neon
 
 try {
     $conn = new PDO(
@@ -12,7 +12,7 @@ try {
         $password
     );
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    // echo "✅ Connected successfully!";
+    // echo "✅ Connected successfully to Neon PostgreSQL!";
 } catch (PDOException $e) {
     die("❌ Database connection failed: " . $e->getMessage());
 }
