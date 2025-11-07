@@ -1,11 +1,19 @@
-# Use an official PHP image
+# Use official PHP image
 FROM php:8.2-apache
 
-# Copy all project files into the container
+# Enable and install required extensions
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql pgsql
+
+# Copy project files
 COPY . /var/www/html/
 
-# Expose port 10000 for Render
-EXPOSE 10000
+# Set working directory
+WORKDIR /var/www/html
 
-# Start PHP’s built-in server
-CMD ["php", "-S", "0.0.0.0:10000", "-t", "."]
+# Expose port 80
+EXPOSE 80
+
+# Start Apache server
+CMD ["apache2-foreground"]
