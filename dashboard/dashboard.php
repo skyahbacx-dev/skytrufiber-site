@@ -28,7 +28,7 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: url('AHBALOGO.png') no-repeat center center;
+      background: url('../AHBALOGO.png') no-repeat center center;
       background-size: 700px auto;
       opacity: 0.08;
       z-index: 0;
