@@ -1,7 +1,7 @@
 services:
   - type: web
-    name: skytrufiber-csr
+    name: skytrufiber-site
     env: php
-    plan: free
+    rootDir: .
     buildCommand: ""
-    startCommand: "php -S 0.0.0.0:10000 -t CSR"
+    startCommand: php -S 0.0.0.0:10000 -t .
