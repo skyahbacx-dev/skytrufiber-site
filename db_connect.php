@@ -1,5 +1,5 @@
 <?php
-$host = "ep-wandering-recipe-afc37ugq-pooler.c-2.us-west-2.aws.neon.tech";
+$host = "$host = "ep-wandering-recipe-afc37ugq.us-west-2.aws.neon.tech";";
 $port = "5432";
 $dbname = "neondb";
 $user = "neondb_owner";
