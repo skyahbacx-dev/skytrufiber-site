@@ -1,6 +1,6 @@
 {
   "name": "skytrufiber/site",
-  "description": "SkyTruFiber CSR Dashboard PHP App",
+  "description": "SkyTruFiber Dashboard PHP App",
   "require": {
     "php": ">=8.0"
   }
