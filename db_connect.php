@@ -1,11 +1,12 @@
 <?php
-$host = "localhost";
-$user = "root";
-$pass = "";
-$db   = "skytrufiber_db";
+$conn = new mysqli(
+    getenv('DB_HOST'),
+    getenv('DB_USER'),
+    getenv('DB_PASS'),
+    getenv('DB_NAME')
+);
 
-$conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) {
-  die("Database connection failed: " . $conn->connect_error);
+    die("Database Connection failed: " . $conn->connect_error);
 }
 ?>
