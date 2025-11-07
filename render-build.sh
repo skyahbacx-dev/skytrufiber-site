@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
-# Update package list
-apt-get update
+echo "🔧 Updating package list..."
+apt-get update -y
 
-# Install PHP and necessary extensions
+echo "📦 Installing PHP..."
 apt-get install -y php php-cli php-mysqli php-common php-json php-opcache php-readline
+
+echo "✅ PHP installed successfully!"
+php -v
