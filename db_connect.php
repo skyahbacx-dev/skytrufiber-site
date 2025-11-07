@@ -1,8 +1,8 @@
 <?php
-$servername = getenv('DB_HOST') ?: 'localhost';
-$username   = getenv('DB_USER') ?: 'root';
-$password   = getenv('DB_PASS') ?: '';
-$database   = getenv('DB_NAME') ?: 'skytrufiber_db';
+$servername = "sql106.infinityfree.com";  
+$username   = "if0_40346931";            
+$password   = "AHBA1234567890";         
+$database   = "if0_40346931_skytrufiber_db";   
 
 $conn = new mysqli($servername, $username, $password, $database);
 
