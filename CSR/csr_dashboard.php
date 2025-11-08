@@ -11,48 +11,46 @@ if (!isset($_SESSION['csr_user'])) {
 $csr_user = $_SESSION['csr_user'];
 
 // Fetch CSR full name
-$stmt = $conn->prepare("SELECT full_name FROM csr_users WHERE username = ? LIMIT 1");
-$stmt->bind_param("s", $csr_user);
-$stmt->execute();
-$res = $stmt->get_result();
-$csr_fullname = ($res && $res->num_rows > 0) ? $res->fetch_assoc()['full_name'] : $csr_user;
+$stmt = $conn->prepare("SELECT full_name FROM csr_users WHERE username = :username LIMIT 1");
+$stmt->execute([':username' => $csr_user]);
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$csr_fullname = $row['full_name'] ?? $csr_user;
 
-// ✅ Set logo path (adjust as needed)
+// ✅ Logo path fallback
 $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBALOGO.png';
 
 /* ===== AJAX HANDLERS ===== */
 if (isset($_GET['ajax'])) {
-
-  // Load Clients
+  // ---------- LOAD CLIENTS ----------
   if ($_GET['ajax'] === 'clients') {
     $tab = $_GET['tab'] ?? 'all';
+
     if ($tab === 'mine') {
       $stmt = $conn->prepare("
         SELECT c.id, c.name, c.assigned_csr, MAX(ch.created_at) AS last_chat
         FROM clients c
         LEFT JOIN chat ch ON ch.client_id = c.id
-        WHERE c.assigned_csr = ?
+        WHERE c.assigned_csr = :csr
         GROUP BY c.id, c.name, c.assigned_csr
-        ORDER BY last_chat DESC
+        ORDER BY last_chat DESC NULLS LAST
       ");
-      $stmt->bind_param("s", $csr_user);
-      $stmt->execute();
-      $clients = $stmt->get_result();
+      $stmt->execute([':csr' => $csr_user]);
     } else {
-      $clients = $conn->query("
+      $stmt = $conn->query("
         SELECT c.id, c.name, c.assigned_csr, MAX(ch.created_at) AS last_chat
         FROM clients c
         LEFT JOIN chat ch ON ch.client_id = c.id
         GROUP BY c.id, c.name, c.assigned_csr
-        ORDER BY last_chat DESC
+        ORDER BY last_chat DESC NULLS LAST
       ");
     }
 
-    while ($row = $clients->fetch_assoc()) {
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
       $assigned = $row['assigned_csr'] ?: 'Unassigned';
       $owned = ($assigned === $csr_user);
       $canAssign = ($assigned === 'Unassigned');
       $btn = '';
+
       if ($canAssign) {
         $btn = "<button class='assign-btn' title='Assign to me' onclick='assignClient({$row['id']})'>＋</button>";
       } elseif ($owned) {
@@ -74,27 +72,28 @@ if (isset($_GET['ajax'])) {
     exit;
   }
 
-  // Assign client
+  // ---------- ASSIGN CLIENT ----------
   if ($_GET['ajax'] === 'assign' && isset($_POST['client_id'])) {
     $id = (int)$_POST['client_id'];
-    $chk = $conn->query("SELECT assigned_csr FROM clients WHERE id=$id");
-    $r = $chk->fetch_assoc();
-    if ($r['assigned_csr'] && $r['assigned_csr'] !== 'Unassigned' && $r['assigned_csr'] !== '') {
+    $stmt = $conn->prepare("SELECT assigned_csr FROM clients WHERE id = :id");
+    $stmt->execute([':id' => $id]);
+    $r = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($r && $r['assigned_csr'] && $r['assigned_csr'] !== 'Unassigned') {
       echo 'taken';
       exit;
     }
-    $stmt = $conn->prepare("UPDATE clients SET assigned_csr = ? WHERE id = ?");
-    $stmt->bind_param("si", $csr_user, $id);
-    echo $stmt->execute() ? 'ok' : 'fail';
+
+    $update = $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :id");
+    echo $update->execute([':csr' => $csr_user, ':id' => $id]) ? 'ok' : 'fail';
     exit;
   }
 
-  // Unassign client
+  // ---------- UNASSIGN CLIENT ----------
   if ($_GET['ajax'] === 'unassign' && isset($_POST['client_id'])) {
     $id = (int)$_POST['client_id'];
-    $stmt = $conn->prepare("UPDATE clients SET assigned_csr = 'Unassigned' WHERE id = ? AND assigned_csr = ?");
-    $stmt->bind_param("is", $id, $csr_user);
-    echo $stmt->execute() ? 'ok' : 'fail';
+    $update = $conn->prepare("UPDATE clients SET assigned_csr = 'Unassigned' WHERE id = :id AND assigned_csr = :csr");
+    echo $update->execute([':id' => $id, ':csr' => $csr_user]) ? 'ok' : 'fail';
     exit;
   }
 }
@@ -105,6 +104,7 @@ if (isset($_GET['ajax'])) {
 <meta charset="UTF-8">
 <title>CSR Dashboard — SkyTruFiber</title>
 <style>
+/* ---- Same CSS from your version ---- */
 body {
   font-family:"Segoe UI",Arial,sans-serif;
   margin:0; height:100vh; display:flex;
@@ -115,8 +115,6 @@ body::before {
   background:url('<?= $logoPath ?>') no-repeat center center;
   background-size:700px auto; opacity:0.05; z-index:0;
 }
-
-/* Sidebar */
 #sidebar {
   width:240px; background:#009900; color:#fff;
   position:fixed; left:0; top:0; bottom:0;
@@ -129,8 +127,6 @@ body::before {
 #sidebar h2 img { height:28px; }
 #sidebar a { color:#fff; text-decoration:none; padding:15px 20px; display:block; font-weight:600; }
 #sidebar a:hover { background:#00b300; }
-
-/* Header */
 header {
   background:#00aa00; color:#fff; display:flex;
   justify-content:space-between; align-items:center;
@@ -138,18 +134,13 @@ header {
 }
 header .title { display:flex; align-items:center; gap:15px; font-size:18px; }
 header img { height:45px; }
-
-/* Tabs */
 #tabs { display:flex; gap:8px; padding:8px 20px; background:rgba(230,255,230,0.95); border-bottom:1px solid #ccc; }
 .tab { padding:8px 14px; border-radius:8px; cursor:pointer; color:#007a00; font-weight:700; }
 .tab.active { background:#009900; color:#fff; }
-
 #main-content { flex:1; margin-left:0; transition:.3s; display:flex; flex-direction:column; z-index:1; }
 #main-content.shifted { margin-left:240px; }
-
 #container { flex:1; display:flex; overflow:hidden; }
 #client-list { width:300px; background:#fff; border-right:1px solid #ccc; overflow-y:auto; padding:10px; }
-
 .client-item {
   display:flex; justify-content:space-between; align-items:center;
   background:#fff; margin:6px 0; padding:8px; border-radius:10px;
@@ -157,7 +148,6 @@ header img { height:45px; }
 }
 .client-item:hover { background:#e6ffe6; }
 .client-item.active { background:#c8f8c8; font-weight:700; }
-
 .assign-btn, .unassign-btn, .locked-btn {
   border:none; color:#fff; border-radius:50%; font-size:18px;
   width:30px; height:30px; cursor:pointer;
@@ -165,7 +155,6 @@ header img { height:45px; }
 .assign-btn { background:#00aa00; }
 .unassign-btn { background:#cc0000; }
 .locked-btn { background:#777; cursor:not-allowed; }
-
 #chat-area { flex:1; display:flex; flex-direction:column; background:#fff; position:relative; }
 #messages::before {
   content:""; position:absolute; top:50%; left:50%;
@@ -179,12 +168,10 @@ header img { height:45px; }
 .client { background:#e9ffe9; float:left; }
 .csr { background:#ccf0ff; float:right; }
 .timestamp { display:block; font-size:11px; color:#777; margin-top:4px; text-align:right; }
-
 .input { display:flex; gap:8px; border-top:1px solid #ddd; padding:10px; background:#fff; }
 .input input { flex:1; border:1px solid #ccc; padding:10px; border-radius:8px; }
 .input button { background:#00aa00; border:none; color:#fff; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:700; }
 .input button:hover { background:#007a00; }
-
 .month-label { font-size:13px; color:#007700; text-align:center; margin:8px 0; background:#eaffea; border-radius:8px; padding:4px; }
 </style>
 </head>
@@ -229,7 +216,7 @@ header img { height:45px; }
 </div>
 
 <script>
-let currentTab='all', clientId=0, lastMsgCount=0;
+let currentTab='all', clientId=0;
 const csrUser="<?= htmlspecialchars($csr_user) ?>";
 const csrFullname="<?= htmlspecialchars($csr_fullname) ?>";
 
@@ -327,14 +314,13 @@ function sendMsg(){
     .then(()=>{input.value='';loadChat(true);});
 }
 
-// Load correct tab on start
+// Auto-tab and live updates
 window.onload=()=>{
   const params=new URLSearchParams(window.location.search);
   const tab=params.get('tab');
   if(tab==='mine'){switchTab('mine');}
   else{switchTab('all');}
 
-  // Real-time updates (SSE)
   if(!!window.EventSource){
     const evtSource=new EventSource('../SKYTRUFIBER/realtime_updates.php');
     evtSource.addEventListener('update',()=>{if(clientId)loadChat();loadClients();});
