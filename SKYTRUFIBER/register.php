@@ -99,7 +99,7 @@ button:hover { background: #007a99; }
     <option value="District 1">District 1</option>
     <option value="District 2">District 2</option>
     <option value="District 3">District 3</option>
-
+    <option value="District 4">District 4</option>
   </select>
 
   <label for="location">Location (Barangay, Quezon City):</label>
@@ -130,7 +130,11 @@ const barangays = {
     "Libis", "Loyola Heights", "Matandang Balara", "Quirino 2-A", "Quirino 2-B",
     "Quirino 2-C", "Amihan", "Duyan-duyan", "Bagumbuhay", "Blue Ridge A", "White Plains"
   ],
-
+  "District 4": [
+    "Kamuning", "Kaunlaran", "Sacred Heart", "San Martin de Porres", "Santol",
+    "Sikatuna Village", "South Triangle", "Teacher's Village East", "Teacher's Village West",
+    "UP Campus", "UP Village", "Laging Handa", "Obrero", "Mariana", "Damayang Lagi"
+  ],
 };
 
 // 🎯 Populate Barangay dropdown based on selected district
