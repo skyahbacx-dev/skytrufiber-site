@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Please enter both username and password.";
     } else {
         try {
-            // Fetch user row (with hashed password and status)
+            // Fetch user row
             $stmt = $conn->prepare("SELECT username, password, status FROM csr_users WHERE username = :username LIMIT 1");
             $stmt->execute([':username' => $u]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -29,21 +29,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = "Account is not active.";
                 } else {
                     $db_hash = $row['password'];
+                    $ok = false;
+                    $is_md5 = false;
 
-                    // 1️⃣ Try modern password_verify (bcrypt/argon2)
-                    $ok = password_verify($pw_input, $db_hash);
-
-                    // 2️⃣ Fallback for legacy MD5 hashes
-                    if (!$ok && strlen($db_hash) === 32 && ctype_xdigit($db_hash)) {
-                        $ok = (md5($pw_input) === strtolower($db_hash));
+                    // Try modern password_verify (bcrypt/argon2)
+                    if (password_verify($pw_input, $db_hash)) {
+                        $ok = true;
+                    }
+                    // Fallback: legacy MD5 check
+                    elseif (strlen($db_hash) === 32 && ctype_xdigit($db_hash) && md5($pw_input) === strtolower($db_hash)) {
+                        $ok = true;
+                        $is_md5 = true;
                     }
 
                     if ($ok) {
-                        // Secure session management
+                        // If MD5 password, rehash to bcrypt and update the DB
+                        if ($is_md5) {
+                            $new_hash = password_hash($pw_input, PASSWORD_DEFAULT);
+                            $update_pw = $conn->prepare("UPDATE csr_users SET password = :new_hash WHERE username = :username");
+                            $update_pw->execute([':new_hash' => $new_hash, ':username' => $u]);
+                        }
+
+                        // Start secure session
                         session_regenerate_id(true);
                         $_SESSION['csr_user'] = $row['username'];
 
-                        // Mark CSR as online
+                        // Mark CSR online
                         $update = $conn->prepare("UPDATE csr_users SET is_online = TRUE, last_seen = NOW() WHERE username = :username");
                         $update->execute([':username' => $row['username']]);
 
