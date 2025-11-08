@@ -1,7 +1,8 @@
 <?php
 session_start();
-$conn = new mysqli("localhost", "root", "", "skytrufiber_db");
+include '../db_connect.php'; // Uses PDO connection
 
+// Ensure logged in
 if (!isset($_SESSION['csr_user'])) {
   header("Location: csr_login.php");
   exit;
@@ -9,17 +10,23 @@ if (!isset($_SESSION['csr_user'])) {
 
 $csr_name = $_SESSION['csr_user'];
 
-// Get all distinct clients
-$clients = $conn->query("SELECT DISTINCT username FROM chat WHERE username != 'CSR' ORDER BY username ASC");
+// ✅ Get all distinct clients (excluding system users)
+$stmt = $conn->query("
+  SELECT DISTINCT username 
+  FROM chat 
+  WHERE username IS NOT NULL AND username <> 'CSR'
+  ORDER BY username ASC
+");
+$clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// If a client is selected
+// Active client (from URL)
 $activeClient = $_GET['client'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CSR Chat Dashboard</title>
+  <title>CSR Chat Dashboard — SkyTruFiber</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -30,7 +37,6 @@ $activeClient = $_GET['client'] ?? '';
       overflow: hidden;
     }
 
-    /* Sidebar for clients */
     .sidebar {
       width: 260px;
       background: #009900;
@@ -67,14 +73,8 @@ $activeClient = $_GET['client'] ?? '';
       transition: background 0.3s;
     }
 
-    .client:hover {
-      background: #33cc33;
-    }
-
-    .active-client {
-      background: #004d00 !important;
-      font-weight: bold;
-    }
+    .client:hover { background: #33cc33; }
+    .active-client { background: #004d00 !important; font-weight: bold; }
 
     .logout {
       background: #ff3333;
@@ -87,7 +87,6 @@ $activeClient = $_GET['client'] ?? '';
       margin-top: 10px;
     }
 
-    /* Chat container */
     .chat-container {
       flex: 1;
       display: flex;
@@ -123,16 +122,8 @@ $activeClient = $_GET['client'] ?? '';
       clear: both;
     }
 
-    .user {
-      background: #e0fbe0;
-      float: left;
-    }
-
-    .csr {
-      background: #009900;
-      color: white;
-      float: right;
-    }
+    .user { background: #e0fbe0; float: left; }
+    .csr { background: #009900; color: white; float: right; }
 
     #input-area {
       display: flex;
@@ -155,9 +146,7 @@ $activeClient = $_GET['client'] ?? '';
       cursor: pointer;
     }
 
-    #input-area button:hover {
-      background: #007a00;
-    }
+    #input-area button:hover { background: #007a00; }
 
     .no-client {
       text-align: center;
@@ -165,7 +154,6 @@ $activeClient = $_GET['client'] ?? '';
       color: #555;
       font-size: 18px;
     }
-
   </style>
 </head>
 <body>
@@ -174,12 +162,12 @@ $activeClient = $_GET['client'] ?? '';
   <div class="sidebar">
     <h2>👩‍💻 <?= htmlspecialchars($csr_name) ?></h2>
     <div class="client-list">
-      <?php while ($row = $clients->fetch_assoc()): 
+      <?php foreach ($clients as $row): 
         $selected = ($row['username'] === $activeClient) ? "active-client" : ""; ?>
         <a href="?client=<?= urlencode($row['username']) ?>" class="client <?= $selected ?>">
           <?= htmlspecialchars($row['username']) ?>
         </a>
-      <?php endwhile; ?>
+      <?php endforeach; ?>
     </div>
     <a href="csr_logout.php" class="logout">🚪 Logout</a>
   </div>
@@ -209,7 +197,7 @@ $activeClient = $_GET['client'] ?? '';
   </div>
 
   <script>
-  const client = "<?= $activeClient ?>";
+  const client = "<?= htmlspecialchars($activeClient) ?>";
 
   function loadChat() {
     if (!client) return;
@@ -221,8 +209,8 @@ $activeClient = $_GET['client'] ?? '';
         data.forEach(m => {
           const div = document.createElement('div');
           div.classList.add('message');
-          div.classList.add(m.username.toLowerCase() === 'csr' ? 'csr' : 'user');
-          div.textContent = `${m.username}: ${m.message}`;
+          div.classList.add(m.sender_type === 'csr' ? 'csr' : 'user');
+          div.textContent = `${m.sender_type.toUpperCase()}: ${m.message}`;
           msgBox.appendChild(div);
         });
         msgBox.scrollTop = msgBox.scrollHeight;
@@ -232,11 +220,15 @@ $activeClient = $_GET['client'] ?? '';
   function sendCSR() {
     const message = document.getElementById('message').value.trim();
     if (!message) return;
-
     fetch('save_chat.php', {
       method: 'POST',
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: `username=CSR&message=${encodeURIComponent(message)}&client=${encodeURIComponent(client)}`
+      body: new URLSearchParams({
+        sender_type: 'csr',
+        message: message,
+        csr_user: "<?= htmlspecialchars($csr_name) ?>",
+        client: client
+      })
     }).then(() => {
       document.getElementById('message').value = '';
       loadChat();
