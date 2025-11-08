@@ -90,7 +90,7 @@ include '../db_connect.php';
 <label for="location">Location (Barangay, Quezon City):</label>
 <select id="location" name="location" required>
   <option value="">Select your barangay</option>
-
+ <?php include 'barangay_list.php'; // optional move of list if too long ?>
   <optgroup label="District 1">
     <option>Alicia (Bago Bantay)</option>
     <option>Bagong Pag-asa (North EDSA / Triangle Park)</option>
@@ -250,7 +250,7 @@ include '../db_connect.php';
     <option>Tandang Sora (Banlat)</option>
     <option>Unang Sigaw (Balintawak)</option>
   </optgroup>
-  <?php include 'barangay_list.php'; // optional move of list if too long ?>
+  
 </select>
 
     <label for="feedback">Feedback:</label>
