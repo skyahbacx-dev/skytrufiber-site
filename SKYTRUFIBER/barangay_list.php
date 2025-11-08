@@ -41,13 +41,6 @@
     <option>West Triangle</option>
   </optgroup>
 
-  <optgroup label="District 2">
-    <option>Bagong Silangan</option>
-    <option>Batasan Hills (Constitution Hills)</option>
-    <option>Commonwealth (Manggahan)</option>
-    <option>Holy Spirit (Don Antonio)</option>
-    <option>Payatas</option>
-  </optgroup>
 
   <optgroup label="District 3">
     <option>Camp Aguinaldo</option>
@@ -89,4 +82,43 @@
     <option>White Plains</option>
   </optgroup>
 
-  
+   <optgroup label="District 4">
+    <option>Bagong Lipunan ng Crame (Camp Crame)</option>
+    <option>Botocan (Diliman)</option>
+    <option>Central (Diliman)</option>
+    <option>Damayang Lagi (New Manila)</option>
+    <option>Don Manuel (Galas)</option>
+    <option>Doña Aurora (Galas)</option>
+    <option>Doña Imelda (Sta. Mesa / Galas)</option>
+    <option>Doña Josefa (Galas)</option>
+    <option>Horseshoe</option>
+    <option>Immaculate Concepcion (Cubao)</option>
+    <option>Kalusugan (St. Luke’s)</option>
+    <option>Kamuning</option>
+    <option>Kaunlaran (Cubao)</option>
+    <option>Kristong Hari</option>
+    <option>Krus na Ligas (Diliman)</option>
+    <option>Laging Handa (Diliman)</option>
+    <option>Malaya (Diliman)</option>
+    <option>Mariana (New Manila)</option>
+    <option>Obrero (Project 1)</option>
+    <option>Old Capitol Site (Diliman)</option>
+    <option>Paligsahan (Diliman)</option>
+    <option>Pinagkaisahan (Cubao)</option>
+    <option>Pinyahan (Triangle Park)</option>
+    <option>Roxas (Project 1)</option>
+    <option>Sacred Heart (Kamuning)</option>
+    <option>San Isidro Galas (Galas)</option>
+    <option>San Martin de Porres (Cubao)</option>
+    <option>San Vicente (Diliman)</option>
+    <option>Santol</option>
+    <option>Sikatuna Village (Diliman)</option>
+    <option>South Triangle (Diliman)</option>
+    <option>Sto. Niño (Galas)</option>
+    <option>Tatalon</option>
+    <option>Teacher's Village East (Diliman)</option>
+    <option>Teacher's Village West (Diliman)</option>
+    <option>U.P. Campus (Diliman)</option>
+    <option>U.P. Village (Diliman)</option>
+    <option>Valencia (Gilmore / N. Domingo)</option>
+  </optgroup>
