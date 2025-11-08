@@ -10,8 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($account_number && $password) {
         try {
-            $stmt = $conn->prepare("SELECT * FROM users WHERE account_number = :account_number LIMIT 1");
-            $stmt->execute([':account_number' => $account_number]);
+            $stmt = $conn->prepare("SELECT * FROM users WHERE full_name = :full_name LIMIT 1");
+            $stmt->execute([':full_name' => $full_name]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user && password_verify($password, $user['password'])) {
@@ -79,12 +79,12 @@ a:hover { text-decoration: underline; }
 </head>
 <body>
 <form method="POST">
-  <h2>SkyTruFiber Login</h2>
+  <h2>Customer Inquiry</h2>
   
-  <label for="account_number">Account Number:</label>
-  <input type="text" id="account_number" name="account_number" placeholder="Enter your account number" required>
+  <label for="full_name">Full Name:</label>
+  <input type="text" id="full_name" name="full_name" placeholder="Enter your full name" required>
   
-  <label for="password">Password:</label>
+  <label for="password">Account No:</label>
   <input type="password" id="password" name="password" placeholder="Enter your password" required>
   
   <div class="show-pass">
