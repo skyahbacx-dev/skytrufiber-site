@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo "
             <script>
               alert('✅ Thank you for your feedback, " . htmlspecialchars($client_name) . "! Your response has been recorded.');
-              window.location.href='skytrufiber.php';
+              window.location.href='register.php';
             </script>";
         } catch (PDOException $e) {
             echo "
