@@ -1,5 +1,5 @@
 <?php
-include '../db_connect.php';
+include '../db_connect.php'; // ✅ uses PDO
 
 // List of users and their known plaintext passwords
 $passwords = [
@@ -10,13 +10,11 @@ $passwords = [
 ];
 
 foreach ($passwords as $user => $plain) {
-  $new_hash = password_hash($plain, PASSWORD_DEFAULT);
-  $stmt = $conn->prepare("UPDATE csr_users SET password = ? WHERE username = ?");
-  $stmt->bind_param("ss", $new_hash, $user);
-  if ($stmt->execute()) {
-    echo "✅ Updated $user successfully.<br>";
-  } else {
-    echo "❌ Failed updating $user.<br>";
-  }
+    $new_hash = password_hash($plain, PASSWORD_DEFAULT);
+
+    $stmt = $conn->prepare("UPDATE csr_users SET password = :hash WHERE username = :user");
+    $stmt->execute([':hash' => $new_hash, ':user' => $user]);
+
+    echo "✅ Updated {$user} successfully.<br>";
 }
 ?>
