@@ -7,6 +7,7 @@ include '../db_connect.php';
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SkyTruFiber - Technician Survey</title>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <style>
     body {
       font-family:"Segoe UI", Arial, sans-serif;
@@ -86,172 +87,23 @@ include '../db_connect.php';
     <label for="account_name">Account Name:</label>
     <input type="text" id="account_name" name="account_name" placeholder="Enter your account name or ID" required>
 
-   <!-- 🏙️ Barangay Dropdown -->
-<label for="location">Location (Barangay, Quezon City):</label>
-<select id="location" name="location" required>
-  <option value="">Select your barangay</option>
- <?php include 'barangay_list.php'; // optional move of list if too long ?>
-  <optgroup label="District 1">
-    <option>Alicia (Bago Bantay)</option>
-    <option>Bagong Pag-asa (North EDSA / Triangle Park)</option>
-    <option>Bahay Toro (Project 8)</option>
-    <option>Balingasa (Balintawak / Cloverleaf)</option>
-    <option>Bungad (Project 7)</option>
-    <option>Damar</option>
-    <option>Damayan (San Francisco del Monte / Frisco)</option>
-    <option>Del Monte (San Francisco del Monte / Frisco)</option>
-    <option>Katipunan (Muñoz)</option>
-    <option>Lourdes (Sta. Mesa Heights)</option>
-    <option>Maharlika (Sta. Mesa Heights)</option>
-    <option>Manresa</option>
-    <option>Mariblo (SFDM / Frisco)</option>
-    <option>Masambong</option>
-    <option>N.S. Amoranto (Gintong Silahis, La Loma)</option>
-    <option>Nayong Kanluran</option>
-    <option>Paang Bundok (La Loma)</option>
-    <option>Pag-ibig sa Nayon (Balintawak)</option>
-    <option>Paltok (SFDM / Frisco)</option>
-    <option>Paraiso (SFDM / Frisco)</option>
-    <option>Phil-Am (West Triangle)</option>
-    <option>Project 6 (Diliman / Triangle Park)</option>
-    <option>Ramon Magsaysay (Bago Bantay)</option>
-    <option>Saint Peter (Sta. Mesa Heights)</option>
-    <option>Salvacion (La Loma)</option>
-    <option>San Antonio (SFDM / Frisco)</option>
-    <option>San Isidro Labrador (La Loma)</option>
-    <option>San Jose (La Loma)</option>
-    <option>Santa Cruz (Pantranco / Heroes Hill)</option>
-    <option>Santa Teresita (Sta. Mesa Heights)</option>
-    <option>Santo Domingo (Matalahib)</option>
-    <option>Siena</option>
-    <option>Sto. Cristo (Bago Bantay)</option>
-    <option>Talayan</option>
-    <option>Vasra (Diliman)</option>
-    <option>Veterans Village (Project 7 / Muñoz)</option>
-    <option>West Triangle</option>
-  </optgroup>
+    <!-- 🏙️ District + Barangay Dropdown -->
+    <label for="district">District:</label>
+    <select id="district" name="district" required>
+      <option value="">Select District</option>
+      <option value="District 1">District 1</option>
+      <option value="District 2">District 2</option>
+      <option value="District 3">District 3</option>
+      <option value="District 4">District 4</option>
+      <option value="District 5">District 5</option>
+      <option value="District 6">District 6</option>
+    </select>
 
-  <optgroup label="District 2">
-    <option>Bagong Silangan</option>
-    <option>Batasan Hills (Constitution Hills)</option>
-    <option>Commonwealth (Manggahan)</option>
-    <option>Holy Spirit (Don Antonio)</option>
-    <option>Payatas</option>
-  </optgroup>
-
-  <optgroup label="District 3">
-    <option>Camp Aguinaldo</option>
-    <option>Pansol (Balara)</option>
-    <option>Mangga (Cubao)</option>
-    <option>San Roque (Cubao)</option>
-    <option>Silangan (Cubao)</option>
-    <option>Socorro (Araneta City)</option>
-    <option>Bagumbayan (Eastwood)</option>
-    <option>Libis (Eastwood)</option>
-    <option>Ugong Norte (Green Meadows / Corinthian / Ortigas)</option>
-    <option>Masagana (Jacobo Zobel)</option>
-    <option>Loyola Heights (Katipunan)</option>
-    <option>Matandang Balara (Old Balara)</option>
-    <option>East Kamias (Project 1)</option>
-    <option>Quirino 2-A (Project 2 / Anonas)</option>
-    <option>Quirino 2-B (Project 2 / Anonas)</option>
-    <option>Quirino 2-C (Project 2 / Anonas)</option>
-    <option>Amihan (Project 3)</option>
-    <option>Claro (Quirino 3-B)</option>
-    <option>Duyan-duyan (Project 3)</option>
-    <option>Quirino 3-A (Project 3 / Anonas)</option>
-    <option>Bagumbuhay (Project 4)</option>
-    <option>Bayanihan (Project 4)</option>
-    <option>Blue Ridge A (Project 4)</option>
-    <option>Blue Ridge B (Project 4)</option>
-    <option>Dioquino Zobel (Project 4)</option>
-    <option>Escopa I</option>
-    <option>Escopa II</option>
-    <option>Escopa III</option>
-    <option>Escopa IV</option>
-    <option>Marilag (Project 4)</option>
-    <option>Milagrosa (Project 4)</option>
-    <option>Tagumpay (Project 4)</option>
-    <option>Villa Maria Clara (Project 4)</option>
-    <option>E. Rodriguez (Project 5 / Cubao)</option>
-    <option>West Kamias (Project 5 / Kamias)</option>
-    <option>St. Ignatius</option>
-    <option>White Plains</option>
-  </optgroup>
-
-  <optgroup label="District 4">
-    <option>Bagong Lipunan ng Crame (Camp Crame)</option>
-    <option>Botocan (Diliman)</option>
-    <option>Central (Diliman)</option>
-    <option>Damayang Lagi (New Manila)</option>
-    <option>Don Manuel (Galas)</option>
-    <option>Doña Aurora (Galas)</option>
-    <option>Doña Imelda (Sta. Mesa / Galas)</option>
-    <option>Doña Josefa (Galas)</option>
-    <option>Horseshoe</option>
-    <option>Immaculate Concepcion (Cubao)</option>
-    <option>Kalusugan (St. Luke’s)</option>
-    <option>Kamuning</option>
-    <option>Kaunlaran (Cubao)</option>
-    <option>Kristong Hari</option>
-    <option>Krus na Ligas (Diliman)</option>
-    <option>Laging Handa (Diliman)</option>
-    <option>Malaya (Diliman)</option>
-    <option>Mariana (New Manila)</option>
-    <option>Obrero (Project 1)</option>
-    <option>Old Capitol Site (Diliman)</option>
-    <option>Paligsahan (Diliman)</option>
-    <option>Pinagkaisahan (Cubao)</option>
-    <option>Pinyahan (Triangle Park)</option>
-    <option>Roxas (Project 1)</option>
-    <option>Sacred Heart (Kamuning)</option>
-    <option>San Isidro Galas (Galas)</option>
-    <option>San Martin de Porres (Cubao)</option>
-    <option>San Vicente (Diliman)</option>
-    <option>Santol</option>
-    <option>Sikatuna Village (Diliman)</option>
-    <option>South Triangle (Diliman)</option>
-    <option>Sto. Niño (Galas)</option>
-    <option>Tatalon</option>
-    <option>Teacher's Village East (Diliman)</option>
-    <option>Teacher's Village West (Diliman)</option>
-    <option>U.P. Campus (Diliman)</option>
-    <option>U.P. Village (Diliman)</option>
-    <option>Valencia (Gilmore / N. Domingo)</option>
-  </optgroup>
-
-  <optgroup label="District 5">
-    <option>Bagbag (Novaliches)</option>
-    <option>Capri (Novaliches)</option>
-    <option>Fairview (La Mesa / Novaliches)</option>
-    <option>Greater Lagro (Lagro / Novaliches)</option>
-    <option>Gulod (Novaliches)</option>
-    <option>Kaligayahan (Zabarte)</option>
-    <option>Nagkaisang Nayon (General Luis)</option>
-    <option>North Fairview</option>
-    <option>Novaliches Proper (Bayan)</option>
-    <option>Pasong Putik Proper</option>
-    <option>San Agustin (Susano)</option>
-    <option>San Bartolome (Holy Cross)</option>
-    <option>Sta. Lucia (San Gabriel)</option>
-    <option>Sta. Monica</option>
-  </optgroup>
-
-  <optgroup label="District 6">
-    <option>Apolonio Samson (Balintawak)</option>
-    <option>Baesa (Project 8)</option>
-    <option>Balong Bato (Balintawak)</option>
-    <option>Culiat (Tandang Sora)</option>
-    <option>New Era (Central / INC)</option>
-    <option>Pasong Tamo (Tandang Sora)</option>
-    <option>Sangandaan (Project 8)</option>
-    <option>Sauyo (Novaliches)</option>
-    <option>Talipapa (Novaliches)</option>
-    <option>Tandang Sora (Banlat)</option>
-    <option>Unang Sigaw (Balintawak)</option>
-  </optgroup>
-  
-</select>
+    <label for="location">Location (Barangay, Quezon City):</label>
+    <select id="location" name="location" required>
+      <option value="">Select your barangay</option>
+      <?php include 'barangay_list.php'; ?>
+    </select>
 
     <label for="feedback">Feedback:</label>
     <textarea id="feedback" name="feedback" rows="4" placeholder="Write your comments or suggestions here..." required></textarea>
@@ -283,19 +135,47 @@ include '../db_connect.php';
   </div>
 </div>
 
-<script>
-<!-- ✅ Add Select2 JS -->
+<!-- ✅ jQuery + Select2 JS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
 $(document).ready(function() {
+  // Initialize Select2 for searchable barangay dropdown
   $('#location').select2({
     placeholder: "Search or select your barangay",
     width: '100%'
   });
+
+  const allOptions = $('#location optgroup').clone();
+
+  // 🌆 District filtering logic
+  $('#district').on('change', function() {
+    const district = $(this).val();
+    $('#location').empty(); 
+    $('#location').append('<option value="">Select your barangay</option>');
+    if (district) {
+      const group = allOptions.filter(`[label="${district}"]`).clone();
+      $('#location').append(group);
+    } else {
+      $('#location').append(allOptions.clone());
+    }
+    $('#location').trigger('change.select2');
+  });
+
+  // 🧠 Auto-detect District based on selected Barangay
+  $('#location').on('change', function() {
+    const selectedBarangay = $(this).find('option:selected');
+    const parentGroup = selectedBarangay.closest('optgroup').attr('label');
+    if (parentGroup) {
+      $('#district').val(parentGroup);
+    }
+  });
 });
-/* --- Chat Script --- */
+</script>
+
+<script>
+// --- Chat Script (unchanged) ---
 const chatBox=document.getElementById('chatbox');
 const chatToggle=document.getElementById('chat-toggle');
 const chatMessages=document.getElementById('chat-messages');
