@@ -54,8 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         session_regenerate_id(true);
                         $_SESSION['csr_user'] = $row['username'];
 
-                        // Mark CSR online
-                        $update = $conn->prepare("UPDATE csr_users SET is_online = TRUE, last_seen = NOW() WHERE username = :username");
+                        // Optionally track last login only
+                        $update = $conn->prepare("UPDATE csr_users SET last_seen = NOW() WHERE username = :username");
                         $update->execute([':username' => $row['username']]);
 
                         header("Location: csr_dashboard.php");
