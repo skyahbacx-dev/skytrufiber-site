@@ -2,7 +2,7 @@
 session_start();
 include '../db_connect.php';
 
-// Ensure logged in
+// Ensure CSR is logged in
 if (!isset($_SESSION['csr_user'])) {
   header("Location: csr_login.php");
   exit;
@@ -10,48 +10,45 @@ if (!isset($_SESSION['csr_user'])) {
 $csr_user = $_SESSION['csr_user'];
 
 // Fetch CSR full name
-$stmt = $conn->prepare("SELECT full_name FROM csr_users WHERE username = ? LIMIT 1");
-$stmt->bind_param("s", $csr_user);
-$stmt->execute();
-$res = $stmt->get_result();
-$csr_fullname = ($res && $res->num_rows > 0) ? $res->fetch_assoc()['full_name'] : $csr_user;
+$stmt = $conn->prepare("SELECT full_name FROM csr_users WHERE username = :u LIMIT 1");
+$stmt->execute([':u' => $csr_user]);
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$csr_fullname = $row['full_name'] ?? $csr_user;
 
-// ✅ Set correct logo path (adjust if your logo file is elsewhere)
+// ✅ Logo fallback
 $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBALOGO.png';
 
 /* === AJAX HANDLERS === */
 if (isset($_GET['ajax'])) {
 
-  // Load responses
+  // ----- LOAD RESPONSES -----
   if ($_GET['ajax'] === 'load') {
     $search = "%" . ($_GET['search'] ?? '') . "%";
     $from = $_GET['from'] ?? '';
     $to = $_GET['to'] ?? '';
 
-    $query = "SELECT * FROM survey_responses WHERE (client_name LIKE ? OR account_name LIKE ? OR location LIKE ? OR feedback LIKE ?)";
-    $types = "ssss";
-    $params = [$search, $search, $search, $search];
+    $query = "
+      SELECT * FROM survey_responses
+      WHERE (client_name ILIKE :search OR account_name ILIKE :search OR location ILIKE :search OR feedback ILIKE :search)
+    ";
+    $params = [':search' => $search];
 
     if ($from && $to) {
-      $query .= " AND DATE(created_at) BETWEEN ? AND ?";
-      $types .= "ss";
-      $params[] = $from;
-      $params[] = $to;
+      $query .= " AND DATE(created_at) BETWEEN :from AND :to";
+      $params[':from'] = $from;
+      $params[':to'] = $to;
     }
 
     $query .= " ORDER BY created_at DESC";
     $stmt = $conn->prepare($query);
-    $stmt->bind_param($types, ...$params);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt->execute($params);
 
-    $data = [];
-    while ($r = $result->fetch_assoc()) $data[] = $r;
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
     echo json_encode($data);
     exit;
   }
 
-  // Update record
+  // ----- UPDATE RESPONSE -----
   if ($_GET['ajax'] === 'update' && isset($_POST['id'])) {
     $id = (int)$_POST['id'];
     $client = trim($_POST['client_name'] ?? '');
@@ -59,9 +56,19 @@ if (isset($_GET['ajax'])) {
     $location = trim($_POST['location'] ?? '');
     $feedback = trim($_POST['feedback'] ?? '');
 
-    $stmt = $conn->prepare("UPDATE survey_responses SET client_name=?, account_name=?, location=?, feedback=? WHERE id=?");
-    $stmt->bind_param("ssssi", $client, $account, $location, $feedback, $id);
-    echo $stmt->execute() ? 'ok' : 'fail';
+    $stmt = $conn->prepare("
+      UPDATE survey_responses
+      SET client_name = :client, account_name = :account, location = :location, feedback = :feedback
+      WHERE id = :id
+    ");
+    $ok = $stmt->execute([
+      ':client' => $client,
+      ':account' => $account,
+      ':location' => $location,
+      ':feedback' => $feedback,
+      ':id' => $id
+    ]);
+    echo $ok ? 'ok' : 'fail';
     exit;
   }
 }
@@ -73,6 +80,7 @@ if (isset($_GET['ajax'])) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Survey Responses — SkyTruFiber CSR Dashboard</title>
 <style>
+/* ---- Your Original CSS (unchanged) ---- */
 body {
   font-family:"Segoe UI",Arial,sans-serif;
   margin:0; height:100vh; display:flex;
@@ -83,8 +91,6 @@ body::before {
   background:url('<?= $logoPath ?>') no-repeat center center;
   background-size:700px auto; opacity:0.05; z-index:0;
 }
-
-/* Sidebar */
 #sidebar {
   width:240px; background:#009900; color:#fff;
   position:fixed; left:0; top:0; bottom:0;
@@ -102,8 +108,6 @@ body::before {
 #hamburger {
   background:#009900; color:#fff; padding:10px 14px; font-size:22px; cursor:pointer; border:none;
 }
-
-/* Header */
 header {
   background:#00aa00; color:#fff; display:flex; justify-content:space-between;
   align-items:center; padding:10px 20px; font-weight:700; z-index:1;
@@ -111,24 +115,15 @@ header {
 header .title { display:flex; align-items:center; gap:15px; font-size:18px; }
 header img { height:45px; }
 header a { color:#fff; text-decoration:none; font-weight:bold; }
-
-/* Tabs */
 #tabs {
   display:flex; gap:8px; padding:8px 20px;
   background:rgba(230,255,230,0.95); border-bottom:1px solid #ccc;
 }
 .tab { padding:8px 14px; border-radius:8px; cursor:pointer; color:#007a00; font-weight:700; }
 .tab.active { background:#009900; color:#fff; }
-
-/* Layout */
-#main-content {
-  flex:1; margin-left:0; transition:.3s; display:flex; flex-direction:column; z-index:1;
-}
+#main-content { flex:1; margin-left:0; transition:.3s; display:flex; flex-direction:column; z-index:1; }
 #main-content.shifted { margin-left:240px; }
-
 h1 { color:#006600; margin:20px; }
-
-/* Filters */
 #filters {
   display:flex; flex-wrap:wrap; gap:12px; background:#eaffea;
   margin:0 20px; padding:10px 15px; border-radius:8px;
@@ -138,8 +133,6 @@ h1 { color:#006600; margin:20px; }
   padding:6px 10px; border:1px solid #ccc; border-radius:6px; font-family:inherit;
 }
 #filters label { font-weight:600; color:#006600; }
-
-/* Table */
 table {
   border-collapse:collapse; width:95%; margin:20px auto;
   background:#fff; box-shadow:0 3px 10px rgba(0,0,0,.1);
@@ -155,8 +148,6 @@ td.date { color:#666; font-size:13px; }
 }
 .edit-btn:hover { background:#00aa00; }
 .no-data { text-align:center; padding:40px; color:#666; }
-
-/* Modal */
 #editModal {
   position:fixed; top:0; left:0; right:0; bottom:0;
   background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:10;
@@ -174,8 +165,6 @@ td.date { color:#666; font-size:13px; }
 #saveBtn { background:#00aa00; color:#fff; }
 #saveBtn:hover { background:#007a00; }
 #closeBtn { background:#ccc; }
-
-/* Mobile */
 @media (max-width:768px){
   #sidebar { width:220px; }
   table { width:98%; font-size:13px; }
@@ -189,7 +178,6 @@ td.date { color:#666; font-size:13px; }
 <div id="sidebar">
   <h2><img src="<?= $logoPath ?>" alt="Logo"> Menu</h2>
   <a href="csr_dashboard.php">💬 Chat Dashboard</a>
-  <a href="#" onclick="toggleSidebar()">👥 My Clients</a>
   <a href="survey_responses.php" style="background:#00b300;">📝 Survey Responses</a>
   <a href="csr_logout.php">🚪 Logout</a>
 </div>
@@ -213,7 +201,6 @@ td.date { color:#666; font-size:13px; }
 
   <h1>📝 Customer Feedback</h1>
 
-  <!-- Search and Filters -->
   <div id="filters">
     <div>
       <label>Search:</label>
