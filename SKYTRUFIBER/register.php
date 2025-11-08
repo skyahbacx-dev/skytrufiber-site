@@ -99,9 +99,7 @@ button:hover { background: #007a99; }
     <option value="District 1">District 1</option>
     <option value="District 2">District 2</option>
     <option value="District 3">District 3</option>
-    <option value="District 4">District 4</option>
-    <option value="District 5">District 5</option>
-    <option value="District 6">District 6</option>
+
   </select>
 
   <label for="location">Location (Barangay, Quezon City):</label>
