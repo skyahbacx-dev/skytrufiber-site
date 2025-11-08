@@ -132,19 +132,7 @@ const barangays = {
     "Libis", "Loyola Heights", "Matandang Balara", "Quirino 2-A", "Quirino 2-B",
     "Quirino 2-C", "Amihan", "Duyan-duyan", "Bagumbuhay", "Blue Ridge A", "White Plains"
   ],
-  "District 4": [
-    "Kamuning", "Kaunlaran", "Sacred Heart", "San Martin de Porres", "Santol",
-    "Sikatuna Village", "South Triangle", "Teacher's Village East", "Teacher's Village West",
-    "UP Campus", "UP Village", "Laging Handa", "Obrero", "Mariana", "Damayang Lagi"
-  ],
-  "District 5": [
-    "Bagbag", "Capri", "Fairview", "Greater Lagro", "Gulod", "Kaligayahan",
-    "Nagkaisang Nayon", "North Fairview", "Novaliches Proper", "San Bartolome", "Sta. Lucia"
-  ],
-  "District 6": [
-    "Apolonio Samson", "Baesa", "Balong Bato", "Culiat", "New Era", "Pasong Tamo",
-    "Sangandaan", "Sauyo", "Talipapa", "Tandang Sora", "Unang Sigaw"
-  ]
+
 };
 
 // 🎯 Populate Barangay dropdown based on selected district
