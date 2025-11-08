@@ -2,32 +2,33 @@
 include '../db_connect.php'; // ensure path is correct
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get form fields and sanitize
+    // 🧹 Sanitize and collect form data
     $client_name  = trim($_POST['client_name'] ?? '');
     $account_name = trim($_POST['account_name'] ?? '');
+    $district     = trim($_POST['district'] ?? '');
+    $location     = trim($_POST['location'] ?? ''); // Barangay
     $feedback     = trim($_POST['feedback'] ?? '');
-    $location     = trim($_POST['location'] ?? ''); // if you added location field
 
-    if ($client_name && $account_name && $feedback) {
+    // ✅ Check for missing fields
+    if ($client_name && $account_name && $district && $location && $feedback) {
         try {
-            // Prepare insert query using PDO
+            // ✅ Insert into your NeonDB table
             $stmt = $conn->prepare("
-                INSERT INTO survey_responses (client_name, account_name, feedback, location, created_at)
-                VALUES (:client_name, :account_name, :feedback, :location, NOW())
+                INSERT INTO survey_responses (client_name, account_name, district, location, feedback, created_at)
+                VALUES (:client_name, :account_name, :district, :location, :feedback, NOW())
             ");
 
-            // Bind parameters safely
             $stmt->bindParam(':client_name', $client_name);
             $stmt->bindParam(':account_name', $account_name);
-            $stmt->bindParam(':feedback', $feedback);
+            $stmt->bindParam(':district', $district);
             $stmt->bindParam(':location', $location);
+            $stmt->bindParam(':feedback', $feedback);
 
-            // Execute the statement
             $stmt->execute();
 
             echo "
             <script>
-              alert('✅ Thank you for your feedback, " . htmlspecialchars($client_name) . "!');
+              alert('✅ Thank you for your feedback, " . htmlspecialchars($client_name) . "! Your response has been recorded.');
               window.location.href='skytrufiber.php';
             </script>";
         } catch (PDOException $e) {
@@ -40,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         echo "
         <script>
-          alert('⚠️ Please fill in all fields before submitting.');
+          alert('⚠️ Please complete all fields before submitting.');
           window.history.back();
         </script>";
     }
