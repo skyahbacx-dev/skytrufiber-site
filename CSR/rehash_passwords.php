@@ -1,5 +1,5 @@
 <?php
-include 'db_connect.php'; // Your PDO connection
+include '../db_connect.php'; // Your PDO connection
 
 // Fetch all CSR users
 $stmt = $conn->query("SELECT id, username, password FROM csr_users");
