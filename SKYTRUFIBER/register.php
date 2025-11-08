@@ -97,7 +97,6 @@ button:hover { background: #007a99; }
   <select id="district" name="district" required>
     <option value="">Select District</option>
     <option value="District 1">District 1</option>
-    <option value="District 2">District 2</option>
     <option value="District 3">District 3</option>
     <option value="District 4">District 4</option>
   </select>
@@ -122,9 +121,7 @@ const barangays = {
     "Paltok", "Paraiso", "Phil-Am", "Project 6", "Ramon Magsaysay", "San Antonio",
     "San Jose", "Santa Cruz", "Santa Teresita", "Talayan", "West Triangle"
   ],
-  "District 2": [
-    "Bagong Silangan", "Batasan Hills", "Commonwealth", "Holy Spirit", "Payatas"
-  ],
+ 
   "District 3": [
     "Camp Aguinaldo", "San Roque", "Silangan", "Socorro", "Bagumbayan",
     "Libis", "Loyola Heights", "Matandang Balara", "Quirino 2-A", "Quirino 2-B",
