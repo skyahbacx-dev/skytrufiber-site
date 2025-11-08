@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $full_name = trim($_POST['full_name']);
     $district = trim($_POST['district']);
     $barangay = trim($_POST['location']);
-    $password = $account_number; // automatically use account number as password
+    $password = $account_number; // automatic password = account number
 
     if ($account_number && $full_name && $district && $barangay) {
         $hash = password_hash($password, PASSWORD_BCRYPT);
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Register - SkyTruFiber</title>
+<title>Customer Feed Back - SkytruFiber</title>
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -84,7 +84,7 @@ button:hover { background: #007a99; }
 <body>
 
 <form method="POST">
-  <h2>SkyTruFiber Registration</h2>
+  <h2>Customer Feed Back</h2>
 
   <label for="account_number">Account Number:</label>
   <input type="text" name="account_number" id="account_number" placeholder="Enter account number" required>
@@ -92,7 +92,7 @@ button:hover { background: #007a99; }
   <label for="full_name">Full Name:</label>
   <input type="text" name="full_name" id="full_name" placeholder="Enter your full name" required>
 
-  <!-- 🏙️ District + Barangay Dropdown -->
+  <!-- 🏙️ Dynamic District and Barangay Selection -->
   <label for="district">District:</label>
   <select id="district" name="district" required>
     <option value="">Select District</option>
@@ -107,13 +107,62 @@ button:hover { background: #007a99; }
   <label for="location">Location (Barangay, Quezon City):</label>
   <select id="location" name="location" required>
     <option value="">Select your barangay</option>
-    <?php include 'barangay_list.php'; ?>
   </select>
 
-  <button type="submit">Register</button>
+  <button type="submit">Submit</button>
   <?php if ($message): ?><p class="message"><?= htmlspecialchars($message) ?></p><?php endif; ?>
   <p style="text-align:center; margin-top:10px;">Already registered? <a href="skytrufiber.php">Login here</a></p>
 </form>
+
+<script>
+// 🏙️ Barangays by District
+const barangays = {
+  "District 1": [
+    "Alicia (Bago Bantay)", "Bagong Pag-asa", "Bahay Toro", "Balingasa", "Bungad",
+    "Damar", "Damayan", "Del Monte", "Katipunan", "Lourdes", "Maharlika", "Manresa", 
+    "Mariblo", "Masambong", "N.S. Amoranto", "Nayong Kanluran", "Pag-ibig sa Nayon", 
+    "Paltok", "Paraiso", "Phil-Am", "Project 6", "Ramon Magsaysay", "San Antonio",
+    "San Jose", "Santa Cruz", "Santa Teresita", "Talayan", "West Triangle"
+  ],
+  "District 2": [
+    "Bagong Silangan", "Batasan Hills", "Commonwealth", "Holy Spirit", "Payatas"
+  ],
+  "District 3": [
+    "Camp Aguinaldo", "San Roque", "Silangan", "Socorro", "Bagumbayan",
+    "Libis", "Loyola Heights", "Matandang Balara", "Quirino 2-A", "Quirino 2-B",
+    "Quirino 2-C", "Amihan", "Duyan-duyan", "Bagumbuhay", "Blue Ridge A", "White Plains"
+  ],
+  "District 4": [
+    "Kamuning", "Kaunlaran", "Sacred Heart", "San Martin de Porres", "Santol",
+    "Sikatuna Village", "South Triangle", "Teacher's Village East", "Teacher's Village West",
+    "UP Campus", "UP Village", "Laging Handa", "Obrero", "Mariana", "Damayang Lagi"
+  ],
+  "District 5": [
+    "Bagbag", "Capri", "Fairview", "Greater Lagro", "Gulod", "Kaligayahan",
+    "Nagkaisang Nayon", "North Fairview", "Novaliches Proper", "San Bartolome", "Sta. Lucia"
+  ],
+  "District 6": [
+    "Apolonio Samson", "Baesa", "Balong Bato", "Culiat", "New Era", "Pasong Tamo",
+    "Sangandaan", "Sauyo", "Talipapa", "Tandang Sora", "Unang Sigaw"
+  ]
+};
+
+// 🎯 Populate Barangay dropdown based on selected district
+document.getElementById('district').addEventListener('change', function() {
+  const selectedDistrict = this.value;
+  const locationSelect = document.getElementById('location');
+  locationSelect.innerHTML = '<option value="">Select your barangay</option>';
+
+  if (barangays[selectedDistrict]) {
+    barangays[selectedDistrict].forEach(brgy => {
+      const option = document.createElement('option');
+      option.value = brgy;
+      option.textContent = brgy;
+      locationSelect.appendChild(option);
+    });
+  }
+});
+</script>
 
 </body>
 </html>
