@@ -99,9 +99,9 @@ button:hover { background: #007a99; }
 .show-pass {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 1px;
   font-size: 13px;
-  margin-top: 6px;
+  margin-top: 1px;
 }
 .message { color: red; text-align: center; margin-top: 10px; }
 a { color: #007744; text-decoration: none; }
