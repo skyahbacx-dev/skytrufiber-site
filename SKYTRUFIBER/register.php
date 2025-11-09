@@ -6,18 +6,23 @@ $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $account_number = trim($_POST['account_number']);
     $full_name = trim($_POST['full_name']);
+    $email = trim($_POST['email']);
     $district = trim($_POST['district']);
     $barangay = trim($_POST['location']);
     $password = $account_number; // automatic password = account number
 
-    if ($account_number && $full_name && $district && $barangay) {
+    if ($account_number && $full_name && $email && $district && $barangay) {
         $hash = password_hash($password, PASSWORD_BCRYPT);
 
         try {
-            $stmt = $conn->prepare("INSERT INTO users (account_number, full_name, password, district, barangay) VALUES (:account_number, :full_name, :password, :district, :barangay)");
+            $stmt = $conn->prepare("
+                INSERT INTO users (account_number, full_name, email, password, district, barangay, created_at)
+                VALUES (:account_number, :full_name, :email, :password, :district, :barangay, NOW())
+            ");
             $stmt->execute([
                 ':account_number' => $account_number,
                 ':full_name' => $full_name,
+                ':email' => $email,
                 ':password' => $hash,
                 ':district' => $district,
                 ':barangay' => $barangay
@@ -33,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     } else {
-        $message = "Please fill in all required fields.";
+        $message = "⚠️ Please fill in all required fields.";
     }
 }
 ?>
@@ -98,9 +103,8 @@ a:hover { text-decoration: underline; }
 </head>
 <body>
 
-<!-- 🟢 SkyTruFiber Logo Header -->
 <div class="logo-container">
-  <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+  <img src="SKYTRUFIBER.png" alt="SkyTruFiber Logo">
 </div>
 
 <form method="POST">
@@ -112,7 +116,9 @@ a:hover { text-decoration: underline; }
   <label for="full_name">Full Name:</label>
   <input type="text" name="full_name" id="full_name" placeholder="Enter your full name" required>
 
-  <!-- 🏙️ Dynamic District and Barangay Selection -->
+  <label for="email">Email Address:</label>
+  <input type="email" name="email" id="email" placeholder="Enter your email" required>
+
   <label for="district">District:</label>
   <select id="district" name="district" required>
     <option value="">Select District</option>
@@ -132,40 +138,21 @@ a:hover { text-decoration: underline; }
 </form>
 
 <script>
-// 🏙️ Barangays by District
 const barangays = {
-  "District 1": [
-    "Alicia (Bago Bantay)", "Bagong Pag-asa", "Bahay Toro", "Balingasa", "Bungad",
-    "Damar", "Damayan", "Del Monte", "Katipunan", "Lourdes", "Maharlika", "Manresa", 
-    "Mariblo", "Masambong", "N.S. Amoranto", "Nayong Kanluran", "Pag-ibig sa Nayon", 
-    "Paltok", "Paraiso", "Phil-Am", "Project 6", "Ramon Magsaysay", "San Antonio",
-    "San Jose", "Santa Cruz", "Santa Teresita", "Talayan", "West Triangle"
-  ],
- 
-  "District 3": [
-    "Camp Aguinaldo", "San Roque", "Silangan", "Socorro", "Bagumbayan",
-    "Libis", "Loyola Heights", "Matandang Balara", "Quirino 2-A", "Quirino 2-B",
-    "Quirino 2-C", "Amihan", "Duyan-duyan", "Bagumbuhay", "Blue Ridge A", "White Plains"
-  ],
-  "District 4": [
-    "Kamuning", "Kaunlaran", "Sacred Heart", "San Martin de Porres", "Santol",
-    "Sikatuna Village", "South Triangle", "Teacher's Village East", "Teacher's Village West",
-    "UP Campus", "UP Village", "Laging Handa", "Obrero", "Mariana", "Damayang Lagi"
-  ],
+  "District 1": ["Alicia (Bago Bantay)", "Bagong Pag-asa", "Bahay Toro", "Balingasa", "Bungad", "Del Monte"],
+  "District 3": ["Camp Aguinaldo", "San Roque", "Silangan", "Socorro", "Bagumbayan"],
+  "District 4": ["Kamuning", "Kaunlaran", "Sacred Heart", "San Martin de Porres", "Santol"]
 };
 
-// 🎯 Populate Barangay dropdown based on selected district
 document.getElementById('district').addEventListener('change', function() {
-  const selectedDistrict = this.value;
+  const selected = this.value;
   const locationSelect = document.getElementById('location');
   locationSelect.innerHTML = '<option value="">Select your barangay</option>';
-
-  if (barangays[selectedDistrict]) {
-    barangays[selectedDistrict].forEach(brgy => {
-      const option = document.createElement('option');
-      option.value = brgy;
-      option.textContent = brgy;
-      locationSelect.appendChild(option);
+  if (barangays[selected]) {
+    barangays[selected].forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b; opt.textContent = b;
+      locationSelect.appendChild(opt);
     });
   }
 });
