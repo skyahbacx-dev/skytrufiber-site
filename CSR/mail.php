@@ -1,43 +1,34 @@
 <?php
-// mail.php
-// Simple PHPMailer wrapper. Requires composer autoload and phpmailer/phpmailer installed.
-//
-// Put SMTP credentials in environment variables:
-//   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM, MAIL_FROM_NAME
-
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require __DIR__ . '/../vendor/autoload.php'; // adjust path to composer autoload
+require __DIR__ . '/vendor/autoload.php'; // Adjust path if needed
 
-function send_mail($to_email, $to_name, $subject, $body_html, $body_text = '') {
+function sendEmail($to, $subject, $message) {
     $mail = new PHPMailer(true);
+
     try {
-        // SMTP config from env
         $mail->isSMTP();
-        $mail->Host = getenv('SMTP_HOST') ?: 'smtp.example.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = getenv('SMTP_USER') ?: 'billing@yourdomain.com';
-        $mail->Password = getenv('SMTP_PASS') ?: 'password';
+        $mail->Host       = getenv('MAIL_HOST');     // smtp.gmail.com
+        $mail->SMTPAuth   = true;
+        $mail->Username   = getenv('MAIL_USERNAME'); // skytrufiberbilling@gmail.com
+        $mail->Password   = getenv('MAIL_PASSWORD'); // app password
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = getenv('SMTP_PORT') ?: 587;
+        $mail->Port       = getenv('MAIL_PORT') ?: 587;
 
-        $from = getenv('MAIL_FROM') ?: 'billing@skytrufiber.com';
-        $from_name = getenv('MAIL_FROM_NAME') ?: 'SkyTruFiber Billing';
-
-        $mail->setFrom($from, $from_name);
-        $mail->addReplyTo($from, $from_name);
-
-        $mail->addAddress($to_email, $to_name);
+        $mail->setFrom(getenv('MAIL_FROM'), 'SkyTruFiber Billing');
+        $mail->addAddress($to);
 
         $mail->isHTML(true);
         $mail->Subject = $subject;
-        $mail->Body = $body_html;
-        if ($body_text) $mail->AltBody = $body_text;
+        $mail->Body    = $message;
 
         $mail->send();
-        return ['ok' => true];
+        return true;
+
     } catch (Exception $e) {
-        return ['ok' => false, 'error' => $mail->ErrorInfo];
+        error_log("PHPMailer Error: " . $mail->ErrorInfo);
+        return false;
     }
 }
+?>
