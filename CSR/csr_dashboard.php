@@ -141,9 +141,318 @@ if (isset($_GET['ajax'])) {
 <title>CSR Dashboard — SkyTruFiber</title>
 
 <style>
-/* === BASIC STYLES — same as before === */
-/* Everything from your previous version remains identical */
+
+/* ===== RESET ===== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body {
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+  background: #f4fff4;
+  position: relative;
+}
+
+/* ===== BACKGROUND LOGO WATERMARK ===== */
+
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url('<?= $logoPath ?>') no-repeat center;
+  background-size: 600px;
+  opacity: 0.04;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ===== SIDEBAR ===== */
+
+#sidebar {
+  width: 250px;
+  background: #038003;
+  color: white;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: -250px;
+  transition: .3s ease;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+#sidebar.active {
+  left: 0;
+}
+
+#sidebar h2 {
+  padding: 18px;
+  background: #026602;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 19px;
+  font-weight: bold;
+}
+
+#sidebar h2 img {
+  height: 30px;
+}
+
+#sidebar a {
+  padding: 16px 20px;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  transition: .2s;
+}
+
+#sidebar a:hover {
+  background: #00a000;
+}
+
+/* ===== MAIN CONTENT ===== */
+
+#main-content {
+  width: 100%;
+  margin-left: 0;
+  transition: .3s ease;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+#main-content.shifted {
+  margin-left: 250px;
+}
+
+header {
+  height: 60px;
+  background: #02a402;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+header button {
+  background: none;
+  border: none;
+  font-size: 26px;
+  color: white;
+  cursor: pointer;
+}
+
+/* ===== CONTAINER LAYOUT ===== */
+
+#container {
+  display: flex;
+  width: 100%;
+  height: calc(100vh - 60px);
+}
+
+/* ===== CLIENT LIST ===== */
+
+#client-list {
+  width: 300px;
+  background: white;
+  overflow-y: auto;
+  border-right: 1px solid #ddd;
+  padding: 10px;
+}
+
+.client-item {
+  background: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: .2s;
+}
+
+.client-item:hover {
+  background: #e0ffe0;
+}
+
+.client-item.active {
+  background: #c6f5c6;
+  border: 2px solid #02a402;
+}
+
+/* ===== BUTTONS ===== */
+
+.assign-btn,
+.unassign-btn,
+.locked-btn {
+  height: 34px;
+  width: 34px;
+  font-size: 18px;
+  border-radius: 50%;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.assign-btn {
+  background: #02a402;
+}
+
+.unassign-btn {
+  background: #cc0000;
+}
+
+.locked-btn {
+  background: #777;
+}
+
+/* ===== CHAT AREA ===== */
+
+#chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  position: relative;
+}
+
+#chat-header {
+  background: #02a402;
+  color: white;
+  padding: 12px;
+  font-weight: bold;
+  font-size: 17px;
+}
+
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  position: relative;
+}
+
+.month-label {
+  background: #d8ffd8;
+  padding: 6px;
+  text-align: center;
+  margin: 12px 0;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 8px;
+  color: #046c04;
+}
+
+.bubble {
+  max-width: 70%;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  clear: both;
+}
+
+.client {
+  background: #eaffea;
+  float: left;
+}
+
+.csr {
+  background: #dbf0ff;
+  float: right;
+}
+
+.timestamp {
+  display: block;
+  font-size: 11px;
+  color: #666;
+  margin-top: 5px;
+  text-align: right;
+}
+
+/* ===== CHAT INPUT ===== */
+
+.input {
+  border-top: 1px solid #ccc;
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.input input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  outline: none;
+  border: 1px solid #ccc;
+}
+
+.input button {
+  background: #02a402;
+  padding: 10px 16px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+/* ===== REMINDERS SECTION ===== */
+
+#reminders-area {
+  width: 100%;
+  background: white;
+  overflow-y: auto;
+}
+
+#reminders-area h2 {
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+#reminders-list table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#reminders-list th,
+#reminders-list td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  font-size: 14px;
+}
+
+#reminders-list th {
+  background: #02a402;
+  color: white;
+}
+
+#reminders-list tr:nth-child(even) {
+  background: #f0fff0;
+}
+
+#rem-type,
+#rem-client,
+#rem-create-btn {
+  margin-top: 10px;
+}
+
 </style>
+
 </head>
 
 <body>
