@@ -33,7 +33,7 @@ try {
 <meta charset="UTF-8">
 <title>SkyTruFiber Support Chat</title>
 <style>
-/* ===== BASE STYLING ===== */
+/* ===== BASE LAYOUT ===== */
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
   background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
@@ -199,13 +199,7 @@ body::before {
   </div>
 
   <!-- Chat Messages -->
-  <div class="chat-box" id="chatBox">
-    <div class="message csr">
-      👋 Hi <?= htmlspecialchars($username) ?>! This is <?= $csr_name_display ?> from SkyTruFiber.<br>
-      How can I assist you today?
-      <span class="timestamp"><?= date("n/j/Y, g:i A") ?></span>
-    </div>
-  </div>
+  <div class="chat-box" id="chatBox"></div>
 
   <!-- Input Section -->
   <div class="chat-input">
@@ -215,19 +209,52 @@ body::before {
 </div>
 
 <script>
+const username = <?= json_encode($username) ?>;
+const chatBox = document.getElementById('chatBox');
+
+// Load messages from DB
+function loadChat() {
+  fetch(`load_chat.php?client=${encodeURIComponent(username)}`)
+    .then(res => res.json())
+    .then(data => {
+      chatBox.innerHTML = '';
+      data.forEach(msg => {
+        const div = document.createElement('div');
+        div.className = 'message ' + (msg.sender_type === 'csr' ? 'csr' : 'user');
+        div.innerHTML = `
+          ${msg.message}
+          <span class="timestamp">${new Date(msg.created_at).toLocaleString()}</span>
+        `;
+        chatBox.appendChild(div);
+      });
+      chatBox.scrollTop = chatBox.scrollHeight;
+    })
+    .catch(err => console.error('Chat load error:', err));
+}
+
+// Send message to DB
 function sendMessage() {
-  const box = document.getElementById('chatBox');
   const input = document.getElementById('message');
   const msg = input.value.trim();
   if (!msg) return;
 
-  const div = document.createElement('div');
-  div.className = 'message user';
-  div.innerHTML = msg + `<span class="timestamp">${new Date().toLocaleTimeString()}</span>`;
-  box.appendChild(div);
-  input.value = '';
-  box.scrollTop = box.scrollHeight;
+  fetch('save_chat.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: new URLSearchParams({
+      sender_type: 'client',
+      message: msg,
+      client: username
+    })
+  }).then(() => {
+    input.value = '';
+    loadChat();
+  });
 }
+
+// Auto-refresh chat every 1.5s
+setInterval(loadChat, 1500);
+window.onload = loadChat;
 </script>
 
 </body>
