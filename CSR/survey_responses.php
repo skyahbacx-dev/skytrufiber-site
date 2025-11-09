@@ -2,451 +2,205 @@
 session_start();
 include '../db_connect.php';
 
-// Require login
-if (!isset($_SESSION['csr_user'])) {
-    header("Location: csr_login.php");
-    exit;
-}
-
+if (!isset($_SESSION['csr_user'])) { header("Location: csr_login.php"); exit; }
 $csr_user = $_SESSION['csr_user'];
 
-// Get CSR name
-$stmt = $conn->prepare("SELECT full_name FROM csr_users WHERE username = :u LIMIT 1");
-$stmt->execute([':u' => $csr_user]);
-$row = $stmt->fetch(PDO::FETCH_ASSOC);
-$csr_fullname = $row['full_name'] ?? $csr_user;
+$stmt = $conn->prepare("SELECT full_name FROM csr_users WHERE username=:u LIMIT 1");
+$stmt->execute([':u'=>$csr_user]);
+$csr_fullname = $stmt->fetchColumn() ?: $csr_user;
 
 $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBALOGO.png';
 
-/* ================================
-   ✅ AJAX ENDPOINTS
-================================ */
 if (isset($_GET['ajax'])) {
+  if ($_GET['ajax']==='load') {
+    $search = "%".($_GET['search']??'')."%";
+    $from   = $_GET['from'] ?? '';
+    $to     = $_GET['to']   ?? '';
 
-    /* ✅ Load all survey + legacy entries */
-    if ($_GET['ajax'] === 'load') {
+    $sql = "
+      SELECT id, client_name, account_name, email, district, location, feedback, created_at
+      FROM survey_responses
+      WHERE (client_name ILIKE :s OR account_name ILIKE :s OR email ILIKE :s OR district ILIKE :s OR location ILIKE :s OR feedback ILIKE :s)
+    ";
+    $params = [':s'=>$search];
 
-        $search = "%" . ($_GET['search'] ?? '') . "%";
-        $from = $_GET['from'] ?? '';
-        $to   = $_GET['to'] ?? '';
-
-        $params = [":search" => $search];
-
-        // Correct actual columns for survey_responses
-        $q1 = "
-            SELECT 
-                id,
-                client_name,
-                account_name,
-                district,
-                location,
-                feedback AS remarks,
-                created_at,
-                'survey_responses' AS source
-            FROM survey_responses
-            WHERE (
-                client_name ILIKE :search OR
-                account_name ILIKE :search OR
-                district ILIKE :search OR
-                location ILIKE :search OR
-                feedback ILIKE :search
-            )
-        ";
-
-        // Legacy "survey" table (different columns)
-        $q2 = "
-            SELECT
-                id,
-                client_name,
-                tech_name AS account_name,
-                NULL AS district,
-                NULL AS location,
-                remarks,
-                created_at,
-                'survey' AS source
-            FROM survey
-            WHERE (
-                client_name ILIKE :search OR
-                tech_name ILIKE :search OR
-                remarks ILIKE :search
-            )
-        ";
-
-        if ($from && $to) {
-            $q1 .= " AND DATE(created_at) BETWEEN :from AND :to";
-            $q2 .= " AND DATE(created_at) BETWEEN :from AND :to";
-            $params[":from"] = $from;
-            $params[":to"]   = $to;
-        }
-
-        $sql = "($q1) UNION ALL ($q2) ORDER BY created_at DESC";
-
-        $stmt = $conn->prepare($sql);
-        $stmt->execute($params);
-
-        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-        exit;
+    if ($from && $to) {
+      $sql .= " AND DATE(created_at) BETWEEN :f AND :t";
+      $params[':f']=$from; $params[':t']=$to;
     }
+    $sql.=" ORDER BY created_at DESC";
+    $st=$conn->prepare($sql); $st->execute($params);
+    echo json_encode($st->fetchAll(PDO::FETCH_ASSOC)); exit;
+  }
 
-    /* ✅ Update "survey_responses" only */
-    if ($_GET['ajax'] === 'update' && isset($_POST['id'])) {
-
-        $id        = (int) $_POST['id'];
-        $client    = trim($_POST['client_name']);
-        $account   = trim($_POST['account_name']);
-        $district  = trim($_POST['district']);
-        $location  = trim($_POST['location']);
-        $feedback  = trim($_POST['feedback']);
-
-        $stmt = $conn->prepare("
-            UPDATE survey_responses
-            SET client_name=:client,
-                account_name=:account,
-                district=:district,
-                location=:location,
-                feedback=:feedback
-            WHERE id=:id
-        ");
-
-        $ok = $stmt->execute([
-            ":client"   => $client,
-            ":account"  => $account,
-            ":district" => $district,
-            ":location" => $location,
-            ":feedback" => $feedback,
-            ":id"       => $id
-        ]);
-
-        echo $ok ? "ok" : "fail";
-        exit;
-    }
+  if ($_GET['ajax']==='update' && isset($_POST['id'])) {
+    $st=$conn->prepare("
+      UPDATE survey_responses
+      SET client_name=:c, account_name=:a, email=:e, district=:d, location=:l, feedback=:f
+      WHERE id=:id
+    ");
+    $ok=$st->execute([
+      ':c'=>trim($_POST['client_name']??''),
+      ':a'=>trim($_POST['account_name']??''),
+      ':e'=>trim($_POST['email']??''),
+      ':d'=>trim($_POST['district']??''),
+      ':l'=>trim($_POST['location']??''),
+      ':f'=>trim($_POST['feedback']??''),
+      ':id'=>(int)$_POST['id']
+    ]);
+    echo $ok?'ok':'fail'; exit;
+  }
 }
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Survey & Feedback — CSR Dashboard</title>
-
+<title>Survey Responses — SkyTruFiber</title>
 <style>
-body {
-  margin:0;
-  font-family:"Segoe UI",sans-serif;
-  background:#f6fff6;
-  overflow:hidden;
-}
-
-#sidebar {
-  position:fixed;
-  top:0; left:0;
-  width:260px;
-  height:100vh;
-  background:#006b00;
-  color:white;
-  transform:translateX(-100%);
-  transition:0.3s;
-  z-index:10;
-}
-
-#sidebar.active {
-  transform:translateX(0);
-}
-
-#sidebar h2 {
-  margin:0;
-  padding:15px;
-  background:#005c00;
-  text-align:center;
-}
-
-#sidebar a {
-  display:block;
-  padding:15px 20px;
-  text-decoration:none;
-  color:white;
-}
-#sidebar a:hover {
-  background:#009900;
-}
-
-header {
-  height:60px;
-  background:#009900;
-  color:white;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:0 20px;
-}
-
-#hamburger {
-  font-size:28px;
-  background:none;
-  border:none;
-  color:white;
-  cursor:pointer;
-}
-
-#tabs {
-  background:#eaffea;
-  padding:12px;
-  display:flex;
-  gap:10px;
-  border-bottom:1px solid #c7e5c7;
-}
-
-.tab {
-  padding:10px 18px;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:600;
-  color:#006b00;
-}
-
-.tab.active {
-  background:#006b00;
-  color:white;
-}
-
-#main-content {
-  height:calc(100vh - 110px);
-  overflow-y:auto;
-  padding:20px;
-}
-
-table {
-  width:100%;
-  border-collapse:collapse;
-  background:white;
-  box-shadow:0 2px 8px rgba(0,0,0,0.1);
-}
-
-th, td {
-  padding:12px;
-  border-bottom:1px solid #eee;
-}
-
-th {
-  background:#006b00;
-  color:white;
-}
-
-tr:hover {
-  background:#e6ffe6;
-}
-
-.edit-btn {
-  padding:6px 12px;
-  background:#009900;
-  color:white;
-  border:none;
-  border-radius:5px;
-  cursor:pointer;
-}
-
-.edit-btn:hover {
-  background:#007a00;
-}
-
-.no-data {
-  padding:40px;
-  text-align:center;
-  color:#666;
-}
-
-#editModal {
-  position:fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background:rgba(0,0,0,0.5);
-  display:none;
-  justify-content:center;
-  align-items:center;
-}
-
-#editModal .modal-box {
-  background:white;
-  padding:20px;
-  border-radius:10px;
-  width:90%;
-  max-width:450px;
-}
+body{font-family:"Segoe UI",Arial,sans-serif;margin:0;height:100vh;display:flex;background:#f2fff2;overflow:hidden;position:relative}
+body::before{content:"";position:absolute;inset:0;background:url('<?= $logoPath ?>') no-repeat center;background-size:700px auto;opacity:0.05;z-index:0}
+#sidebar{width:240px;background:#009900;color:#fff;position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);transition:.3s;display:flex;flex-direction:column;z-index:2}
+#sidebar.active{transform:translateX(0)}
+#sidebar h2{margin:0;padding:15px;background:#007a00;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px}
+#sidebar h2 img{height:28px}
+#sidebar a{color:#fff;text-decoration:none;padding:15px 20px;display:block;font-weight:600}
+#sidebar a:hover{background:#00b300}
+#hamburger{background:#009900;color:#fff;padding:10px 14px;font-size:22px;cursor:pointer;border:none}
+header{background:#00aa00;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:10px 20px;font-weight:700;z-index:1}
+header .title{display:flex;align-items:center;gap:15px;font-size:18px}
+header img{height:45px}
+#tabs{display:flex;gap:8px;padding:8px 20px;background:rgba(230,255,230,0.95);border-bottom:1px solid #ccc}
+.tab{padding:8px 14px;border-radius:8px;cursor:pointer;color:#007a00;font-weight:700}
+.tab.active{background:#009900;color:#fff}
+#main{flex:1;margin-left:0;transition:.3s;display:flex;flex-direction:column;z-index:1}
+#main.shifted{margin-left:240px}
+h1{color:#006600;margin:20px}
+#filters{display:flex;flex-wrap:wrap;gap:12px;background:#eaffea;margin:0 20px;padding:10px 15px;border-radius:8px;align-items:center;justify-content:space-between}
+#filters input{padding:6px 10px;border:1px solid #ccc;border-radius:6px}
+table{border-collapse:collapse;width:95%;margin:20px auto;background:#fff;box-shadow:0 3px 10px rgba(0,0,0,.1);border-radius:10px;overflow:hidden}
+th,td{padding:12px 15px;text-align:left;border-bottom:1px solid #eee}
+th{background:#009900;color:#fff;position:sticky;top:0}
+tr:hover{background:#e6ffe6}
+td.feedback{white-space:pre-wrap;word-break:break-word;color:#333}
+td.date{color:#666;font-size:13px}
+.edit-btn{background:#007a00;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer}
+.edit-btn:hover{background:#00aa00}
+.no-data{text-align:center;padding:40px;color:#666}
+#editModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:10}
+#editModal .modal-content{background:#fff;padding:20px;border-radius:10px;width:90%;max-width:520px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+#editModal input,#editModal textarea{width:100%;padding:8px;margin:6px 0;border:1px solid #ccc;border-radius:6px}
+#editModal button{padding:8px 14px;border:none;border-radius:6px;cursor:pointer;font-weight:bold}
+#saveBtn{background:#00aa00;color:#fff}
+#saveBtn:hover{background:#007a00}
+#closeBtn{background:#ccc}
 </style>
-
 </head>
-
 <body>
-
 <div id="sidebar">
-  <h2>Menu</h2>
+  <h2><img src="<?= $logoPath ?>" alt=""> Menu</h2>
   <a href="csr_dashboard.php">💬 Chat Dashboard</a>
   <a href="csr_dashboard.php?tab=mine">👥 My Clients</a>
-  <a href="csr_dashboard.php?tab=reminders">⏰ Reminders</a>
-  <a style="background:#009900;">📝 Survey Responses</a>
-  <a href="edit_profile.php">👤 Edit Profile</a>
+  <a href="survey_responses.php" style="background:#00b300;">📝 Survey Responses</a>
   <a href="csr_logout.php">🚪 Logout</a>
 </div>
 
-<header>
-  <button id="hamburger" onclick="toggleSidebar()">☰</button>
-  <span>Survey Responses — <?= htmlspecialchars($csr_fullname) ?></span>
-</header>
+<div id="main">
+  <header>
+    <button id="hamburger" onclick="toggleSidebar()">☰</button>
+    <div class="title">
+      <img src="<?= $logoPath ?>" alt="">
+      <span>Survey Responses — <?= htmlspecialchars($csr_fullname) ?></span>
+    </div>
+    <a href="csr_logout.php" style="color:#fff;text-decoration:none">Logout</a>
+  </header>
 
-<div id="tabs">
-  <div class="tab" onclick="window.location='csr_dashboard.php'">💬 All Clients</div>
-  <div class="tab" onclick="window.location='csr_dashboard.php?tab=mine'">👥 My Clients</div>
-  <div class="tab active">📝 Survey Responses</div>
-</div>
+  <div id="tabs">
+    <div class="tab" onclick="goTo('csr_dashboard.php')">💬 All Clients</div>
+    <div class="tab" onclick="goTo('csr_dashboard.php?tab=mine')">👤 My Clients</div>
+    <div class="tab active">📝 Survey Responses</div>
+  </div>
 
-<div id="main-content">
-  <h2>Customer Feedback Records</h2>
+  <h1>📝 Customer Feedback (Unified)</h1>
 
-  <div style="margin-bottom:20px; display:flex; gap:10px;">
-    <input id="searchBox" type="text" placeholder="Search client, account, district, feedback..." style="flex:1; padding:10px;">
-    <input id="fromDate" type="date">
-    <input id="toDate" type="date">
-    <button onclick="loadTable()" class="edit-btn">Filter</button>
+  <div id="filters">
+    <div>
+      <label>Search:</label>
+      <input type="text" id="searchBox" placeholder="Client / Account / Email / District / Barangay / Feedback...">
+    </div>
+    <div>
+      <label>From:</label><input type="date" id="fromDate">
+      <label>To:</label><input type="date" id="toDate">
+      <button class="edit-btn" onclick="loadTable()">Filter</button>
+    </div>
   </div>
 
   <div id="table-container"></div>
 </div>
 
-<!-- Modal -->
+<!-- Edit Modal -->
 <div id="editModal">
-  <div class="modal-box">
-    <h3>Edit Survey Response</h3>
-
+  <div class="modal-content">
+    <h3>Edit Feedback</h3>
     <input type="hidden" id="editId">
-
-    <label>Client Name:</label>
-    <input type="text" id="editClient">
-
-    <label>Account Name:</label>
-    <input type="text" id="editAccount">
-
-    <label>District:</label>
-    <input type="text" id="editDistrict">
-
-    <label>Location:</label>
-    <input type="text" id="editLocation">
-
-    <label>Feedback:</label>
-    <textarea id="editFeedback" rows="5" style="width:100%;"></textarea>
-
-    <div style="margin-top:10px; text-align:right;">
-      <button onclick="closeModal()" style="padding:6px 12px;">Cancel</button>
-      <button onclick="saveChanges()" class="edit-btn">Save</button>
+    <label>Client Name:</label><input type="text" id="editClient">
+    <label>Account Number:</label><input type="text" id="editAccount">
+    <label>Email:</label><input type="email" id="editEmail">
+    <label>District:</label><input type="text" id="editDistrict">
+    <label>Barangay:</label><input type="text" id="editLocation">
+    <label>Feedback:</label><textarea id="editFeedback" rows="5"></textarea>
+    <div style="margin-top:10px;text-align:right">
+      <button id="closeBtn" onclick="closeModal()">Cancel</button>
+      <button id="saveBtn" onclick="saveChanges()">Save</button>
     </div>
   </div>
 </div>
 
 <script>
-/* Sidebar toggle */
-function toggleSidebar() {
-    document.getElementById("sidebar").classList.toggle("active");
-}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('active');document.getElementById('main').classList.toggle('shifted');}
+function goTo(u){window.location.href=u;}
+function esc(s){return (s||'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
-/* Escape HTML */
-function escapeHTML(str){
-  return str?.replace(/[&<>\"']/g, t => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[t])) || '';
-}
-
-/* Load table */
 function loadTable(){
-  const search = document.getElementById('searchBox').value.trim();
-  const from   = document.getElementById('fromDate').value;
-  const to     = document.getElementById('toDate').value;
-
-  fetch(`survey_responses.php?ajax=load&search=${search}&from=${from}&to=${to}`)
-    .then(r=>r.json())
-    .then(data=>{
-      const cont=document.getElementById('table-container');
-
-      if(!data.length){
-        cont.innerHTML="<div class='no-data'>No feedback found.</div>";
-        return;
-      }
-
-      let html="<table><tr><th>#</th><th>Client</th><th>Account</th><th>District</th><th>Location</th><th>Feedback</th><th>Source</th><th>Date</th><th>Action</th></tr>";
-
-      data.forEach((r,i)=>{
-        html+=`
-          <tr>
-            <td>${i+1}</td>
-            <td>${escapeHTML(r.client_name)}</td>
-            <td>${escapeHTML(r.account_name)}</td>
-            <td>${escapeHTML(r.district)}</td>
-            <td>${escapeHTML(r.location)}</td>
-            <td>${escapeHTML(r.remarks)}</td>
-            <td>${r.source === "survey" ? "Legacy" : "New"}</td>
-            <td>${new Date(r.created_at).toLocaleString()}</td>
-            <td>
-              ${r.source==="survey_responses"
-                ? `<button onclick="openModal(${r.id}, '${escapeHTML(r.client_name)}', '${escapeHTML(r.account_name)}', '${escapeHTML(r.district)}', '${escapeHTML(r.location)}', '${escapeHTML(r.remarks)}')" class='edit-btn'>Edit</button>`
-                : "<span style='color:#888;'>Read-only</span>"
-              }
-            </td>
-          </tr>
-        `;
-      });
-
-      html+="</table>";
-      cont.innerHTML=html;
+  const params=new URLSearchParams({ajax:'load',search:document.getElementById('searchBox').value.trim(),from:document.getElementById('fromDate').value,to:document.getElementById('toDate').value});
+  fetch('survey_responses.php?'+params).then(r=>r.json()).then(rows=>{
+    const c=document.getElementById('table-container');
+    if(!rows.length){c.innerHTML='<div class="no-data">No feedback found.</div>';return;}
+    let html='<table><thead><tr><th>#</th><th>Client</th><th>Account #</th><th>Email</th><th>District</th><th>Barangay</th><th>Feedback</th><th>Date</th><th>Action</th></tr></thead><tbody>';
+    rows.forEach((r,i)=>{
+      html+=`<tr>
+      <td>${i+1}</td>
+      <td>${esc(r.client_name)}</td>
+      <td>${esc(r.account_name)}</td>
+      <td>${esc(r.email||'')}</td>
+      <td>${esc(r.district||'')}</td>
+      <td>${esc(r.location||'')}</td>
+      <td class="feedback">${esc(r.feedback||'')}</td>
+      <td class="date">${new Date(r.created_at).toLocaleString()}</td>
+      <td><button class="edit-btn" onclick="openModal(${r.id},'${esc(r.client_name)}','${esc(r.account_name)}','${esc(r.email||'')}','${esc(r.district||'')}','${esc(r.location||'')}','${esc(r.feedback||'')}')">Edit</button></td>
+      </tr>`;
     });
-}
-
-/* Open modal */
-function openModal(id, client, account, district, location, feedback){
-  document.getElementById("editId").value = id;
-  document.getElementById("editClient").value = client;
-  document.getElementById("editAccount").value = account;
-  document.getElementById("editDistrict").value = district;
-  document.getElementById("editLocation").value = location;
-  document.getElementById("editFeedback").value = feedback;
-
-  document.getElementById("editModal").style.display="flex";
-}
-
-/* Close modal */
-function closeModal(){
-  document.getElementById("editModal").style.display="none";
-}
-
-/* Save changes */
-function saveChanges(){
-  const id       = document.getElementById("editId").value;
-  const client   = document.getElementById("editClient").value;
-  const account  = document.getElementById("editAccount").value;
-  const district = document.getElementById("editDistrict").value;
-  const location = document.getElementById("editLocation").value;
-  const feedback = document.getElementById("editFeedback").value;
-
-  fetch("survey_responses.php?ajax=update", {
-      method: "POST",
-      headers: {"Content-Type": "application/x-www-form-urlencoded"},
-      body: new URLSearchParams({
-          id, client_name:client, account_name:account,
-          district, location, feedback
-      })
-  })
-  .then(r=>r.text())
-  .then(resp=>{
-    if(resp==="ok"){
-        alert("✅ Update successful!");
-        closeModal();
-        loadTable();
-    } else {
-        alert("❌ Update failed.");
-    }
+    html+='</tbody></table>'; c.innerHTML=html;
   });
 }
-
-/* Auto-load */
-window.onload = loadTable;
-document.getElementById("searchBox").addEventListener("keyup", ()=>loadTable());
+function openModal(id,c,a,e,d,l,f){document.getElementById('editId').value=id;document.getElementById('editClient').value=c;document.getElementById('editAccount').value=a;document.getElementById('editEmail').value=e;document.getElementById('editDistrict').value=d;document.getElementById('editLocation').value=l;document.getElementById('editFeedback').value=f;document.getElementById('editModal').style.display='flex';}
+function closeModal(){document.getElementById('editModal').style.display='none';}
+function saveChanges(){
+  const body=new URLSearchParams({
+    id:document.getElementById('editId').value,
+    client_name:document.getElementById('editClient').value.trim(),
+    account_name:document.getElementById('editAccount').value.trim(),
+    email:document.getElementById('editEmail').value.trim(),
+    district:document.getElementById('editDistrict').value.trim(),
+    location:document.getElementById('editLocation').value.trim(),
+    feedback:document.getElementById('editFeedback').value.trim()
+  });
+  fetch('survey_responses.php?ajax=update',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body})
+    .then(r=>r.text()).then(t=>{ if(t==='ok'){alert('✅ Saved.');closeModal();loadTable();} else alert('❌ Failed to save.');});
+}
+setInterval(loadTable,10000);
+window.onload=loadTable;
+document.getElementById('searchBox').addEventListener('keyup',loadTable);
 </script>
-
 </body>
 </html>
