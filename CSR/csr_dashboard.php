@@ -4,754 +4,551 @@ include '../db_connect.php';
 
 // Ensure CSR is logged in
 if (!isset($_SESSION['csr_user'])) {
-    header("Location: csr_login.php");
-    exit;
+  header("Location: csr_login.php");
+  exit;
 }
-
 $csr_user = $_SESSION['csr_user'];
 
-// Fetch CSR info
-$stmt = $conn->prepare("SELECT full_name, email FROM csr_users WHERE username = :u LIMIT 1");
+// Fetch CSR full name
+$stmt = $conn->prepare("SELECT full_name FROM csr_users WHERE username = :u LIMIT 1");
 $stmt->execute([':u' => $csr_user]);
-$csrRow = $stmt->fetch(PDO::FETCH_ASSOC);
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$csr_fullname = $row['full_name'] ?? $csr_user;
 
-$csr_fullname = $csrRow['full_name'] ?? $csr_user;
-$csr_email = $csrRow['email'] ?? "";
-
-// Logo path
+// ✅ Logo fallback
 $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBALOGO.png';
 
-/* ==========================================================
-   AJAX HANDLERS
-========================================================== */
+/* ===========================
+   AJAX ENDPOINTS
+   =========================== */
 if (isset($_GET['ajax'])) {
 
-    /* ---------- Load Client List ---------- */
-    if ($_GET['ajax'] === 'clients') {
-        $tab = $_GET['tab'] ?? 'all';
+  /* ---- Load Clients (All / Mine) ---- */
+  if ($_GET['ajax'] === 'clients') {
+    $tab = $_GET['tab'] ?? 'all';
 
-        if ($tab === 'mine') {
-            $stmt = $conn->prepare("
-                SELECT c.id, c.name, c.assigned_csr, MAX(ch.created_at) AS last_chat
-                FROM clients c
-                LEFT JOIN chat ch ON ch.client_id = c.id
-                WHERE c.assigned_csr = :csr
-                GROUP BY c.id, c.name, c.assigned_csr
-                ORDER BY last_chat DESC NULLS LAST
-            ");
-            $stmt->execute([':csr' => $csr_user]);
-        } else {
-            $stmt = $conn->query("
-                SELECT c.id, c.name, c.assigned_csr, MAX(ch.created_at) AS last_chat
-                FROM clients c
-                LEFT JOIN chat ch ON ch.client_id = c.id
-                GROUP BY c.id, c.name, c.assigned_csr
-                ORDER BY last_chat DESC NULLS LAST
-            ");
-        }
-
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $assigned = htmlspecialchars($row['assigned_csr'] ?: 'Unassigned');
-            $name = htmlspecialchars($row['name']);
-            $id = (int)$row['id'];
-
-            $owned = ($assigned === $csr_user);
-            $isFree = ($assigned === "Unassigned");
-
-            if ($isFree) {
-                $btn = "<button class='assign-btn' onclick='assignClient($id)'>＋</button>";
-            } elseif ($owned) {
-                $btn = "<button class='unassign-btn' onclick='unassignClient($id)'>−</button>";
-            } else {
-                $btn = "<button class='locked-btn' disabled>🔒</button>";
-            }
-
-            echo "
-            <div class='client-item' data-id='$id' data-name='$name' data-csr='$assigned'>
-                <div class='client-info'>
-                    <strong>$name</strong><br>
-                    <small>Assigned: $assigned</small>
-                </div>
-                $btn
-            </div>";
-        }
-        exit;
+    if ($tab === 'mine') {
+      $stmt = $conn->prepare("
+        SELECT c.id, c.name, c.assigned_csr, MAX(ch.created_at) AS last_chat
+        FROM clients c
+        LEFT JOIN chat ch ON ch.client_id = c.id
+        WHERE c.assigned_csr = :csr
+        GROUP BY c.id, c.name, c.assigned_csr
+        ORDER BY last_chat DESC NULLS LAST, c.name ASC
+      ");
+      $stmt->execute([':csr' => $csr_user]);
+    } else {
+      $stmt = $conn->query("
+        SELECT c.id, c.name, c.assigned_csr, MAX(ch.created_at) AS last_chat
+        FROM clients c
+        LEFT JOIN chat ch ON ch.client_id = c.id
+        GROUP BY c.id, c.name, c.assigned_csr
+        ORDER BY last_chat DESC NULLS LAST, c.name ASC
+      ");
     }
 
-    /* ---------- Load Reminders ---------- */
-    if ($_GET['ajax'] === 'load_reminders') {
-        $search = "%".($_GET['search'] ?? "")."%";
+    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+      $assigned = $r['assigned_csr'] ?: 'Unassigned';
+      $owned    = ($assigned === $csr_user);
+      $btn = '';
+      if ($assigned === 'Unassigned') {
+        $btn = "<button class='assign-btn' title='Assign to me' onclick='assignClient({$r['id']})'>＋</button>";
+      } elseif ($owned) {
+        $btn = "<button class='unassign-btn' title='Unassign' onclick='unassignClient({$r['id']})'>−</button>";
+      } else {
+        $btn = "<button class='locked-btn' title='Assigned' disabled>🔒</button>";
+      }
 
-        $stmt = $conn->prepare("
-            SELECT r.id, r.client_id, r.csr_username, r.reminder_type, r.status, r.sent_at,
-                   c.name AS client_name
-            FROM reminders r
-            LEFT JOIN clients c ON c.id = r.client_id
-            WHERE c.name ILIKE :s OR r.reminder_type ILIKE :s OR r.status ILIKE :s
-            ORDER BY r.id DESC
-        ");
-        $stmt->execute([":s" => $search]);
-        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-        exit;
+      echo "
+        <div class='client-item' data-id='{$r['id']}' data-name='".htmlspecialchars($r['name'],ENT_QUOTES)."' data-csr='".htmlspecialchars($assigned,ENT_QUOTES)."'>
+          <div class='client-label'>
+            <strong>".htmlspecialchars($r['name'])."</strong>
+            <small>Assigned: ".htmlspecialchars($assigned)."</small>
+          </div>
+          $btn
+        </div>
+      ";
     }
+    exit;
+  }
 
-    /* ---------- Create Reminder ---------- */
-    if ($_GET['ajax'] === 'create_reminder') {
-        $cid = (int)$_POST['client_id'];
-        $type = $_POST['type'];
-
-        $stmt = $conn->prepare("
-            INSERT INTO reminders (client_id, csr_username, reminder_type, status)
-            VALUES (:cid, :csr, :type, 'pending')
-        ");
-        $stmt->execute([
-            ':cid' => $cid,
-            ':csr' => $csr_user,
-            ':type' => $type
-        ]);
-
-        echo "ok";
-        exit;
+  /* ---- Assign Client ---- */
+  if ($_GET['ajax'] === 'assign' && isset($_POST['client_id'])) {
+    $id = (int)$_POST['client_id'];
+    $stmt = $conn->prepare("SELECT assigned_csr FROM clients WHERE id = :id");
+    $stmt->execute([':id' => $id]);
+    $curr = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($curr && $curr['assigned_csr'] && $curr['assigned_csr'] !== 'Unassigned') {
+      echo 'taken'; exit;
     }
+    $up = $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :id");
+    echo $up->execute([':csr' => $csr_user, ':id' => $id]) ? 'ok' : 'fail';
+    exit;
+  }
 
-    /* ---------- Assign Client ---------- */
-    if ($_GET['ajax'] === 'assign') {
-        $id = (int)$_POST['client_id'];
+  /* ---- Unassign Client ---- */
+  if ($_GET['ajax'] === 'unassign' && isset($_POST['client_id'])) {
+    $id = (int)$_POST['client_id'];
+    $up = $conn->prepare("UPDATE clients SET assigned_csr = 'Unassigned' WHERE id = :id AND assigned_csr = :csr");
+    echo $up->execute([':id' => $id, ':csr' => $csr_user]) ? 'ok' : 'fail';
+    exit;
+  }
 
-        $stmt = $conn->prepare("SELECT assigned_csr FROM clients WHERE id = :id");
-        $stmt->execute([':id' => $id]);
-        $r = $stmt->fetch(PDO::FETCH_ASSOC);
+  /* ---- Load Reminders (with ETA if users.due_date exists) ---- */
+  if ($_GET['ajax'] === 'reminders') {
+    // We attempt to compute planned send date if `users.due_date` is present.
+    // If not present, planned_at will be NULL and we just show Scheduled/Sent.
+    $sql = "
+      SELECT 
+        r.id,
+        r.client_id,
+        r.csr_username,
+        r.reminder_type,
+        r.sent_at,
+        r.status,
+        c.name AS client_name,
+        u.due_date,
+        CASE
+          WHEN r.reminder_type = '1_WEEK' AND u.due_date IS NOT NULL 
+            THEN (u.due_date::timestamp - INTERVAL '7 days')
+          WHEN r.reminder_type = '3_DAYS' AND u.due_date IS NOT NULL 
+            THEN (u.due_date::timestamp - INTERVAL '3 days')
+          ELSE NULL
+        END AS planned_at
+      FROM reminders r
+      LEFT JOIN clients c ON c.id = r.client_id
+      LEFT JOIN users   u ON LOWER(u.full_name) = LOWER(c.name)
+      ORDER BY 
+        /* Show scheduled soonest first, then sent desc */
+        CASE WHEN r.sent_at IS NULL THEN 0 ELSE 1 END,
+        COALESCE(
+          CASE 
+            WHEN r.reminder_type = '1_WEEK' AND u.due_date IS NOT NULL THEN (u.due_date::timestamp - INTERVAL '7 days')
+            WHEN r.reminder_type = '3_DAYS' AND u.due_date IS NOT NULL THEN (u.due_date::timestamp - INTERVAL '3 days')
+            ELSE NULL
+          END,
+          NOW()
+        ) ASC,
+        r.id DESC
+    ";
+    $stmt = $conn->query($sql);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode($rows);
+    exit;
+  }
 
-        if ($r && $r['assigned_csr'] !== "Unassigned") {
-            echo "taken";
-            exit;
-        }
+  /* ---- Create Reminder (optional, kept for future) ---- */
+  if ($_GET['ajax'] === 'create_reminder' && !empty($_POST['client_id']) && !empty($_POST['type'])) {
+    $cid = (int)$_POST['client_id'];
+    $type = $_POST['type'];
+    $ins = $conn->prepare("
+      INSERT INTO reminders (client_id, csr_username, reminder_type, status)
+      VALUES (:cid, :csr, :type, 'scheduled')
+    ");
+    $ok = $ins->execute([':cid'=>$cid, ':csr'=>$csr_user, ':type'=>$type]);
+    echo $ok ? 'ok' : 'fail'; exit;
+  }
 
-        $upd = $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :id");
-        echo $upd->execute([':csr' => $csr_user, ':id' => $id]) ? "ok" : "fail";
-        exit;
-    }
-
-    /* ---------- Unassign Client ---------- */
-    if ($_GET['ajax'] === 'unassign') {
-        $id = (int)$_POST['client_id'];
-
-        $upd = $conn->prepare("
-            UPDATE clients
-            SET assigned_csr = 'Unassigned'
-            WHERE id = :id AND assigned_csr = :csr
-        ");
-        echo $upd->execute([':id' => $id, ':csr' => $csr_user]) ? "ok" : "fail";
-        exit;
-    }
+  exit;
 }
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>CSR Dashboard — SkyTruFiber</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-/* ====== GLOBAL RESET ====== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ——— Base ——— */
+:root{
+  --g-900:#006d00;
+  --g-800:#008000;
+  --g-700:#00a000;
+  --g-600:#00b000;
+  --g-100:#eaffea;
+  --g-050:#f4fff4;
+  --b-100:#f5f7fb;
+  --line:#dfe7df;
+  --text:#21312a;
+  --muted:#667a6e;
+  --white:#fff;
+  --danger:#cc1a1a;
+  --info:#0b74d6;
+  --badge:#ffb100;
+  --shadow:0 6px 18px rgba(0,0,0,.08);
 }
 
-body {
-  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-  background: #f8fff8;
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:"Segoe UI",system-ui,-apple-system,Arial;
+  color:var(--text);
+  background:var(--g-050);
 }
 
-/* ====== SIDEBAR ====== */
-#sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 260px;
-  height: 100%;
-  background: #006400;
-  color: #fff;
-  padding-top: 60px;
-  transition: 0.3s ease;
-  z-index: 1000;
+/* ——— Topbar ——— */
+.topbar{
+  height:56px;background:var(--g-800);color:var(--white);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px; box-shadow:var(--shadow); position:relative; z-index:3;
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700}
+.brand img{height:32px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
+.hamb{
+  width:38px;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.25);
+  display:grid;place-items:center;background:transparent;color:#fff;cursor:pointer;font-size:20px;
+  transition:transform .2s ease;
+}
+.hamb.active{transform:rotate(90deg);}
+
+/* ——— Layout grid ——— */
+.wrapper{
+  display:grid; grid-template-columns: 260px 340px 1fr;
+  gap:12px; padding:12px;
+}
+@media(max-width:1200px){
+  .wrapper{grid-template-columns: 240px 1fr; grid-template-areas:"sidebar content" "sidebar content";}
+  .col-reminders{grid-column:2 / -1;}
+  .col-right    {grid-column:2 / -1;}
+}
+@media(max-width:860px){
+  .wrapper{grid-template-columns: 1fr;}
+  .sidebar{position:fixed;top:56px;left:0;bottom:0;width:260px;transform:translateX(-100%);transition:.25s ease;z-index:4}
+  .sidebar.show{transform:translateX(0)}
 }
 
-#sidebar.collapsed {
-  width: 70px;
+/* ——— Sidebar ——— */
+.sidebar{
+  background:var(--g-900); color:#fff; border-radius:14px; padding:10px; box-shadow:var(--shadow);
+}
+.side-title{
+  display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid rgba(255,255,255,.15);font-weight:700
+}
+.side-link{
+  display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;
+  padding:10px 12px;border-radius:10px;margin-top:6px; font-weight:600;
+}
+.side-link:hover{background:rgba(255,255,255,.09)}
+.side-link.active{background:rgba(255,255,255,.15)}
+
+/* ——— Card / Panel ——— */
+.card{
+  background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)
+}
+.section-head{
+  background:var(--g-700); color:#fff; padding:10px 12px; font-weight:800;border-radius:14px 14px 0 0
 }
 
-#sidebar h2,
-#sidebar a {
-  transition: 0.3s ease;
+/* ——— Reminders column ——— */
+.rem-body{padding:12px;max-height:calc(100vh - 56px - 24px);overflow:auto}
+.search{display:flex;gap:8px;margin-bottom:8px}
+.search input{
+  flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px
 }
-
-#sidebar h2 {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 260px;
-  font-size: 18px;
-  background: #004b00;
-  padding: 15px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.rem-item{
+  border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;
+  background:var(--g-050)
 }
-
-#sidebar.collapsed h2 {
-  width: 70px;
-  font-size: 0;
+.rem-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.badge{
+  padding:3px 8px;border-radius:100px;font-size:12px;font-weight:800;color:#fff;white-space:nowrap
 }
+.badge-scheduled{background:var(--badge);color:#342c00}
+.badge-sent{background:var(--g-700)}
+.rem-meta{font-size:12px;color:var(--muted);margin-top:4px}
+.rem-soon{background:#fff7e6;border:1px dashed #ffc866}
+.rem-title{font-weight:700}
 
-#sidebar.collapsed h2 img {
-  margin: auto;
+/* ——— Right Column (Clients + Chat) ——— */
+.right-grid{
+  display:grid;grid-template-columns: 320px 1fr; gap:12px; height:calc(100vh - 56px - 24px);
 }
-
-#sidebar a {
-  padding: 15px 20px;
-  display: block;
-  color: #fff;
-  text-decoration: none;
-  font-weight: 600;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+.list-panel{overflow:auto;border-right:1px dashed var(--line);padding:12px}
+.client-item{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  border:1px solid var(--line);border-radius:12px;background:#fff;padding:10px 12px;margin-bottom:8px;cursor:pointer
 }
-
-#sidebar a:hover {
-  background: #00a000;
+.client-item:hover{background:var(--g-100)}
+.client-label small{color:var(--muted);display:block;margin-top:2px}
+.assign-btn,.unassign-btn,.locked-btn{
+  border:none;border-radius:50%;width:28px;height:28px;color:#fff;cursor:pointer
 }
+.assign-btn{background:var(--g-700)}
+.unassign-btn{background:var(--danger)}
+.locked-btn{background:#888}
 
-/* ====== MAIN CONTENT ====== */
-#main-content {
-  margin-left: 260px;
-  width: calc(100% - 260px);
-  display: flex;
-  flex-direction: column;
-  transition: 0.3s;
+/* Chat */
+.chat-wrap{display:flex;flex-direction:column;height:100%}
+.chat-header{background:var(--g-700);color:#fff;padding:10px 12px;border-radius:14px 14px 0 0;font-weight:800}
+.chat-body{position:relative;flex:1;overflow:auto;background:#fff;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+.chat-body::before{
+  content:""; position:absolute; inset:0; background:url('<?= $logoPath ?>') no-repeat center 60%; 
+  opacity:.06; background-size:560px auto; pointer-events:none;
 }
-
-#sidebar.collapsed + #main-content {
-  margin-left: 70px;
-  width: calc(100% - 70px);
-}
-
-/* ====== HEADER ====== */
-header {
-  background: #009900;
-  color: white;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  justify-content: space-between;
-}
-
-#menu-toggle {
-  cursor: pointer;
-  font-size: 28px;
-  transition: 0.3s;
-}
-
-#menu-toggle.active {
-  transform: rotate(90deg);
-}
-
-/* Title block */
-header .title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-header img {
-  height: 40px;
-}
-
-/* ====== APP BODY (After Header) ====== */
-#app-body {
-  display: flex;
-  flex-grow: 1;
-  overflow: hidden;
-  height: calc(100% - 60px);
-}
-
-/* ====== LEFT COLUMN ====== */
-#left-panel {
-  width: 320px;
-  background: #f2fff2;
-  border-right: 1px solid #c0eac0;
-  overflow-y: auto;
-  padding: 10px;
-}
-
-/* Reminder Panel */
-#reminder-panel {
-  background: #e8ffe8;
-  padding: 10px;
-  border-radius: 12px;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-}
-
-#reminder-panel h3 {
-  margin-bottom: 8px;
-}
-
-#reminder-search {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #a0dba0;
-  border-radius: 8px;
-  margin-bottom: 8px;
-}
-
-.reminder-item {
-  background: #fff;
-  padding: 8px;
-  border-radius: 8px;
-  margin-bottom: 6px;
-  font-size: 13px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-/* Client list items */
-.client-item {
-  background: #ffffff;
-  padding: 12px;
-  border-radius: 10px;
-  margin-bottom: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.client-item:hover {
-  background: #dfffdf;
-}
-
-/* Assign/unassign buttons */
-.assign-btn {
-  background: #009900;
-  color: #fff;
-  border: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.unassign-btn {
-  background: #cc0000;
-  color: #fff;
-  border: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.locked-btn {
-  background: #999;
-  color: #fff;
-  border: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-size: 18px;
-  cursor: not-allowed;
-}
-
-/* ====== CHAT AREA ====== */
-#chat-area {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-#chat-header {
-  padding: 10px 20px;
-  background: #00aa00;
-  color: #fff;
-  font-weight: bold;
-}
-
-#messages {
-  flex-grow: 1;
-  padding: 20px;
-  overflow-y: auto;
-  background: #ffffff;
-  position: relative;
-}
-
-/* Watermark background */
-#messages::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 450px;
-  height: 450px;
-  background: url('../SKYTRUFIBER/AHBALOGO.png') no-repeat center center;
-  background-size: contain;
-  opacity: 0.10;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.bubble {
-  padding: 12px 15px;
-  border-radius: 12px;
-  max-width: 60%;
-  margin-bottom: 10px;
-  font-size: 14px;
-  position: relative;
-}
-
-.bubble.client {
-  background: #eaffea;
-  align-self: flex-start;
-}
-
-.bubble.csr {
-  background: #e0f0ff;
-  align-self: flex-end;
-}
-
-.timestamp {
-  display: block;
-  font-size: 11px;
-  color: gray;
-  margin-top: 4px;
-}
-
-/* Input row */
-.input {
-  display: flex;
-  border-top: 1px solid #ddd;
-  padding: 10px;
-}
-
-#msg {
-  flex-grow: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-
-.input button {
-  padding: 10px 16px;
-  margin-left: 8px;
-  border: none;
-  border-radius: 8px;
-  background: #009900;
-  color: #fff;
-  cursor: pointer;
-}
-
+.bubble{max-width:70%;padding:10px 12px;border-radius:12px;margin:8px 12px;font-size:14px;clear:both}
+.bubble.client{background:#eaffea;float:left}
+.bubble.csr{background:#e6f3ff;float:right}
+.timestamp{display:block;font-size:11px;color:#777;margin-top:4px;text-align:right}
+.chat-input{display:flex;gap:8px;border:1px solid var(--line);border-top:none;background:#fff;padding:10px;border-radius:0 0 14px 14px}
+.chat-input input{flex:1;border:1px solid var(--line);padding:10px;border-radius:10px}
+.chat-input button{background:var(--g-700);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer}
+.empty-hint{padding:24px;color:var(--muted)}
 </style>
-
 </head>
 <body>
 
-<!-- ========== SIDEBAR ========== -->
-<div id="sidebar" class="closed">
-  <h2><img src="<?= $logoPath ?>"> SkyTruFiber</h2>
-
-  <a href="?tab=all">💬 Chat Dashboard</a>
-  <a href="?tab=mine">👥 My Clients</a>
-  <a href="#" onclick="showReminderView()">⏰ Reminders</a>
-  <a href="survey_responses.php">📝 Survey Responses</a>
-  <a href="csr_logout.php">🚪 Logout</a>
+<!-- Top bar -->
+<div class="topbar">
+  <div class="brand">
+    <button id="hamb" class="hamb" title="Toggle sidebar">☰</button>
+    <img src="<?= $logoPath ?>" alt="Logo" />
+    CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?>
+  </div>
 </div>
 
-<!-- ========== MAIN CONTENT ========== -->
-<div class="main">
-  <div class="header">
-    <button id="sidebar-toggle" class="hamburger">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="title">
-      <img src="<?= $logoPath ?>" alt="logo">
-      <span>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></span>
+<div class="wrapper">
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
+    <div class="side-title">Menu</div>
+    <a class="side-link active" href="csr_dashboard.php?tab=all">💬 Chat Dashboard</a>
+    <a class="side-link" href="csr_dashboard.php?tab=mine">👥 My Clients</a>
+    <a class="side-link" href="#" onclick="scrollToRem();return false;">⏰ Reminders</a>
+    <a class="side-link" href="survey_responses.php">📝 Survey Responses</a>
+    <a class="side-link" href="csr_logout.php">🚪 Logout</a>
+  </aside>
+
+  <!-- Reminders column -->
+  <section class="card col-reminders" id="remColumn">
+    <div class="section-head">⏰ Upcoming Reminders</div>
+    <div class="rem-body">
+      <div class="search">
+        <input id="remSearch" placeholder="Search reminders (client, type, status)…" oninput="filterReminders()" />
+      </div>
+      <div id="remList">Loading...</div>
     </div>
-  </div>
+  </section>
 
-  <div id="container">
-
-    <!-- ========== LEFT: CLIENT LIST + REMINDERS ABOVE ========== -->
-    <div id="client-list">
-
-      <div id="reminder-banner">
-        <strong>Upcoming Reminders</strong>
-        <input type="text" id="reminder-search" placeholder="Search reminders..." onkeyup="loadReminders()">
+  <!-- Right: client list + chat -->
+  <section class="card col-right">
+    <div class="right-grid">
+      <div class="list-panel">
+        <div class="section-head">Clients</div>
+        <div id="clientList" style="padding-top:10px;"></div>
       </div>
 
-      <!-- client list loads here -->
-    </div>
-
-    <!-- ========== RIGHT: CHAT AREA ========== -->
-    <div id="chat-area">
-      <div id="chat-header">
-        <span id="chat-title">Select a client to view messages</span>
-      </div>
-
-      <div id="messages"></div>
-
-      <div class="input" id="inputRow" style="display:none;">
-        <input id="msg" placeholder="Type message…">
-        <button onclick="sendMsg()">Send</button>
+      <div class="chat-wrap">
+        <div class="chat-header"><span id="chatTitle">Select a client to view messages</span></div>
+        <div id="messages" class="chat-body"></div>
+        <div id="inputRow" class="chat-input" style="display:none;">
+          <input id="msg" placeholder="Type a reply…" />
+          <button onclick="sendMsg()">Send</button>
+        </div>
       </div>
     </div>
-
-  </div>
+  </section>
 </div>
 
 <script>
-let currentTab = "<?php echo $_GET['tab'] ?? 'all' ?>";
-let clientId = 0;
-const csrUser = "<?= htmlspecialchars($csr_user) ?>";
-const csrFullname = "<?= htmlspecialchars($csr_fullname) ?>";
+const csrUser      = <?= json_encode($csr_user) ?>;
+const csrFullname  = <?= json_encode($csr_fullname) ?>;
 
-/* ==========================
-   SIDEBAR TOGGLE
-========================== */
+let currentTab='all';
+let clientId=0;
+
+// Sidebar toggle for small screens
 const sidebar = document.getElementById('sidebar');
-const main = document.querySelector('.main');
-const toggleBtn = document.getElementById('sidebar-toggle');
-
-toggleBtn.addEventListener('click', () => {
-  sidebar.classList.toggle('closed');
-  toggleBtn.classList.toggle('active');
-
-  if(window.innerWidth > 900){
-    main.classList.toggle('shifted');
-  }
+const hamb    = document.getElementById('hamb');
+hamb.addEventListener('click', ()=>{
+  hamb.classList.toggle('active');
+  sidebar.classList.toggle('show');
 });
 
-/* ==========================
+// Scroll to reminders when clicked in sidebar
+function scrollToRem(){
+  document.getElementById('remColumn').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ===========================
    LOAD CLIENTS
-========================== */
+   =========================== */
 function loadClients(){
-  fetch(`csr_dashboard.php?ajax=clients&tab=${currentTab}`)
-  .then(r=>r.text())
-  .then(html=>{
-    document.getElementById("client-list").innerHTML =
-      document.getElementById("client-list").innerHTML.replace(document.getElementById("client-list").innerHTML, html);
-
-    // Restore reminder banner
-    document.getElementById("client-list").insertAdjacentHTML("afterbegin", `
-      <div id="reminder-banner">
-        <strong>Upcoming Reminders</strong>
-        <input type="text" id="reminder-search" placeholder="Search reminders..." onkeyup="loadReminders()">
-      </div>
-    `);
-
-    document.querySelectorAll(".client-item").forEach(el=>{
-      el.onclick = ()=>selectClient(el);
+  fetch('csr_dashboard.php?ajax=clients&tab='+currentTab)
+    .then(r=>r.text())
+    .then(html=>{
+      const list=document.getElementById('clientList');
+      list.innerHTML=html || '<div class="empty-hint">No clients yet.</div>';
+      list.querySelectorAll('.client-item').forEach(el=>{
+        el.addEventListener('click',()=>{
+          selectClient(el);
+        });
+      });
     });
-
-    loadReminders();
-  });
 }
-
 function selectClient(el){
-  document.querySelectorAll(".client-item").forEach(i=>i.classList.remove("active"));
-  el.classList.add("active");
+  const assigned=el.dataset.csr;
+  const name    =el.dataset.name;
 
-  let name = el.dataset.name;
-  let assigned = el.dataset.csr;
+  document.querySelectorAll('.client-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
 
-  clientId = parseInt(el.dataset.id);
-
-  document.getElementById('chat-title').textContent = "Chat with " + name;
-
-  loadChat(assigned === csrUser);
+  clientId=parseInt(el.dataset.id,10);
+  document.getElementById('chatTitle').textContent='Chat with '+name;
+  loadChat(assigned===csrUser,assigned);
 }
-
-/* ==========================
-   LOAD CHAT
-========================== */
-function loadChat(canSend){
-  if(!clientId) return;
-
-  fetch(`../SKYTRUFIBER/load_chat.php?client_id=${clientId}`)
-  .then(r=>r.json())
-  .then(list=>{
-    const box = document.getElementById("messages");
-    box.innerHTML = "";
-
-    let lastMonth = "";
-
-    list.forEach(m=>{
-      const d = new Date(m.time);
-      const monthYear = d.toLocaleString("default",{month:"long"}) + " " + d.getFullYear();
-
-      if(monthYear !== lastMonth){
-        const label = document.createElement("div");
-        label.className = "month-label";
-        label.textContent = "📅 " + monthYear;
-        box.appendChild(label);
-        lastMonth = monthYear;
-      }
-
-      const bubble = document.createElement("div");
-      bubble.className = "bubble " + (m.sender_type === "csr" ? "csr" : "client");
-
-      bubble.innerHTML = `
-        <strong>${m.sender_type === "csr" ? (m.csr_fullname || m.assigned_csr) : m.client_name}:</strong><br>
-        ${m.message}
-        <span class="timestamp">${new Date(m.time).toLocaleString()}</span>
-      `;
-
-      box.appendChild(bubble);
-    });
-
-    box.scrollTop = box.scrollHeight;
-
-    document.getElementById("inputRow").style.display = canSend ? "flex" : "none";
-  });
-}
-
-/* ==========================
-   SEND MESSAGE
-========================== */
-function sendMsg(){
-  const msg = document.getElementById("msg").value.trim();
-  if(!msg) return;
-
-  let form = new URLSearchParams();
-  form.append("sender_type", "csr");
-  form.append("message", msg);
-  form.append("csr_user", csrUser);
-  form.append("csr_fullname", csrFullname);
-  form.append("client_id", clientId);
-
-  fetch("../SKYTRUFIBER/save_chat.php", {
-    method: "POST",
-    headers: {"Content-Type":"application/x-www-form-urlencoded"},
-    body: form
-  }).then(()=>{
-    document.getElementById("msg").value = "";
-    loadChat(true);
-  });
-}
-
-/* ==========================
-   REMINDERS
-========================== */
-function loadReminders(){
-  const s = document.getElementById("reminder-search").value;
-  fetch(`csr_dashboard.php?ajax=load_reminders&search=${encodeURIComponent(s)}`)
-  .then(r=>r.json())
-  .then(rows=>{
-    if(rows.length === 0){
-      document.getElementById("reminder-banner").innerHTML = `
-        <strong>Upcoming Reminders</strong>
-        <input type="text" id="reminder-search" placeholder="Search reminders..." onkeyup="loadReminders()">
-        <p style="text-align:center;color:#444;">No reminders</p>
-      `;
-      return;
-    }
-
-    let html = `
-      <strong>Upcoming Reminders</strong>
-      <input type="text" id="reminder-search" placeholder="Search reminders..." onkeyup="loadReminders()" value="${s}">
-      <div style="margin-top:10px;max-height:200px;overflow-y:auto;">`;
-
-    rows.forEach(r=>{
-      html += `
-        <div style="padding:8px;border-bottom:1px solid #ccc;">
-          <b>${r.client_name}</b><br>
-          Type: ${r.reminder_type}<br>
-          Status: <span style="color:${r.status==='sent'?'green':'red'}">${r.status}</span><br>
-          ${r.sent_at ? "Sent at: "+r.sent_at : ""}
-        </div>
-      `;
-    });
-
-    html += "</div>";
-
-    document.getElementById("reminder-banner").innerHTML = html;
-  });
-}
-
-function showReminderView(){
-  document.getElementById("client-list").scrollTop = 0;
-  loadReminders();
-}
-
-/* ==========================
-   ASSIGN / UNASSIGN
-========================== */
 function assignClient(id){
-  let form = new URLSearchParams();
-  form.append("client_id", id);
-
-  fetch("csr_dashboard.php?ajax=assign",{
-    method:"POST",
-    headers:{"Content-Type":"application/x-www-form-urlencoded"},
-    body: form
-  }).then(r=>r.text())
-  .then(txt=>{
-    if(txt==="ok"){
-      alert("Client assigned!");
-      loadClients();
-    }
-    else if(txt==="taken"){
-      alert("Already assigned.");
-      loadClients();
-    }
-  });
-}
-
-function unassignClient(id){
-  if(!confirm("Unassign this client?")) return;
-
-  let form = new URLSearchParams();
-  form.append("client_id", id);
-
-  fetch("csr_dashboard.php?ajax=unassign",{
-    method:"POST",
-    headers:{"Content-Type":"application/x-www-form-urlencoded"},
-    body: form
-  }).then(()=>{
-    loadClients();
-  });
-}
-
-/* ==========================
-   REALTIME UPDATES
-========================== */
-window.onload = ()=>{
-  sidebar.classList.add("closed");
-  toggleBtn.classList.remove("active");
-
-  loadClients();
-
-  if(!!window.EventSource){
-    const source = new EventSource("../SKYTRUFIBER/realtime_updates.php");
-    source.addEventListener("update", ()=>{
-      if(clientId) loadChat();
-      loadClients();
+  fetch('csr_dashboard.php?ajax=assign',{method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'client_id='+encodeURIComponent(id)})
+    .then(r=>r.text()).then(t=>{
+      if(t==='ok'){loadClients()}
+      else if(t==='taken'){alert('Client already assigned.')}
     });
-  } else {
-    setInterval(()=>{
+}
+function unassignClient(id){
+  if(!confirm('Unassign this client?')) return;
+  fetch('csr_dashboard.php?ajax=unassign',{method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'client_id='+encodeURIComponent(id)})
+    .then(()=>loadClients());
+}
+
+/* ===========================
+   CHAT
+   =========================== */
+function loadChat(isMine=false,assignedTo=''){
+  if(!clientId) return;
+  fetch('../SKYTRUFIBER/load_chat.php?client_id='+clientId)
+    .then(r=>r.json()).then(list=>{
+      const box=document.getElementById('messages');
+      box.innerHTML='';
+      if(!list.length){
+        box.innerHTML='<div class="empty-hint">No messages yet.</div>';
+      }
+      list.forEach(m=>{
+        const b=document.createElement('div');
+        b.className='bubble '+(m.sender_type==='csr'?'csr':'client');
+        const who=(m.sender_type==='csr')?(m.csr_fullname||m.assigned_csr||'CSR'):(m.client_name||'Client');
+        b.textContent=who+': '+m.message;
+        const t=document.createElement('span');t.className='timestamp';t.textContent=new Date(m.time).toLocaleString();
+        b.appendChild(t);
+        box.appendChild(b);
+      });
+      box.scrollTop=box.scrollHeight;
+      document.getElementById('inputRow').style.display=(assignedTo===csrUser)?'flex':'none';
+    });
+}
+function sendMsg(){
+  const input=document.getElementById('msg');
+  const text=input.value.trim();
+  if(!text||!clientId) return;
+  const body=new URLSearchParams();
+  body.set('sender_type','csr');
+  body.set('message',text);
+  body.set('csr_user',csrUser);
+  body.set('csr_fullname',csrFullname);
+  body.set('client_id',String(clientId));
+
+  fetch('../SKYTRUFIBER/save_chat.php',{method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},body})
+    .then(()=>{input.value='';loadChat(true);});
+}
+
+/* Live updates (SSE fallback to polling) */
+(function live(){
+  if(!!window.EventSource){
+    const evt=new EventSource('../SKYTRUFIBER/realtime_updates.php');
+    evt.addEventListener('update',()=>{
       if(clientId) loadChat();
       loadClients();
-    }, 3000);
+      loadReminders();
+    });
+  }else{
+    setInterval(()=>{ if(clientId) loadChat(); loadClients(); loadReminders(); }, 4000);
   }
+})();
+
+/* ===========================
+   REMINDERS
+   =========================== */
+let allReminders=[];
+function loadReminders(){
+  fetch('csr_dashboard.php?ajax=reminders')
+    .then(r=>r.json())
+    .then(rows=>{
+      allReminders = rows || [];
+      renderReminders(allReminders);
+    })
+    .catch(()=>{ document.getElementById('remList').innerHTML='<div class="empty-hint">No reminders.</div>'; });
+}
+function filterReminders(){
+  const q=document.getElementById('remSearch').value.toLowerCase();
+  const filtered=allReminders.filter(r=>{
+    const text=[r.client_name||'', r.reminder_type||'', r.status||'', r.csr_username||''].join(' ').toLowerCase();
+    return text.includes(q);
+  });
+  renderReminders(filtered);
+}
+function renderReminders(rows){
+  const rem=document.getElementById('remList');
+  if(!rows.length){ rem.innerHTML='<div class="empty-hint">No reminders.</div>'; return; }
+
+  let html='';
+  const now = new Date();
+
+  rows.forEach(r=>{
+    let badgeClass = (r.sent_at ? 'badge-sent' : 'badge-scheduled');
+    let badgeText  = (r.sent_at ? 'Sent' : 'Scheduled');
+
+    // Compute "soon" style if planned_at exists and is within next 7 days
+    let soonClass = '';
+    let metaLine2 = '';
+    if(r.planned_at){
+      const planned = new Date(r.planned_at);
+      const ms=planned-now;
+      const days=Math.floor(ms/86400000);
+      if(ms>0 && days<=7 && !r.sent_at){
+        soonClass=' rem-soon';
+      }
+      metaLine2 = `<div>Planned: <strong>${planned.toLocaleString()}</strong>${
+        r.due_date ? ` • Due: <strong>${new Date(r.due_date).toLocaleDateString()}</strong>` : ''
+      }</div>`;
+    }else{
+      if(r.due_date){
+        metaLine2 = `<div>Due: <strong>${new Date(r.due_date).toLocaleDateString()}</strong></div>`;
+      }
+    }
+
+    const sentLine = r.sent_at ? `<div>Sent: <strong>${new Date(r.sent_at).toLocaleString()}</strong></div>` : '';
+
+    html += `
+      <div class="rem-item${soonClass}">
+        <div class="rem-top">
+          <div class="rem-title">${escapeHTML(r.client_name || '—')}</div>
+          <span class="badge ${badgeClass}">${badgeText}</span>
+        </div>
+        <div class="rem-meta">
+          <div>Type: <strong>${escapeHTML(r.reminder_type || '')}</strong> • CSR: <strong>${escapeHTML(r.csr_username || '')}</strong></div>
+          ${metaLine2}
+          ${sentLine}
+        </div>
+      </div>
+    `;
+  });
+  rem.innerHTML=html;
+}
+function escapeHTML(s){return (s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+/* ===========================
+   INIT
+   =========================== */
+window.onload=()=>{
+  const params=new URLSearchParams(window.location.search);
+  const tab=params.get('tab');
+  if(tab==='mine'){currentTab='mine'}
+  loadClients();
+  loadReminders();
 };
 </script>
-
 </body>
 </html>
