@@ -153,171 +153,179 @@ if (isset($_GET['ajax'])) {
 <title>CSR Dashboard — SkyTruFiber</title>
 
 <style>
-:root {
-  --green: #009900;
-  --light-green: #eaffea;
-  --dark-green: #006600;
-  --white: #ffffff;
+/* ====== GLOBAL RESET ====== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* ========== GENERAL LAYOUT ========== */
 body {
-  margin: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #f5fff5;
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  background: #f8fff8;
+  display: flex;
   height: 100vh;
   overflow: hidden;
-  display: flex;
 }
 
-/* ========== SIDEBAR ========== */
+/* ====== SIDEBAR ====== */
 #sidebar {
-  width: 260px;
-  background: var(--green);
-  color: white;
   position: fixed;
-  left: 0;
   top: 0;
-  bottom: 0;
-  padding-top: 20px;
-  overflow-y: auto;
+  left: 0;
+  width: 260px;
+  height: 100%;
+  background: #006400;
+  color: #fff;
+  padding-top: 60px;
+  transition: 0.3s ease;
   z-index: 1000;
-  transition: transform .3s ease;
 }
 
-#sidebar.closed {
-  transform: translateX(-260px);
+#sidebar.collapsed {
+  width: 70px;
+}
+
+#sidebar h2,
+#sidebar a {
+  transition: 0.3s ease;
 }
 
 #sidebar h2 {
-  text-align: center;
-  margin: 0 0 20px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 260px;
+  font-size: 18px;
+  background: #004b00;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-#sidebar h2 img {
-  height: 40px;
+
+#sidebar.collapsed h2 {
+  width: 70px;
+  font-size: 0;
+}
+
+#sidebar.collapsed h2 img {
+  margin: auto;
 }
 
 #sidebar a {
-  display: block;
   padding: 15px 20px;
-  font-size: 16px;
-  text-decoration: none;
-  color: white;
-  font-weight: bold;
-}
-#sidebar a:hover {
-  background: #00b300;
-}
-
-/* ========== MAIN ========== */
-.main {
-  margin-left: 260px;
-  transition: margin-left .3s ease;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.main.shifted {
-  margin-left: 0;
-}
-
-/* ========== HEADER ========== */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--green);
-  color: white;
-  padding: 12px 20px;
-}
-
-.header img {
-  height: 45px;
-}
-
-.header .title {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-/* ========== HAMBURGER ========== */
-.hamburger {
-  width: 34px;
-  height: 28px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  cursor: pointer;
-  background: transparent;
-  border: none;
-}
-.hamburger span {
   display: block;
-  height: 3px;
-  background: white;
-  border-radius: 4px;
-  transition: .3s ease;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
-.hamburger.active span:nth-child(1) {
-  transform: translateY(10px) rotate(45deg);
-}
-.hamburger.active span:nth-child(2) {
-  opacity: 0;
-}
-.hamburger.active span:nth-child(3) {
-  transform: translateY(-10px) rotate(-45deg);
+#sidebar a:hover {
+  background: #00a000;
 }
 
-/* ========== CONTAINER ========== */
-#container {
-  flex: 1;
+/* ====== MAIN CONTENT ====== */
+#main-content {
+  margin-left: 260px;
+  width: calc(100% - 260px);
   display: flex;
-  overflow: hidden;
+  flex-direction: column;
+  transition: 0.3s;
 }
 
-/* ========== CLIENT LIST ========== */
-#client-list {
-  width: 300px;
-  background: white;
-  border-right: 2px solid #ccffcc;
+#sidebar.collapsed + #main-content {
+  margin-left: 70px;
+  width: calc(100% - 70px);
+}
+
+/* ====== HEADER ====== */
+header {
+  background: #009900;
+  color: white;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  justify-content: space-between;
+}
+
+#menu-toggle {
+  cursor: pointer;
+  font-size: 28px;
+  transition: 0.3s;
+}
+
+#menu-toggle.active {
+  transform: rotate(90deg);
+}
+
+/* Title block */
+header .title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+header img {
+  height: 40px;
+}
+
+/* ====== APP BODY (After Header) ====== */
+#app-body {
+  display: flex;
+  flex-grow: 1;
+  overflow: hidden;
+  height: calc(100% - 60px);
+}
+
+/* ====== LEFT COLUMN ====== */
+#left-panel {
+  width: 320px;
+  background: #f2fff2;
+  border-right: 1px solid #c0eac0;
   overflow-y: auto;
   padding: 10px;
-  position: relative;
 }
 
-/* ========== REMINDER BANNERS ABOVE CLIENT LIST ========== */
-#reminder-banner {
-  background: var(--light-green);
+/* Reminder Panel */
+#reminder-panel {
+  background: #e8ffe8;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 12px;
   margin-bottom: 10px;
-  border: 1px solid #b6eab6;
-  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
-#reminder-banner strong {
-  display: block;
-  margin-bottom: 5px;
+#reminder-panel h3 {
+  margin-bottom: 8px;
 }
 
-/* Search field */
 #reminder-search {
   width: 100%;
   padding: 8px;
+  border: 1px solid #a0dba0;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  margin-bottom: 8px;
 }
 
-/* ========== CLIENT ITEMS ========== */
+.reminder-item {
+  background: #fff;
+  padding: 8px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* Client list items */
 .client-item {
-  padding: 10px;
+  background: #ffffff;
+  padding: 12px;
   border-radius: 10px;
   margin-bottom: 8px;
-  background: #f8fff8;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -325,133 +333,131 @@ body {
 }
 
 .client-item:hover {
-  background: #e2ffe2;
+  background: #dfffdf;
 }
 
-.client-item.active {
-  background: #cfffcc;
-  border-left: 5px solid var(--green);
-}
-
-/* Buttons */
+/* Assign/unassign buttons */
 .assign-btn {
-  background: var(--green);
-  color: white;
+  background: #009900;
+  color: #fff;
   border: none;
-  padding: 5px 10px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
 }
 
 .unassign-btn {
   background: #cc0000;
-  color: white;
-  border-radius: 50%;
-  padding: 5px 10px;
+  color: #fff;
   border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
 }
 
 .locked-btn {
   background: #999;
-  color: white;
-  border-radius: 50%;
-  padding: 5px 10px;
+  color: #fff;
   border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: not-allowed;
 }
 
-/* ========== CHAT AREA ========== */
+/* ====== CHAT AREA ====== */
 #chat-area {
-  flex: 1;
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  background: white;
   position: relative;
+}
+
+#chat-header {
+  padding: 10px 20px;
+  background: #00aa00;
+  color: #fff;
+  font-weight: bold;
 }
 
 #messages {
-  flex: 1;
+  flex-grow: 1;
+  padding: 20px;
   overflow-y: auto;
-  padding: 15px;
+  background: #ffffff;
   position: relative;
 }
 
+/* Watermark background */
 #messages::before {
   content: "";
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 350px;
-  height: 350px;
-  background: url('<?= $logoPath ?>') no-repeat center center;
+  width: 450px;
+  height: 450px;
+  background: url('../SKYTRUFIBER/AHBALOGO.png') no-repeat center center;
   background-size: contain;
-  opacity: 0.08;
+  opacity: 0.10;
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
 
-.month-label {
-  text-align: center;
-  background: #eaffea;
-  padding: 5px;
-  border-radius: 8px;
-  margin: 8px 0;
-  color: #007700;
-  font-weight: bold;
-}
-
 .bubble {
-  max-width: 70%;
-  margin: 8px 0;
-  padding: 10px 14px;
+  padding: 12px 15px;
   border-radius: 12px;
+  max-width: 60%;
+  margin-bottom: 10px;
+  font-size: 14px;
+  position: relative;
 }
 
-.client {
-  background: #e9ffe9;
-  float: left;
+.bubble.client {
+  background: #eaffea;
+  align-self: flex-start;
 }
 
-.csr {
-  background: #cceaff;
-  float: right;
+.bubble.csr {
+  background: #e0f0ff;
+  align-self: flex-end;
 }
 
 .timestamp {
   display: block;
   font-size: 11px;
-  color: #666;
-  text-align: right;
+  color: gray;
+  margin-top: 4px;
 }
 
-/* ========== INPUT ROW ========== */
+/* Input row */
 .input {
   display: flex;
-  gap: 8px;
-  padding: 10px;
   border-top: 1px solid #ddd;
+  padding: 10px;
 }
 
-.input input {
-  flex: 1;
+#msg {
+  flex-grow: 1;
   padding: 10px;
-  border: 1px solid #ccc;
   border-radius: 8px;
+  border: 1px solid #ccc;
 }
 
 .input button {
-  background: var(--green);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 10px 16px;
+  margin-left: 8px;
   border: none;
-  font-weight: bold;
+  border-radius: 8px;
+  background: #009900;
+  color: #fff;
+  cursor: pointer;
 }
 
-/* ========== RESPONSIVE ========== */
-@media(max-width: 900px){
-  .main {
-    margin-left: 0;
-  }
-}
 </style>
 
 </head>
