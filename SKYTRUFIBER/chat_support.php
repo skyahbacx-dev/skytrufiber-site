@@ -9,7 +9,7 @@ $username = $_GET['username'] ?? 'Guest';
 <meta charset="UTF-8">
 <title>SkyTruFiber Support Chat</title>
 <style>
-/* ===== PAGE BASE ===== */
+/* ===== BASE LAYOUT ===== */
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
   background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
@@ -22,11 +22,11 @@ body {
   overflow: hidden;
 }
 
-/* ===== DYNAMIC WATERMARK ===== */
+/* ===== PAGE WATERMARK (behind everything) ===== */
 body::before {
   content: "";
   background: url('../SKYTRUFIBER.png') no-repeat center center;
-  background-size: clamp(250px, 40vw, 500px);
+  background-size: clamp(250px, 35vw, 550px);
   opacity: 0.05;
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -34,7 +34,7 @@ body::before {
   filter: grayscale(100%);
 }
 
-/* ===== CHAT CONTAINER ===== */
+/* ===== CHAT WRAPPER ===== */
 .chat-wrapper {
   background: rgba(255, 255, 255, 0.97);
   border-radius: 15px;
@@ -47,7 +47,7 @@ body::before {
   z-index: 1;
 }
 
-/* ===== LOGO ABOVE CHAT BOX ===== */
+/* ===== LOGO ABOVE CHAT ===== */
 .logo-header {
   text-align: center;
   background: #ffffff;
@@ -71,18 +71,17 @@ body::before {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* ===== CHAT MESSAGES AREA ===== */
+/* ===== CHAT AREA ===== */
 .chat-box {
   flex: 1;
   padding: 15px;
   overflow-y: auto;
-  background: #f2fbff url('../SKYTRUFIBER.png') no-repeat center;
-  background-size: 300px auto;
-  background-attachment: fixed;
+  background: #f2fbff url('../SKYTRUFIBER.png') no-repeat center center fixed;
+  background-size: 280px auto;
   background-blend-mode: lighten;
 }
 
-/* ===== MESSAGE STYLING ===== */
+/* ===== MESSAGE STYLES ===== */
 .message {
   margin: 10px 0;
   padding: 10px 15px;
@@ -92,7 +91,6 @@ body::before {
   word-wrap: break-word;
   font-size: 14px;
   line-height: 1.4;
-  position: relative;
 }
 .user {
   background: #dfffe2;
@@ -116,7 +114,7 @@ body::before {
   margin-top: 3px;
 }
 
-/* ===== INPUT SECTION ===== */
+/* ===== INPUT BAR ===== */
 .chat-input {
   display: flex;
   border-top: 1px solid #ccc;
@@ -144,7 +142,9 @@ body::before {
 }
 
 /* ===== SCROLLBAR ===== */
-.chat-box::-webkit-scrollbar { width: 8px; }
+.chat-box::-webkit-scrollbar {
+  width: 8px;
+}
 .chat-box::-webkit-scrollbar-thumb {
   background: #b0d4e3;
   border-radius: 10px;
@@ -176,21 +176,16 @@ body::before {
     <small>Connected to CSR WALDO</small>
   </div>
 
-  <!-- Chat box -->
+  <!-- Chat messages -->
   <div class="chat-box" id="chatBox">
     <div class="message csr">
       👋 Hi <?= htmlspecialchars($username) ?>! This is CSR WALDO from SkyTruFiber.<br>
       How can I assist you today?
-      <span class="timestamp">11/9/2025, 5:15 AM</span>
-    </div>
-
-    <div class="message user">
-      I HAVE A SLOW INTERNET TODAY. CAN YOU HELP ME OUT?
-      <span class="timestamp">11/9/2025, 5:37 AM</span>
+      <span class="timestamp"><?= date("n/j/Y, g:i A") ?></span>
     </div>
   </div>
 
-  <!-- Chat input -->
+  <!-- Input section -->
   <div class="chat-input">
     <input type="text" id="message" placeholder="Type your message...">
     <button onclick="sendMessage()">Send</button>
