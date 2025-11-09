@@ -2,172 +2,198 @@
 session_start();
 include '../db_connect.php';
 
-// Identify user (you might have stored this in session after login)
-$username = $_SESSION['name'] ?? 'Guest-' . rand(1000, 9999);
-$_SESSION['username'] = $username;
+if (!isset($_SESSION['name'])) {
+  header("Location: skytrufiber.php");
+  exit;
+}
 
-// Get or create client_id
-$stmt = $conn->prepare("SELECT id FROM clients WHERE name = :name LIMIT 1");
-$stmt->execute([':name' => $username]);
-$client_id = $stmt->fetchColumn();
+$username = $_SESSION['name'];
+$email = $_SESSION['email'] ?? '';
+$clientStmt = $conn->prepare("SELECT id, assigned_csr FROM clients WHERE name = :n LIMIT 1");
+$clientStmt->execute([':n' => $username]);
+$client = $clientStmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$client_id) {
-    $conn->prepare("INSERT INTO clients (name, assigned_csr, created_at) VALUES (:n, 'Unassigned', NOW())")->execute([':n' => $username]);
-    $client_id = $conn->lastInsertId();
+if (!$client) {
+  die("❌ Client not found in the system.");
+}
+
+$client_id = $client['id'];
+$assigned_csr = $client['assigned_csr'] ?? 'Unassigned';
+
+// Fetch CSR name (if assigned)
+$csr_name = '';
+if ($assigned_csr !== 'Unassigned') {
+  $csrStmt = $conn->prepare("SELECT full_name FROM csr_users WHERE username = :csr LIMIT 1");
+  $csrStmt->execute([':csr' => $assigned_csr]);
+  $csr_name = $csrStmt->fetchColumn();
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SkyTruFiber — Customer Chat</title>
+<title>SkyTruFiber - Live Chat Support</title>
 <style>
 body {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #e6faff;
+  margin: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  margin: 0;
+  height: 100vh;
 }
-.chat-container {
-  width: 95%;
-  max-width: 600px;
+
+.chat-box {
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  width: 90%;
+  max-width: 600px;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   display: flex;
   flex-direction: column;
-  height: 80vh;
+  overflow: hidden;
 }
+
 .header {
   background: #0099cc;
   color: #fff;
-  text-align: center;
   padding: 15px;
+  text-align: center;
   font-weight: bold;
-  border-radius: 12px 12px 0 0;
+  font-size: 18px;
 }
-.chat-box {
+
+.messages {
   flex: 1;
   padding: 15px;
   overflow-y: auto;
-  background: #f7f9fa;
+  background: #f2fcff;
 }
-.msg {
-  margin: 8px 0;
-  padding: 10px 12px;
-  border-radius: 8px;
-  max-width: 75%;
-  line-height: 1.4;
-  font-size: 14px;
+
+.message {
+  margin: 10px 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  max-width: 70%;
   word-wrap: break-word;
+  position: relative;
+  clear: both;
 }
-.msg.client {
-  background: #d0f0ff;
-  align-self: flex-end;
+
+.client {
+  background: #d9f9d9;
+  float: right;
+  text-align: right;
 }
-.msg.csr {
-  background: #d5ffd6;
-  align-self: flex-start;
+
+.csr {
+  background: #e6f2ff;
+  float: left;
+  text-align: left;
 }
-.msg.system {
-  text-align: center;
-  font-style: italic;
-  background: #fff8cc;
+
+.timestamp {
+  font-size: 11px;
+  color: #777;
+  margin-top: 4px;
 }
-.input {
+
+.input-area {
   display: flex;
   padding: 10px;
-  background: #f2f2f2;
-  border-top: 1px solid #ccc;
+  border-top: 1px solid #ddd;
+  background: #fff;
 }
-.input textarea {
+
+.input-area input {
   flex: 1;
-  resize: none;
   padding: 10px;
-  border-radius: 8px;
   border: 1px solid #ccc;
-  height: 45px;
+  border-radius: 8px;
+  outline: none;
 }
-.input button {
-  padding: 10px 16px;
-  background: #0099cc;
-  color: #fff;
+
+.input-area button {
+  margin-left: 8px;
+  padding: 10px 15px;
   border: none;
   border-radius: 8px;
-  margin-left: 8px;
-  cursor: pointer;
+  background: #0099cc;
+  color: white;
   font-weight: bold;
+  cursor: pointer;
 }
-.input button:hover { background: #007a99; }
+
+.input-area button:hover { background: #007a99; }
+
 </style>
 </head>
 <body>
 
-<div class="chat-container">
-  <div class="header">💬 SkyTruFiber Chat Support</div>
-  <div class="chat-box" id="chat-box"></div>
-  <div class="input">
-    <textarea id="msg" placeholder="Type your message..." onkeypress="handleEnter(event)"></textarea>
+<div class="chat-box">
+  <div class="header">
+    👋 Welcome, <?= htmlspecialchars($username) ?>  
+    <?php if ($csr_name): ?><br><small>Connected to <?= htmlspecialchars($csr_name) ?></small><?php endif; ?>
+  </div>
+
+  <div id="messages" class="messages">
+    <!-- Messages will load dynamically -->
+  </div>
+
+  <div class="input-area">
+    <input type="text" id="message" placeholder="Type your message..." autocomplete="off">
     <button onclick="sendMessage()">Send</button>
   </div>
 </div>
 
 <script>
-const client_id = <?= (int)$client_id ?>;
-const username = "<?= htmlspecialchars($username) ?>";
-const chatBox = document.getElementById('chat-box');
+const clientId = <?= (int)$client_id ?>;
+const username = <?= json_encode($username) ?>;
 
-// Load chat messages
-function loadChat() {
-  fetch(`load_chat.php?client_id=${client_id}`)
+function loadMessages() {
+  fetch('load_chat.php?client_id=' + clientId)
     .then(res => res.json())
     .then(data => {
-      chatBox.innerHTML = '';
+      const msgBox = document.getElementById('messages');
+      msgBox.innerHTML = '';
       data.forEach(m => {
         const div = document.createElement('div');
-        div.className = 'msg ' + (m.sender_type === 'csr' ? 'csr' : 'client');
-        div.textContent = m.message;
-        chatBox.appendChild(div);
+        div.classList.add('message');
+        div.classList.add(m.sender_type === 'csr' ? 'csr' : 'client');
+        div.innerHTML = `
+          ${m.message}
+          <div class="timestamp">${new Date(m.time).toLocaleString()}</div>
+        `;
+        msgBox.appendChild(div);
       });
-      chatBox.scrollTop = chatBox.scrollHeight;
+      msgBox.scrollTop = msgBox.scrollHeight;
     });
 }
 
-// Send message
 function sendMessage() {
-  const msg = document.getElementById('msg').value.trim();
-  if (msg === '') return;
+  const msg = document.getElementById('message').value.trim();
+  if (!msg) return;
 
-  const data = new URLSearchParams();
-  data.append('sender_type', 'client');
-  data.append('message', msg);
-  data.append('username', username);
+  const body = new URLSearchParams();
+  body.append('sender_type', 'client');
+  body.append('message', msg);
+  body.append('username', username);
 
   fetch('save_chat.php', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: data.toString()
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body
   }).then(() => {
-    document.getElementById('msg').value = '';
-    loadChat();
+    document.getElementById('message').value = '';
+    loadMessages();
   });
 }
 
-// Allow Enter to send
-function handleEnter(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-}
-
-// Auto-refresh every 2 seconds
-setInterval(loadChat, 2000);
-window.onload = loadChat;
+// Load messages every 2 seconds
+setInterval(loadMessages, 2000);
+window.onload = loadMessages;
 </script>
 
 </body>
