@@ -1,0 +1,15 @@
+name: Send Payment Reminders
+
+on:
+  schedule:
+    - cron: '0 8 * * *'   # runs at 8 AM every day (UTC)
+  workflow_dispatch:      # allows manual run
+
+jobs:
+  trigger-reminder:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call reminder URL
+        run: |
+          curl -s "https://skytrufiber-site-1.onrender.com/SKYTRUFIBER/send_reminders.php?token=${{ secrets.REMINDER_TOKEN }}"
