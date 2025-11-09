@@ -1,199 +1,197 @@
 <?php
-session_start();
 include '../db_connect.php';
-
-if (!isset($_SESSION['name'])) {
-  header("Location: skytrufiber.php");
-  exit;
-}
-
-$username = $_SESSION['name'];
-$email = $_SESSION['email'] ?? '';
-$clientStmt = $conn->prepare("SELECT id, assigned_csr FROM clients WHERE name = :n LIMIT 1");
-$clientStmt->execute([':n' => $username]);
-$client = $clientStmt->fetch(PDO::FETCH_ASSOC);
-
-if (!$client) {
-  die("❌ Client not found in the system.");
-}
-
-$client_id = $client['id'];
-$assigned_csr = $client['assigned_csr'] ?? 'Unassigned';
-
-// Fetch CSR name (if assigned)
-$csr_name = '';
-if ($assigned_csr !== 'Unassigned') {
-  $csrStmt = $conn->prepare("SELECT full_name FROM csr_users WHERE username = :csr LIMIT 1");
-  $csrStmt->execute([':csr' => $assigned_csr]);
-  $csr_name = $csrStmt->fetchColumn();
-}
+$username = $_GET['username'] ?? 'Guest';
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SkyTruFiber - Live Chat Support</title>
+<title>SkyTruFiber Support Chat</title>
 <style>
 body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #e6faff;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
   margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   height: 100vh;
-}
-
-.chat-box {
-  background: #fff;
-  width: 90%;
-  max-width: 600px;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   display: flex;
-  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
   overflow: hidden;
 }
 
-.header {
-  background: #0099cc;
-  color: #fff;
-  padding: 15px;
-  text-align: center;
-  font-weight: bold;
-  font-size: 18px;
+/* Watermark behind everything */
+body::before {
+  content: "";
+  background: url('SKYTRUFIBER.png') no-repeat center center;
+  background-size: 500px auto;
+  opacity: 0.05;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 0;
 }
 
-.messages {
+/* Chat container */
+.chat-wrapper {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 450px;
+  max-width: 95%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* Logo above chat box */
+.logo-header {
+  text-align: center;
+  background: #ffffff;
+  padding: 15px 10px 0;
+}
+.logo-header img {
+  width: 120px;
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Chat header */
+.chat-header {
+  background: #0099cc;
+  color: white;
+  padding: 12px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 16px;
+  border-top: 2px solid #007a99;
+}
+
+/* Chat messages area */
+.chat-box {
   flex: 1;
   padding: 15px;
   overflow-y: auto;
-  background: #f2fcff;
+  background: #f4fbff url('chat_bg_pattern.png') repeat; /* Optional background pattern */
+  background-size: 120px;
 }
 
+/* Message styling */
 .message {
   margin: 10px 0;
-  padding: 10px 14px;
-  border-radius: 10px;
-  max-width: 70%;
-  word-wrap: break-word;
-  position: relative;
-  clear: both;
-}
-
-.client {
-  background: #d9f9d9;
-  float: right;
-  text-align: right;
-}
-
-.csr {
-  background: #e6f2ff;
-  float: left;
-  text-align: left;
-}
-
-.timestamp {
-  font-size: 11px;
-  color: #777;
-  margin-top: 4px;
-}
-
-.input-area {
-  display: flex;
-  padding: 10px;
-  border-top: 1px solid #ddd;
-  background: #fff;
-}
-
-.input-area input {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  outline: none;
-}
-
-.input-area button {
-  margin-left: 8px;
   padding: 10px 15px;
+  border-radius: 10px;
+  display: inline-block;
+  max-width: 80%;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.user {
+  background: #dfffe2;
+  align-self: flex-end;
+  float: right;
+}
+.csr {
+  background: #e3f2fd;
+  border-left: 3px solid #0099cc;
+  color: #004466;
+  float: left;
+}
+
+/* Input area */
+.chat-input {
+  display: flex;
+  border-top: 1px solid #ccc;
+}
+.chat-input input {
+  flex: 1;
+  padding: 12px;
   border: none;
-  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+}
+.chat-input button {
   background: #0099cc;
   color: white;
-  font-weight: bold;
+  border: none;
+  padding: 12px 20px;
   cursor: pointer;
+  font-weight: bold;
+}
+.chat-input button:hover {
+  background: #007a99;
 }
 
-.input-area button:hover { background: #007a99; }
+/* Timestamp */
+.timestamp {
+  display: block;
+  font-size: 11px;
+  color: #777;
+  margin-top: 3px;
+}
 
+/* Scrollbar styling */
+.chat-box::-webkit-scrollbar {
+  width: 8px;
+}
+.chat-box::-webkit-scrollbar-thumb {
+  background: #b0d4e3;
+  border-radius: 10px;
+}
 </style>
 </head>
 <body>
 
-<div class="chat-box">
-  <div class="header">
-    👋 Welcome, <?= htmlspecialchars($username) ?>  
-    <?php if ($csr_name): ?><br><small>Connected to <?= htmlspecialchars($csr_name) ?></small><?php endif; ?>
+<div class="chat-wrapper">
+  <!-- Logo above chat -->
+  <div class="logo-header">
+    <img src="SKYTRUFIBER.png" alt="SkyTruFiber Logo">
   </div>
 
-  <div id="messages" class="messages">
-    <!-- Messages will load dynamically -->
+  <!-- Chat header -->
+  <div class="chat-header">
+    👋 Welcome, <?= htmlspecialchars($username) ?><br>
+    <small>Connected to CSR WALDO</small>
   </div>
 
-  <div class="input-area">
-    <input type="text" id="message" placeholder="Type your message..." autocomplete="off">
+  <!-- Chat messages -->
+  <div class="chat-box" id="chatBox">
+    <!-- Example messages -->
+    <div class="message csr">
+      👋 Hi <?= htmlspecialchars($username) ?>! This is CSR WALDO from SkyTruFiber.<br>
+      How can I assist you today?
+      <span class="timestamp">11/09/2025, 5:15 AM</span>
+    </div>
+
+    <div class="message user">
+      I HAVE A SLOW INTERNET TODAY. CAN YOU HELP ME OUT?
+      <span class="timestamp">11/09/2025, 5:37 AM</span>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="chat-input">
+    <input type="text" placeholder="Type your message..." id="message">
     <button onclick="sendMessage()">Send</button>
   </div>
 </div>
 
 <script>
-const clientId = <?= (int)$client_id ?>;
-const username = <?= json_encode($username) ?>;
-
-function loadMessages() {
-  fetch('load_chat.php?client_id=' + clientId)
-    .then(res => res.json())
-    .then(data => {
-      const msgBox = document.getElementById('messages');
-      msgBox.innerHTML = '';
-      data.forEach(m => {
-        const div = document.createElement('div');
-        div.classList.add('message');
-        div.classList.add(m.sender_type === 'csr' ? 'csr' : 'client');
-        div.innerHTML = `
-          ${m.message}
-          <div class="timestamp">${new Date(m.time).toLocaleString()}</div>
-        `;
-        msgBox.appendChild(div);
-      });
-      msgBox.scrollTop = msgBox.scrollHeight;
-    });
-}
-
 function sendMessage() {
-  const msg = document.getElementById('message').value.trim();
+  const box = document.getElementById('chatBox');
+  const input = document.getElementById('message');
+  const msg = input.value.trim();
   if (!msg) return;
 
-  const body = new URLSearchParams();
-  body.append('sender_type', 'client');
-  body.append('message', msg);
-  body.append('username', username);
-
-  fetch('save_chat.php', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body
-  }).then(() => {
-    document.getElementById('message').value = '';
-    loadMessages();
-  });
+  const div = document.createElement('div');
+  div.className = 'message user';
+  div.innerHTML = msg + `<span class="timestamp">${new Date().toLocaleTimeString()}</span>`;
+  box.appendChild(div);
+  input.value = '';
+  box.scrollTop = box.scrollHeight;
 }
-
-// Load messages every 2 seconds
-setInterval(loadMessages, 2000);
-window.onload = loadMessages;
 </script>
 
 </body>
