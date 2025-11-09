@@ -42,13 +42,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Customer Feed Back - SkytruFiber</title>
+<title>Customer Registration - SkyTruFiber</title>
 <style>
 body {
   font-family: Arial, sans-serif;
   background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
-  display: flex; align-items: center; justify-content: center;
-  min-height: 100vh; margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+}
+.logo-container {
+  text-align: center;
+  margin-bottom: 15px;
+}
+.logo-container img {
+  width: 140px;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 form {
   background: #fff;
@@ -57,7 +70,7 @@ form {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   width: 380px;
 }
-h2 { text-align: center; color: #004466; }
+h2 { text-align: center; color: #004466; margin-bottom: 15px; }
 label { font-weight: 600; color: #004466; display: block; margin-top: 10px; }
 input, select {
   width: 100%;
@@ -79,12 +92,19 @@ button {
 }
 button:hover { background: #007a99; }
 .message { color: red; text-align: center; margin-top: 10px; }
+a { color: #007744; text-decoration: none; }
+a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
 
+<!-- 🟢 SkyTruFiber Logo Header -->
+<div class="logo-container">
+  <img src="SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+</div>
+
 <form method="POST">
-  <h2>Customer Feed Back</h2>
+  <h2>Customer Registration</h2>
 
   <label for="account_number">Account Number:</label>
   <input type="text" name="account_number" id="account_number" placeholder="Enter account number" required>
