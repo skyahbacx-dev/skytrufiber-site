@@ -42,9 +42,7 @@ if (isset($_GET['ajax'])) {
     $query .= " ORDER BY created_at DESC";
     $stmt = $conn->prepare($query);
     $stmt->execute($params);
-
-    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    echo json_encode($data);
+    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     exit;
   }
 
@@ -80,7 +78,6 @@ if (isset($_GET['ajax'])) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Survey Responses — SkyTruFiber CSR Dashboard</title>
 <style>
-/* ---- Your Original CSS (unchanged) ---- */
 body {
   font-family:"Segoe UI",Arial,sans-serif;
   margin:0; height:100vh; display:flex;
@@ -141,7 +138,11 @@ table {
 th, td { padding:12px 15px; text-align:left; border-bottom:1px solid #eee; }
 th { background:#009900; color:#fff; position:sticky; top:0; }
 tr:hover { background:#e6ffe6; }
-td.feedback { white-space:pre-wrap; color:#333; }
+td.feedback {
+  white-space:pre-wrap;
+  word-break:break-word;
+  color:#333;
+}
 td.date { color:#666; font-size:13px; }
 .edit-btn {
   background:#007a00; color:#fff; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;
@@ -174,15 +175,14 @@ td.date { color:#666; font-size:13px; }
 </head>
 <body>
 
-<!-- Sidebar -->
 <div id="sidebar">
   <h2><img src="<?= $logoPath ?>" alt="Logo"> Menu</h2>
   <a href="csr_dashboard.php">💬 Chat Dashboard</a>
+  <a href="csr_dashboard.php?tab=mine">👥 My Clients</a>
   <a href="survey_responses.php" style="background:#00b300;">📝 Survey Responses</a>
   <a href="csr_logout.php">🚪 Logout</a>
 </div>
 
-<!-- Main -->
 <div id="main-content">
   <header>
     <button id="hamburger" onclick="toggleSidebar()">☰</button>
@@ -195,8 +195,8 @@ td.date { color:#666; font-size:13px; }
 
   <div id="tabs">
     <div class="tab" onclick="goTo('csr_dashboard.php')">💬 All Clients</div>
-    <div class="tab" onclick="goTo('csr_dashboard.php?tab=mine')">🧑‍💼 My Clients</div>
-    <div class="tab active" onclick="goTo('survey_responses.php')">📝 Survey Responses</div>
+    <div class="tab" onclick="goTo('csr_dashboard.php?tab=mine')">👥 My Clients</div>
+    <div class="tab active">📝 Survey Responses</div>
   </div>
 
   <h1>📝 Customer Feedback</h1>
@@ -218,7 +218,6 @@ td.date { color:#666; font-size:13px; }
   <div id="table-container"></div>
 </div>
 
-<!-- Edit Modal -->
 <div id="editModal">
   <div class="modal-content">
     <h3>Edit Survey Response</h3>
@@ -245,6 +244,12 @@ function toggleSidebar(){
 }
 function goTo(url){window.location.href=url;}
 
+function escapeHTML(str){
+  return str.replace(/[&<>'"]/g, tag => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[tag]));
+}
+
 function loadTable(){
   const search=document.getElementById('searchBox').value.trim();
   const from=document.getElementById('fromDate').value;
@@ -260,12 +265,12 @@ function loadTable(){
     data.forEach((r,i)=>{
       html+=`<tr>
         <td>${i+1}</td>
-        <td>${r.client_name||''}</td>
-        <td>${r.account_name||''}</td>
-        <td>${r.location||''}</td>
-        <td class="feedback">${(r.feedback||'').replace(/\n/g,"<br>")}</td>
+        <td>${escapeHTML(r.client_name||'')}</td>
+        <td>${escapeHTML(r.account_name||'')}</td>
+        <td>${escapeHTML(r.location||'')}</td>
+        <td class="feedback">${escapeHTML(r.feedback||'')}</td>
         <td class="date">${new Date(r.created_at).toLocaleString()}</td>
-        <td><button class="edit-btn" onclick="openModal(${r.id},'${(r.client_name||'').replace(/'/g,"\\'")}','${(r.account_name||'').replace(/'/g,"\\'")}','${(r.location||'').replace(/'/g,"\\'")}','${(r.feedback||'').replace(/'/g,"\\'")}')">Edit</button></td>
+        <td><button class="edit-btn" onclick="openModal(${r.id},'${escapeHTML(r.client_name||'')}','${escapeHTML(r.account_name||'')}','${escapeHTML(r.location||'')}','${escapeHTML(r.feedback||'')}')">Edit</button></td>
       </tr>`;
     });
     html+='</tbody></table>';
@@ -282,6 +287,7 @@ function openModal(id,client,account,location,feedback){
   document.getElementById('editModal').style.display='flex';
 }
 function closeModal(){document.getElementById('editModal').style.display='none';}
+
 function saveChanges(){
   const id=document.getElementById('editId').value;
   const client=document.getElementById('editClient').value.trim();
@@ -299,6 +305,7 @@ function saveChanges(){
   });
 }
 
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 setInterval(loadTable,10000);
 window.onload=loadTable;
 document.getElementById('searchBox').addEventListener('keyup',()=>loadTable());
