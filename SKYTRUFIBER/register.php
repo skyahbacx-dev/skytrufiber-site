@@ -4,6 +4,7 @@ include '../db_connect.php';
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
     $account_number = trim($_POST['account_number']);
     $full_name = trim($_POST['full_name']);
     $email = trim($_POST['email']);
@@ -14,37 +15,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $account_number; // auto password
 
     if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
-        $hash = password_hash($password, PASSWORD_BCRYPT);
 
         try {
-            // Start transaction (so both inserts happen together)
+
             $conn->beginTransaction();
 
-            // 1️⃣ Register user
+            // ✅ 1. Insert into users
+            $hash = password_hash($password, PASSWORD_BCRYPT);
+
             $stmt = $conn->prepare("
                 INSERT INTO users (account_number, full_name, email, password, district, barangay, date_installed, created_at)
-                VALUES (:account_number, :full_name, :email, :password, :district, :barangay, :date_installed, NOW())
+                VALUES (:acc, :name, :email, :pw, :district, :brgy, :installed, NOW())
             ");
             $stmt->execute([
-                ':account_number' => $account_number,
-                ':full_name' => $full_name,
+                ':acc' => $account_number,
+                ':name' => $full_name,
                 ':email' => $email,
-                ':password' => $hash,
+                ':pw' => $hash,
                 ':district' => $district,
-                ':barangay' => $barangay,
-                ':date_installed' => $date_installed
+                ':brgy' => $barangay,
+                ':installed' => $date_installed
             ]);
 
-            // 2️⃣ Save feedback in survey table (no rating)
+            // ✅ 2. Insert feedback into survey_responses
             if ($remarks) {
                 $stmt2 = $conn->prepare("
-                    INSERT INTO survey (tech_name, client_name, remarks, created_at)
-                    VALUES (:tech_name, :client_name, :remarks, NOW())
+                    INSERT INTO survey_responses (client_name, account_number, district, location, feedback, created_at)
+                    VALUES (:name, :acc, :district, :brgy, :feedback, NOW())
                 ");
                 $stmt2->execute([
-                    ':tech_name' => 'N/A', // no technician info at registration
-                    ':client_name' => $full_name,
-                    ':remarks' => $remarks
+                    ':name' => $full_name,
+                    ':acc' => $account_number,
+                    ':district' => $district,
+                    ':brgy' => $barangay,
+                    ':feedback' => $remarks
                 ]);
             }
 
@@ -54,17 +58,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         } catch (PDOException $e) {
             $conn->rollBack();
-            if (strpos($e->getMessage(), 'duplicate key') !== false) {
-                $message = '⚠️ Account number already exists.';
-            } else {
-                $message = '❌ Database error: ' . htmlspecialchars($e->getMessage());
-            }
+            $message = '❌ Database error: ' . htmlspecialchars($e->getMessage());
         }
+
     } else {
         $message = '⚠️ Please fill in all required fields.';
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
