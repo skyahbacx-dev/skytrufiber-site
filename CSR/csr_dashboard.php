@@ -30,7 +30,7 @@ body {
     overflow:hidden;
 }
 
-/* SIDEBAR OVERLAY — FIXED VERSION */
+/* Overlay */
 #overlay {
     position:fixed;
     top:0; left:0;
@@ -40,7 +40,7 @@ body {
     z-index:8;
 }
 
-/* SIDEBAR */
+/* Sidebar */
 #sidebar {
     position:fixed;
     top:0;
@@ -79,7 +79,7 @@ body {
     background:#009900;
 }
 
-/* HEADER */
+/* Header */
 header {
     height:60px;
     background:#009900;
@@ -105,66 +105,36 @@ header {
     transform:rotate(90deg);
 }
 
-/* General tab style */
+/* Tabs */
+#tabs {
+    display:flex;
+    background:#eaffea;
+    padding:12px 15px;
+    gap:10px;
+    border-bottom:1px solid #c7e5c7;
+}
+
 .tab {
     padding:10px 18px;
     border-radius:6px;
     cursor:pointer;
     font-weight:600;
     color:#006b00;
-    background:#ffffff;
-    border:2px solid transparent;
-    transition:0.15s;
-    display:flex;
-    align-items:center;
 }
 
-/* Hover effect */
-.tab:hover {
-    background:#c8f5c8;
-}
-
-/* Active state – JS controlled tabs */
 .tab.active {
     background:#006b00;
     color:white;
-    border-color:#006400;
 }
 
-/* Styles for <a> tab links */
-.tab-link {
-    padding:10px 18px;
-    border-radius:6px;
-    font-weight:600;
-    color:#006b00;
-    background:#ffffff;
-    border:2px solid transparent;
-    text-decoration:none;
-    display:flex;
-    align-items:center;
-    transition:0.15s ease;
-}
-
-/* Hover effect for link-style tabs */
-.tab-link:hover {
-    background:#c8f5c8;
-}
-
-/* Optional: when link is selected (active state) */
-.tab-link.active {
-    background:#006b00;
-    color:white;
-    border-color:#006400;
-}
-
-
-/* MAIN CONTENT */
+/* Main */
 #main {
     display:flex;
     height:calc(100vh - 105px);
+    overflow:hidden;
 }
 
-/* LEFT CLIENT LIST */
+/* Client list */
 #client-list {
     width:280px;
     overflow-y:auto;
@@ -173,7 +143,7 @@ header {
     padding:10px;
 }
 
-/* CLIENT ITEM */
+/* Client items */
 .client-item {
     padding:12px;
     margin-bottom:10px;
@@ -190,7 +160,7 @@ header {
     background:#e8ffe8;
 }
 
-/* CHAT AREA */
+/* Chat area */
 #chat-area {
     flex:1;
     display:flex;
@@ -235,7 +205,7 @@ header {
     align-self:flex-end;
 }
 
-/* INPUT ROW */
+/* Input row */
 #input-row {
     padding:12px;
     border-top:1px solid #ccc;
@@ -263,13 +233,14 @@ header {
 
 <body>
 
+<!-- Overlay -->
 <div id="overlay" onclick="toggleSidebar()"></div>
 
-<!-- SIDEBAR -->
+<!-- Sidebar -->
 <div id="sidebar">
     <h2><img src="<?= $logoPath ?>" style="height:40px;"> Menu</h2>
     <a onclick="activateTab('clients')">💬 Chat Dashboard</a>
-    <a onclick="activateTab('mine')">👤 My Clients</a>
+    <a onclick="activateTab('mine')">👥 My Clients</a>
     <a onclick="activateTab('reminders')">⏰ Reminders</a>
     <a href="survey_responses.php">📝 Survey Responses</a>
     <a href="edit_profile.php">👤 Edit Profile</a>
@@ -281,23 +252,21 @@ header {
     <span>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></span>
 </header>
 
+<!-- Tabs -->
 <div id="tabs">
-    <!-- JavaScript switching tabs -->
     <div id="tab_clients" class="tab active" onclick="activateTab('clients')">💬 All Clients</div>
-    <div id="tab_mine" class="tab" onclick="activateTab('mine')">👤 My Clients</div>
+    <div id="tab_mine" class="tab" onclick="activateTab('mine')">👥 My Clients</div>
     <div id="tab_reminders" class="tab" onclick="activateTab('reminders')">⏰ Reminders</div>
-
-    <!-- Link tabs -->
-    <a href="survey_responses.php" id="tab_survey" class="tab-link">📝 Survey Responses</a>
-    <a href="update_profile.php" id="tab_profile" class="tab-link">👤 Edit Profile</a>
+    <div id="tab_survey_responses" class="tab" onclick="window.location='survey_responses.php'">📝 Survey Responses</div>
+    <div id="tab_edit_profile" class="tab" onclick="window.location='edit_profile.php'">👤 Edit Profile</div>
 </div>
 
 <div id="main">
 
-    <!-- CLIENT LIST -->
-    <div id="client-list"></div>
+    <!-- Client list -->
+    <div id="client-list">Loading...</div>
 
-    <!-- CHAT -->
+    <!-- Chat area -->
     <div id="chat-area">
         <div id="messages">Select a client</div>
 
@@ -313,15 +282,13 @@ header {
 let currentTab = "clients";
 let currentClient = null;
 
-/* ✅ SIDEBAR OPEN/CLOSE FIX */
+/* Sidebar toggle */
 function toggleSidebar() {
     const sidebar = document.getElementById("sidebar");
     const overlay = document.getElementById("overlay");
     const burger = document.getElementById("hamburger");
 
-    const isOpen = sidebar.classList.contains("active");
-
-    if (isOpen) {
+    if (sidebar.classList.contains("active")) {
         sidebar.classList.remove("active");
         overlay.style.display = "none";
         burger.classList.remove("active");
@@ -332,7 +299,7 @@ function toggleSidebar() {
     }
 }
 
-/* ✅ TAB SWITCHING */
+/* Tabs */
 function activateTab(tab) {
     currentTab = tab;
 
@@ -343,7 +310,7 @@ function activateTab(tab) {
     loadClients();
 }
 
-/* ✅ LOAD CLIENTS */
+/* Load clients */
 function loadClients() {
     fetch(`csr_dashboard.php?ajax=clients&tab=${currentTab}`)
     .then(r => r.text())
@@ -355,35 +322,32 @@ function loadClients() {
     });
 }
 
-/* ✅ SELECT CLIENT */
+/* Selecting client */
 function selectClient(item) {
     currentClient = item.dataset.id;
     document.getElementById("messages").innerHTML = "";
     document.getElementById("input-row").style.display = "flex";
-
     loadChat();
 }
 
-/* ✅ LOAD CHAT */
+/* Load chat messages */
 function loadChat() {
     fetch(`csr_dashboard.php?ajax=load_chat&client_id=${currentClient}`)
     .then(r => r.json())
     .then(rows => {
         let box = document.getElementById("messages");
         box.innerHTML = "";
-
         rows.forEach(m => {
             let bubble = document.createElement("div");
             bubble.className = `message-bubble ${m.sender_type}`;
             bubble.innerHTML = `<strong>${m.sender_type === 'csr' ? m.csr_fullname : m.client_name}:</strong> ${m.message}`;
             box.appendChild(bubble);
         });
-
         box.scrollTop = box.scrollHeight;
     });
 }
 
-/* ✅ SEND MESSAGE */
+/* Send message */
 function sendMessage() {
     const msg = document.getElementById("msg").value.trim();
     if (!msg) return;
@@ -398,7 +362,7 @@ function sendMessage() {
     });
 }
 
-/* ✅ AUTO REFRESH CLIENT LIST & CHAT */
+/* Auto refresh */
 setInterval(() => {
     loadClients();
     if (currentClient) loadChat();
