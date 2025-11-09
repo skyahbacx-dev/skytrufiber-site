@@ -1,5 +1,5 @@
 <?php
-include 'db_connect.php';
+include '../db_connect.php';
 
 // secure token to stop abuse
 $token = $_GET['token'] ?? '';
