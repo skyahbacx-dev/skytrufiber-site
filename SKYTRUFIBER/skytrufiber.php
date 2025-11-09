@@ -5,31 +5,37 @@ include '../db_connect.php';
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $account_number = trim($_POST['account_number'] ?? '');
+    $identifier = trim($_POST['identifier'] ?? ''); // email or full name
     $password = $_POST['password'] ?? '';
+    $concern = trim($_POST['concern'] ?? '');
 
-    if ($account_number && $password) {
+    if ($identifier && $password && $concern) {
         try {
-            $stmt = $conn->prepare("SELECT * FROM users WHERE account_number = :account_number LIMIT 1");
-            $stmt->execute([':account_number' => $account_number]);
+            // ✅ Check if customer is registered (email OR full name)
+            $stmt = $conn->prepare("SELECT * FROM users WHERE email = :identifier OR full_name = :identifier LIMIT 1");
+            $stmt->execute([':identifier' => $identifier]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user && password_verify($password, $user['password'])) {
+                // ✅ Valid customer → store info in session
                 $_SESSION['user'] = $user['account_number'];
                 $_SESSION['name'] = $user['full_name'];
+                $_SESSION['email'] = $user['email'] ?? '';
                 $_SESSION['district'] = $user['district'] ?? '';
                 $_SESSION['barangay'] = $user['barangay'] ?? '';
+                $_SESSION['concern'] = $concern;
 
-                header("Location: skytrufiber.php");
+                // Redirect to chat page
+                header("Location: chat_support.php");
                 exit;
             } else {
-                $message = "❌ Invalid account number or password.";
+                $message = "❌ Invalid email/full name or password. Please make sure you’re registered.";
             }
         } catch (PDOException $e) {
             $message = "⚠️ Database error: " . htmlspecialchars($e->getMessage());
         }
     } else {
-        $message = "⚠️ Please enter both account number and password.";
+        $message = "⚠️ Please complete all fields.";
     }
 }
 ?>
@@ -38,9 +44,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SkyTruFiber Login</title>
+<title>SkyTruFiber Customer Service</title>
 <style>
-/* layout */
+/* Layout */
 body {
   font-family: "Segoe UI", Arial, sans-serif;
   background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
@@ -65,10 +71,10 @@ form {
   padding: 25px;
   border-radius: 15px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  width: 380px;
+  width: 400px;
 }
 
-/* headings + labels */
+/* Headings + Labels */
 h2 {
   color: #004466;
   text-align: center;
@@ -81,18 +87,24 @@ label {
   margin-top: 10px;
 }
 
-/* inputs */
+/* Inputs */
 input[type="text"],
-input[type="password"] {
+input[type="password"],
+textarea {
   width: 100%;
   padding: 10px;
   margin-top: 5px;
   border-radius: 8px;
   border: 1px solid #ccc;
   box-sizing: border-box;
+  font-size: 14px;
+}
+textarea {
+  resize: vertical;
+  min-height: 80px;
 }
 
-/* button */
+/* Button */
 button {
   width: 100%;
   padding: 10px;
@@ -106,31 +118,28 @@ button {
 }
 button:hover { background: #007a99; }
 
-/* show password row: right aligned, vertically centered */
+/* Show Password */
 .show-pass {
   display: flex;
-  justify-content: flex-end;    /* push to the right */
-  align-items: center;           /* vertical center */
+  justify-content: flex-end;
+  align-items: center;
   gap: 8px;
   margin-top: 8px;
   font-size: 13px;
   color: #004466;
 }
-
-/* smaller checkbox so it looks neat */
 .show-pass input[type="checkbox"] {
   width: 16px;
   height: 16px;
   margin: 0;
-  vertical-align: middle;
 }
 
-/* message and links */
+/* Message + Links */
 .message { color: red; text-align: center; margin-top: 10px; }
 a { color: #007744; text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-/* responsive tweaks */
+/* Responsive */
 @media (max-width:420px){
   form { width: 92%; padding: 18px; }
   .logo-container img { width: 120px; }
@@ -139,26 +148,27 @@ a:hover { text-decoration: underline; }
 </head>
 <body>
 
-<!-- 🟢 SkyTruFiber Logo Header -->
+<!-- 🟢 SkyTruFiber Logo -->
 <div class="logo-container">
   <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
 </div>
 
 <form method="POST">
-  <h2>Customer Inquiry</h2>
+  <h2>Customer Service Portal</h2>
 
-  <!-- note: field names kept as your PHP expects -->
-  <label for="account_number">Account Number / Full Name:</label>
-  <input type="text" id="account_number" name="account_number" placeholder="Enter account number or full name" required>
+  <label for="identifier">Email or Full Name:</label>
+  <input type="text" id="identifier" name="identifier" placeholder="Enter your email or full name" required>
 
   <label for="password">Password:</label>
   <input type="password" id="password" name="password" placeholder="Enter password" required>
 
-  <!-- RIGHT-ALIGNED Show Password -->
   <div class="show-pass">
     <label for="showPassword">Show Password</label>
     <input type="checkbox" id="showPassword" />
   </div>
+
+  <label for="concern">Your Concern / Inquiry:</label>
+  <textarea id="concern" name="concern" placeholder="Describe your concern or issue here..." required></textarea>
 
   <button type="submit">Submit</button>
 
