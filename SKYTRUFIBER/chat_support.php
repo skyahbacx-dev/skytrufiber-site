@@ -1,6 +1,30 @@
 <?php
 include '../db_connect.php';
+header('Content-Type: text/html; charset=UTF-8');
+
 $username = $_GET['username'] ?? 'Guest';
+
+/* =======================
+   FETCH ASSIGNED CSR
+   ======================= */
+try {
+    $stmt = $conn->prepare("
+        SELECT assigned_csr, csr_fullname 
+        FROM chat 
+        WHERE client_id = (
+            SELECT id FROM clients WHERE username = :username LIMIT 1
+        )
+        ORDER BY created_at DESC 
+        LIMIT 1
+    ");
+    $stmt->execute([':username' => $username]);
+    $chatInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    $csr_fullname = $chatInfo['csr_fullname'] ?? 'No CSR Assigned';
+    $csr_name_display = $csr_fullname !== 'No CSR Assigned' ? htmlspecialchars($csr_fullname) : 'CSR Support Team';
+} catch (PDOException $e) {
+    $csr_name_display = 'CSR Support';
+}
 ?>
 
 <!DOCTYPE html>
@@ -9,7 +33,7 @@ $username = $_GET['username'] ?? 'Guest';
 <meta charset="UTF-8">
 <title>SkyTruFiber Support Chat</title>
 <style>
-/* ===== BASE LAYOUT ===== */
+/* ===== BASE STYLING ===== */
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
   background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
@@ -22,7 +46,7 @@ body {
   overflow: hidden;
 }
 
-/* ===== PAGE WATERMARK (behind everything) ===== */
+/* ===== PAGE WATERMARK ===== */
 body::before {
   content: "";
   background: url('../SKYTRUFIBER.png') no-repeat center center;
@@ -81,7 +105,7 @@ body::before {
   background-blend-mode: lighten;
 }
 
-/* ===== MESSAGE STYLES ===== */
+/* ===== MESSAGE STYLING ===== */
 .message {
   margin: 10px 0;
   padding: 10px 15px;
@@ -114,7 +138,7 @@ body::before {
   margin-top: 3px;
 }
 
-/* ===== INPUT BAR ===== */
+/* ===== INPUT AREA ===== */
 .chat-input {
   display: flex;
   border-top: 1px solid #ccc;
@@ -142,9 +166,7 @@ body::before {
 }
 
 /* ===== SCROLLBAR ===== */
-.chat-box::-webkit-scrollbar {
-  width: 8px;
-}
+.chat-box::-webkit-scrollbar { width: 8px; }
 .chat-box::-webkit-scrollbar-thumb {
   background: #b0d4e3;
   border-radius: 10px;
@@ -170,22 +192,22 @@ body::before {
     <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
   </div>
 
-  <!-- Chat header -->
+  <!-- Dynamic Chat Header -->
   <div class="chat-header">
     👋 Welcome, <?= htmlspecialchars($username) ?><br>
-    <small>Connected to CSR WALDO</small>
+    <small>Connected to <?= $csr_name_display ?></small>
   </div>
 
-  <!-- Chat messages -->
+  <!-- Chat Messages -->
   <div class="chat-box" id="chatBox">
     <div class="message csr">
-      👋 Hi <?= htmlspecialchars($username) ?>! This is CSR WALDO from SkyTruFiber.<br>
+      👋 Hi <?= htmlspecialchars($username) ?>! This is <?= $csr_name_display ?> from SkyTruFiber.<br>
       How can I assist you today?
       <span class="timestamp"><?= date("n/j/Y, g:i A") ?></span>
     </div>
   </div>
 
-  <!-- Input section -->
+  <!-- Input Section -->
   <div class="chat-input">
     <input type="text" id="message" placeholder="Type your message...">
     <button onclick="sendMessage()">Send</button>
