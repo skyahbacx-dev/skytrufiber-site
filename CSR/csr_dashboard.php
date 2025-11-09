@@ -2,7 +2,6 @@
 session_start();
 include '../db_connect.php';
 
-// ✅ Ensure CSR is logged in
 if (!isset($_SESSION['csr_user'])) {
     header("Location: csr_login.php");
     exit;
@@ -10,424 +9,344 @@ if (!isset($_SESSION['csr_user'])) {
 
 $csr_user = $_SESSION['csr_user'];
 
-// ✅ Fetch CSR full profile details
-$stmt = $conn->prepare("SELECT full_name, email FROM csr_users WHERE username = :u LIMIT 1");
-$stmt->execute([":u" => $csr_user]);
-$csrData = $stmt->fetch(PDO::FETCH_ASSOC);
+$stmt = $conn->prepare("SELECT full_name FROM csr_users WHERE username=:u LIMIT 1");
+$stmt->execute([":u"=>$csr_user]);
+$data = $stmt->fetch(PDO::FETCH_ASSOC);
+$csr_fullname = $data['full_name'] ?? $csr_user;
 
-$csr_fullname = $csrData["full_name"] ?? $csr_user;
-$csr_email     = $csrData["email"] ?? "";
-
-// ✅ Logo path fallback
 $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBALOGO.png';
-
-/* ================================
-   ✅ AJAX Handler Responses
-================================ */
-if (isset($_GET["ajax"])) {
-
-    // --------------- Load Client List ---------------
-    if ($_GET["ajax"] == "clients") {
-        $tab = $_GET["tab"] ?? "all";
-
-        if ($tab === "mine") {
-            $stmt = $conn->prepare("
-                SELECT c.id, c.name, c.assigned_csr,
-                MAX(ch.created_at) AS last_chat
-                FROM clients c
-                LEFT JOIN chat ch ON c.id = ch.client_id
-                WHERE c.assigned_csr = :csr
-                GROUP BY c.id, c.name, c.assigned_csr
-                ORDER BY last_chat DESC NULLS LAST
-            ");
-            $stmt->execute([":csr" => $csr_user]);
-        } else {
-            $stmt = $conn->query("
-                SELECT c.id, c.name, c.assigned_csr,
-                MAX(ch.created_at) AS last_chat
-                FROM clients c
-                LEFT JOIN chat ch ON c.id = ch.client_id
-                GROUP BY c.id, c.name, c.assigned_csr
-                ORDER BY last_chat DESC NULLS LAST
-            ");
-        }
-
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $assigned = $row["assigned_csr"] ?: "Unassigned";
-            $owned = ($assigned === $csr_user);
-
-            echo "
-                <div class='client-item' data-id='{$row['id']}' data-name='".htmlspecialchars($row['name'], ENT_QUOTES)."' data-csr='{$assigned}'>
-                    <div class='client-info'>
-                        <strong>".htmlspecialchars($row['name'])."</strong>
-                        <small>Assigned: {$assigned}</small>
-                    </div>
-                    <div class='actions'>
-            ";
-
-            if ($assigned === "Unassigned") {
-                echo "<button class='assign' onclick='assignClient({$row['id']})'>＋</button>";
-            } elseif ($assigned === $csr_user) {
-                echo "<button class='unassign' onclick='unassignClient({$row['id']})'>−</button>";
-            } else {
-                echo "<button class='locked' disabled>🔒</button>";
-            }
-
-            echo "</div></div>";
-        }
-
-        exit;
-    }
-
-    // --------------- Load Chat Messages ---------------
-    if ($_GET["ajax"] == "load_chat" && isset($_GET["client_id"])) {
-        $cid = (int)$_GET["client_id"];
-
-        $stmt = $conn->prepare("
-            SELECT sender_type, message, created_at, csr_fullname, client_name
-            FROM chat
-            WHERE client_id = :cid
-            ORDER BY created_at ASC
-        ");
-        $stmt->execute([":cid" => $cid]);
-
-        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-        exit;
-    }
-
-    // --------------- Reminders List ---------------
-    if ($_GET["ajax"] == "load_reminders") {
-        $search = "%".($_GET["search"] ?? "")."%";
-
-        $stmt = $conn->prepare("
-        SELECT r.id, r.reminder_type, r.status, r.sent_at, r.send_on, c.name AS client_name
-        FROM reminders r
-        LEFT JOIN clients c ON r.client_id = c.id
-        WHERE c.name ILIKE :s OR r.reminder_type ILIKE :s
-        ORDER BY r.send_on ASC
-        ");
-        $stmt->execute([":s"=>$search]);
-        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-        exit;
-    }
-
-    exit;
-}
-
 ?>
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>CSR Dashboard — SkyTruFiber</title>
+<title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
 
 <style>
-/* ✅ ORIGINAL GREEN THEME, CLEAN + FLEXIBLE LAYOUT */
-
 body {
-    margin: 0;
-    padding: 0;
-    font-family: "Segoe UI", Arial, sans-serif;
-    background:#f2fff2;
+    margin:0;
+    font-family:Segoe UI, sans-serif;
+    background:#f6fff6;
     overflow:hidden;
 }
 
-/* ✅ Collapsible Sidebar ----------------------*/
+/* SIDEBAR OVERLAY — FIXED VERSION */
+#overlay {
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.4);
+    display:none;
+    z-index:8;
+}
+
+/* SIDEBAR */
 #sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 250px;
-    height:100%;
-    background:#009900;
+    position:fixed;
+    top:0;
+    left:0;
+    width:260px;
+    height:100vh;
+    background:#006b00;
     color:white;
-    transform: translateX(-100%);
-    transition: 0.3s;
-    z-index:10;
+    transform:translateX(-100%);
+    transition:0.3s ease;
+    z-index:9;
+    box-shadow:5px 0 10px rgba(0,0,0,0.2);
 }
 
 #sidebar.active {
-    transform: translateX(0);
+    transform:translateX(0);
 }
 
 #sidebar h2 {
-    background:#007a00;
     margin:0;
     padding:20px;
+    background:#005c00;
+    font-size:20px;
     text-align:center;
 }
 
 #sidebar a {
-    display: block;
+    display:block;
     padding:15px 20px;
     text-decoration:none;
     color:white;
-    font-weight:600;
+    font-weight:500;
 }
 
 #sidebar a:hover {
-    background:#00b300;
+    background:#009900;
 }
 
-/* ✅ Main Header ------------------------*/
+/* HEADER */
 header {
+    height:60px;
     background:#009900;
     color:white;
-    padding:15px 20px;
     display:flex;
-    justify-content:space-between;
     align-items:center;
+    padding:0 20px;
+    font-size:22px;
+    font-weight:600;
+    justify-content:space-between;
 }
 
 #hamburger {
+    cursor:pointer;
     font-size:28px;
-    cursor:pointer;
-    border:none;
     background:none;
+    border:none;
     color:white;
-}
-#hamburger.active { transform:rotate(90deg); }
-
-/* ✅ Tabs -------------------------*/
-#tabs {
-    display:flex;
-    gap:10px;
-    padding:10px 20px;
-    background:#eaffea;
-    border-bottom:1px solid #ccc;
+    transition:transform 0.2s;
 }
 
+#hamburger.active {
+    transform:rotate(90deg);
+}
+
+/* General tab style */
 .tab {
-    padding:10px 20px;
-    border-radius:8px;
-    font-weight:700;
+    padding:10px 18px;
+    border-radius:6px;
     cursor:pointer;
-    color:#007a00;
-}
-
-.tab.active {
-    background:#009900;
-    color:white;
-}
-
-/* ✅ Layout Columns ------------------------*/
-#container {
+    font-weight:600;
+    color:#006b00;
+    background:#ffffff;
+    border:2px solid transparent;
+    transition:0.15s;
     display:flex;
-    height:calc(100vh - 110px);
+    align-items:center;
 }
 
+/* Hover effect */
+.tab:hover {
+    background:#c8f5c8;
+}
+
+/* Active state – JS controlled tabs */
+.tab.active {
+    background:#006b00;
+    color:white;
+    border-color:#006400;
+}
+
+/* Styles for <a> tab links */
+.tab-link {
+    padding:10px 18px;
+    border-radius:6px;
+    font-weight:600;
+    color:#006b00;
+    background:#ffffff;
+    border:2px solid transparent;
+    text-decoration:none;
+    display:flex;
+    align-items:center;
+    transition:0.15s ease;
+}
+
+/* Hover effect for link-style tabs */
+.tab-link:hover {
+    background:#c8f5c8;
+}
+
+/* Optional: when link is selected (active state) */
+.tab-link.active {
+    background:#006b00;
+    color:white;
+    border-color:#006400;
+}
+
+
+/* MAIN CONTENT */
+#main {
+    display:flex;
+    height:calc(100vh - 105px);
+}
+
+/* LEFT CLIENT LIST */
 #client-list {
-    width:300px;
+    width:280px;
     overflow-y:auto;
     background:white;
-    border-right:1px solid #ccc;
+    border-right:1px solid #d6d6d6;
     padding:10px;
 }
 
-/* ✅ Client List Items -----------------------*/
+/* CLIENT ITEM */
 .client-item {
+    padding:12px;
+    margin-bottom:10px;
+    border-radius:6px;
+    background:#fff;
+    box-shadow:0 0 6px rgba(0,0,0,0.1);
+    cursor:pointer;
     display:flex;
     justify-content:space-between;
     align-items:center;
-    padding:10px;
-    margin-bottom:8px;
-    background:white;
-    border-radius:8px;
-    cursor:pointer;
-    box-shadow:0 1px 4px rgba(0,0,0,0.1);
 }
 
 .client-item:hover {
-    background:#e6ffe6;
+    background:#e8ffe8;
 }
 
-.client-item.active {
-    background:#c8f8c8;
-    font-weight:bold;
-}
-
-/* ✅ Chat area -------------------------------*/
+/* CHAT AREA */
 #chat-area {
     flex:1;
     display:flex;
     flex-direction:column;
     background:white;
-    position:relative;
 }
 
 #messages {
     flex:1;
     overflow-y:auto;
-    padding:15px;
+    padding:20px;
     position:relative;
 }
 
 #messages::before {
     content:"";
     position:absolute;
-    top:50%;
-    left:50%;
+    top:50%; left:50%;
     width:500px;
     height:500px;
-    background:url('<?= $logoPath ?>') no-repeat center center;
+    opacity:0.06;
+    background:url('<?= $logoPath ?>') no-repeat center;
     background-size:contain;
-    opacity:0.05;
-    transform:translate(-50%, -50%);
+    transform:translate(-50%,-50%);
 }
 
-/* ✅ Bubbles ------------------------------*/
-.bubble {
-    padding:12px 15px;
-    border-radius:12px;
-    margin-bottom:10px;
+.message-bubble {
     max-width:70%;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:12px;
     font-size:14px;
 }
 
 .client {
-    background:#e9ffe9;
+    background:#e4ffe4;
     align-self:flex-start;
 }
 
 .csr {
-    background:#ccf0ff;
+    background:#cfe9ff;
     align-self:flex-end;
 }
 
-/* ✅ Input Bar -----------------------------*/
-.input {
-    display:flex;
-    padding:10px;
+/* INPUT ROW */
+#input-row {
+    padding:12px;
     border-top:1px solid #ccc;
+    display:flex;
 }
 
-.input input {
+#input-row input {
     flex:1;
-    padding:10px;
+    padding:12px;
     border-radius:8px;
-    border:1px solid #ccc;
+    border:1px solid #aaa;
 }
 
-.input button {
-    padding:10px 20px;
+#input-row button {
+    padding:12px 20px;
+    margin-left:10px;
     background:#009900;
     border:none;
-    color:white;
-    margin-left:10px;
     border-radius:8px;
-    font-size:16px;
+    color:white;
     cursor:pointer;
 }
-
-/* ✅ Reminders Panel ----------------------*/
-#reminders-panel {
-    display:none;
-    padding:20px;
-}
-
-.searchbox {
-    padding:8px;
-    border:1px solid #ccc;
-    width:250px;
-    border-radius:8px;
-    margin-bottom:10px;
-}
-
 </style>
 </head>
 
 <body>
 
-<!-- ✅ Sidebar -->
+<div id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- SIDEBAR -->
 <div id="sidebar">
-  <h2><img style="height:40px;" src="<?= $logoPath ?>"> Menu</h2>
-  <a href="#" onclick="switchTab('clients')">💬 Chat Dashboard</a>
-  <a href="#" onclick="switchTab('mine')">🧑‍💼 My Clients</a>
-  <a href="#" onclick="openReminderTab()">⏰ Reminders</a>
-  <a href="edit_profile.php">👤 Edit Profile</a>
-  <a href="survey_responses.php">📝 Survey Responses</a>
-  <a href="csr_logout.php">🚪 Logout</a>
+    <h2><img src="<?= $logoPath ?>" style="height:40px;"> Menu</h2>
+    <a onclick="activateTab('clients')">💬 Chat Dashboard</a>
+    <a onclick="activateTab('mine')">👤 My Clients</a>
+    <a onclick="activateTab('reminders')">⏰ Reminders</a>
+    <a href="survey_responses.php">📝 Survey Responses</a>
+    <a href="edit_profile.php">👤 Edit Profile</a>
+    <a href="csr_logout.php">🚪 Logout</a>
 </div>
 
-<!-- ✅ Main Content -->
-<div id="main-content">
-
 <header>
-  <button id="hamburger" onclick="toggleSidebar()">☰</button>
-  <h1>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></h1>
+    <button id="hamburger" onclick="toggleSidebar()">☰</button>
+    <span>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></span>
 </header>
 
 <div id="tabs">
-    <div class="tab active" id="tab_clients" onclick="switchTab('clients')">💬 All Clients</div>
-    <div class="tab" id="tab_mine" onclick="switchTab('mine')">👤 My Clients</div>
-    <div class="tab" id="tab_reminders" onclick="openReminderTab()">⏰ Reminders</div>
+    <!-- JavaScript switching tabs -->
+    <div id="tab_clients" class="tab active" onclick="activateTab('clients')">💬 All Clients</div>
+    <div id="tab_mine" class="tab" onclick="activateTab('mine')">👤 My Clients</div>
+    <div id="tab_reminders" class="tab" onclick="activateTab('reminders')">⏰ Reminders</div>
+
+    <!-- Link tabs -->
+    <a href="survey_responses.php" id="tab_survey" class="tab-link">📝 Survey Responses</a>
+    <a href="update_profile.php" id="tab_profile" class="tab-link">👤 Edit Profile</a>
 </div>
 
-<div id="container">
+<div id="main">
 
-<!-- ✅ Clients List -->
-<div id="client-list"></div>
+    <!-- CLIENT LIST -->
+    <div id="client-list"></div>
 
-<!-- ✅ Chat Panel -->
-<div id="chat-area">
-  <div id="chat-header" class="header">
-    <h3 id="chat-title">Select a client</h3>
-  </div>
-  <div id="messages"></div>
+    <!-- CHAT -->
+    <div id="chat-area">
+        <div id="messages">Select a client</div>
 
-  <div class="input" id="inputRow" style="display:none;">
-    <input type="text" id="msg" placeholder="Type a message...">
-    <button onclick="sendMsg()">Send</button>
-  </div>
+        <div id="input-row" style="display:none;">
+            <input id="msg" placeholder="Type a reply...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
 </div>
-
-<!-- ✅ Reminders Tab -->
-<div id="reminders-panel">
-    <input class="searchbox" placeholder="Search reminders..." onkeyup="loadReminders(this.value)">
-    <div id="reminders-list"></div>
-</div>
-
-</div><!-- End container -->
-
-</div><!-- End main -->
 
 <script>
 let currentTab = "clients";
-let clientId = null;
+let currentClient = null;
 
-/* ✅ Sidebar Toggle */
+/* ✅ SIDEBAR OPEN/CLOSE FIX */
 function toggleSidebar() {
-    document.getElementById("sidebar").classList.toggle("active");
-    document.getElementById("hamburger").classList.toggle("active");
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("overlay");
+    const burger = document.getElementById("hamburger");
+
+    const isOpen = sidebar.classList.contains("active");
+
+    if (isOpen) {
+        sidebar.classList.remove("active");
+        overlay.style.display = "none";
+        burger.classList.remove("active");
+    } else {
+        sidebar.classList.add("active");
+        overlay.style.display = "block";
+        burger.classList.add("active");
+    }
 }
 
-/* ✅ Switch Tabs (Clients / My Clients / Reminders) */
-function switchTab(tab) {
+/* ✅ TAB SWITCHING */
+function activateTab(tab) {
     currentTab = tab;
-    document.getElementById("chat-area").style.display = "block";
-    document.getElementById("reminders-panel").style.display = "none";
 
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    document.getElementById("tab_"+tab).classList.add("active");
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.getElementById("tab_" + tab).classList.add("active");
 
+    toggleSidebar();
     loadClients();
 }
 
-/* ✅ Reminders Tab */
-function openReminderTab() {
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    document.getElementById("tab_reminders").classList.add("active");
-
-    document.getElementById("chat-area").style.display = "none";
-    document.getElementById("reminders-panel").style.display = "block";
-
-    loadReminders("");
-}
-
-/* ✅ Load Clients List */
+/* ✅ LOAD CLIENTS */
 function loadClients() {
     fetch(`csr_dashboard.php?ajax=clients&tab=${currentTab}`)
-    .then(res => res.text())
+    .then(r => r.text())
     .then(html => {
         document.getElementById("client-list").innerHTML = html;
         document.querySelectorAll(".client-item").forEach(item => {
@@ -436,85 +355,56 @@ function loadClients() {
     });
 }
 
-/* ✅ Select Client */
+/* ✅ SELECT CLIENT */
 function selectClient(item) {
-    clientId = item.dataset.id;
-    document.getElementById("chat-title").textContent = "Chat with " + item.dataset.name;
-    document.getElementById("reminders-panel").style.display = "none";
+    currentClient = item.dataset.id;
+    document.getElementById("messages").innerHTML = "";
+    document.getElementById("input-row").style.display = "flex";
+
     loadChat();
-    document.getElementById("inputRow").style.display = "flex";
 }
 
-/* ✅ Load Chat Messages */
+/* ✅ LOAD CHAT */
 function loadChat() {
-    if (!clientId) return;
-    fetch(`csr_dashboard.php?ajax=load_chat&client_id=${clientId}`)
-    .then(res => res.json())
-    .then(messages => {
+    fetch(`csr_dashboard.php?ajax=load_chat&client_id=${currentClient}`)
+    .then(r => r.json())
+    .then(rows => {
         let box = document.getElementById("messages");
         box.innerHTML = "";
 
-        messages.forEach(m => {
-            let div = document.createElement("div");
-            div.className = `bubble ${m.sender_type}`;
-            div.innerHTML = `<strong>${m.sender_type == 'csr' ? m.csr_fullname : m.client_name}:</strong> ${m.message}`;
-            box.appendChild(div);
+        rows.forEach(m => {
+            let bubble = document.createElement("div");
+            bubble.className = `message-bubble ${m.sender_type}`;
+            bubble.innerHTML = `<strong>${m.sender_type === 'csr' ? m.csr_fullname : m.client_name}:</strong> ${m.message}`;
+            box.appendChild(bubble);
         });
 
         box.scrollTop = box.scrollHeight;
     });
 }
 
-/* ✅ Send Message */
-function sendMsg() {
-    let text = document.getElementById("msg").value.trim();
-    if (!text) return;
+/* ✅ SEND MESSAGE */
+function sendMessage() {
+    const msg = document.getElementById("msg").value.trim();
+    if (!msg) return;
 
     fetch("../SKYTRUFIBER/save_chat.php", {
         method:"POST",
         headers:{"Content-Type":"application/x-www-form-urlencoded"},
-        body:`client_id=${clientId}&message=${encodeURIComponent(text)}&sender_type=csr`
-    })
-    .then(() => {
-        document.getElementById("msg").value = "";
+        body:`client_id=${currentClient}&message=${encodeURIComponent(msg)}&sender_type=csr`
+    }).then(() => {
+        document.getElementById("msg").value="";
         loadChat();
     });
 }
 
-/* ✅ Load reminders */
-function loadReminders(search) {
-    fetch(`csr_dashboard.php?ajax=load_reminders&search=${search}`)
-    .then(r=>r.json())
-    .then(rows=>{
-        let out = "<table width='100%' style='border-collapse:collapse;'>";
-        out += "<tr><th>ID</th><th>Client</th><th>Type</th><th>Status</th><th>Send On</th><th>Sent At</th></tr>";
-
-        rows.forEach(r=>{
-            out += `
-                <tr>
-                    <td>${r.id}</td>
-                    <td>${r.client_name}</td>
-                    <td>${r.reminder_type}</td>
-                    <td>${r.status}</td>
-                    <td>${r.send_on}</td>
-                    <td>${r.sent_at || ""}</td>
-                </tr>
-            `;
-        });
-
-        out += "</table>";
-        document.getElementById("reminders-list").innerHTML = out;
-    });
-}
-
-/* ✅ Auto-refresh chat + client list */
+/* ✅ AUTO REFRESH CLIENT LIST & CHAT */
 setInterval(() => {
-    if (clientId) loadChat();
     loadClients();
-}, 6000);
+    if (currentClient) loadChat();
+}, 5000);
 
-/* ✅ Initial Load */
-window.onload = loadClients;
+loadClients();
 </script>
 
 </body>
