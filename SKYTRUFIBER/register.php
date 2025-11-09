@@ -100,7 +100,7 @@ a:hover { text-decoration: underline; }
 
 <!-- 🟢 SkyTruFiber Logo Header -->
 <div class="logo-container">
-  <img src="SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+  <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
 </div>
 
 <form method="POST">
