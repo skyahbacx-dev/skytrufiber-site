@@ -24,7 +24,7 @@ body {
 /* Watermark behind everything */
 body::before {
   content: "";
-  background: url('SKYTRUFIBER.png') no-repeat center center;
+  background: url('../SKYTRUFIBER.png') no-repeat center center;
   background-size: 500px auto;
   opacity: 0.05;
   position: absolute;
@@ -73,7 +73,7 @@ body::before {
   flex: 1;
   padding: 15px;
   overflow-y: auto;
-  background: #f4fbff url('chat_bg_pattern.png') repeat; /* Optional background pattern */
+  background: #f4fbff url('../SKYTRUFIBER.png') repeat; /* Optional background pattern */
   background-size: 120px;
 }
 
@@ -147,7 +147,7 @@ body::before {
 <div class="chat-wrapper">
   <!-- Logo above chat -->
   <div class="logo-header">
-    <img src="SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+    <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
   </div>
 
   <!-- Chat header -->
