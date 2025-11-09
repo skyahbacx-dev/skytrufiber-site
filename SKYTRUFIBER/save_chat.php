@@ -1,11 +1,12 @@
 <?php
+session_start();
 include '../db_connect.php';
 header('Content-Type: application/json');
 
 $sender_type  = $_POST['sender_type'] ?? 'client';
 $message      = trim($_POST['message'] ?? '');
-$username     = trim($_POST['username'] ?? '');
-$client_id    = isset($_POST['client_id']) ? (int)$_POST['client_id'] : 0;
+$username     = $_SESSION['name'] ?? ($_POST['username'] ?? '');
+$account_number = $_SESSION['user'] ?? 0;
 $csr_user     = $_POST['csr_user'] ?? '';
 $csr_fullname = $_POST['csr_fullname'] ?? '';
 
@@ -15,10 +16,10 @@ if ($message === '') {
 }
 
 /* ===========================================================
-   1️⃣ CLIENT MESSAGE HANDLER
+   🧑‍💻 CLIENT MESSAGE HANDLER
    =========================================================== */
 if ($sender_type === 'client') {
-    // Find or create client
+    // Find or create client record
     $stmt = $conn->prepare("SELECT id, assigned_csr FROM clients WHERE name = :username LIMIT 1");
     $stmt->execute([':username' => $username]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -27,7 +28,7 @@ if ($sender_type === 'client') {
     $assigned_csr_full = '';
 
     if (!$row) {
-        // Pick a random online CSR
+        // Pick an online CSR randomly
         $csrQ = $conn->query("SELECT username, full_name FROM csr_users WHERE status='active' AND is_online=TRUE ORDER BY RANDOM() LIMIT 1");
         $csr = $csrQ->fetch(PDO::FETCH_ASSOC);
 
@@ -39,32 +40,36 @@ if ($sender_type === 'client') {
             $assigned_csr_full = '';
         }
 
-        // Create new client
-        $ins = $conn->prepare("INSERT INTO clients (name, assigned_csr, created_at) VALUES (:name, :csr, NOW()) RETURNING id");
-        $ins->execute([':name' => $username, ':csr' => $assigned_csr]);
+        // Create new client record
+        $ins = $conn->prepare("INSERT INTO clients (name, ip_address, assigned_csr, created_at) VALUES (:name, :ip, :csr, NOW()) RETURNING id");
+        $ins->execute([
+            ':name' => $username,
+            ':ip'   => $_SERVER['REMOTE_ADDR'] ?? '',
+            ':csr'  => $assigned_csr
+        ]);
         $client_id = $ins->fetchColumn();
     } else {
         $client_id = $row['id'];
         $assigned_csr = $row['assigned_csr'];
 
-        // Get full name of assigned CSR
+        // Get CSR’s full name
         $csrNameQ = $conn->prepare("SELECT full_name FROM csr_users WHERE username = :csr LIMIT 1");
         $csrNameQ->execute([':csr' => $assigned_csr]);
-        $csrName = $csrNameQ->fetchColumn();
-        $assigned_csr_full = $csrName ?: $assigned_csr;
+        $csr_fullname_result = $csrNameQ->fetchColumn();
+        $assigned_csr_full = $csr_fullname_result ?: $assigned_csr;
     }
 
-    // Save client message
+    // Save client’s message
     $stmt2 = $conn->prepare("INSERT INTO chat (client_id, sender_type, message, created_at) VALUES (:cid, 'client', :msg, NOW())");
     $stmt2->execute([':cid' => $client_id, ':msg' => $message]);
 
-    // Check if it’s the first chat, send automated greeting
+    // Send automated greeting if this is a new chat
     $existing = $conn->prepare("SELECT COUNT(*) FROM chat WHERE client_id = :cid");
     $existing->execute([':cid' => $client_id]);
     $count = $existing->fetchColumn();
 
     if ($count <= 2 && $assigned_csr !== 'Unassigned') {
-        $greeting = "👋 Hi $username! This is $assigned_csr_full from SkyTruFiber. Thank you for reaching out. How can I assist you today?";
+        $greeting = "👋 Hi $username! This is $assigned_csr_full from SkyTruFiber. Thanks for reaching out. How can I assist you today?";
         $stmt3 = $conn->prepare("
             INSERT INTO chat (client_id, sender_type, message, assigned_csr, csr_fullname, created_at)
             VALUES (:cid, 'csr', :msg, :csr, :csr_full, NOW())
@@ -82,9 +87,10 @@ if ($sender_type === 'client') {
 }
 
 /* ===========================================================
-   2️⃣ CSR MESSAGE HANDLER
+   🧑‍💼 CSR MESSAGE HANDLER
    =========================================================== */
-if ($sender_type === 'csr' && $client_id > 0) {
+if ($sender_type === 'csr' && isset($_POST['client_id'])) {
+    $client_id = (int)$_POST['client_id'];
     $stmt = $conn->prepare("
         INSERT INTO chat (client_id, sender_type, message, assigned_csr, csr_fullname, created_at)
         VALUES (:cid, 'csr', :msg, :csr, :csr_full, NOW())
@@ -101,7 +107,7 @@ if ($sender_type === 'csr' && $client_id > 0) {
 }
 
 /* ===========================================================
-   3️⃣ INVALID REQUEST
+   ⚠️ INVALID REQUEST HANDLER
    =========================================================== */
 echo json_encode(['status' => 'error', 'msg' => 'Invalid request']);
 ?>
