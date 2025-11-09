@@ -9,15 +9,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email']);
     $district = trim($_POST['district']);
     $barangay = trim($_POST['location']);
+    $date_installed = trim($_POST['date_installed']);
     $password = $account_number; // automatic password = account number
 
-    if ($account_number && $full_name && $email && $district && $barangay) {
+    if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
         $hash = password_hash($password, PASSWORD_BCRYPT);
 
         try {
             $stmt = $conn->prepare("
-                INSERT INTO users (account_number, full_name, email, password, district, barangay, created_at)
-                VALUES (:account_number, :full_name, :email, :password, :district, :barangay, NOW())
+                INSERT INTO users (account_number, full_name, email, password, district, barangay, date_installed, created_at)
+                VALUES (:account_number, :full_name, :email, :password, :district, :barangay, :date_installed, NOW())
             ");
             $stmt->execute([
                 ':account_number' => $account_number,
@@ -25,20 +26,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':email' => $email,
                 ':password' => $hash,
                 ':district' => $district,
-                ':barangay' => $barangay
+                ':barangay' => $barangay,
+                ':date_installed' => $date_installed
             ]);
 
-            header("Location: skytrufiber.php?registered=1");
+            echo "<script>
+                    alert('✅ Registration successful!');
+                    window.location.href='skytrufiber.php';
+                  </script>";
             exit;
         } catch (PDOException $e) {
             if (strpos($e->getMessage(), 'duplicate key') !== false) {
-                $message = "⚠️ Account number already exists.";
+                $message = '⚠️ Account number already exists.';
             } else {
-                $message = "Database error: " . htmlspecialchars($e->getMessage());
+                $message = 'Database error: ' . htmlspecialchars($e->getMessage());
             }
         }
     } else {
-        $message = "⚠️ Please fill in all required fields.";
+        $message = '⚠️ Please fill in all required fields.';
     }
 }
 ?>
@@ -75,14 +80,24 @@ form {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   width: 380px;
 }
-h2 { text-align: center; color: #004466; margin-bottom: 15px; }
-label { font-weight: 600; color: #004466; display: block; margin-top: 10px; }
+h2 {
+  text-align: center;
+  color: #004466;
+  margin-bottom: 15px;
+}
+label {
+  font-weight: 600;
+  color: #004466;
+  display: block;
+  margin-top: 10px;
+}
 input, select {
   width: 100%;
   padding: 10px;
   margin-top: 5px;
   border-radius: 8px;
   border: 1px solid #ccc;
+  font-size: 14px;
 }
 button {
   width: 100%;
@@ -123,8 +138,11 @@ a:hover { text-decoration: underline; }
   <select id="district" name="district" required>
     <option value="">Select District</option>
     <option value="District 1">District 1</option>
+    <option value="District 2">District 2</option>
     <option value="District 3">District 3</option>
     <option value="District 4">District 4</option>
+    <option value="District 5">District 5</option>
+    <option value="District 6">District 6</option>
   </select>
 
   <label for="location">Location (Barangay, Quezon City):</label>
@@ -132,16 +150,23 @@ a:hover { text-decoration: underline; }
     <option value="">Select your barangay</option>
   </select>
 
-  <button type="submit">Submit</button>
+  <label for="date_installed">📅 Date Installed:</label>
+  <input type="date" id="date_installed" name="date_installed" required>
+
+  <button type="submit">Register</button>
   <?php if ($message): ?><p class="message"><?= htmlspecialchars($message) ?></p><?php endif; ?>
   <p style="text-align:center; margin-top:10px;">Already registered? <a href="skytrufiber.php">Login here</a></p>
 </form>
 
 <script>
+// --- Barangays by District ---
 const barangays = {
   "District 1": ["Alicia (Bago Bantay)", "Bagong Pag-asa", "Bahay Toro", "Balingasa", "Bungad", "Del Monte"],
+  "District 2": ["Bagong Silangan", "Batasan Hills", "Commonwealth", "Holy Spirit", "Payatas"],
   "District 3": ["Camp Aguinaldo", "San Roque", "Silangan", "Socorro", "Bagumbayan"],
-  "District 4": ["Kamuning", "Kaunlaran", "Sacred Heart", "San Martin de Porres", "Santol"]
+  "District 4": ["Kamuning", "Kaunlaran", "Sacred Heart", "San Martin de Porres", "Santol"],
+  "District 5": ["Fairview", "North Fairview", "Greater Lagro", "Sta. Lucia", "San Bartolome"],
+  "District 6": ["Culiat", "Tandang Sora", "Sauyo", "Talipapa", "New Era"]
 };
 
 document.getElementById('district').addEventListener('change', function() {
@@ -155,6 +180,16 @@ document.getElementById('district').addEventListener('change', function() {
       locationSelect.appendChild(opt);
     });
   }
+});
+
+// --- Auto-fill date installed with today's date ---
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const formattedDate = `${yyyy}-${mm}-${dd}`;
+  document.getElementById('date_installed').value = formattedDate;
 });
 </script>
 
