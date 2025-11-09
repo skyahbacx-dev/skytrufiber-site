@@ -240,9 +240,7 @@
         <img src="../AHBALOGO.png" alt="AHBA Development Logo">
       </a>
 
-      <a href="https://www.homeaiddepot.com/" target="_blank" class="stf-trigger">
-        <img src="../HOMEAID.png" alt="HomeAid Depot Logo">
-      </a>
+      
 
       <!-- SkyTruFiber Dropdown -->
       <div class="stf-dropdown" tabindex="0">
