@@ -1,12 +1,23 @@
 <?php
+session_start();
 include '../db_connect.php';
-header('Content-Type: application/json');
+header('Content-Type: text/html; charset=UTF-8');
 
-$client_id = isset($_GET['client_id']) ? (int)$_GET['client_id'] : 0;
-$username  = trim($_GET['username'] ?? '');
+$username = trim($_SESSION['name'] ?? '');
+$client_id = $_SESSION['client_id'] ?? 0;
 
 /* ===========================================================
-   1️⃣ LOAD CHAT BY CLIENT ID (CSR Dashboard)
+   1️⃣ DETERMINE CLIENT ID FROM SESSION OR USERNAME
+   =========================================================== */
+if ($client_id == 0 && $username !== '') {
+    $stmt = $conn->prepare("SELECT id FROM clients WHERE name = :uname LIMIT 1");
+    $stmt->execute([':uname' => $username]);
+    $client_id = $stmt->fetchColumn();
+    if ($client_id) $_SESSION['client_id'] = $client_id;
+}
+
+/* ===========================================================
+   2️⃣ LOAD CHAT MESSAGES
    =========================================================== */
 if ($client_id > 0) {
     $stmt = $conn->prepare("
@@ -25,60 +36,31 @@ if ($client_id > 0) {
     $stmt->execute([':cid' => $client_id]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $messages = [];
     foreach ($rows as $row) {
-        $messages[] = [
-            'message' => $row['message'],
-            'sender_type' => $row['sender_type'],
-            'time' => date('Y-m-d H:i:s', strtotime($row['created_at'])),
-            'client_name' => $row['client_name'],
-            'assigned_csr' => $row['assigned_csr'],
-            'csr_fullname' => $row['csr_fullname']
-        ];
+        $time = date('H:i', strtotime($row['created_at']));
+        $senderType = $row['sender_type'];
+
+        // Class + name logic
+        if ($senderType === 'csr') {
+            $class = 'csr';
+            $senderName = htmlspecialchars($row['csr_fullname'] ?: 'CSR Agent');
+        } elseif ($senderType === 'client') {
+            $class = 'customer';
+            $senderName = htmlspecialchars($row['client_name']);
+        } else {
+            $class = 'system';
+            $senderName = 'System';
+        }
+
+        // Message bubble
+        echo "
+        <div class='message $class'>
+          <div><strong>$senderName:</strong> " . htmlspecialchars($row['message']) . "</div>
+          <div style='font-size:12px; color:#888;'>$time</div>
+        </div>
+        ";
     }
-
-    echo json_encode($messages);
-    exit;
+} else {
+    echo "<div class='message system'>No chat messages found.</div>";
 }
-
-/* ===========================================================
-   2️⃣ LOAD CHAT BY USERNAME (Client Chat)
-   =========================================================== */
-if ($username !== '') {
-    $stmt = $conn->prepare("
-        SELECT 
-            ch.message, 
-            ch.sender_type, 
-            ch.created_at, 
-            ch.assigned_csr,
-            ch.csr_fullname,
-            c.name AS client_name
-        FROM chat ch
-        JOIN clients c ON ch.client_id = c.id
-        WHERE c.name = :uname
-        ORDER BY ch.created_at ASC
-    ");
-    $stmt->execute([':uname' => $username]);
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    $messages = [];
-    foreach ($rows as $row) {
-        $messages[] = [
-            'message' => $row['message'],
-            'sender_type' => $row['sender_type'],
-            'time' => date('Y-m-d H:i:s', strtotime($row['created_at'])),
-            'client_name' => $row['client_name'],
-            'assigned_csr' => $row['assigned_csr'],
-            'csr_fullname' => $row['csr_fullname']
-        ];
-    }
-
-    echo json_encode($messages);
-    exit;
-}
-
-/* ===========================================================
-   3️⃣ DEFAULT FALLBACK
-   =========================================================== */
-echo json_encode([]);
 ?>
