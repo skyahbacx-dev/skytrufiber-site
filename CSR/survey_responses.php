@@ -21,32 +21,44 @@ $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBAL
 /* === AJAX HANDLERS === */
 if (isset($_GET['ajax'])) {
 
-  // ----- LOAD RESPONSES -----
+  // ----- LOAD BOTH TABLES -----
   if ($_GET['ajax'] === 'load') {
     $search = "%" . ($_GET['search'] ?? '') . "%";
     $from = $_GET['from'] ?? '';
     $to = $_GET['to'] ?? '';
 
-    $query = "
-      SELECT * FROM survey_responses
-      WHERE (client_name ILIKE :search OR account_name ILIKE :search OR location ILIKE :search OR feedback ILIKE :search)
-    ";
     $params = [':search' => $search];
 
+    // --- Load from survey_responses ---
+    $q1 = "
+      SELECT id, client_name, account_name, location, feedback AS remarks, created_at, 'survey_responses' AS source
+      FROM survey_responses
+      WHERE (client_name ILIKE :search OR account_name ILIKE :search OR location ILIKE :search OR feedback ILIKE :search)
+    ";
+
+    // --- Load from survey ---
+    $q2 = "
+      SELECT id, client_name, tech_name AS account_name, NULL AS location, remarks, created_at, 'survey' AS source
+      FROM survey
+      WHERE (client_name ILIKE :search OR tech_name ILIKE :search OR remarks ILIKE :search)
+    ";
+
     if ($from && $to) {
-      $query .= " AND DATE(created_at) BETWEEN :from AND :to";
+      $q1 .= " AND DATE(created_at) BETWEEN :from AND :to";
+      $q2 .= " AND DATE(created_at) BETWEEN :from AND :to";
       $params[':from'] = $from;
       $params[':to'] = $to;
     }
 
-    $query .= " ORDER BY created_at DESC";
+    // Union both tables
+    $query = "($q1) UNION ALL ($q2) ORDER BY created_at DESC";
     $stmt = $conn->prepare($query);
     $stmt->execute($params);
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     exit;
   }
 
-  // ----- UPDATE RESPONSE -----
+  // ----- UPDATE (survey_responses only) -----
   if ($_GET['ajax'] === 'update' && isset($_POST['id'])) {
     $id = (int)$_POST['id'];
     $client = trim($_POST['client_name'] ?? '');
@@ -76,7 +88,7 @@ if (isset($_GET['ajax'])) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Survey Responses — SkyTruFiber CSR Dashboard</title>
+<title>Survey & Feedback — SkyTruFiber CSR Dashboard</title>
 <style>
 body {
   font-family:"Segoe UI",Arial,sans-serif;
@@ -138,11 +150,7 @@ table {
 th, td { padding:12px 15px; text-align:left; border-bottom:1px solid #eee; }
 th { background:#009900; color:#fff; position:sticky; top:0; }
 tr:hover { background:#e6ffe6; }
-td.feedback {
-  white-space:pre-wrap;
-  word-break:break-word;
-  color:#333;
-}
+td.feedback { white-space:pre-wrap; word-break:break-word; color:#333; }
 td.date { color:#666; font-size:13px; }
 .edit-btn {
   background:#007a00; color:#fff; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;
@@ -179,7 +187,7 @@ td.date { color:#666; font-size:13px; }
   <h2><img src="<?= $logoPath ?>" alt="Logo"> Menu</h2>
   <a href="csr_dashboard.php">💬 Chat Dashboard</a>
   <a href="csr_dashboard.php?tab=mine">👥 My Clients</a>
-  <a href="survey_responses.php" style="background:#00b300;">📝 Survey Responses</a>
+  <a href="survey_responses.php" style="background:#00b300;">📝 Survey & Feedback</a>
   <a href="csr_logout.php">🚪 Logout</a>
 </div>
 
@@ -188,7 +196,7 @@ td.date { color:#666; font-size:13px; }
     <button id="hamburger" onclick="toggleSidebar()">☰</button>
     <div class="title">
       <img src="<?= $logoPath ?>" alt="Logo">
-      <span>Survey Responses — <?= htmlspecialchars($csr_fullname) ?></span>
+      <span>Survey & Feedback — <?= htmlspecialchars($csr_fullname) ?></span>
     </div>
     <a href="csr_logout.php">Logout</a>
   </header>
@@ -196,15 +204,15 @@ td.date { color:#666; font-size:13px; }
   <div id="tabs">
     <div class="tab" onclick="goTo('csr_dashboard.php')">💬 All Clients</div>
     <div class="tab" onclick="goTo('csr_dashboard.php?tab=mine')">👥 My Clients</div>
-    <div class="tab active">📝 Survey Responses</div>
+    <div class="tab active">📝 Surveys & Feedback</div>
   </div>
 
-  <h1>📝 Customer Feedback</h1>
+  <h1>📝 Combined Customer Feedback</h1>
 
   <div id="filters">
     <div>
       <label>Search:</label>
-      <input type="text" id="searchBox" placeholder="Client, Account, Feedback, or Location...">
+      <input type="text" id="searchBox" placeholder="Client, Technician, Feedback, or Location...">
     </div>
     <div>
       <label>From:</label>
@@ -218,15 +226,16 @@ td.date { color:#666; font-size:13px; }
   <div id="table-container"></div>
 </div>
 
+<!-- Edit Modal -->
 <div id="editModal">
   <div class="modal-content">
     <h3>Edit Survey Response</h3>
     <input type="hidden" id="editId">
     <label>Client Name:</label>
     <input type="text" id="editClient">
-    <label>Account Name:</label>
+    <label>Account/Technician Name:</label>
     <input type="text" id="editAccount">
-    <label>Location:</label>
+    <label>Location (if applicable):</label>
     <input type="text" id="editLocation">
     <label>Feedback:</label>
     <textarea id="editFeedback" rows="5"></textarea>
@@ -245,9 +254,8 @@ function toggleSidebar(){
 function goTo(url){window.location.href=url;}
 
 function escapeHTML(str){
-  return str.replace(/[&<>'"]/g, tag => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[tag]));
+  if(!str) return '';
+  return str.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[t]));
 }
 
 function loadTable(){
@@ -260,17 +268,21 @@ function loadTable(){
   .then(r=>r.json())
   .then(data=>{
     const cont=document.getElementById('table-container');
-    if(!data.length){cont.innerHTML='<div class="no-data">No survey responses found.</div>';return;}
-    let html='<table><thead><tr><th>#</th><th>Client</th><th>Account</th><th>Location</th><th>Feedback</th><th>Date</th><th>Action</th></tr></thead><tbody>';
+    if(!data.length){cont.innerHTML='<div class="no-data">No survey or feedback records found.</div>';return;}
+    let html='<table><thead><tr><th>#</th><th>Client</th><th>Account/Technician</th><th>Location</th><th>Feedback</th><th>Source</th><th>Date</th><th>Action</th></tr></thead><tbody>';
     data.forEach((r,i)=>{
       html+=`<tr>
         <td>${i+1}</td>
         <td>${escapeHTML(r.client_name||'')}</td>
         <td>${escapeHTML(r.account_name||'')}</td>
         <td>${escapeHTML(r.location||'')}</td>
-        <td class="feedback">${escapeHTML(r.feedback||'')}</td>
+        <td class="feedback">${escapeHTML(r.remarks||'')}</td>
+        <td>${r.source==='survey'?'🧾 Survey':'🗂️ Response'}</td>
         <td class="date">${new Date(r.created_at).toLocaleString()}</td>
-        <td><button class="edit-btn" onclick="openModal(${r.id},'${escapeHTML(r.client_name||'')}','${escapeHTML(r.account_name||'')}','${escapeHTML(r.location||'')}','${escapeHTML(r.feedback||'')}')">Edit</button></td>
+        <td>${r.source==='survey_responses'
+          ? `<button class="edit-btn" onclick="openModal(${r.id},'${escapeHTML(r.client_name)}','${escapeHTML(r.account_name)}','${escapeHTML(r.location)}','${escapeHTML(r.remarks)}')">Edit</button>`
+          : `<span style='color:#777;'>Read-only</span>`}
+        </td>
       </tr>`;
     });
     html+='</tbody></table>';
@@ -300,8 +312,8 @@ function saveChanges(){
     headers:{'Content-Type':'application/x-www-form-urlencoded'},
     body:new URLSearchParams({id,client_name:client,account_name:account,location,feedback})
   }).then(r=>r.text()).then(resp=>{
-    if(resp==='ok'){alert('Survey updated successfully!');closeModal();loadTable();}
-    else alert('Failed to update.');
+    if(resp==='ok'){alert('✅ Survey updated successfully!');closeModal();loadTable();}
+    else alert('❌ Failed to update.');
   });
 }
 
