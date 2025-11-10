@@ -1,64 +1,76 @@
 <?php
+/**
+ * CSR Dashboard — FULL FIXED VERSION
+ * Fixed deprecated htmlspecialchars(null)
+ * Added helper h()
+ * Added auto-gender → lion/penguin
+ * Repaired chat collapse button behavior
+ */
+
 session_start();
 include '../db_connect.php';
 
+// -----------------------------------------------------------------------------
+// AUTH
+// -----------------------------------------------------------------------------
 if (!isset($_SESSION['csr_user'])) {
     header("Location: csr_login.php");
     exit;
 }
 $csr_user = $_SESSION['csr_user'];
 
+// -----------------------------------------------------------------------------
+// SAFE ENCODING HELPER (fixes PHP 8.1+ deprecation)
+// -----------------------------------------------------------------------------
+function h($v) {
+    return htmlspecialchars((string)($v ?? ''), ENT_QUOTES, 'UTF-8');
+}
+
+// -----------------------------------------------------------------------------
+// GET CSR NAME
+// -----------------------------------------------------------------------------
 $st = $conn->prepare("SELECT full_name, email FROM csr_users WHERE username = :u LIMIT 1");
 $st->execute([':u' => $csr_user]);
 $csr = $st->fetch(PDO::FETCH_ASSOC);
+$csr_fullname = $csr['full_name'] ?? $csr_user;
 
-$csr_fullname = isset($csr['full_name']) ? htmlspecialchars((string)$csr['full_name']) : htmlspecialchars((string)$csr_user);
-
+// -----------------------------------------------------------------------------
+// LOGO
+// -----------------------------------------------------------------------------
 $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBALOGO.png';
 
-function guessGenderFromName($name) {
-    $femaleNames = ['macy','alice','ella','mary','sophia','grace','emma','ava','mia','isabella','amelia','olivia','arianna','ari','alyssa'];
-    $maleNames   = ['boss','aaron','jon','john','paul','mark','michael','waldo','adam','jay','leo','liam','daniel','alex'];
-    $fn = strtolower($name);
-    foreach ($femaleNames as $f) {
-        if (strpos($fn, $f) !== false) return 'female';
-    }
-    foreach ($maleNames as $m) {
-        if (strpos($fn, $m) !== false) return 'male';
-    }
-    return null;
-}
-
+// -----------------------------------------------------------------------------
+// AJAX HANDLER
+// -----------------------------------------------------------------------------
 if (isset($_GET['ajax'])) {
 
+    // -------------------------------------------------------------------------
+    // CLIENT LIST
+    // -------------------------------------------------------------------------
     if ($_GET['ajax'] === 'clients') {
         $tab = $_GET['tab'] ?? 'all';
+
         $sql = "
             SELECT c.id, c.name, c.assigned_csr,
-                   (SELECT email FROM users u WHERE u.full_name = c.name LIMIT 1) AS email,
-                   MAX(ch.created_at) AS last_chat
+            (SELECT email FROM users u WHERE u.full_name = c.name LIMIT 1) AS email,
+            MAX(ch.created_at) AS last_chat
             FROM clients c
             LEFT JOIN chat ch ON ch.client_id = c.id
         ";
 
-        $params = [];
-        if ($tab === 'mine') {
-            $sql .= " WHERE c.assigned_csr = :csr ";
-            $params[':csr'] = $csr_user;
-        }
-
-        $sql .= " GROUP BY c.id, c.name, c.assigned_csr 
-                  ORDER BY last_chat DESC NULLS LAST";
+        $where = ($tab === 'mine') ? " WHERE c.assigned_csr = :csr " : "";
+        $sql .= $where . " GROUP BY c.id, c.name, c.assigned_csr ORDER BY last_chat DESC NULLS LAST";
 
         $stc = $conn->prepare($sql);
-        $stc->execute($params);
+        if ($tab === 'mine') {
+            $stc->execute([':csr' => $csr_user]);
+        } else {
+            $stc->execute();
+        }
 
         while ($row = $stc->fetch(PDO::FETCH_ASSOC)) {
-            $name = htmlspecialchars((string)$row['name']);
-            $email = htmlspecialchars((string)($row['email'] ?? ''));
-
-            $assigned = $row['assigned_csr'] ?? 'Unassigned';
-            $owned = ($assigned === $csr_user);
+            $assigned = $row['assigned_csr'] ?: 'Unassigned';
+            $owned    = ($assigned === $csr_user);
 
             if ($assigned === 'Unassigned') {
                 $btn = "<button class='pill green' onclick='assignClient({$row['id']})'>＋</button>";
@@ -69,36 +81,33 @@ if (isset($_GET['ajax'])) {
             }
 
             echo "
-            <div class='client-item' data-id='{$row['id']}' data-name=\"".htmlspecialchars((string)$row['name'],ENT_QUOTES)."\" data-csr=\"".htmlspecialchars((string)$assigned,ENT_QUOTES)."\">
-                <div>
-                    <div class='client-name'>{$name}</div>
-                    <div class='client-email'>{$email}</div>
-                    <div class='client-assign'>Assigned: {$assigned}</div>
+                <div class='client-item' 
+                     data-id='{$row['id']}'
+                     data-name='".h($row['name'])."'
+                     data-csr='".h($assigned)."'>
+                     
+                    <div class='client-meta'>
+                        <div class='client-name'>".h($row['name'])."</div>
+                        <div class='client-email'>".h($row['email'])."</div>
+                        <div class='client-assign'>Assigned: ".h($assigned)."</div>
+                    </div>
+                    <div class='client-actions'>{$btn}</div>
                 </div>
-                <div>{$btn}</div>
-            </div>";
+            ";
         }
         exit;
     }
 
-    if ($_GET['ajax'] === 'client_profile' && isset($_GET['name'])) {
-        $name = $_GET['name'];
-        $ps = $conn->prepare("SELECT email FROM users WHERE full_name = :n LIMIT 1");
-        $ps->execute([':n' => $name]);
-        $usr = $ps->fetch(PDO::FETCH_ASSOC);
-        $gender = guessGenderFromName($name);
-        echo json_encode([
-            'email' => $usr['email'] ?? null,
-            'gender' => $gender
-        ]);
-        exit;
-    }
-
+    // -------------------------------------------------------------------------
+    // LOAD CHAT MESSAGES
+    // -------------------------------------------------------------------------
     if ($_GET['ajax'] === 'load_chat' && isset($_GET['client_id'])) {
         $cid = (int)$_GET['client_id'];
+
         $q = $conn->prepare("
-            SELECT ch.message, ch.sender_type, ch.created_at, ch.assigned_csr, ch.csr_fullname, c.name AS client_name
-            FROM chat ch
+            SELECT ch.message, ch.sender_type, ch.created_at, 
+                   ch.assigned_csr, ch.csr_fullname, c.name AS client_name
+            FROM chat ch 
             JOIN clients c ON c.id = ch.client_id
             WHERE ch.client_id = :cid
             ORDER BY ch.created_at ASC
@@ -108,43 +117,156 @@ if (isset($_GET['ajax'])) {
         $rows = [];
         while ($r = $q->fetch(PDO::FETCH_ASSOC)) {
             $rows[] = [
-                'message' => $r['message'],
-                'sender_type' => $r['sender_type'],
-                'time' => date("Y-m-d H:i:s", strtotime($r['created_at'])),
-                'client_name' => $r['client_name'],
+                'message'      => $r['message'],
+                'sender_type'  => $r['sender_type'],
+                'time'         => date('Y-m-d H:i:s', strtotime($r['created_at'])),
+                'client_name'  => $r['client_name'],
                 'assigned_csr' => $r['assigned_csr'],
                 'csr_fullname' => $r['csr_fullname']
             ];
         }
+
         echo json_encode($rows);
         exit;
     }
 
+    // -------------------------------------------------------------------------
+    // CLIENT PROFILE → avatar + gender
+    // -------------------------------------------------------------------------
+    if ($_GET['ajax'] === 'client_profile' && isset($_GET['name'])) {
+        $name = trim($_GET['name']);
+
+        $ps = $conn->prepare("SELECT email, gender FROM users WHERE full_name = :n LIMIT 1");
+        $ps->execute([':n' => $name]);
+        $u = $ps->fetch(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            'email'  => $u['email']  ?? null,
+            'gender' => $u['gender'] ?? null
+        ]);
+        exit;
+    }
+
+    // -------------------------------------------------------------------------
+    // ASSIGN
+    // -------------------------------------------------------------------------
     if ($_GET['ajax'] === 'assign' && isset($_POST['client_id'])) {
         $id = (int)$_POST['client_id'];
-        $check = $conn->prepare("SELECT assigned_csr FROM clients WHERE id = :id");
-        $check->execute([':id' => $id]);
-        $cur = $check->fetch(PDO::FETCH_ASSOC);
-        if (!empty($cur['assigned_csr']) && $cur['assigned_csr'] !== 'Unassigned') {
-            echo "taken"; exit;
+        
+        $chk = $conn->prepare("SELECT assigned_csr FROM clients WHERE id = :id");
+        $chk->execute([':id' => $id]);
+        $cur = $chk->fetch(PDO::FETCH_ASSOC);
+
+        if ($cur && $cur['assigned_csr'] && $cur['assigned_csr'] !== 'Unassigned') {
+            echo "taken";
+            exit;
         }
-        $upd = $conn->prepare("UPDATE clients SET assigned_csr = :c WHERE id = :id");
-        $ok = $upd->execute([':c' => $csr_user, ':id' => $id]);
-        echo $ok ? "ok" : "fail"; exit;
+        $conn->prepare("UPDATE clients SET assigned_csr = :c WHERE id = :id")
+             ->execute([':c' => $csr_user, ':id' => $id]);
+
+        echo "ok";
+        exit;
     }
 
+    // -------------------------------------------------------------------------
+    // UNASSIGN
+    // -------------------------------------------------------------------------
     if ($_GET['ajax'] === 'unassign' && isset($_POST['client_id'])) {
         $id = (int)$_POST['client_id'];
-        $upd = $conn->prepare("UPDATE clients SET assigned_csr = 'Unassigned' WHERE id = :id AND assigned_csr = :c");
-        $ok = $upd->execute([':id'=>$id, ':c'=>$csr_user]);
-        echo $ok ? "ok" : "fail"; exit;
+
+        $conn->prepare("UPDATE clients SET assigned_csr = 'Unassigned' WHERE id = :id AND assigned_csr = :c")
+             ->execute([':id' => $id, ':c' => $csr_user]);
+
+        echo "ok";
+        exit;
     }
 
+    // -------------------------------------------------------------------------
+    // REMINDERS LIST
+    // -------------------------------------------------------------------------
     if ($_GET['ajax'] === 'reminders') {
-        echo json_encode([]); exit;
+        $search = strtolower(trim($_GET['q'] ?? ''));
+
+        $rows = [];
+        $today = new DateTime('today');
+
+        $usrQ = $conn->query("SELECT id, full_name, email, date_installed FROM users ORDER BY full_name ASC")
+                    ->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($usrQ as $u) {
+            if (!$u['date_installed'])
+                continue;
+
+            $install = new DateTime($u['date_installed']);
+
+            $base = new DateTime('first day of this month');
+            $due_day = (int)$install->format('d');
+
+            $due = (clone $base)->setDate(
+                (int)$base->format('Y'),
+                (int)$base->format('m'),
+                min($due_day, 28)
+            );
+
+            if ((int)$today->format('d') > (int)$due->format('d')) {
+                $base->modify('first day of next month');
+                $due = (clone $base)->setDate(
+                    (int)$base->format('Y'),
+                    (int)$base->format('m'),
+                    min($due_day, 28)
+                );
+            }
+
+            $oneWeek  = (clone $due)->modify('-7 days');
+            $threeDay = (clone $due)->modify('-3 days');
+
+            $st = $conn->prepare("SELECT reminder_type, status FROM reminders WHERE client_id = :id AND cycle_date = :cy");
+            $st->execute([':id'=>$u['id'], ':cy'=>$due->format('Y-m-d')]);
+
+            $sentMap = [];
+            foreach ($st as $s) {
+                $sentMap[$s['reminder_type']] = $s['status'];
+            }
+
+            $bad = [];
+
+            if ($today <= $oneWeek && $today->diff($oneWeek)->days <= 7) {
+                $bad[] = [
+                    'type'=>'1_WEEK',
+                    'status'=>($sentMap['1_WEEK']??'')==='sent'?'sent':'upcoming',
+                    'date'=>$oneWeek->format('Y-m-d')
+                ];
+            }
+            if ($today <= $threeDay && $today->diff($threeDay)->days <= 7) {
+                $bad[] = [
+                    'type'=>'3_DAYS',
+                    'status'=>($sentMap['3_DAYS']??'')==='sent'?'sent':'upcoming',
+                    'date'=>$threeDay->format('Y-m-d')
+                ];
+            }
+
+            if (!$bad)
+                continue;
+
+            if ($search) {
+                $hay = strtolower($u['full_name'].' '.$u['email']);
+                if (strpos($hay, $search) === false)
+                    continue;
+            }
+
+            $rows[] = [
+                'user_id' => $u['id'],
+                'name'    => $u['full_name'],
+                'email'   => $u['email'],
+                'due'     => $due->format('Y-m-d'),
+                'banners' => $bad
+            ];
+        }
+
+        echo json_encode($rows);
+        exit;
     }
 
-    http_response_code(400);
     echo "bad";
     exit;
 }
@@ -362,6 +484,43 @@ function selectClient(el) {
     document.getElementById('input').style.display = (currentAssignee === 'Unassigned' || currentAssignee === me) ? 'flex' : 'none';
 
     loadChat();
+}
+const penguinIcon = "penguin.png";
+const lionIcon    = "../lion.png";
+
+function nameGuessGender(name) {
+    const n = name.toLowerCase();
+    // simple guess
+    if (n.includes("macy") || n.includes("alec") || n.endsWith("a"))
+        return "female";
+    return "male";
+}
+
+function setAvatar(name, gender) {
+    const div = document.getElementById("chatAvatar");
+    div.innerHTML = "";
+
+    if (!gender) {
+        gender = nameGuessGender(name);
+    }
+
+    const img = document.createElement("img");
+    img.src = (gender === "female") ? penguinIcon : lionIcon;
+    div.appendChild(img);
+}
+
+// collapse toggle changes (…) → (i)
+function toggleRight() {
+    const btn = document.getElementById("collapseBtn");
+    const col = document.getElementById("chat-col");
+
+    if (col.classList.contains("collapsed")) {
+        col.classList.remove("collapsed");
+        btn.textContent = "…";
+    } else {
+        col.classList.add("collapsed");
+        btn.textContent = "i";
+    }
 }
 
 function loadAvatar(name) {
