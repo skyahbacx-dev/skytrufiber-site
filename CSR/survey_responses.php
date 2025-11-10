@@ -1,156 +1,260 @@
 <?php
 session_start();
-include "../db_connect.php";
+include '../db_connect.php';
 
 if (!isset($_SESSION['csr_user'])) {
     header("Location: csr_login.php");
     exit;
 }
 
-$search = trim($_GET['search'] ?? "");
-$sort = $_GET['sort'] ?? "id";
-$order = ($_GET['order'] ?? "ASC") === "DESC" ? "DESC" : "ASC";
+// Logo used for PDF
+$logoPath = file_exists("AHBALOGO.png") ? "AHBALOGO.png" : "../SKYTRUFIBER/AHBALOGO.png";
 
-$perPage = 20;
-$page = max(1, intval($_GET['page'] ?? 1));
-$offset = ($page - 1) * $perPage;
+// Pagination settings
+$limit = 10;
+$page  = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $limit;
 
-// Build search filter
-$filter = "";
+// Search
+$search = isset($_GET['search']) ? trim($_GET['search']) : "";
+
+// Sorting
+$sort = isset($_GET['sort']) ? $_GET['sort'] : "created_at";
+$dir  = isset($_GET['dir']) && strtolower($_GET['dir']) === "asc" ? "ASC" : "DESC";
+
+// Accepted columns (prevent SQL injection)
+$allowedSort = ["client_name", "account_number", "district", "location", "feedback", "created_at"];
+if (!in_array($sort, $allowedSort)) $sort = "created_at";
+
+// Search SQL
+$cond = "";
+$params = [];
+
 if ($search !== "") {
-    $filter = "WHERE full_name ILIKE :s OR email ILIKE :s OR account_number ILIKE :s";
+    $cond = "WHERE client_name ILIKE :s OR account_number ILIKE :s OR district ILIKE :s OR location ILIKE :s OR email ILIKE :s";
+    $params[':s'] = "%$search%";
 }
 
-// Fetch total rows
-$tc = $conn->prepare("SELECT COUNT(*) FROM survey_responses $filter");
-if ($filter) $tc->execute([':s'=>"%$search%"]);
-else $tc->execute();
-$total = $tc->fetchColumn();
-$pages = ceil($total / $perPage);
+// Count rows
+$countQuery = $conn->prepare("SELECT COUNT(*) FROM survey_responses $cond");
+$countQuery->execute($params);
+$totalRows = $countQuery->fetchColumn();
+$totalPages = max(1, ceil($totalRows / $limit));
 
-// Fetch paginated survey data
-$q = $conn->prepare("
-    SELECT *
+// Get paginated data
+$query = $conn->prepare("
+    SELECT id, client_name, account_number, district, location, email, feedback, created_at
     FROM survey_responses
-    $filter
-    ORDER BY $sort $order
-    LIMIT :pp OFFSET :off
+    $cond
+    ORDER BY $sort $dir
+    LIMIT $limit OFFSET $offset
 ");
+$query->execute($params);
+$rows = $query->fetchAll(PDO::FETCH_ASSOC);
 
-if ($filter) $q->bindValue(":s", "%$search%", PDO::PARAM_STR);
-$q->bindValue(":pp", $perPage, PDO::PARAM_INT);
-$q->bindValue(":off", $offset, PDO::PARAM_INT);
+// CSV export
+if (isset($_GET['export']) && $_GET['export'] === "csv") {
+    header("Content-Type: text/csv");
+    header("Content-Disposition: attachment; filename=survey_responses.csv");
 
-$q->execute();
-$data = $q->fetchAll(PDO::FETCH_ASSOC);
+    $out = fopen("php://output", "w");
+    fputcsv($out, ["ID", "Client Name", "Account Number", "District", "Location", "Email", "Feedback", "Date Installed"]);
+
+    foreach ($rows as $r) {
+        fputcsv($out, [
+            $r['id'],
+            $r['client_name'],
+            $r['account_number'],
+            $r['district'],
+            $r['location'],
+            $r['email'],
+            $r['feedback'],
+            date('Y-m-d', strtotime($r['created_at']))
+        ]);
+    }
+    fclose($out);
+    exit;
+}
+
+// PDF export (fallback)
+if (isset($_GET['export']) && $_GET['export'] === "pdf") {
+    header("Content-Type: application/pdf");
+    header("Content-Disposition: attachment; filename=survey_responses.pdf");
+
+    echo "%PDF-1.4\n";
+    echo "Survey Responses Export\n";
+    exit;
+}
+
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <title>Survey Responses</title>
+<link rel="stylesheet" href="../css/csr_styles.css">
 <style>
-body { font-family: Arial; background: #f2f2f2; margin: 0; padding: 20px; }
-.container { background: #fff; padding: 20px; border-radius: 12px; }
-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-th, td { padding: 8px 10px; border-bottom: 1px solid #ccc; }
-th { background: #0aa05b; color: #fff; cursor: pointer; }
-tr:hover { background: #f9f9f9; }
-input.search { padding: 8px; width: 300px; border-radius: 8px; border: 1px solid #ccc; }
-button { padding: 8px 12px; border-radius: 8px; border: none; cursor: pointer; margin-right: 5px; }
-.export-btn { background: #1976d2; color: #fff; }
-.print-btn { background: #444; color: #fff; }
+/* Extra table styling */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+}
+
+th {
+    padding: 10px;
+    background: #0aa05b;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #e4e4e4;
+}
+
+tr:hover {
+    background: #f8fff9;
+}
+.search-box {
+    margin: 15px 0;
+}
+.btn {
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.btn-csv {
+    background: #0aa05b;
+    color: #fff;
+}
+
+.btn-pdf {
+    background: #ff5252;
+    color: #fff;
+}
+
+.pagination {
+    margin-top: 15px;
+}
+
 .pagination a {
-    padding: 5px 10px; margin: 0 2px; text-decoration: none; border-radius: 6px; border: 1px solid #ccc;
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 2px;
+    border: 1px solid #0aa05b;
+    color: #0aa05b;
+    border-radius: 6px;
+    text-decoration: none;
 }
-.pagination a.active { background: #0aa05b; color: #fff; border: 1px solid #0aa05b; }
+
+.pagination a.active {
+    background: #0aa05b;
+    color: white;
+}
 </style>
-<script>
-function sort(col) {
-    let url = new URL(window.location.href);
-    let curSort = url.searchParams.get("sort");
-    let curOrder = url.searchParams.get("order");
-
-    let order = "ASC";
-    if (curSort === col && curOrder === "ASC") {
-        order = "DESC";
-    }
-    url.searchParams.set("sort", col);
-    url.searchParams.set("order", order);
-    window.location.href = url.toString();
-}
-
-function exportCSV() {
-    window.location.href = "survey_export_csv.php";
-}
-
-function exportPDF() {
-    window.location.href = "survey_export_pdf.php";
-}
-
-function printView() {
-    window.print();
-}
-</script>
 </head>
+
 <body>
 
-<div class="container">
+<!-- HEADER / NAV BAR -->
+<header class="csr-header">
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+    <div class="brand">
+        <img src="<?= $logoPath ?>" alt="Logo">
+        <span>CSR Dashboard — Survey Responses</span>
+    </div>
+</header>
+
+<!-- SIDEBAR -->
+<?php include "sidebar.php"; ?>
+
+<!-- TABS -->
+<div class="tabs">
+    <div class="tab" onclick="location.href='csr_dashboard.php'">💬 All Clients</div>
+    <div class="tab" onclick="location.href='csr_dashboard.php?tab=mine'">👤 My Clients</div>
+    <div class="tab" onclick="location.href='csr_dashboard.php?tab=rem'">⏰ Reminders</div>
+    <div class="tab active">📝 Survey Responses</div>
+    <div class="tab" onclick="location.href='update_profile.php'">👤 Edit Profile</div>
+</div>
+
+<!-- CONTENT -->
+<div style="padding:20px;">
+
     <h2>Survey Responses</h2>
 
-    <form method="GET" style="margin-bottom: 10px;">
-        <input type="text" name="search" class="search" placeholder="Search name/email/account..." value="<?= htmlspecialchars($search) ?>">
-        <button type="submit">Search</button>
+    <form method="GET" class="search-box">
+        <input type="text" name="search" placeholder="Search..." value="<?= htmlspecialchars($search ?? "", ENT_QUOTES) ?>">
+        <button class="btn" type="submit">Search</button>
+        <button class="btn-csv" type="submit" name="export" value="csv">Export CSV</button>
+        <button class="btn-pdf" type="submit" name="export" value="pdf">Export PDF</button>
     </form>
 
-    <button class="export-btn" onclick="exportCSV()">Export CSV</button>
-    <button class="export-btn" onclick="exportPDF()">Export PDF</button>
-    <button class="print-btn" onclick="printView()">Print</button>
-
-    <table cellspacing="0" cellpadding="0">
-        <thead>
-            <tr>
-                <th onclick="sort('id')">ID</th>
-                <th onclick="sort('full_name')">Client Name</th>
-                <th onclick="sort('account_number')">Account Number</th>
-                <th onclick="sort('district')">District</th>
-                <th onclick="sort('barangay')">Barangay</th>
-                <th onclick="sort('location')">Location</th>
-                <th onclick="sort('email')">Email</th>
-                <th onclick="sort('feedback')">Feedback</th>
-                <th onclick="sort('date_installed')">Date Installed</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if (!$data): ?>
-                <tr><td colspan="9" style="text-align:center;">No data found</td></tr>
-            <?php else: ?>
-                <?php foreach ($data as $row): ?>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th onclick="sortBy('id')">ID</th>
+                    <th onclick="sortBy('client_name')">Client Name</th>
+                    <th onclick="sortBy('account_number')">Account Number</th>
+                    <th onclick="sortBy('district')">District</th>
+                    <th onclick="sortBy('location')">Location</th>
+                    <th onclick="sortBy('email')">Email</th>
+                    <th onclick="sortBy('feedback')">Feedback</th>
+                    <th onclick="sortBy('created_at')">Date Installed</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($rows as $r): ?>
                     <tr>
-                        <td><?= $row['id'] ?></td>
-                        <td><?= htmlspecialchars($row['full_name']) ?></td>
-                        <td><?= htmlspecialchars($row['account_number']) ?></td>
-                        <td><?= htmlspecialchars($row['district']) ?></td>
-                        <td><?= htmlspecialchars($row['barangay']) ?></td>
-                        <td><?= htmlspecialchars($row['location']) ?></td>
-                        <td><?= htmlspecialchars($row['email']) ?></td>
-                        <td><?= htmlspecialchars($row['feedback']) ?></td>
-                        <td><?= htmlspecialchars($row['date_installed']) ?></td>
+                        <td><?= htmlspecialchars($r['id']) ?></td>
+                        <td><?= htmlspecialchars($r['client_name'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($r['account_number'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($r['district'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($r['location'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($r['email'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($r['feedback'] ?? '') ?></td>
+                        <td><?= date('Y-m-d', strtotime($r['created_at'])) ?></td>
                     </tr>
                 <?php endforeach; ?>
-            <?php endif; ?>
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
 
+    <!-- PAGINATION -->
     <div class="pagination">
-        <?php for ($i=1; $i <= $pages; $i++): ?>
-            <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&sort=<?= $sort ?>&order=<?= $order ?>"
-                class="<?= ($i == $page) ? "active" : "" ?>">
-            <?= $i ?>
-            </a>
+        <?php for ($i=1; $i<=$totalPages; $i++): ?>
+            <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&sort=<?= $sort ?>&dir=<?= $dir ?>" 
+               class="<?= $i==$page?'active':'' ?>"><?= $i ?></a>
         <?php endfor; ?>
     </div>
 
 </div>
+
+<script>
+function sortBy(column) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("sort", column);
+
+    let currentDir = url.searchParams.get("dir") || "DESC";
+    url.searchParams.set("dir", currentDir === "DESC" ? "ASC" : "DESC");
+
+    window.location.href = url.toString();
+}
+</script>
 
 </body>
 </html>
