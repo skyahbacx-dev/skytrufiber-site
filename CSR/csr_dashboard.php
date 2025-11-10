@@ -229,7 +229,7 @@ header{
   height:60px;background:var(--green);color:#fff;display:flex;align-items:center;
   padding:0 16px;gap:12px;justify-content:space-between;font-weight:700
 }
-.brand{display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:9px}
 .brand img{height:38px}
 
 /* sidebar */
@@ -340,7 +340,7 @@ header{
   <a href="javascript:void(0)" onclick="switchTab('mine')">👤 My Clients</a>
   <a href="javascript:void(0)" onclick="switchTab('rem')">⏰ Reminders</a>
   <a href="survey_responses.php">📝 Survey Responses</a>
-  <a href="edit_profile.php">👤 Edit Profile</a>
+  <a href="update_profile.php">👤 Edit Profile</a>
   <a href="csr_logout.php">🚪 Logout</a>
 </div>
 
@@ -358,7 +358,7 @@ header{
   <div id="tab-mine" class="tab"         onclick="switchTab('mine')">👤 My Clients</div>
   <div id="tab-rem"  class="tab"         onclick="switchTab('rem')">⏰ Reminders</div>
   <div class="tab" onclick="location.href='survey_responses.php'">📝 Surveys</div>
-  <div class="tab" onclick="location.href='edit_profile.php'">👤 Edit Profile</div>
+  <div class="tab" onclick="location.href='update_profile.php'">👤 Edit Profile</div>
 </div>
 
 <!-- Main layout -->
