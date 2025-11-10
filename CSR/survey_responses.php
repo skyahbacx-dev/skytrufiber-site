@@ -294,7 +294,7 @@ tr:hover { background:#eefbee; }
 
         <button onclick="exportExcel()" style="background:#003399;color:white;border:none;border-radius:6px;padding:8px 12px;">Excel</button>
 
-        <button onclick="exportPDF()" style="background:#7a00cc;color:white;border:none;border-radius:6px;padding:8px 12px;">PDF</button>
+        <button onclick="window.open('export_pdf.php?search='+search+'&from='+from+'&to='+to+'&month='+month)">📄 PDF</button>
 
         <button onclick="printView()" style="background:#444;color:white;border:none;border-radius:6px;padding:8px 12px;">Print</button>
     </div>
