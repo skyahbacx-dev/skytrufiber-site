@@ -1,258 +1,253 @@
-<?php
-include '../db_connect.php';
-header('Content-Type: text/html; charset=UTF-8');
-
-$username = $_GET['username'] ?? 'Guest';
-
-/* =======================
-   FETCH ASSIGNED CSR
-   ======================= */
-try {
-    $stmt = $conn->prepare("
-        SELECT assigned_csr, csr_fullname 
-        FROM chat 
-        WHERE client_id = (
-            SELECT id FROM clients WHERE username = :username LIMIT 1
-        )
-        ORDER BY created_at DESC 
-        LIMIT 1
-    ");
-    $stmt->execute([':username' => $username]);
-    $chatInfo = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    $csr_fullname = $chatInfo['csr_fullname'] ?? 'No CSR Assigned';
-    $csr_name_display = $csr_fullname !== 'No CSR Assigned' ? htmlspecialchars($csr_fullname) : 'CSR Support Team';
-} catch (PDOException $e) {
-    $csr_name_display = 'CSR Support';
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SkyTruFiber Support Chat</title>
+<title>SkyTruFiber Live Support</title>
 <style>
-/* ===== BASE LAYOUT ===== */
+
+/* ========================================= */
+/* 🌈 GLOBAL DESIGN IMPROVED                 */
+/* ========================================= */
+
 body {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
   margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(135deg, #bfe6ff, #e7f6ff);
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  position: relative;
   overflow: hidden;
+  position: relative;
 }
 
-/* ===== PAGE WATERMARK ===== */
+/* Watermark logo */
 body::before {
   content: "";
-  background: url('../SKYTRUFIBER.png') no-repeat center center;
-  background-size: clamp(250px, 35vw, 550px);
-  opacity: 0.05;
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 0;
+  inset: 0;
+  background: url('../SKYTRUFIBER.png') center center no-repeat;
+  background-size: 350px;
+  opacity: 0.10;
   filter: grayscale(100%);
+  z-index: 0;
 }
 
-/* ===== CHAT WRAPPER ===== */
-.chat-wrapper {
-  background: rgba(255, 255, 255, 0.97);
-  border-radius: 15px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  width: 450px;
-  max-width: 95%;
+/* Outer chat container */
+.chat-box-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 430px;
+  max-width: 94%;
+  height: 89vh;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.18);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  z-index: 1;
+  border: 1px solid rgba(0,0,0,0.05);
 }
 
-/* ===== LOGO ABOVE CHAT ===== */
-.logo-header {
+/* ========================================= */
+/* 🌟 HEADER                                  */
+/* ========================================= */
+.header {
+  background: linear-gradient(135deg, #0088cc, #00a5dd);
+  padding: 16px;
+  color: #fff;
   text-align: center;
-  background: #ffffff;
-  padding: 20px 10px 10px;
-}
-.logo-header img {
-  width: 120px;
-  border-radius: 50%;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  border-bottom: 2px solid rgba(255,255,255,0.3);
 }
 
-/* ===== CHAT HEADER ===== */
-.chat-header {
-  background: #0099cc;
-  color: white;
-  padding: 12px;
-  text-align: center;
-  font-weight: bold;
-  font-size: 16px;
-  border-top: 2px solid #007a99;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.header-title {
+  font-size: 18px;
+  font-weight: 600;
 }
 
-/* ===== CHAT AREA ===== */
-.chat-box {
+.header-sub {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+/* Logo on top of header */
+.chat-logo {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  margin: 10px auto 0;
+  display: block;
+  filter: drop-shadow(0px 3px 5px rgba(0,0,0,0.2));
+}
+
+/* ========================================= */
+/* 💬 MESSAGES AREA                           */
+/* ========================================= */
+.messages {
   flex: 1;
-  padding: 15px;
+  padding: 20px 15px;
   overflow-y: auto;
-  background: #f2fbff url('../SKYTRUFIBER.png') no-repeat center center fixed;
-  background-size: 280px auto;
+  background: #f7fcff;
+  background-image: url("../SKYTRUFIBER.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 250px;
   background-blend-mode: lighten;
 }
 
-/* ===== MESSAGE STYLING ===== */
-.message {
-  margin: 10px 0;
-  padding: 10px 15px;
-  border-radius: 10px;
-  display: inline-block;
-  max-width: 80%;
-  word-wrap: break-word;
-  font-size: 14px;
+.message-bubble {
+  padding: 12px 16px;
+  border-radius: 18px;
+  margin: 8px 0;
+  max-width: 78%;
+  word-break: break-word;
   line-height: 1.4;
+  font-size: 14.3px;
+  position: relative;
+  box-shadow: 0 3px 7px rgba(0,0,0,0.08);
 }
-.user {
-  background: #dfffe2;
+
+/* CSR messages */
+.message-csr {
+  background: #e1f1ff;
+  border-left: 4px solid #0080c6;
+  color: #003355;
+  align-self: flex-start;
+}
+
+/* User messages */
+.message-user {
+  background: #ccffd8;
+  border-right: 4px solid #189444;
   align-self: flex-end;
-  float: right;
-  border: 1px solid #aee1b6;
-}
-.csr {
-  background: #e3f2fd;
-  border-left: 3px solid #0099cc;
-  color: #004466;
-  float: left;
-  border: 1px solid #b3d9f7;
+  color: #083713;
 }
 
-/* ===== TIMESTAMP ===== */
+/* Timestamp */
 .timestamp {
-  display: block;
   font-size: 11px;
-  color: #777;
-  margin-top: 3px;
+  opacity: 0.6;
+  margin-top: 6px;
 }
 
-/* ===== INPUT AREA ===== */
-.chat-input {
+/* ========================================= */
+/* ✏️ INPUT BAR                               */
+/* ========================================= */
+.input-area {
   display: flex;
-  border-top: 1px solid #ccc;
-  background: #f9f9f9;
-}
-.chat-input input {
-  flex: 1;
   padding: 12px;
+  background: #f4f4f4;
+  border-top: 1px solid #ddd;
+}
+
+.input-area input {
+  flex: 1;
   border: none;
   outline: none;
+  padding: 12px;
+  border-radius: 8px;
   font-size: 14px;
-  background: transparent;
+  background: #fff;
 }
-.chat-input button {
+
+.btn-send {
+  margin-left: 10px;
   background: #0099cc;
-  color: white;
+  color: #fff;
   border: none;
-  padding: 12px 20px;
+  padding: 12px 18px;
+  font-weight: 600;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: bold;
-  transition: 0.3s;
-}
-.chat-input button:hover {
-  background: #007a99;
+  transition: 0.2s;
 }
 
-/* ===== SCROLLBAR ===== */
-.chat-box::-webkit-scrollbar { width: 8px; }
-.chat-box::-webkit-scrollbar-thumb {
-  background: #b0d4e3;
-  border-radius: 10px;
+.btn-send:hover {
+  background: #007eb1;
 }
 
-/* ===== RESPONSIVE ===== */
+/* Scrollbar */
+.messages::-webkit-scrollbar {
+  width: 8px;
+}
+.messages::-webkit-scrollbar-thumb {
+  background: #b8dcf0;
+  border-radius: 8px;
+}
+
+/* Mobile */
 @media (max-width: 500px) {
-  .chat-wrapper { width: 95%; }
-  .logo-header img { width: 90px; }
-  .chat-header { font-size: 15px; }
-  body::before {
-    background-size: 250px;
-    opacity: 0.07;
+  .chat-box-wrapper {
+    height: 92vh;
   }
 }
 </style>
 </head>
+
 <body>
 
-<div class="chat-wrapper">
-  <!-- Logo above chat -->
-  <div class="logo-header">
-    <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+<div class="chat-box-wrapper">
+
+  <img src="../SKYTRUFIBER.png" class="chat-logo">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">Welcome, <?= htmlspecialchars($username) ?></div>
+    <div class="header-sub">Connected to <?= $csr_name_display ?></div>
   </div>
 
-  <!-- Dynamic Chat Header -->
-  <div class="chat-header">
-    👋 Welcome, <?= htmlspecialchars($username) ?><br>
-    <small>Connected to <?= $csr_name_display ?></small>
-  </div>
+  <!-- Messages -->
+  <div class="messages" id="chatBox"></div>
 
-  <!-- Chat Messages -->
-  <div class="chat-box" id="chatBox"></div>
-
-  <!-- Input Section -->
-  <div class="chat-input">
+  <!-- Input -->
+  <div class="input-area">
     <input type="text" id="message" placeholder="Type your message...">
-    <button onclick="sendMessage()">Send</button>
+    <button class="btn-send" onclick="sendMessage()">Send</button>
   </div>
+
 </div>
 
 <script>
 const username = <?= json_encode($username) ?>;
 const chatBox = document.getElementById('chatBox');
 
-// Load messages from DB
+// Load messages
 function loadChat() {
   fetch(`load_chat.php?client=${encodeURIComponent(username)}`)
-    .then(res => res.json())
-    .then(data => {
-      chatBox.innerHTML = '';
-      data.forEach(msg => {
-        const div = document.createElement('div');
-        div.className = 'message ' + (msg.sender_type === 'csr' ? 'csr' : 'user');
-        div.innerHTML = `
+    .then(r=>r.json())
+    .then(data=>{
+      chatBox.innerHTML = "";
+      data.forEach(msg=>{
+        const wrap = document.createElement('div');
+        wrap.className = "message-bubble " + (msg.sender_type === "csr" ? "message-csr" : "message-user");
+        wrap.innerHTML = `
           ${msg.message}
-          <span class="timestamp">${new Date(msg.created_at).toLocaleString()}</span>
+          <div class="timestamp">${new Date(msg.created_at).toLocaleString()}</div>
         `;
-        chatBox.appendChild(div);
+        chatBox.appendChild(wrap);
       });
       chatBox.scrollTop = chatBox.scrollHeight;
-    })
-    .catch(err => console.error('Chat load error:', err));
+    });
 }
 
-// Send message to DB
 function sendMessage() {
-  const input = document.getElementById('message');
-  const msg = input.value.trim();
-  if (!msg) return;
-
-  fetch('save_chat.php', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+  const text = document.getElementById('message').value.trim();
+  if (!text) return;
+  fetch("save_chat.php", {
+    method: "POST",
+    headers: {"Content-Type":"application/x-www-form-urlencoded"},
     body: new URLSearchParams({
-      sender_type: 'client',
-      message: msg,
+      sender_type: "client",
+      message: text,
       client: username
     })
-  }).then(() => {
-    input.value = '';
+  }).then(()=>{
+    document.getElementById('message').value="";
     loadChat();
   });
 }
 
-// Auto-refresh chat every 1.5s
 setInterval(loadChat, 1500);
 window.onload = loadChat;
 </script>
