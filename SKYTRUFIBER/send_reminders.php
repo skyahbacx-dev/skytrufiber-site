@@ -1,39 +1,74 @@
 <?php
 include '../db_connect.php';
 
-// secure token to stop abuse
-$token = $_GET['token'] ?? '';
+// ✅ Validate API token
+$expectedToken = "AhbaReminderToken"; // keep same as your GitHub secret AUTH_TOKEN
 
-// compare with token stored in environment
-$expected = getenv("REMINDER_TOKEN");
-
-if (!$expected || $token !== $expected) {
-  http_response_code(403);
-  echo "Unauthorized";
-  exit();
+if (!isset($_GET['token']) || $_GET['token'] !== $expectedToken) {
+    http_response_code(403);
+    echo "Unauthorized access";
+    exit;
 }
 
-echo "Reminder script running...\n";
+// ✅ Fetch all users from NeonDB
+$stmt = $conn->query("
+    SELECT id, full_name, email, date_installed
+    FROM users
+    WHERE date_installed IS NOT NULL
+");
 
-// Get users whose due_date is 7 days or 3 days away
-$sql = "
-SELECT email, full_name, due_date
-FROM users
-WHERE due_date = CURRENT_DATE + INTERVAL '7 days'
-   OR due_date = CURRENT_DATE + INTERVAL '3 days'
-";
+$users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$stmt = $conn->query($sql);
+// ✅ reminder schedule
+$reminders = [
+    5 => "Your 5-day reminder message…",
+    15 => "Your 15-day reminder message…",
+    30 => "Your 30-day reminder message…",
+];
 
-while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $email = $row['email'];
-    $name  = $row['full_name'];
-    $due   = $row['due_date'];
+foreach ($users as $u) {
+    $uid        = $u['id'];
+    $name       = $u['full_name'];
+    $email      = $u['email'];
+    $installed  = $u['date_installed'];
 
-    // include PHPMailer
-    require 'mail.php';
+    if (!$installed) continue;
 
-    sendReminderMail($email, $name, $due);
+    $days = (new DateTime())->diff(new DateTime($installed))->days;
+
+    if (!isset($reminders[$days])) {
+        continue;
+    }
+
+    // ✅ Check if already sent
+    $check = $conn->prepare("
+        SELECT id FROM reminders
+        WHERE user_id = :uid AND day_marker = :day
+    ");
+    $check->execute([':uid' => $uid, ':day' => $days]);
+
+    if ($check->fetch()) {
+        continue; // already sent
+    }
+
+    // ✅ Save to reminders table
+    $insert = $conn->prepare("
+        INSERT INTO reminders (user_id, sent_message, day_marker, created_at)
+        VALUES (:uid, :msg, :day, NOW())
+    ");
+    $insert->execute([
+        ':uid' => $uid,
+        ':msg' => $reminders[$days],
+        ':day' => $days
+    ]);
+
+    // ✅ Email sending
+    mail(
+        $email,
+        "Reminder Notification",
+        $reminders[$days]
+    );
 }
 
-echo "Done!";
+echo "✅ Reminder cron executed successfully.";
+?>
