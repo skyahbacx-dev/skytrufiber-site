@@ -179,8 +179,17 @@ tr:hover {
     </div>
 </header>
 
-<!-- SIDEBAR -->
-<?php include "sidebar.php"; ?>
+<div id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
+<div id="sidebar">
+    <h2>CSR Menu</h2>
+    <a onclick="switchTab('all')">💬 Chat Dashboard</a>
+    <a onclick="switchTab('mine')">👤 My Clients</a>
+    <a onclick="switchTab('rem')">⏰ Reminders</a>
+    <a href="survey_responses.php">📝 Survey Responses</a>
+    <a href="update_profile.php">👤 Edit Profile</a>
+    <a href="csr_logout.php">🚪 Logout</a>
+</div>
+
 
 <!-- TABS -->
 <div class="tabs">
