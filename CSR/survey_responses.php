@@ -2,7 +2,7 @@
 session_start();
 include '../db_connect.php';
 
-// Validate login
+// Validate CSR
 if (!isset($_SESSION['csr_user'])) {
     header("Location: csr_login.php");
     exit;
@@ -15,153 +15,164 @@ $stmt->execute([':u'=>$csr_user]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 $csr_fullname = $row['full_name'] ?? $csr_user;
 
-// Logo
+// Logo path
 $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBALOGO.png';
 
-// ======================== AJAX SECTION ============================
+/* ============================================================
+   AJAX HANDLERS
+   ============================================================ */
 if (isset($_GET['ajax'])) {
 
-    // ✅ LOAD ONLY survey_responses TABLE
-    if ($_GET['ajax'] === 'load') {
-        $search = "%" . ($_GET['search'] ?? '') . "%";
-        $from = $_GET['from'] ?? '';
-        $to = $_GET['to'] ?? '';
+    /* ✅ LOAD DATA WITH PAGINATION + SORTING */
+    if ($_GET['ajax'] === "load") {
 
-        $params = [':search'=> $search];
+        $search = "%".($_GET['search'] ?? "")."%";
+        $from = $_GET['from'] ?? "";
+        $to = $_GET['to'] ?? "";
+        $month = $_GET['month'] ?? "";
+        $sort = $_GET['sort'] ?? "created_at";
+        $order = $_GET['order'] ?? "DESC";
 
-        $q = "
-            SELECT id, client_name, account_number, district, location, feedback AS remarks, email, created_at,
-                   'survey_responses' AS source
-            FROM survey_responses
-            WHERE (
-                client_name ILIKE :search OR
-                account_number ILIKE :search OR
-                district ILIKE :search OR
-                location ILIKE :search OR
-                feedback ILIKE :search OR
-                email ILIKE :search
-            )
+        $allowedSort = ["created_at","client_name","district"]; 
+        if (!in_array($sort,$allowedSort)) $sort="created_at";
+        $order = ($order === "ASC") ? "ASC" : "DESC";
+
+        $page = max(1, intval($_GET['page'] ?? 1));
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        $params = [":s"=>$search];
+
+        $query = "
+        SELECT id, client_name, account_number, district, location, email, feedback AS remarks, created_at 
+        FROM survey_responses
+        WHERE (
+            client_name ILIKE :s OR
+            account_number ILIKE :s OR
+            district ILIKE :s OR
+            location ILIKE :s OR
+            feedback ILIKE :s OR
+            email ILIKE :s
+        )
         ";
 
         if ($from && $to) {
-            $q .= " AND DATE(created_at) BETWEEN :from AND :to";
-            $params[':from'] = $from;
-            $params[':to'] = $to;
+            $query .= " AND DATE(created_at) BETWEEN :f AND :t";
+            $params[":f"] = $from;
+            $params[":t"] = $to;
         }
 
-        $q .= " ORDER BY created_at DESC";
+        if ($month) {
+            $query .= " AND EXTRACT(MONTH FROM created_at) = :m";
+            $params[":m"] = intval($month);
+        }
 
-        $stmt = $conn->prepare($q);
+        $countQuery = "SELECT COUNT(*) FROM ($query) AS x";
+
+        $query .= " ORDER BY {$sort} {$order} LIMIT $limit OFFSET $offset";
+
+        $stmt = $conn->prepare($query);
         $stmt->execute($params);
-        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $countStmt = $conn->prepare($countQuery);
+        $countStmt->execute($params);
+        $total = $countStmt->fetchColumn();
+
+        echo json_encode([
+            "rows" => $rows,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit
+        ]);
         exit;
     }
 
-    // ✅ UPDATE survey_responses RECORDS
-    if ($_GET['ajax'] === 'update' && isset($_POST['id'])) {
+    /* ✅ UPDATE RECORD */
+    if ($_GET['ajax'] === "update") {
         $id = (int)$_POST['id'];
-        $client = trim($_POST['client_name']);
-        $account = trim($_POST['account_number']);
-        $district = trim($_POST['district']);
-        $location = trim($_POST['location']);
-        $feedback = trim($_POST['feedback']);
-        $email = trim($_POST['email']);
 
         $stmt = $conn->prepare("
-            UPDATE survey_responses
-            SET client_name=:c,
-                account_number=:a,
-                district=:d,
-                location=:l,
-                feedback=:f,
-                email=:e
-            WHERE id=:id
+        UPDATE survey_responses
+        SET client_name=:c, account_number=:a, district=:d, location=:l, email=:e, feedback=:f
+        WHERE id=:id
         ");
-
         $ok = $stmt->execute([
-            ':c'=>$client, ':a'=>$account, ':d'=>$district,
-            ':l'=>$location, ':f'=>$feedback, ':e'=>$email, ':id'=>$id
+            ':c'=>trim($_POST['client_name']),
+            ':a'=>trim($_POST['account_number']),
+            ':d'=>trim($_POST['district']),
+            ':l'=>trim($_POST['location']),
+            ':e'=>trim($_POST['email']),
+            ':f'=>trim($_POST['feedback']),
+            ':id'=>$id
         ]);
-
         echo $ok ? "ok" : "fail";
         exit;
     }
 
     http_response_code(400);
-    echo "bad request";
     exit;
 }
+
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Survey & Feedback — <?= htmlspecialchars($csr_fullname) ?></title>
 
 <style>
-/* --------- GLOBAL ----------- */
 body {
     margin:0;
-    font-family:Segoe UI,Arial,sans-serif;
-    background:#f4FFF4;
-    height:100vh;
+    font-family:Segoe UI, Arial, sans-serif;
+    background:#f2fff2;
     overflow:hidden;
 }
 header {
-    height:60px;
     background:#009900;
     color:white;
+    padding:12px 18px;
     display:flex;
-    align-items:center;
     justify-content:space-between;
-    padding:0 18px;
-    font-weight:700;
+    align-items:center;
 }
-
 #hamburger {
+    cursor:pointer;
     font-size:26px;
     background:none;
     border:none;
     color:white;
-    cursor:pointer;
 }
-
-/* --------- SIDEBAR ----------- */
 #sidebar {
     width:260px;
     background:#006b00;
     color:white;
-    height:100vh;
     position:fixed;
     left:-260px;
     top:0;
-    transition:0.25s;
-    z-index:1000;
+    height:100vh;
+    transition:0.3s;
+    z-index:999;
 }
-#sidebar.active {
-    left:0;
-}
+#sidebar.active { left:0; }
 #sidebar h2 {
     margin:0;
-    padding:20px;
+    padding:18px;
     text-align:center;
-    background:#005c00;
+    background:#004f00;
 }
 #sidebar a {
+    padding:14px 20px;
     display:block;
-    padding:14px 18px;
-    text-decoration:none;
     color:white;
+    text-decoration:none;
     font-weight:600;
 }
-#sidebar a:hover {
-    background:#00aa00;
-}
+#sidebar a:hover { background:#00b300; }
 
-/* --------- TABS ----------- */
 #tabs {
     display:flex;
-    gap:10px;
+    gap:8px;
     padding:12px 18px;
     background:#eaffea;
     border-bottom:1px solid #cce5cc;
@@ -173,72 +184,60 @@ header {
     font-weight:700;
     color:#006b00;
 }
-.tab.active {
-    background:#006b00;
-    color:white;
-}
+.tab.active { background:#006b00; color:white; }
 
-/* -------- CONTENT -------- */
 #main {
+    height:calc(100vh - 120px);
     padding:20px;
     overflow-y:auto;
-    height:calc(100vh - 120px);
 }
-
 table {
     width:100%;
     border-collapse:collapse;
-    box-shadow:0 3px 10px rgba(0,0,0,0.1);
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 th {
-    background:#009900;
+    background:#007e00;
     color:white;
-    position:sticky;
-    top:0;
+    cursor:pointer;
 }
 th, td {
     padding:10px;
-    border-bottom:1px solid #eee;
+    border-bottom:1px solid #ddd;
 }
-tr:hover {
-    background:#f1fff1;
+tr:hover { background:#eefbee; }
+#pagination button {
+    padding:6px 10px;
+    border:none;
+    background:#009900;
+    color:white;
+    border-radius:6px;
+    cursor:pointer;
 }
+#pagination button:hover { background:#007700; }
 
-/* --- EDIT MODAL --- */
+/* Modal */
 #editModal {
     position:fixed;
     inset:0;
-    background:rgba(0,0,0,0.4);
     display:none;
+    background:rgba(0,0,0,0.4);
     justify-content:center;
     align-items:center;
-    z-index:2000;
 }
 .modal-box {
-    width:90%;
-    max-width:500px;
     background:white;
     padding:20px;
+    width:90%;
+    max-width:450px;
     border-radius:10px;
 }
 .modal-box input,
 .modal-box textarea {
     width:100%;
     padding:10px;
-    margin:5px 0 10px;
-    border-radius:6px;
-    border:1px solid #ccc;
+    margin:6px 0;
 }
-.modal-box button {
-    padding:10px 14px;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-    font-weight:600;
-}
-#saveBtn { background:#009900; color:white; }
-#cancelBtn { background:#ccc; }
-
 </style>
 </head>
 
@@ -251,16 +250,15 @@ tr:hover {
     <a href="csr_dashboard.php?tab=mine">👤 My Clients</a>
     <a href="csr_dashboard.php?tab=rem">⏰ Reminders</a>
     <a style="background:#00b300;">📝 Survey & Feedback</a>
+    <a href="update_profile.php">👤 Edit Profile</a>
     <a href="csr_logout.php">🚪 Logout</a>
 </div>
 
-<!-- HEADER -->
 <header>
     <button id="hamburger" onclick="toggleSidebar()">☰</button>
     <div>Survey & Feedback — <?= htmlspecialchars($csr_fullname) ?></div>
 </header>
 
-<!-- TABS -->
 <div id="tabs">
     <div class="tab" onclick="location.href='csr_dashboard.php'">💬 All Clients</div>
     <div class="tab" onclick="location.href='csr_dashboard.php?tab=mine'">👤 My Clients</div>
@@ -269,143 +267,228 @@ tr:hover {
 </div>
 
 <div id="main">
-    <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
+
+    <!-- Filters -->
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
         <label>Search:</label>
-        <input id="searchBox" type="text" placeholder="Client, Account, Feedback..." style="padding:8px;border:1px solid #ccc;border-radius:6px;width:220px;">
+        <input id="searchBox" type="text" placeholder="Search..." style="padding:8px;border:1px solid #ccc;border-radius:6px;">
+
         <label>From:</label>
         <input id="fromDate" type="date">
+
         <label>To:</label>
         <input id="toDate" type="date">
-        <button onclick="loadTable()" style="padding:8px 14px;background:#009900;color:white;border:none;border-radius:6px;">Filter</button>
+
+        <label>Month:</label>
+        <select id="monthFilter">
+            <option value="">All</option>
+            <?php for($m=1;$m<=12;$m++): ?>
+                <option value="<?= $m ?>"><?= date("F",mktime(0,0,0,$m,1)) ?></option>
+            <?php endfor; ?>
+        </select>
+
+        <button onclick="loadTable()" style="background:#009900;color:white;border:none;border-radius:6px;padding:8px 12px;">Filter</button>
+
+        <!-- Export Buttons -->
+        <button onclick="exportCSV()" style="background:#0055cc;color:white;border:none;border-radius:6px;padding:8px 12px;">CSV</button>
+
+        <button onclick="exportExcel()" style="background:#003399;color:white;border:none;border-radius:6px;padding:8px 12px;">Excel</button>
+
+        <button onclick="exportPDF()" style="background:#7a00cc;color:white;border:none;border-radius:6px;padding:8px 12px;">PDF</button>
+
+        <button onclick="printView()" style="background:#444;color:white;border:none;border-radius:6px;padding:8px 12px;">Print</button>
     </div>
 
-    <div id="table-container">Loading…</div>
+    <div id="table-container"></div>
+    <div id="pagination" style="margin-top:10px;text-align:center;"></div>
 </div>
 
-<!-- EDIT MODAL -->
+<!-- Edit Modal -->
 <div id="editModal">
     <div class="modal-box">
         <h3>Edit Survey Response</h3>
-
         <input type="hidden" id="editId">
-
         <label>Client Name</label>
         <input id="editClient">
-
         <label>Account Number</label>
         <input id="editAccount">
-
         <label>District</label>
         <input id="editDistrict">
-
         <label>Location</label>
         <input id="editLocation">
-
         <label>Email</label>
         <input id="editEmail">
-
         <label>Feedback</label>
-        <textarea id="editFeedback" rows="4"></textarea>
+        <textarea id="editFeedback"></textarea>
 
         <div style="text-align:right;margin-top:10px;">
-            <button id="cancelBtn" onclick="closeModal()">Cancel</button>
-            <button id="saveBtn" onclick="saveChanges()">Save</button>
+            <button onclick="closeModal()" style="background:#ccc;border:none;padding:8px 12px;">Cancel</button>
+            <button onclick="saveChanges()" style="background:#009900;color:white;border:none;padding:8px 12px;">Save</button>
         </div>
     </div>
 </div>
 
 <script>
-function toggleSidebar() {
+let currentPage = 1;
+let currentSort = "created_at";
+let currentOrder = "DESC";
+
+function toggleSidebar(){
     document.getElementById('sidebar').classList.toggle('active');
 }
 
-// Load table
-function loadTable() {
-    const s = encodeURIComponent(document.getElementById('searchBox').value.trim());
+function safe(t){ return (t??"").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+
+function loadTable(page = 1){
+    currentPage = page;
+
+    const q = document.getElementById('searchBox').value.trim();
     const f = document.getElementById('fromDate').value;
     const t = document.getElementById('toDate').value;
+    const m = document.getElementById('monthFilter').value;
 
-    fetch(`survey_responses.php?ajax=load&search=${s}&from=${f}&to=${t}`)
+    fetch(`survey_responses.php?ajax=load&search=${encodeURIComponent(q)}&from=${f}&to=${t}&month=${m}&page=${page}&sort=${currentSort}&order=${currentOrder}`)
         .then(r=>r.json())
-        .then(rows=>{
-            let html = "<table><thead><tr>" +
-                "<th>#</th><th>Client</th><th>Account</th><th>District</th><th>Location</th><th>Email</th><th>Feedback</th><th>Date</th><th>Action</th>" +
-                "</tr></thead><tbody>";
+        .then(data=>{
+            const rows=data.rows;
+            const total=data.total;
+            const limit=data.limit;
+            const page=data.page;
 
-            if (!rows.length) {
-                html += "<tr><td colspan='9' style='text-align:center;padding:20px;color:#777;'>No survey responses found.</td></tr>";
-            } else {
-                rows.forEach((r,i)=>{
-                    html += `<tr>
-                        <td>${i+1}</td>
+            let html="<table><thead><tr>";
+            html+=`<th onclick="sortBy('client_name')">Client</th>`;
+            html+=`<th onclick="sortBy('account_number')">Account</th>`;
+            html+=`<th onclick="sortBy('district')">District</th>`;
+            html+=`<th onclick="sortBy('location')">Location</th>`;
+            html+=`<th>Email</th>`;
+            html+=`<th>Feedback</th>`;
+            html+=`<th onclick="sortBy('created_at')">Date Installed</th>`;
+            html+=`<th>Action</th>`;
+            html+="</tr></thead><tbody>";
+
+            if(!rows.length){
+                html+="<tr><td colspan='8' style='text-align:center;padding:20px;color:#777;'>No records found.</td></tr>";
+            }else{
+                rows.forEach(r=>{
+                    html+=`<tr>
                         <td>${r.client_name}</td>
-                        <td>${r.account_number ?? ''}</td>
-                        <td>${r.district ?? ''}</td>
-                        <td>${r.location ?? ''}</td>
-                        <td>${r.email ?? ''}</td>
-                        <td>${r.remarks ?? ''}</td>
+                        <td>${r.account_number || ""}</td>
+                        <td>${r.district || ""}</td>
+                        <td>${r.location || ""}</td>
+                        <td>${r.email || ""}</td>
+                        <td>${r.remarks || ""}</td>
                         <td>${new Date(r.created_at).toLocaleString()}</td>
-                        <td><button onclick="openEdit(${r.id}, '${escape(r.client_name)}', '${escape(r.account_number)}', '${escape(r.district)}', '${escape(r.location)}', '${escape(r.email)}', '${escape(r.remarks)}')" style="background:#009900;color:white;border:none;padding:6px 10px;border-radius:6px;">Edit</button></td>
+                        <td>
+                            <button onclick="openEdit(${r.id},'${safe(r.client_name)}','${safe(r.account_number)}','${safe(r.district)}','${safe(r.location)}','${safe(r.email)}','${safe(r.remarks)}')" style="background:#009900;color:white;border:none;padding:6px 10px;border-radius:6px;">Edit</button>
+                        </td>
                     </tr>`;
                 });
             }
 
-            html += "</tbody></table>";
+            html+="</tbody></table>";
 
             document.getElementById('table-container').innerHTML = html;
+
+            // Pagination
+            let totalPages = Math.ceil(total / limit);
+            let pag = "";
+            if(totalPages > 1){
+                if(page > 1){
+                    pag += `<button onclick="loadTable(${page-1})">⬅ Prev</button> `;
+                }
+                pag += ` Page ${page} of ${totalPages} `;
+                if(page < totalPages){
+                    pag += `<button onclick="loadTable(${page+1})">Next ➡</button>`;
+                }
+            }
+            document.getElementById('pagination').innerHTML = pag;
         });
 }
 
-function escape(text) {
-    return (text ?? '').replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+function sortBy(col){
+    if(currentSort === col){
+        currentOrder = (currentOrder === "ASC") ? "DESC" : "ASC";
+    } else {
+        currentSort = col;
+        currentOrder = "ASC";
+    }
+    loadTable(1);
 }
 
-function openEdit(id, client, account, district, location, email, feedback) {
-    document.getElementById('editId').value = id;
-    document.getElementById('editClient').value = client;
-    document.getElementById('editAccount').value = account;
-    document.getElementById('editDistrict').value = district;
-    document.getElementById('editLocation').value = location;
-    document.getElementById('editEmail').value = email;
-    document.getElementById('editFeedback').value = feedback;
-
-    document.getElementById('editModal').style.display = 'flex';
+// Edit Modal
+function openEdit(id,client,account,district,location,email,feedback){
+    document.getElementById('editId').value=id;
+    document.getElementById('editClient').value=client;
+    document.getElementById('editAccount').value=account;
+    document.getElementById('editDistrict').value=district;
+    document.getElementById('editLocation').value=location;
+    document.getElementById('editEmail').value=email;
+    document.getElementById('editFeedback').value=feedback;
+    document.getElementById('editModal').style.display="flex";
 }
+function closeModal(){ document.getElementById('editModal').style.display="none"; }
 
-function closeModal() {
-    document.getElementById('editModal').style.display = 'none';
-}
+function saveChanges(){
+    const id=document.getElementById('editId').value;
+    const data=new URLSearchParams({
+        id: id,
+        client_name: document.getElementById('editClient').value,
+        account_number: document.getElementById('editAccount').value,
+        district: document.getElementById('editDistrict').value,
+        location: document.getElementById('editLocation').value,
+        email: document.getElementById('editEmail').value,
+        feedback: document.getElementById('editFeedback').value
+    });
 
-function saveChanges() {
-    const id = document.getElementById('editId').value;
-    const data = new URLSearchParams();
-    data.append("id", id);
-    data.append("client_name", document.getElementById('editClient').value);
-    data.append("account_number", document.getElementById('editAccount').value);
-    data.append("district", document.getElementById('editDistrict').value);
-    data.append("location", document.getElementById('editLocation').value);
-    data.append("email", document.getElementById('editEmail').value);
-    data.append("feedback", document.getElementById('editFeedback').value);
-
-    fetch("survey_responses.php?ajax=update", {
+    fetch("survey_responses.php?ajax=update",{
         method:"POST",
-        headers:{'Content-Type':"application/x-www-form-urlencoded"},
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},
         body:data.toString()
     })
     .then(r=>r.text())
     .then(resp=>{
-        if (resp === "ok") {
-            alert("✅ Updated successfully!");
+        if(resp==="ok"){
+            alert("✅ Updated!");
             closeModal();
-            loadTable();
+            loadTable(currentPage);
         } else {
-            alert("❌ Update failed!");
+            alert("❌ Update failed.");
         }
     });
 }
 
-window.onload = loadTable;
-</script>
+function exportCSV(){
+    const s=document.getElementById('searchBox').value.trim();
+    const f=document.getElementById('fromDate').value;
+    const t=document.getElementById('toDate').value;
+    const m=document.getElementById('monthFilter').value;
+    window.location=`export_csv.php?search=${encodeURIComponent(s)}&from=${f}&to=${t}&month=${m}`;
+}
+function exportExcel(){
+    const s=document.getElementById('searchBox').value.trim();
+    const f=document.getElementById('fromDate').value;
+    const t=document.getElementById('toDate').value;
+    const m=document.getElementById('monthFilter').value;
+    window.location=`export_excel.php?search=${encodeURIComponent(s)}&from=${f}&to=${t}&month=${m}`;
+}
+function exportPDF(){
+    const s=document.getElementById('searchBox').value.trim();
+    const f=document.getElementById('fromDate').value;
+    const t=document.getElementById('toDate').value;
+    const m=document.getElementById('monthFilter').value;
+    window.location=`export_pdf.php?search=${encodeURIComponent(s)}&from=${f}&to=${t}&month=${m}`;
+}
+function printView(){
+    const html=document.getElementById('table-container').innerHTML;
+    const printWindow=window.open("","_blank");
+    printWindow.document.write("<html><head><title>Survey Report</title></head><body>");
+    printWindow.document.write(html);
+    printWindow.document.write("</body></html>");
+    printWindow.document.close();
+    printWindow.print();
+}
 
+window.onload=loadTable;
+</script>
 </body>
 </html>
