@@ -402,3 +402,29 @@ header{
     height:60vh;
   }
 }
+.typing-bubble {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+    width: fit-content;
+    background: #e3f2fd;
+    border-radius: 16px;
+    margin: 10px;
+}
+
+.typing-bubble .dot {
+    width: 8px;
+    height: 8px;
+    background: #4a89dc;
+    border-radius: 50%;
+    animation: blink 1.4s infinite both;
+}
+
+.typing-bubble .dot:nth-child(2) { animation-delay: .2s; }
+.typing-bubble .dot:nth-child(3) { animation-delay: .4s; }
+
+@keyframes blink {
+    0% { opacity: .2; }
+    20% { opacity: 1; }
+    100% { opacity: .2; }
+}
