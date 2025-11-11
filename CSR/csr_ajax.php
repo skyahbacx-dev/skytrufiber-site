@@ -4,90 +4,84 @@ include '../db_connect.php';
 
 $csr_user = $_SESSION['csr_user'] ?? null;
 
-$action = $_GET['action'] ?? null;
+header('Content-Type: application/json');
 
-header("Content-Type: application/json");
+$action = $_GET['action'] ?? '';
 
-// ----------------- LOAD CLIENTS ------------------
+/* ======================
+   LOAD CLIENT LIST
+ ====================== */
 if ($action === "clients") {
-    $tab = $_GET['tab'] ?? 'all';
-    $where = ($tab === "mine") ? "WHERE assigned_csr = :csr" : "";
 
-    $stmt = $conn->prepare("SELECT id, name, email, assigned_csr FROM clients $where ORDER BY id ASC");
+    $tab = $_GET['tab'] ?? "all";
+
     if ($tab === "mine") {
+        $stmt = $conn->prepare("
+            SELECT c.id, 
+                   c.name,
+                   c.assigned_csr,
+                   u.email
+            FROM clients c
+            LEFT JOIN users u ON u.full_name = c.name
+            WHERE c.assigned_csr = :csr
+            ORDER BY c.id ASC
+        ");
         $stmt->execute([':csr' => $csr_user]);
     } else {
-        $stmt->execute();
+        $stmt = $conn->query("
+            SELECT c.id, 
+                   c.name,
+                   c.assigned_csr,
+                   u.email
+            FROM clients c
+            LEFT JOIN users u ON u.full_name = c.name
+            ORDER BY c.id ASC
+        ");
     }
 
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $assigned = $row['assigned_csr'] ?: "Unassigned";
-        echo "
-        <div class='client-item' data-id='{$row["id"]}' data-name='".htmlspecialchars($row["name"])."' data-csr='{$assigned}'>
-            <strong>{$row["name"]}</strong><br>
-            <small>{$row["email"]}</small><br>
-            <small>Assigned: {$assigned}</small>
-        </div>";
-    }
+    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     exit;
 }
 
-// ----------------- LOAD CHAT ------------------
+/* ======================
+   LOAD CHAT
+ ====================== */
 if ($action === "load_chat" && isset($_GET['client_id'])) {
-    $cid = (int)$_GET['client_id'];
 
     $stmt = $conn->prepare("
-        SELECT ch.*, 
-        CASE WHEN ch.sender_type='csr' THEN csr.full_name ELSE u.full_name END AS sender_name
+        SELECT ch.message,
+               ch.sender_type,
+               ch.created_at,
+               c.name AS client_name,
+               ch.csr_fullname
         FROM chat ch
-        LEFT JOIN csr_users csr ON csr.username = ch.assigned_csr
-        LEFT JOIN users u ON u.full_name = ch.client_name
-        WHERE ch.client_id = :cid
+        JOIN clients c ON c.id = ch.client_id
+        WHERE ch.client_id = :id
         ORDER BY ch.created_at ASC
     ");
-    $stmt->execute([':cid' => $cid]);
-
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    echo json_encode($rows);
+    $stmt->execute([":id" => $_GET['client_id']]);
+    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     exit;
 }
 
-// ----------------- LOAD CLIENT PROFILE ------------------
-if ($action === "client_profile" && isset($_GET['name'])) {
-    $name = $_GET['name'];
+/* ======================
+   SEND MESSAGE
+ ====================== */
+if ($action === "send" && isset($_POST['client_id']) && isset($_POST['message'])) {
 
-    $stmt = $conn->prepare("SELECT gender, avatar FROM users WHERE full_name = :n LIMIT 1");
-    $stmt->execute([':n'=>$name]);
-    $data = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    echo json_encode($data);
-    exit;
-}
-
-// ----------------- SEND MESSAGE ------------------
-if ($action === "send") {
-    $cid = $_POST['client_id'];
-    $msg = $_POST['message'];
-
-    // Insert chat record
     $stmt = $conn->prepare("
-        INSERT INTO chat (client_id, message, sender_type, assigned_csr, created_at)
-        VALUES (:cid, :msg, 'csr', :csr, NOW())
+        INSERT INTO chat (client_id, message, sender_type, csr_fullname, assigned_csr)
+        VALUES (:cid, :msg, 'csr', :csrname, :assigned)
     ");
     $stmt->execute([
-        ':cid'=>$cid,
-        ':msg'=>$msg,
-        ':csr'=>$csr_user
+        ":cid" => $_POST["client_id"],
+        ":msg" => $_POST["message"],
+        ":csrname" => $_SESSION["csr_fullname"] ?? $csr_user,
+        ":assigned" => $csr_user
     ]);
 
-    echo json_encode(["status"=>"ok"]);
+    echo json_encode(["status" => "ok"]);
     exit;
 }
 
-// ----------------- REMINDERS ------------------
-if ($action === "reminders") {
-    echo json_encode([]); // simplified
-    exit;
-}
-
-echo json_encode(["error"=>"Invalid action"]);
+echo json_encode(["error" => "unknown"]);
