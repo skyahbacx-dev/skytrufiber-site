@@ -14,17 +14,56 @@ $stmt = $conn->prepare("SELECT full_name, email FROM csr_users WHERE username = 
 $stmt->execute([':u' => $csr_user]);
 $csr = $stmt->fetch(PDO::FETCH_ASSOC);
 $csr_fullname = $csr['full_name'] ?? $csr_user;
+
+// Logo
 $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBALOGO.png';
 
-// ─────────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------------------
 // AJAX HANDLERS
-// ─────────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------------------
 
 if (isset($_GET['ajax'])) {
 
+    // -----------------------------
+    // Set typing status (CSR typing)
+    // -----------------------------
+    if ($_GET['ajax'] === "set_typing" && isset($_POST['client_id'])) {
+        $cid = intval($_POST['client_id']);
+        $status = ($_POST['status'] === "1");
+
+        $conn->prepare("
+            INSERT INTO typing_status (client_id, csr_typing, updated_at)
+            VALUES (:cid, :s, NOW())
+            ON CONFLICT (client_id)
+            DO UPDATE SET csr_typing = :s, updated_at = NOW()
+        ")->execute([':cid' => $cid, ':s' => $status]);
+
+        exit;
+    }
+
+    // -----------------------------
+    // Get typing status
+    // -----------------------------
+    if ($_GET['ajax'] === "get_typing" && isset($_GET['client_id'])) {
+        $cid = intval($_GET['client_id']);
+
+        $st = $conn->prepare("
+            SELECT csr_typing, client_typing
+            FROM typing_status
+            WHERE client_id = :cid
+        ");
+        $st->execute([':cid' => $cid]);
+
+        echo json_encode($st->fetch(PDO::FETCH_ASSOC));
+        exit;
+    }
+
+    // -----------------------------
     // Load clients
+    // -----------------------------
     if ($_GET['ajax'] === "clients") {
         $tab = $_GET['tab'] ?? "all";
+
         $where = ($tab === "mine") ? " WHERE c.assigned_csr = :csr " : "";
 
         $q = $conn->prepare("
@@ -35,13 +74,10 @@ if (isset($_GET['ajax'])) {
             ORDER BY c.id ASC
         ");
 
-        if ($tab === "mine") {
-            $q->execute([':csr' => $csr_user]);
-        } else {
-            $q->execute();
-        }
+        if ($tab === "mine") $q->execute([':csr' => $csr_user]); else $q->execute();
 
         while ($row = $q->fetch(PDO::FETCH_ASSOC)) {
+
             $assigned = $row["assigned_csr"] ?: "Unassigned";
             $owned = ($assigned === $csr_user);
 
@@ -71,9 +107,11 @@ if (isset($_GET['ajax'])) {
         exit;
     }
 
+    // -----------------------------
     // Load chat messages
+    // -----------------------------
     if ($_GET['ajax'] === "load_chat" && isset($_GET['client_id'])) {
-        $cid = (int)$_GET['client_id'];
+        $cid = intval($_GET['client_id']);
 
         $c = $conn->prepare("
             SELECT ch.*, c.name AS client_name
@@ -85,7 +123,6 @@ if (isset($_GET['ajax'])) {
         $c->execute([':cid'=>$cid]);
 
         $rows = [];
-
         while ($r = $c->fetch(PDO::FETCH_ASSOC)) {
             $rows[] = [
                 "message" => $r["message"],
@@ -101,13 +138,14 @@ if (isset($_GET['ajax'])) {
         exit;
     }
 
-    // Load client profile (email + gender + avatar)
-    if ($_GET['ajax'] === "client_profile" && isset($_GET['name'])) {
+    // -----------------------------
+    // Load client profile (avatar)
+    // -----------------------------
+    if ($_GET['ajax'] === "client_profile" && isset($_GET['name"])) {
         $name = trim($_GET['name']);
 
         $ps = $conn->prepare("SELECT email, gender, avatar FROM users WHERE full_name = :n LIMIT 1");
         $ps->execute([':n'=>$name]);
-
         $u = $ps->fetch(PDO::FETCH_ASSOC);
 
         echo json_encode([
@@ -118,115 +156,6 @@ if (isset($_GET['ajax'])) {
         exit;
     }
 
-    // Assign client
-    if ($_GET['ajax'] === "assign" && isset($_POST['client_id'])) {
-        $cid = (int)$_POST['client_id'];
-
-        $chk = $conn->prepare("SELECT assigned_csr FROM clients WHERE id = :i");
-        $chk->execute([':i'=>$cid]);
-        $cur = $chk->fetch(PDO::FETCH_ASSOC);
-
-        if ($cur && $cur["assigned_csr"] && $cur["assigned_csr"] !== "Unassigned") {
-            echo "taken";
-            exit;
-        }
-
-        $u = $conn->prepare("UPDATE clients SET assigned_csr = :c WHERE id = :i");
-        $u->execute([':c'=>$csr_user, ':i'=>$cid]);
-        echo "ok";
-        exit;
-    }
-
-    // Unassign client
-    if ($_GET['ajax'] === "unassign" && isset($_POST['client_id'])) {
-        $cid = (int)$_POST['client_id'];
-
-        $u = $conn->prepare("
-            UPDATE clients
-            SET assigned_csr = 'Unassigned'
-            WHERE id = :i AND assigned_csr = :c
-        ");
-        $u->execute([':i'=>$cid, ':c'=>$csr_user]);
-
-        echo "ok";
-        exit;
-    }
-
-    // Reminders list
-    if ($_GET['ajax'] === "reminders") {
-
-        $search = trim($_GET['q'] ?? "");
-        $rows = [];
-
-        $u = $conn->query("
-            SELECT id, full_name, email, date_installed
-            FROM users
-            WHERE email IS NOT NULL
-            ORDER BY full_name ASC
-        ")->fetchAll(PDO::FETCH_ASSOC);
-
-        $today = new DateTime('today');
-
-        foreach ($u as $usr) {
-            if (!$usr["date_installed"]) continue;
-
-            $di = new DateTime($usr["date_installed"]);
-            $dueDay = (int)$di->format('d');
-
-            $base = new DateTime('first day of this month');
-            $due = $base->setDate($base->format('Y'), $base->format('m'), min($dueDay, 28));
-
-            if ((int)$today->format('d') > (int)$due->format('d')) {
-                $base->modify('+1 month');
-                $due = $base->setDate($base->format('Y'), $base->format('m'), min($dueDay, 28));
-            }
-
-            $oneWeek = (clone $due)->modify('-7 days');
-            $threeDay = (clone $due)->modify('-3 days');
-
-            $cycle = $due->format('Y-m-d');
-
-            $st = $conn->prepare("
-                SELECT reminder_type, status
-                FROM reminders
-                WHERE client_id = :cid AND cycle_date = :cy
-            ");
-            $st->execute([':cid'=>$usr['id'], ':cy'=>$cycle]);
-
-            $sent = [];
-            foreach ($st as $x) {
-                $sent[$x['reminder_type']] = $x['status'];
-            }
-
-            $badges = [];
-
-            if ($today <= $oneWeek && $today->diff($oneWeek)->days <= 7) {
-                $badges[] = ["type"=>"1_WEEK", "status"=>$sent["1_WEEK"] ?? "upcoming", "date"=>$oneWeek->format("Y-m-d")];
-            }
-            if ($today <= $threeDay && $today->diff($threeDay)->days <= 7) {
-                $badges[] = ["type"=>"3_DAYS", "status"=>$sent["3_DAYS"] ?? "upcoming", "date"=>$threeDay->format("Y-m-d")];
-            }
-
-            if (!$badges) continue;
-
-            if ($search) {
-                $hay = strtolower($usr["full_name"]." ".$usr["email"]);
-                if (strpos($hay, strtolower($search)) === false) continue;
-            }
-
-            $rows[] = [
-                "name"=>$usr["full_name"],
-                "email"=>$usr["email"],
-                "due"=>$due->format("Y-m-d"),
-                "banners"=>$badges
-            ];
-        }
-
-        echo json_encode($rows);
-        exit;
-    }
-
-    // default
     echo "invalid";
     exit;
 }
@@ -271,7 +200,7 @@ if (isset($_GET['ajax'])) {
     <div class="tab" onclick="location.href='update_profile.php'">👤 Edit Profile</div>
 </div>
 
-<!-- MAIN LAYOUT -->
+<!-- MAIN -->
 <div id="main">
 
     <!-- LEFT COLUMN -->
@@ -287,54 +216,48 @@ if (isset($_GET['ajax'])) {
                 <div id="chatAvatar" class="avatar"></div>
                 <span id="chat-title">Select a client</span>
             </div>
-            <div id="chat-info" class="info-dot">i</div>
         </div>
 
         <div id="messages"></div>
 
-        <div id="input" style="display:none;">
-            <input id="msg" placeholder="Type a reply…">
-            <button onclick="sendMsg()">Send</button>
+        <!-- Typing indicator -->
+        <div id="typingIndicator" class="typing-bubble" style="display:none;">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
         </div>
 
-        <!-- Reminders panel -->
-        <div id="reminders">
-            <div id="rem-filter">
-                <input id="rem-q" placeholder="Search..." onkeyup="loadReminders()">
-            </div>
-            <div id="rem-list"></div>
+        <!-- Input -->
+        <div id="input" style="display:none;">
+            <input id="msg" placeholder="Type a reply…" oninput="setTyping(1)">
+            <button onclick="sendMsg()">Send</button>
         </div>
 
     </div>
 </div>
 
 <script>
-let currentTab = "all";
 let currentClient = 0;
 let currentAssignee = "";
 const me = <?= json_encode($csr_user) ?>;
 
-/* Sidebar */
+// Sidebar
 function toggleSidebar(force) {
     const s = document.getElementById("sidebar");
     const o = document.getElementById("sidebar-overlay");
     const open = s.classList.contains("active");
-    let willOpen = force === true || (!open && force !== false);
 
-    if (willOpen) {
-        s.classList.add("active");
-        o.style.display = "block";
+    if ((force === true) || (!open && force !== false)) {
+        s.classList.add("active"); o.style.display = "block";
     } else {
-        s.classList.remove("active");
-        o.style.display = "none";
+        s.classList.remove("active"); o.style.display = "none";
     }
 }
 
-/* Right column collapse */
+// Right column collapse
 function toggleRight() {
     const col = document.getElementById("chat-col");
     const btn = document.getElementById("collapseBtn");
-
     if (col.classList.contains("collapsed")) {
         col.classList.remove("collapsed");
         btn.textContent = "…";
@@ -344,27 +267,20 @@ function toggleRight() {
     }
 }
 
-/* Tab switching */
+// Tabs
 function switchTab(tab) {
     currentTab = tab === "rem" ? "all" : tab;
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     document.getElementById("tab-"+tab).classList.add("active");
 
     if (tab === "rem") {
-        document.getElementById("chat-head").style.display = "none";
-        document.getElementById("messages").style.display = "none";
-        document.getElementById("input").style.display = "none";
-        document.getElementById("reminders").style.display = "block";
-        loadReminders();
-    } else {
-        document.getElementById("chat-head").style.display = "flex";
-        document.getElementById("messages").style.display = "block";
-        document.getElementById("reminders").style.display = "none";
-        loadClients();
+        return; // skip for now
     }
+
+    loadClients();
 }
 
-/* Load client list */
+// Load client list
 function loadClients() {
     fetch("csr_dashboard.php?ajax=clients&tab="+currentTab)
     .then(r=>r.text())
@@ -376,28 +292,34 @@ function loadClients() {
     });
 }
 
-/* Avatar handler */
+// Avatar
 function setAvatar(name, gender, avatarFile) {
     const box = document.getElementById("chatAvatar");
     box.innerHTML = "";
 
-    let img = document.createElement("img");
-
     if (avatarFile) {
-        img.src = "uploads/" + avatarFile;
-    } else if (gender === "female") {
-        img.src = "assets/penguin.png";
-    } else if (gender === "male") {
-        img.src = "assets/lion.png";
-    } else {
-        box.textContent = name.split(" ").map(w=>w[0]).join("").toUpperCase();
+        let img = document.createElement("img");
+        img.src = "uploads/"+avatarFile;
+        box.appendChild(img);
         return;
     }
 
-    box.appendChild(img);
+    if (gender === "female") {
+        let img = document.createElement("img");
+        img.src = "../penguin.png"; 
+        box.appendChild(img);
+    }
+    else if (gender === "male") {
+        let img = document.createElement("img");
+        img.src = "../lion.png"; 
+        box.appendChild(img);
+    }
+    else {
+        box.textContent = name.split(" ").map(w=>w[0]).join("").toUpperCase();
+    }
 }
 
-/* Select client */
+// Select client
 function selectClient(el) {
     currentClient = parseInt(el.dataset.id);
     currentAssignee = el.dataset.csr;
@@ -413,12 +335,11 @@ function selectClient(el) {
     });
 
     loadChat();
+    getTyping();
 }
 
-/* Chat loading */
+// Load chat
 function loadChat() {
-    if (!currentClient) return;
-
     fetch("csr_dashboard.php?ajax=load_chat&client_id="+currentClient)
     .then(r=>r.json())
     .then(rows=>{
@@ -426,7 +347,7 @@ function loadChat() {
         box.innerHTML = "";
 
         rows.forEach(m=>{
-            const name = (m.sender_type === "csr") ? (m.csr_fullname ?? "CSR") : m.client_name;
+            const name = m.sender_type === "csr" ? (m.csr_fullname ?? "CSR") : m.client_name;
             box.innerHTML += `
                 <div class="msg ${m.sender_type}">
                     <div class="bubble">
@@ -441,14 +362,53 @@ function loadChat() {
     });
 }
 
-/* Send message */
+// Typing indicator
+let typingTimeout;
+
+function setTyping(status) {
+    // CSR is typing
+    fetch("csr_dashboard.php?ajax=set_typing", {
+        method: "POST",
+        headers: {"Content-Type":"application/x-www-form-urlencoded"},
+        body: "client_id="+currentClient+"&status="+status
+    });
+
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+        // Stop typing after 2 seconds idle
+        fetch("csr_dashboard.php?ajax=set_typing", {
+            method: "POST",
+            headers: {"Content-Type":"application/x-www-form-urlencoded"},
+            body: "client_id="+currentClient+"&status=0"
+        });
+    }, 2000);
+}
+
+// Poll typing
+function getTyping() {
+    fetch("csr_dashboard.php?ajax=get_typing&client_id="+currentClient)
+    .then(r=>r.json())
+    .then(st=>{
+        const bubble = document.getElementById("typingIndicator");
+
+        if (st && st.client_typing) {
+            bubble.style.display = "flex";
+        } else {
+            bubble.style.display = "none";
+        }
+    });
+}
+
+setInterval(() => {
+    if (currentClient) {
+        loadChat();
+        getTyping();
+    }
+}, 1500);
+
+// Send message
 function sendMsg() {
     if (!currentClient) return;
-
-    if (currentAssignee !== "Unassigned" && currentAssignee !== me) {
-        alert("This client is assigned to another CSR.");
-        return;
-    }
 
     const msg = document.getElementById("msg").value.trim();
     if (!msg) return;
@@ -459,26 +419,21 @@ function sendMsg() {
         body: "sender_type=csr&message="+encodeURIComponent(msg)+"&client_id="+currentClient
     }).then(()=>{
         document.getElementById("msg").value = "";
+        setTyping(0); // stop typing
         loadChat();
     });
 }
 
-/* Assign/Unassign */
+// Assign/unassign
 function assignClient(id) {
     fetch("csr_dashboard.php?ajax=assign", {
         method:"POST",
         headers:{"Content-Type":"application/x-www-form-urlencoded"},
         body:"client_id="+id
-    })
-    .then(r=>r.text())
-    .then(t=>{
-        if (t==="taken") alert("Already assigned.");
-        loadClients();
-    });
+    }).then(()=>loadClients());
 }
 
 function unassignClient(id) {
-    if (!confirm("Unassign this client?")) return;
     fetch("csr_dashboard.php?ajax=unassign", {
         method:"POST",
         headers:{"Content-Type":"application/x-www-form-urlencoded"},
@@ -486,44 +441,7 @@ function unassignClient(id) {
     }).then(()=>loadClients());
 }
 
-/* Reminders */
-function loadReminders() {
-    const q = document.getElementById("rem-q").value;
-
-    fetch("csr_dashboard.php?ajax=reminders&q="+encodeURIComponent(q))
-    .then(r=>r.json())
-    .then(list=>{
-        const box = document.getElementById("rem-list");
-        box.innerHTML = "";
-
-        if (!list.length) {
-            box.innerHTML = "<div class='card'>No reminders</div>";
-            return;
-        }
-
-        list.forEach(item=>{
-            let badges = "";
-            item.banners.forEach(b=>{
-                let cls = b.status === "sent" ? "sent" : (b.status === "due" ? "due" : "upcoming");
-                badges += `<span class="badge ${cls}">${b.type} — ${b.status} (${b.date})</span>`;
-            });
-
-            box.innerHTML += `
-                <div class="card">
-                    <strong>${item.name}</strong> (${item.email})<br>
-                    Due: <b>${item.due}</b><br>
-                    ${badges}
-                </div>
-            `;
-        });
-    });
-}
-
 loadClients();
-setInterval(()=>{
-    if (currentClient) loadChat();
-    if (document.getElementById("reminders").style.display !== "none") loadReminders();
-}, 5000);
 </script>
 
 </body>
