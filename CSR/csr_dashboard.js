@@ -1,240 +1,83 @@
-/* ===========================
-   GLOBAL VARS
-=========================== */
-let currentTab = "all";
-let currentClient = 0;
-let currentAssignee = "";
-let typingTimer;
+let currentClient = null;
 
-const csr = window.CSRUser;
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    if (document.getElementById('tab-' + tab))
+        document.getElementById('tab-' + tab).classList.add('active');
 
-/* ===========================
-   SIDEBAR
-=========================== */
-function toggleSidebar() {
-    const sb = document.getElementById("sidebar");
-    const ov = document.getElementById("sidebar-overlay");
-
-    if (sb.classList.contains("active")) {
-        sb.classList.remove("active");
-        ov.style.display = "none";
+    if (tab === 'rem') {
+        document.getElementById('reminders').style.display = 'block';
+        document.getElementById('messages').style.display = 'none';
+        document.getElementById('input').style.display = 'none';
     } else {
-        sb.classList.add("active");
-        ov.style.display = "block";
+        document.getElementById('reminders').style.display = 'none';
+        document.getElementById('messages').style.display = 'block';
+        document.getElementById('input').style.display = currentClient ? 'flex' : 'none';
+        loadClients(tab);
     }
 }
 
-/* ===========================
-   CHAT COLLAPSE / EXPAND
-=========================== */
-function collapseChat() {
-    const col = document.getElementById("chat-col");
-    const btn = document.getElementById("collapseBtn");
-
-    if (col.classList.contains("collapsed")) {
-        col.classList.remove("collapsed");
-        btn.textContent = "●";
-    } else {
-        col.classList.add("collapsed");
-        btn.textContent = "i";
-    }
+function loadClients(tab) {
+    fetch('csr_dashboard_ajax.php?clients=1&tab=' + tab)
+    .then(res => res.text())
+    .then(html => {
+        document.getElementById('client-col').innerHTML = html;
+    });
 }
 
-/* ===========================
-   LOAD CLIENTS
-=========================== */
-function loadClients() {
-    fetch(`csr_dashboard_ajax.php?clients=1&tab=${currentTab}`)
-        .then(res => res.text())
-        .then(html => {
-            const box = document.getElementById("client-col");
-            box.innerHTML = html;
+function openChat(id) {
+    currentClient = id;
+    document.getElementById('input').style.display = 'flex';
 
-            document.querySelectorAll(".client-item").forEach(el => {
-                el.addEventListener("click", () => selectClient(el));
-            });
-        });
-}
-
-/* ===========================
-   SELECT CLIENT
-=========================== */
-function selectClient(el) {
-    currentClient = el.dataset.id;
-    currentAssignee = el.dataset.csr;
-    const name = el.dataset.name;
-
-    document.getElementById("chat-name").textContent = name;
-    document.getElementById("input").style.display = "flex";
-
-    // Load profile
-    fetch(`csr_dashboard_ajax.php?client_profile=1&name=${encodeURIComponent(name)}`)
-        .then(res => res.json())
-        .then(p => {
-            const avatarBox = document.getElementById("chatAvatar");
-            avatarBox.innerHTML = "";
-
-            if (p.avatar) {
-                let img = document.createElement("img");
-                img.src = "../" + p.avatar;
-                avatarBox.appendChild(img);
-            } else if (p.gender === "male") {
-                avatarBox.innerHTML = `<img src="../lion.png">`;
-            } else if (p.gender === "female") {
-                avatarBox.innerHTML = `<img src="../penguin.png">`;
-            } else {
-                avatarBox.textContent = name.split(" ").map(x=>x[0]).join("");
-            }
-        });
-
-    loadChat();
-}
-
-/* ===========================
-   LOAD CHAT
-=========================== */
-function loadChat() {
-    if (!currentClient) return;
-
-    fetch(`csr_dashboard_ajax.php?load_chat=1&client_id=${currentClient}`)
-    .then(res => res.json())
-    .then(rows => {
-        const box = document.getElementById("messages");
+    fetch('csr_dashboard_ajax.php?load_chat=1&client_id=' + id)
+    .then(r => r.json())
+    .then(data => {
+        let box = document.getElementById('messages');
         box.innerHTML = "";
 
-        rows.forEach(m => {
-            const cls = m.sender === "csr" ? "csr" : "client";
-            box.innerHTML += `
-                <div class="msg ${cls}">
-                    <div class="bubble">
-                        <strong>${cls === "csr" ? "CSR " + csr + ": " : ""}</strong> 
-                        ${m.message}
-                    </div>
-                    <div class="meta">${m.time}</div>
-                </div>
-            `;
+        data.forEach(m => {
+            let div = document.createElement('div');
+            div.className = m.sender === 'csr' ? 'msg right' : 'msg left';
+            div.innerHTML =
+                `<div class="bubble">${m.message}</div>
+                <div class="time">${m.time}</div>`;
+            box.appendChild(div);
         });
-
         box.scrollTop = box.scrollHeight;
     });
 }
 
-/* ===========================
-   SEND MESSAGE
-=========================== */
 function sendMsg() {
-    if (!currentClient) return;
+    let txt = document.getElementById('msg');
+    if (!txt.value.trim()) return;
 
-    if (currentAssignee !== "Unassigned" && currentAssignee !== csr) {
-        alert("❌ You cannot reply — this client is owned by another CSR.");
-        return;
-    }
-
-    const msgEl = document.getElementById("msg");
-    const msg = msgEl.value.trim();
-    if (!msg) return;
-
-    fetch("csr_dashboard_ajax.php?send=1", {
-        method: "POST",
-        headers: {"Content-Type":"application/x-www-form-urlencoded"},
-        body: `client_id=${currentClient}&msg=${encodeURIComponent(msg)}`
+    fetch('csr_dashboard_ajax.php?send=1', {
+        method: 'POST',
+        body: new URLSearchParams({
+            client_id: currentClient,
+            msg: txt.value
+        })
     }).then(() => {
-        msgEl.value = "";
-        loadChat();
+        txt.value = "";
+        openChat(currentClient);
     });
 }
 
-/* ===========================
-   TYPING INDICATOR
-=========================== */
-function typing() {
-    clearTimeout(typingTimer);
-    document.getElementById("typingIndicator").style.display = "block";
-
-    typingTimer = setTimeout(() => {
-        document.getElementById("typingIndicator").style.display = "none";
-    }, 1200);
-}
-
-/* ===========================
-   ASSIGN / UNASSIGN
-=========================== */
-function assignClient(id) {
-    fetch("csr_dashboard_ajax.php?assign=1", {
-        method: "POST",
-        body: `client_id=${id}`,
-        headers: {"Content-Type":"application/x-www-form-urlencoded"}
-    }).then(() => loadClients());
-}
-
-function unassignClient(id) {
-    if (!confirm("Unassign this client?")) return;
-    fetch("csr_dashboard_ajax.php?unassign=1", {
-        method: "POST",
-        body: `client_id=${id}`,
-        headers: {"Content-Type":"application/x-www-form-urlencoded"}
-    }).then(() => loadClients());
-}
-
-/* ===========================
-   REMINDERS
-=========================== */
 function loadReminders() {
-    const q = document.getElementById("rem-q").value;
+    let q = document.getElementById('rem-q').value;
 
-    fetch(`csr_dashboard_ajax.php?reminders=1&q=${encodeURIComponent(q)}`)
-        .then(res => res.json())
-        .then(list => {
-            const box = document.getElementById("rem-list");
-            box.innerHTML = "";
-
-            list.forEach(item => {
-                box.innerHTML += `
-                    <div class="card">
-                        <strong>${item.name}</strong><br>
-                        <small>${item.email}</small><br>
-                        <div>Due: ${item.due}</div>
-                        <div>${item.badges}</div>
-                    </div>
-                `;
-            });
+    fetch('csr_dashboard_ajax.php?reminders=1&q=' + q)
+    .then(r => r.json())
+    .then(list => {
+        let out = "";
+        list.forEach(r => {
+            out += `
+            <div class="rem-item">
+                <div>${r.name}</div>
+                <div>${r.email}</div>
+                <div>${r.due}</div>
+            </div>`;
         });
+        document.getElementById('rem-list').innerHTML = out;
+    });
 }
-
-/* ===========================
-   TAB SWITCHING
-=========================== */
-function switchTab(tab) {
-    document.querySelectorAll(".tab").forEach(el => el.classList.remove("active"));
-    document.getElementById(`tab-${tab}`).classList.add("active");
-
-    if (tab === "rem") {
-        currentTab = "all";
-        document.getElementById("messages").style.display = "none";
-        document.getElementById("input").style.display = "none";
-        document.getElementById("chat-head").style.display = "none";
-        document.getElementById("reminders").style.display = "block";
-        loadReminders();
-        return;
-    }
-
-    document.getElementById("reminders").style.display = "none";
-    document.getElementById("messages").style.display = "block";
-    document.getElementById("chat-head").style.display = "flex";
-
-    currentTab = tab;
-    loadClients();
-}
-
-/* ===========================
-   AUTO REFRESH
-=========================== */
-setInterval(() => {
-    if (currentClient) loadChat();
-    if (document.getElementById("reminders").style.display !== "none") loadReminders();
-}, 4000);
-
-/* ===========================
-   INIT
-=========================== */
-loadClients();
