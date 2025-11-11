@@ -9,151 +9,52 @@ if (!isset($_SESSION['csr_user'])) {
 
 $csr_user = $_SESSION['csr_user'];
 
-// LOAD CSR DETAILS
-$stmt = $conn->prepare("SELECT full_name, email FROM csr_users WHERE username = :u LIMIT 1");
+// Load CSR fullname
+$stmt = $conn->prepare("SELECT full_name, email, profile_pic FROM csr_users WHERE username = :u LIMIT 1");
 $stmt->execute([':u' => $csr_user]);
 $csr = $stmt->fetch(PDO::FETCH_ASSOC);
+
 $csr_fullname = $csr['full_name'] ?? $csr_user;
+$profile_pic = $csr['profile_pic'] ?? "../SKYTRUFIBER/default.png";
 
-$logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBALOGO.png';
-
-/* ============================================================
-   AJAX SECTION
-   ============================================================ */
-if (isset($_GET['ajax'])) {
-
-    // LOAD CLIENTS
-    if ($_GET['ajax'] === "clients") {
-        $tab = $_GET['tab'] ?? "all";
-        $condition = ($tab === "mine") ? "WHERE assigned_csr = :csr" : "";
-
-        $q = $conn->prepare("
-            SELECT id, name, assigned_csr,
-                (SELECT email FROM users u WHERE u.full_name = c.name LIMIT 1) AS email
-            FROM clients c
-            $condition
-            ORDER BY id ASC
-        ");
-        ($tab === "mine") ? $q->execute([':csr' => $csr_user]) : $q->execute();
-
-        while($row = $q->fetch(PDO::FETCH_ASSOC)){
-
-            $assigned = $row["assigned_csr"] ?: "Unassigned";
-            $btn="";
-            if ($assigned === "Unassigned")
-                $btn = "<button class='pill green' onclick='assignClient({$row["id"]})'>＋</button>";
-            else if ($assigned === $csr_user)
-                $btn = "<button class='pill red' onclick='unassignClient({$row["id"]})'>−</button>";
-            else
-                $btn = "<button class='pill gray' disabled>🔒</button>";
-
-            echo "
-            <div class='client-item' data-id='{$row["id"]}' data-name='".htmlspecialchars($row["name"],ENT_QUOTES)."' data-csr='{$assigned}'>
-                <div>
-                    <div class='client-name'>{$row["name"]}</div>
-                    <div class='client-email'>".htmlspecialchars($row["email"] ?? "")."</div>
-                    <div class='client-assign'>Assigned: {$assigned}</div>
-                </div>
-                <div>$btn</div>
-            </div>";
-        }
-        exit;
-    }
-
-    // LOAD CHAT
-    if ($_GET['ajax'] === "load_chat" && isset($_GET['client_id'])) {
-        $cid = (int)$_GET['client_id'];
-
-        $q = $conn->prepare("
-            SELECT ch.*, c.name as client_name
-            FROM chat ch
-            JOIN clients c ON c.id = ch.client_id
-            WHERE ch.client_id = :cid
-            ORDER BY ch.created_at ASC
-        ");
-        $q->execute([':cid'=>$cid]);
-
-        $res = [];
-        while($r = $q->fetch(PDO::FETCH_ASSOC)) {
-            $res[] = $r;
-        }
-
-        echo json_encode($res);
-        exit;
-    }
-
-    // LOAD PROFILE
-    if ($_GET['ajax'] === "client_profile" && isset($_GET['name'])) {
-        $name = $_GET['name'];
-        $q = $conn->prepare("SELECT email, gender, avatar FROM users WHERE full_name = :n LIMIT 1");
-        $q->execute([':n'=>$name]);
-        echo json_encode($q->fetch(PDO::FETCH_ASSOC) ?: []);
-        exit;
-    }
-
-    // ASSIGN
-    if ($_GET['ajax'] === "assign" && isset($_POST['client_id'])) {
-        $cid = (int)$_POST['client_id'];
-        $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :id")
-             ->execute([':csr'=>$csr_user, ':id'=>$cid]);
-        echo "ok";
-        exit;
-    }
-
-    // UNASSIGN
-    if ($_GET['ajax'] === "unassign" && isset($_POST['client_id'])) {
-        $cid = (int)$_POST['client_id'];
-        $conn->prepare("UPDATE clients SET assigned_csr = 'Unassigned' WHERE id = :id AND assigned_csr = :csr")
-             ->execute([':id'=>$cid, ':csr'=>$csr_user]);
-        echo "ok";
-        exit;
-    }
-
-    // MARK SEEN
-    if ($_GET['ajax'] === "seen") {
-        $cid = (int)$_GET['client_id'];
-        $conn->prepare("UPDATE chat SET seen = TRUE WHERE client_id = :cid AND sender_type = 'client'")
-             ->execute([':cid'=>$cid]);
-        exit;
-    }
-
-    echo "invalid";
-    exit;
-}
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
-<link rel="stylesheet" href="csr_dashboard.css">
+    <meta charset="UTF-8">
+    <title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
+    <link rel="stylesheet" href="csr_dashboard.css">
 </head>
-
 <body>
 
-<!-- SIDEBAR -->
+<!-- Sidebar Overlay -->
 <div id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
-<div id="sidebar">
-    <h2>CSR Menu</h2>
-    <a onclick="switchTab('all')">💬 Chat Dashboard</a>
+
+<!-- Sidebar -->
+<div id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+        <h2>Menu</h2>
+        <button class="close-sidebar" onclick="toggleSidebar(false)">✖</button>
+    </div>
+
+    <a onclick="switchTab('all')">💬 All Clients</a>
     <a onclick="switchTab('mine')">👤 My Clients</a>
     <a onclick="switchTab('rem')">⏰ Reminders</a>
-    <a href="survey_responses.php">📝 Survey Responses</a>
-    <a href="update_profile.php">👤 Edit Profile</a>
+    <a href="survey_responses.php">📝 Surveys</a>
+    <a href="update_profile.php">👤 Profile</a>
     <a href="csr_logout.php">🚪 Logout</a>
 </div>
 
-<!-- HEADER -->
-<header>
-    <button id="hamb" onclick="toggleSidebar()">☰</button>
-    <div class="brand">
-        <img src="<?= $logoPath ?>" alt="logo">
+<!-- Header -->
+<header class="header">
+    <button class="hamburger" onclick="toggleSidebar(true)">☰</button>
+    <div class="header-brand">
+        <img src="../SKYTRUFIBER/AHBALOGO.png" class="header-logo">
         <span>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></span>
     </div>
-    <div id="darkToggle" onclick="toggleDarkMode()">🌙</div>
 </header>
 
-<!-- TABS -->
+<!-- Tabs -->
 <div class="tabs">
     <div id="tab-all" class="tab active" onclick="switchTab('all')">💬 All Clients</div>
     <div id="tab-mine" class="tab" onclick="switchTab('mine')">👤 My Clients</div>
@@ -162,211 +63,196 @@ if (isset($_GET['ajax'])) {
     <div class="tab" onclick="location.href='update_profile.php'">👤 Profile</div>
 </div>
 
-<!-- MAIN -->
+<!-- Main Layout -->
 <div id="main">
-    <!-- LEFT -->
+
+    <!-- Client list column -->
     <div id="client-col"></div>
 
-    <!-- RIGHT -->
+    <!-- Chat column -->
     <div id="chat-col">
-        <button id="collapseBtn" onclick="toggleRight()">●</button>
 
-        <!-- CHAT HEADER -->
-        <div id="chat-head">
+        <div id="chat-head" class="chat-head">
             <div class="chat-title">
                 <div id="chatAvatar" class="avatar"></div>
-                <span id="chat-title">Select a Client</span>
+                <span id="chat-title-text">Select a client</span>
             </div>
-            <div class="info-dot">i</div>
         </div>
 
-        <!-- MESSAGES -->
-        <div id="messages"></div>
-        <div id="typingIndicator">typing…</div>
+        <div id="messages" class="messages"></div>
 
-        <!-- INPUT -->
-        <div id="input" style="display:none;">
-            <button id="emojiBtn" type="button">😊</button>
-            <div id="emojiPanel"></div>
+        <div id="input" class="chat-input">
             <input id="msg" placeholder="Type a reply…">
             <button onclick="sendMsg()">Send</button>
         </div>
+
+        <!-- Reminders -->
+        <div id="reminders" class="reminders-panel" style="display:none;">
+            <input id="rem-q" placeholder="Search..." onkeyup="loadReminders()">
+            <div id="rem-list"></div>
+        </div>
+
     </div>
 </div>
 
 <script>
-let currentTab="all", currentClient=0, currentAssignee="";
+let currentTab = "all";
+let currentClient = 0;
+let currentAssignee = "";
 const me = <?= json_encode($csr_user) ?>;
 
-// Sidebar
-function toggleSidebar(force){
-    const s=document.getElementById("sidebar");
-    const o=document.getElementById("sidebar-overlay");
-    const open=s.classList.contains("active");
-
-    let openNow = (force===true || (!open && force!==false));
-    if(openNow){ s.classList.add("active"); o.style.display="block"; }
-    else { s.classList.remove("active"); o.style.display="none"; }
-}
-
-// Collapse chat
-function toggleRight(){
-    const col=document.getElementById("chat-col");
-    if(col.classList.contains("collapsed")){
-        col.classList.remove("collapsed");
+// Toggle sidebar
+function toggleSidebar(open) {
+    const s = document.getElementById("sidebar");
+    const o = document.getElementById("sidebar-overlay");
+    if (open) {
+        s.classList.add("active");
+        o.style.display = "block";
     } else {
-        col.classList.add("collapsed");
+        s.classList.remove("active");
+        o.style.display = "none";
     }
 }
 
-// Switch tab
-function switchTab(tab){
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    document.getElementById("tab-"+tab).classList.add("active");
-    currentTab=tab;
-    loadClients();
+// Tab switching
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.getElementById("tab-" + tab).classList.add("active");
+
+    if (tab === "rem") {
+        document.getElementById("messages").style.display = "none";
+        document.getElementById("input").style.display = "none";
+        document.getElementById("chat-head").style.display = "none";
+        document.getElementById("reminders").style.display = "block";
+        loadReminders();
+    } else {
+        document.getElementById("chat-head").style.display = "flex";
+        document.getElementById("messages").style.display = "block";
+        document.getElementById("input").style.display = "flex";
+        document.getElementById("reminders").style.display = "none";
+        loadClients();
+    }
 }
 
 // Load clients
-function loadClients(){
-    fetch("csr_dashboard.php?ajax=clients&tab="+currentTab)
-    .then(r=>r.text())
-    .then(html=>{
-        document.getElementById("client-col").innerHTML=html;
-        document.querySelectorAll(".client-item").forEach(x=>{
-            x.onclick=()=>selectClient(x);
+function loadClients() {
+    fetch("csr_ajax.php?action=clients&tab=" + currentTab)
+        .then(r => r.text())
+        .then(html => {
+            document.getElementById("client-col").innerHTML = html;
+            document.querySelectorAll(".client-item").forEach(el => {
+                el.addEventListener("click", () => selectClient(el));
+            });
         });
-    });
 }
 
-// Avatar
-function setAvatar(name, gender, avatar){
-    const box=document.getElementById("chatAvatar");
-    box.innerHTML="";
+// Avatar logic
+function setAvatar(gender, avatar) {
+    const box = document.getElementById("chatAvatar");
+    box.innerHTML = "";
 
-    let img=document.createElement("img");
+    let img = document.createElement("img");
 
-    if(avatar){
-        img.src="uploads/"+avatar;
-    } else if(gender==="female"){
-        img.src="../penguin.png";
-    } else if(gender==="male"){
-        img.src="../lion.png";
+    if (avatar) {
+        img.src = avatar;
+    } else if (gender === "female") {
+        img.src = "../penguin.png";
+    } else if (gender === "male") {
+        img.src = "../lion.png";
     } else {
-        box.textContent=name[0].toUpperCase();
-        return;
+        img.src = "../penguin.png";
     }
+
     box.appendChild(img);
 }
 
 // Select client
-function selectClient(el){
+function selectClient(el) {
     currentClient = el.dataset.id;
     currentAssignee = el.dataset.csr;
     const name = el.dataset.name;
 
-    document.getElementById("chat-title").textContent=name;
-    document.getElementById("input").style.display="flex";
+    document.getElementById("chat-title-text").textContent = name;
 
-    fetch("csr_dashboard.php?ajax=client_profile&name="+encodeURIComponent(name))
-    .then(r=>r.json())
-    .then(p=>{
-        setAvatar(name, p.gender, p.avatar);
-    });
+    fetch("csr_ajax.php?action=client_profile&name=" + encodeURIComponent(name))
+        .then(r => r.json())
+        .then(data => {
+            setAvatar(data.gender, data.avatar);
+        });
 
     loadChat();
 }
 
-// Load chat
-function loadChat(){
-    if(!currentClient) return;
+// Load chat messages
+function loadChat() {
+    if (!currentClient) return;
+    fetch("csr_ajax.php?action=load_chat&client_id=" + currentClient)
+        .then(r => r.json())
+        .then(rows => {
+            const box = document.getElementById("messages");
+            box.innerHTML = "";
 
-    fetch("csr_dashboard.php?ajax=load_chat&client_id="+currentClient)
-    .then(r=>r.json())
-    .then(rows=>{
-        const box=document.getElementById("messages");
-        box.innerHTML="";
+            rows.forEach(m => {
+                box.innerHTML += `
+                    <div class="msg ${m.sender_type}">
+                        <div class="bubble">
+                            <strong>${m.sender_name}:</strong> ${m.message}
+                        </div>
+                        <div class="time">${new Date(m.created_at).toLocaleString()}</div>
+                    </div>
+                `;
+            });
 
-        rows.forEach(m=>{
-            let seen="";
-            if(m.sender_type==="csr"){
-                seen = m.seen==true ? "✅ Seen" : "✓ Delivered";
-            }
-            box.innerHTML += `
-            <div class="msg ${m.sender_type}">
-                <div class="bubble">
-                    <strong>${m.sender_type==="csr"?"CSR":m.client_name}:</strong> ${m.message}
-                </div>
-                <div class="meta">${new Date(m.created_at).toLocaleTimeString()} ${seen}</div>
-            </div>`;
+            box.scrollTop = box.scrollHeight;
         });
-
-        box.scrollTop = box.scrollHeight;
-
-        // Mark client messages as seen
-        fetch("csr_dashboard.php?ajax=seen&client_id="+currentClient);
-    });
 }
 
 // Send message
-function sendMsg(){
-    if(!currentClient) return;
-    const txt=document.getElementById("msg");
-    const msg=txt.value.trim();
-    if(!msg) return;
+function sendMsg() {
+    if (!currentClient) return;
 
-    fetch("../SKYTRUFIBER/save_chat.php", {
-        method:"POST",
-        headers:{"Content-Type":"application/x-www-form-urlencoded"},
-        body:"sender_type=csr&message="+encodeURIComponent(msg)+"&client_id="+currentClient
-    }).then(()=>{
-        txt.value="";
+    // Locked reply check
+    if (currentAssignee !== "Unassigned" && currentAssignee !== me) {
+        alert("This client is assigned to another CSR.");
+        return;
+    }
+
+    const msg = document.getElementById("msg").value.trim();
+    if (!msg) return;
+
+    fetch("csr_ajax.php?action=send", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "client_id=" + currentClient + "&message=" + encodeURIComponent(msg)
+    })
+    .then(() => {
+        document.getElementById("msg").value = "";
         loadChat();
     });
 }
 
-// Dark Mode
-function toggleDarkMode(){
-    document.body.classList.toggle("dark");
-    localStorage.setItem("dark", document.body.classList.contains("dark"));
+// Reminders
+function loadReminders() {
+    const q = document.getElementById("rem-q").value;
+    fetch("csr_ajax.php?action=reminders&q=" + encodeURIComponent(q))
+        .then(r => r.json())
+        .then(list => {
+            let html = "";
+            list.forEach(item => {
+                html += `<div class="card">
+                    <b>${item.name}</b> (${item.email})<br>
+                    Due: ${item.due}<br>
+                </div>`;
+            });
+            document.getElementById("rem-list").innerHTML = html;
+        });
 }
-
-if(localStorage.getItem("dark")==="true"){
-    document.body.classList.add("dark");
-}
-
-// Emoji picker
-const emojiPanel=document.getElementById("emojiPanel");
-emojiPanel.style.display="none";
-
-const emojiList="😀😁😂🤣😃😄😅😉😊😍😘😎🤩🤔🙄😇😭😡👍👎🙏👏🔥✨❤️💯".split("");
-emojiList.forEach(e=>{
-    let span=document.createElement("span");
-    span.textContent=e;
-    span.className="emoji";
-    span.onclick=()=>{ document.getElementById("msg").value+=e; emojiPanel.style.display="none"; };
-    emojiPanel.appendChild(span);
-});
-
-document.getElementById("emojiBtn").onclick=()=> {
-    emojiPanel.style.display = emojiPanel.style.display==="none" ? "flex" : "none";
-};
-
-// Typing
-document.getElementById("msg").addEventListener("input", ()=>{
-    document.getElementById("typingIndicator").style.display="block";
-    clearTimeout(window.typingTimer);
-    window.typingTimer=setTimeout(()=>{
-        document.getElementById("typingIndicator").style.display="none";
-    },1500);
-});
-
-// Auto refresh
-setInterval(()=>{
-    if(currentClient) loadChat();
-}, 4000);
 
 loadClients();
+setInterval(() => {
+    if (currentClient) loadChat();
+}, 5000);
 </script>
 
 </body>
