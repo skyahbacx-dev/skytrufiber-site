@@ -9,16 +9,17 @@ if (!isset($_SESSION['csr_user'])) {
 
 $csr_user = $_SESSION['csr_user'];
 
-// GET CSR DETAILS
+// Load CSR info
 $stmt = $conn->prepare("SELECT full_name FROM csr_users WHERE username = :u LIMIT 1");
-$stmt->execute([':u'=>$csr_user]);
+$stmt->execute([':u' => $csr_user]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 $csr_fullname = $row['full_name'] ?? $csr_user;
 
 $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBALOGO.png';
 ?>
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
@@ -46,7 +47,7 @@ $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBAL
     <button id="hamb" onclick="toggleSidebar()">☰</button>
     <div class="brand">
         <img src="<?= $logoPath ?>" alt="Logo">
-        <span>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></span>
+        <span><?= htmlspecialchars($csr_fullname) ?></span>
     </div>
 </header>
 
@@ -55,18 +56,19 @@ $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBAL
     <div id="tab-all" class="tab active" onclick="switchTab('all')">💬 All Clients</div>
     <div id="tab-mine" class="tab" onclick="switchTab('mine')">👤 My Clients</div>
     <div id="tab-rem" class="tab" onclick="switchTab('rem')">⏰ Reminders</div>
-     <a href="survey_responses.php">📝 Survey Responses</a>
-     <a href="update_profile.php">👤 Edit Profile</a>
-    <a href="csr_logout.php">🚪 Logout</a>
+
+    <!-- NEW TABS (redirect tabs) -->
+    <div class="tab" onclick="window.location.href='survey_responses.php'">📝 Survey Responses</div>
+    <div class="tab" onclick="window.location.href='update_profile.php'">👤 Edit Profile</div>
 </div>
 
-<!-- MAIN GRID -->
+<!-- MAIN LAYOUT -->
 <div id="main">
 
-    <!-- LEFT: CLIENTS -->
+    <!-- LEFT COLUMN -->
     <div id="client-col"></div>
 
-    <!-- RIGHT: CHAT -->
+    <!-- RIGHT COLUMN (CHAT PANEL) -->
     <div id="chat-col">
 
         <button id="collapseBtn" onclick="collapseChat()">●</button>
@@ -76,30 +78,33 @@ $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBAL
                 <div id="chatAvatar" class="avatar"></div>
                 <div>
                     <div id="chat-name">Select a client</div>
-                    <div id="status" class="status">Offline</div>
+                    <div id="status">Offline</div>
                 </div>
             </div>
-            <div class="info-dot">i</div>
         </div>
 
         <div id="messages"></div>
 
-        <div id="typingIndicator" style="display:none;">Typing...</div>
+        <div id="typingIndicator">Typing...</div>
 
-        <div id="input" style="display:none;">
+        <div id="input">
             <input id="msg" placeholder="Type a reply…" onkeyup="typing()">
             <button onclick="sendMsg()">Send</button>
         </div>
 
-        <!-- REMINDERS -->
-        <div id="reminders">
-            <input id="rem-q" placeholder="Search…" onkeyup="loadReminders()">
-            <div id="rem-list"></div>
-        </div>
+    </div>
 
+    <!-- REMINDERS PANEL (SEPARATE RIGHT PANEL) -->
+    <div id="reminders">
+        <input id="rem-q" placeholder="Search…" onkeyup="loadReminders()">
+        <div id="rem-list"></div>
     </div>
 
 </div>
+
+<script>
+const csrUser = <?= json_encode($csr_user) ?>;
+</script>
 
 <script src="csr_dashboard.js"></script>
 
