@@ -2,98 +2,80 @@
 session_start();
 include '../db_connect.php';
 
-header('Content-Type: application/json');
+$csr_user = $_SESSION['csr_user'] ?? '';
 
-if (!isset($_SESSION['csr_user'])) {
-    echo json_encode(['error' => 'unauthorized']);
+$action = $_GET['action'] ?? '';
+
+if ($action === "list") {
+
+    $tab = $_GET['tab'] ?? 'all';
+
+    if ($tab === "mine") {
+        $q = $conn->prepare("SELECT id, name, assigned_csr FROM clients WHERE assigned_csr = :csr ORDER BY id ASC");
+        $q->execute([':csr' => $csr_user]);
+    } else {
+        $q = $conn->query("SELECT id, name, assigned_csr FROM clients ORDER BY id ASC");
+    }
+
+    $rows = [];
+
+    while ($r = $q->fetch(PDO::FETCH_ASSOC)) {
+        $rows[] = $r;
+    }
+
+    echo json_encode($rows);
     exit;
 }
 
-$csr_user = $_SESSION['csr_user'];
+if ($action === "profile") {
+    $cid = (int)$_GET['client_id'];
 
-/* ROUTER */
-$action = $_GET['action'] ?? null;
+    $q = $conn->prepare("SELECT name, gender, avatar FROM users WHERE id = :id");
+    $q->execute([':id' => $cid]);
 
-switch ($action) {
-
-    /* GET CLIENT LIST */
-    case 'clients':
-        $tab = $_GET['tab'] ?? 'all';
-
-        if ($tab === 'mine') {
-            $stmt = $conn->prepare("
-                SELECT c.id, c.name, c.assigned_csr, u.email
-                FROM clients c
-                LEFT JOIN users u ON u.full_name = c.name
-                WHERE c.assigned_csr = :csr
-                ORDER BY c.id ASC
-            ");
-            $stmt->execute(['csr' => $csr_user]);
-        } else {
-            $stmt = $conn->query("
-                SELECT c.id, c.name, c.assigned_csr, u.email
-                FROM clients c
-                LEFT JOIN users u ON u.full_name = c.name
-                ORDER BY c.id ASC
-            ");
-        }
-
-        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-        break;
-
-    /* LOAD CHAT */
-    case 'load_chat':
-        $cid = (int)($_GET['client_id'] ?? 0);
-
-        $stmt = $conn->prepare("
-            SELECT ch.message, ch.sender_type, ch.created_at,
-                   c.name AS client_name, 
-                   COALESCE(ch.csr_fullname, cu.full_name) AS csr_fullname
-            FROM chat ch
-            JOIN clients c ON c.id = ch.client_id
-            LEFT JOIN csr_users cu ON cu.username = :csr
-            WHERE ch.client_id = :cid
-            ORDER BY ch.created_at ASC
-        ");
-        $stmt->execute([
-            'cid' => $cid,
-            'csr' => $csr_user
-        ]);
-
-        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-        break;
-
-    /* SEND MESSAGE */
-    case 'send':
-        $cid = (int)($_POST['client_id'] ?? 0);
-        $msg = trim($_POST['message'] ?? '');
-
-        if (!$msg) {
-            echo json_encode(['error' => 'empty']);
-            break;
-        }
-
-        // Get CSR fullname
-        $csr_stmt = $conn->prepare("SELECT full_name FROM csr_users WHERE username = :u");
-        $csr_stmt->execute(['u' => $csr_user]);
-        $csr = $csr_stmt->fetch(PDO::FETCH_ASSOC);
-        $csr_name = $csr['full_name'] ?? $csr_user;
-
-        $stmt = $conn->prepare("
-            INSERT INTO chat (client_id,message,sender_type,csr_fullname,assigned_csr)
-            VALUES (:cid,:msg,'csr',:fullname,:csr)
-        ");
-        $stmt->execute([
-            'cid' => $cid,
-            'msg' => $msg,
-            'fullname' => $csr_name,
-            'csr' => $csr_user
-        ]);
-
-        echo json_encode(['status' => 'ok']);
-        break;
-
-    default:
-        echo json_encode(['error' => 'invalid action']);
-        break;
+    echo json_encode($q->fetch(PDO::FETCH_ASSOC));
+    exit;
 }
+
+if ($action === "messages") {
+    $cid = (int)$_GET['client_id'];
+
+    $q = $conn->prepare("
+        SELECT ch.*, c.name AS cname, cu.full_name AS csrname
+        FROM chat ch
+        LEFT JOIN clients c ON ch.client_id = c.id
+        LEFT JOIN csr_users cu ON ch.assigned_csr = cu.username
+        WHERE ch.client_id = :cid
+        ORDER BY ch.created_at ASC
+    ");
+    $q->execute([':cid' => $cid]);
+
+    $rows = [];
+
+    while ($r = $q->fetch(PDO::FETCH_ASSOC)) {
+        $rows[] = $r;
+    }
+
+    echo json_encode($rows);
+    exit;
+}
+
+if ($action === "send") {
+    $cid = (int)$_POST['client_id'];
+    $msg = $_POST['msg'];
+
+    $q = $conn->prepare("
+        INSERT INTO chat (client_id, message, sender_type, assigned_csr)
+        VALUES (:cid, :msg, 'csr', :csr)
+    ");
+    $q->execute([
+        ':cid' => $cid,
+        ':msg' => $msg,
+        ':csr' => $csr_user
+    ]);
+
+    echo "ok";
+    exit;
+}
+
+echo "invalid";
