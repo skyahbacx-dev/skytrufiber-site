@@ -2,29 +2,52 @@
 session_start();
 include '../db_connect.php';
 
-$csr = $_SESSION['csr_user'] ?? "";
+$csr = $_SESSION['csr_user'] ?? "";  // Example: "CSR WALDO"
 
-/* ✅ Load clients */
+
+/* ✅ LOAD CLIENTS LIST */
 if (isset($_GET['clients'])) {
+
     $tab = $_GET['tab'] ?? "all";
 
     if ($tab === "mine") {
-        $stmt = $conn->prepare("SELECT * FROM clients WHERE assigned_csr = :csr ORDER BY full_name ASC");
-        $stmt->execute([':csr'=>$csr]);
+        // Show only clients assigned to logged-in CSR
+        $stmt = $conn->prepare("
+            SELECT id, full_name, email, assigned_csr 
+            FROM clients 
+            WHERE assigned_csr = :csr 
+            ORDER BY full_name ASC
+        ");
+        $stmt->execute([':csr' => $csr]);
     } else {
-        $stmt = $conn->query("SELECT * FROM clients ORDER BY full_name ASC");
+        // Show all clients
+        $stmt = $conn->prepare("
+            SELECT id, full_name, email, assigned_csr 
+            FROM clients 
+            ORDER BY full_name ASC
+        ");
+        $stmt->execute();
     }
 
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
         $assigned = $row['assigned_csr'] ?: "Unassigned";
-        $btn = ($assigned === "Unassigned") ?
-            "<button class='pill green' onclick='assignClient({$row['id']})'>＋</button>" :
-            ($assigned === $csr ? "<button class='pill red' onclick='unassignClient({$row['id']})'>−</button>" :
-            "<button class='pill gray' disabled>🔒</button>");
+
+        // ✅ Assignment button logic
+        if ($assigned === "Unassigned") {
+            $btn = "<button class='pill green' onclick='assignClient({$row['id']})'>＋</button>";
+        }
+        else if ($assigned === $csr) {
+            $btn = "<button class='pill red' onclick='unassignClient({$row['id']})'>−</button>";
+        }
+        else {
+            $btn = "<button class='pill gray' disabled>🔒</button>";  // other CSR's client
+        }
 
         echo "
-        <div class='client-item' data-id='{$row['id']}'
-             data-name='".htmlspecialchars($row['full_name'],ENT_QUOTES)."'
+        <div class='client-item' 
+             data-id='{$row['id']}'
+             data-name='".htmlspecialchars($row['full_name'], ENT_QUOTES)."'
              data-csr='{$assigned}'>
 
             <div>
@@ -32,95 +55,135 @@ if (isset($_GET['clients'])) {
                 <div class='client-email'>{$row['email']}</div>
                 <div class='client-assign'>Assigned: {$assigned}</div>
             </div>
+
             <div>{$btn}</div>
         </div>";
     }
+
     exit;
 }
 
-/* ✅ Load chat */
+
+
+/* ✅ LOAD CHAT HISTORY */
 if (isset($_GET['load_chat'])) {
+
     $cid = (int)$_GET['client_id'];
 
     $stmt = $conn->prepare("
-        SELECT ch.*, c.full_name AS client
+        SELECT ch.*, c.full_name AS client_name
         FROM chat ch
         JOIN clients c ON c.id = ch.client_id
         WHERE ch.client_id = :cid
-        ORDER BY created_at ASC
+        ORDER BY ch.created_at ASC
     ");
-    $stmt->execute([':cid'=>$cid]);
+    $stmt->execute([':cid' => $cid]);
 
-    $out = [];
-    while ($r=$stmt->fetch(PDO::FETCH_ASSOC)) {
-        $out[] = [
-            "sender"=>$r['sender_type'],
-            "message"=>$r['message'],
-            "time"=>date("M d h:i A", strtotime($r['created_at'])),
-            "client"=>$r['client'],
-            "read"=>$r['is_read']
+    $messages = [];
+
+    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $messages[] = [
+            "sender"  => $r['sender_type'],
+            "message" => $r['message'],
+            "time"    => date("M d h:i A", strtotime($r['created_at'])),
+            "client"  => $r['client_name'],
+            "read"    => $r['is_read']
         ];
     }
 
-    echo json_encode($out);
+    echo json_encode($messages);
     exit;
 }
 
-/* ✅ Client profile */
+
+
+/* ✅ CLIENT PROFILE FIXED */
 if (isset($_GET['client_profile'])) {
-    $name = $_GET['name'];
 
-    $stmt = $conn->prepare("SELECT email, gender, avatar, online FROM users WHERE full_name = :n LIMIT 1");
-    $stmt->execute([':n'=>$name]);
+    $clientId = (int)$_GET['client_id'];
 
-    $out = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-    echo json_encode($out);
+    // ✅ get profile from clients table instead of users table
+    $stmt = $conn->prepare("
+        SELECT full_name, email, barangay, balance, assigned_csr 
+        FROM clients 
+        WHERE id = :id LIMIT 1
+    ");
+
+    $stmt->execute([':id' => $clientId]);
+    echo json_encode($stmt->fetch(PDO::FETCH_ASSOC) ?: []);
     exit;
 }
 
-/* ✅ Send message */
-if (isset($_GET['send'])) {
-    $cid = $_POST['client_id'];
-    $msg = $_POST['msg'];
 
-    $stmt = $conn->prepare("INSERT INTO chat (client_id, sender_type, message, csr_fullname) VALUES (:i,'csr',:m,:csr)");
+
+/* ✅ SEND MESSAGE — FIXED GET/POST */
+if (isset($_POST['send'])) {
+
+    $cid = (int)$_POST['client_id'];
+    $msg = trim($_POST['msg']);
+
+    if ($msg === "") {
+        echo "empty";
+        exit;
+    }
+
+    $stmt = $conn->prepare("
+        INSERT INTO chat (client_id, sender_type, message, assigned_csr, csr_fullname)
+        VALUES (:cid, 'csr', :msg, :csr, :csr)
+    ");
+
     $stmt->execute([
-        ':i'=>$cid,
-        ':m'=>$msg,
-        ':csr'=>$csr
+        ':cid' => $cid,
+        ':msg' => $msg,
+        ':csr' => $csr
     ]);
 
     echo "ok";
     exit;
 }
 
-/* ✅ Typing indicator */
+
+
+/* ✅ TYPING INDICATOR */
 if (isset($_GET['typing'])) {
     echo "ok";
     exit;
 }
 
-/* ✅ Reminders */
+
+
+/* ✅ REMINDERS */
 if (isset($_GET['reminders'])) {
-    $q = $_GET['q'] ?? "";
 
-    $u = $conn->query("SELECT full_name, email, date_installed FROM users")->fetchAll(PDO::FETCH_ASSOC);
+    $search = $_GET['q'] ?? "";
 
-    $out = [];
+    $stmt = $conn->query("
+        SELECT full_name, email, date_installed 
+        FROM clients
+        ORDER BY date_installed DESC
+    ");
 
-    foreach ($u as $usr) {
-        if (!$usr['date_installed']) continue;
-        if ($q && stripos($usr['full_name'].$usr['email'], $q) === false) continue;
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $out[] = [
-            "name"=>$usr['full_name'],
-            "email"=>$usr['email'],
-            "due"=>$usr['date_installed'],
-            "badges"=>"<span class='badge'>1 WEEK</span>"
+    $output = [];
+
+    foreach ($rows as $row) {
+
+        if (!$row['date_installed']) continue;
+
+        if ($search && stripos($row['full_name'].$row['email'], $search) === false) {
+            continue;
+        }
+
+        $output[] = [
+            "name"   => $row['full_name'],
+            "email"  => $row['email'],
+            "due"    => $row['date_installed'],
+            "badges" => "<span class='badge'>1 WEEK</span>"
         ];
     }
 
-    echo json_encode($out);
+    echo json_encode($output);
     exit;
 }
 
