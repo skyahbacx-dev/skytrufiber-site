@@ -55,6 +55,9 @@ $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBAL
     <div id="tab-all" class="tab active" onclick="switchTab('all')">💬 All Clients</div>
     <div id="tab-mine" class="tab" onclick="switchTab('mine')">👤 My Clients</div>
     <div id="tab-rem" class="tab" onclick="switchTab('rem')">⏰ Reminders</div>
+     <a href="survey_responses.php">📝 Survey Responses</a>
+     <a href="update_profile.php">👤 Edit Profile</a>
+    <a href="csr_logout.php">🚪 Logout</a>
 </div>
 
 <!-- MAIN GRID -->
