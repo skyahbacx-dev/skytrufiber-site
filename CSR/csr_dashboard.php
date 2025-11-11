@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../db_connect.php';
+
 if (!isset($_SESSION['csr_user'])) {
     header("Location: csr_login.php");
     exit;
@@ -12,69 +13,77 @@ $stmt = $conn->prepare("SELECT full_name FROM csr_users WHERE username = :u LIMI
 $stmt->execute([':u' => $csr_user]);
 $csr = $stmt->fetch(PDO::FETCH_ASSOC);
 $csr_fullname = $csr['full_name'] ?? $csr_user;
+$logoPath = '../SKYTRUFIBER/AHBALOGO.png';
 ?>
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
-    <link rel="stylesheet" href="csr_dashboard.css">
+<meta charset="UTF-8">
+<title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
+<link rel="stylesheet" href="csr_dashboard.css">
 </head>
 
 <body>
 
-<!-- SIDEBAR -->
+<!-- Sidebar -->
 <div id="sidebar">
-    <button class="close-sidebar" onclick="toggleSidebar(false)">✖</button>
-
-    <h2><?= htmlspecialchars($csr_fullname) ?></h2>
+    <div class="side-header">
+        <img src="<?= $logoPath ?>" class="side-logo">
+        <span><?= htmlspecialchars($csr_fullname) ?></span>
+        <button id="sideClose" onclick="toggleSidebar(false)">✕</button>
+    </div>
 
     <a onclick="switchTab('all')">💬 All Clients</a>
     <a onclick="switchTab('mine')">👤 My Clients</a>
     <a onclick="switchTab('rem')">⏰ Reminders</a>
-    <a href="survey_responses.php">📝 Surveys</a>
-    <a href="update_profile.php">⚙️ Profile</a>
+    <a href="survey_responses.php">📝 Survey Responses</a>
+    <a href="update_profile.php">👤 Profile</a>
     <a href="csr_logout.php">🚪 Logout</a>
 </div>
 
 <div id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
 
-<!-- HEADER -->
+<!-- Header -->
 <header>
     <button id="openSidebar" onclick="toggleSidebar(true)">☰</button>
-    <div class="centered-title">CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></div>
+    <div class="brand">
+        <img src="<?= $logoPath ?>" class="brand-logo">
+        <span>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></span>
+    </div>
 </header>
 
-<!-- TABS -->
+<!-- Tabs -->
 <div class="tabs">
-    <button id="tab-all" class="active" onclick="switchTab('all')">All Clients</button>
-    <button id="tab-mine" onclick="switchTab('mine')">My Clients</button>
-    <button id="tab-rem" onclick="switchTab('rem')">Reminders</button>
-    <button onclick="location.href='survey_responses.php'">Surveys</button>
-    <button onclick="location.href='update_profile.php'">Profile</button>
+    <div id="tab-all" class="tab active" onclick="switchTab('all')">💬 All Clients</div>
+    <div id="tab-mine" class="tab" onclick="switchTab('mine')">👤 My Clients</div>
+    <div id="tab-rem" class="tab" onclick="switchTab('rem')">⏰ Reminders</div>
+    <div class="tab" onclick="location.href='survey_responses.php'">📝 Surveys</div>
+    <div class="tab" onclick="location.href='update_profile.php'">👤 Profile</div>
 </div>
 
-<!-- MAIN -->
-<div id="main">
-    <div id="client-col"></div>
+<div id="layout">
+    <!-- Client list -->
+    <div id="clientList"></div>
 
-    <div id="chat-col">
-        <div id="chat-head">
+    <!-- Chat area -->
+    <div id="chatArea">
+        <div id="chatHeader">
             <div id="chatAvatar" class="avatar"></div>
-            <div id="chat-title">Select a client</div>
+            <div class="chatName" id="chatName">Select a client</div>
         </div>
 
         <div id="messages"></div>
 
-        <div id="input" style="display:none;">
-            <input id="msg" placeholder="Type a reply…">
-            <button onclick="sendMsg()">Send</button>
+        <div id="inputArea" style="display:none;">
+            <input type="text" id="msgBox" placeholder="Type a reply…">
+            <button onclick="sendMessage()">Send</button>
         </div>
+
+        <div id="reminderArea"></div>
     </div>
 </div>
 
-<script src="csr_dashboard.js"></script>
+<script src="csr_ajax.js"></script>
 
 </body>
 </html>
