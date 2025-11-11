@@ -1,255 +1,317 @@
+<?php
+// chat_support.php (Messenger style)
+include '../db_connect.php';
+header('Content-Type: text/html; charset=UTF-8');
+
+$username = $_GET['username'] ?? 'Guest';
+
+/* =======================
+   FETCH LAST ASSIGNED CSR
+   ======================= */
+$csr_name_display = 'CSR Support Team';
+try {
+    $stmt = $conn->prepare("
+        SELECT assigned_csr, csr_fullname
+        FROM chat
+        WHERE client_id = (
+            SELECT id FROM clients WHERE username = :u LIMIT 1
+        )
+        ORDER BY created_at DESC
+        LIMIT 1
+    ");
+    $stmt->execute([':u' => $username]);
+    if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        if (!empty($row['csr_fullname'])) {
+            $csr_name_display = $row['csr_fullname'];
+        }
+    }
+} catch (Throwable $e) {
+    // leave default label
+}
+
+function e($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>SkyTruFiber Live Support</title>
+<meta charset="UTF-8" />
+<title>SkyTruFiber — Support Chat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
+/* ====== Messenger-style UI ====== */
 
-/* ========================================= */
-/* 🌈 GLOBAL DESIGN IMPROVED                 */
-/* ========================================= */
-
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Segoe UI', Arial, sans-serif;
-  background: linear-gradient(135deg, #bfe6ff, #e7f6ff);
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-  position: relative;
+:root{
+  --bg: #e5e8f0;
+  --header: #0084FF;
+  --outgoing: #0084FF;
+  --incoming: #f0f0f0;
+  --text-on-blue: #fff;
+  --text-on-gray: #0a0a0a;
+  --shadow: 0 10px 28px rgba(0,0,0,.18);
+  --border: 1px solid rgba(0,0,0,0.06);
 }
 
-/* Watermark logo */
-body::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: url('../SKYTRUFIBER.png') center center no-repeat;
-  background-size: 350px;
-  opacity: 0.10;
-  filter: grayscale(100%);
-  z-index: 0;
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(135deg,#c2e1ff,#f3f8ff);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  position:relative;
+}
+body::before{
+  content:"";
+  position:absolute; inset:0;
+  background:url('../SKYTRUFIBER.png') center/420px no-repeat;
+  opacity:.08; filter:grayscale(100%);
+  pointer-events:none;
 }
 
-/* Outer chat container */
-.chat-box-wrapper {
-  position: relative;
-  z-index: 1;
-  width: 430px;
-  max-width: 94%;
-  height: 89vh;
-  background: white;
-  border-radius: 18px;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.18);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid rgba(0,0,0,0.05);
+/* Shell */
+.chat-wrap{
+  width:min(430px,95vw);
+  height:min(92vh,800px);
+  background:#fff;
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  border:var(--border);
 }
 
-/* ========================================= */
-/* 🌟 HEADER                                  */
-/* ========================================= */
-.header {
-  background: linear-gradient(135deg, #0088cc, #00a5dd);
-  padding: 16px;
-  color: #fff;
-  text-align: center;
-  border-bottom: 2px solid rgba(255,255,255,0.3);
+/* Header */
+.chat-header{
+  background:var(--header);
+  color:#fff;
+  padding:12px 14px;
+  display:flex; align-items:center; gap:10px;
 }
-
-.header-title {
-  font-size: 18px;
-  font-weight: 600;
+.logo{
+  width:38px; height:38px; border-radius:50%;
+  background:#fff; display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
 }
-
-.header-sub {
-  font-size: 13px;
-  opacity: 0.85;
+.logo img{ width:34px; height:34px; object-fit:contain; }
+.head-text{
+  display:flex; flex-direction:column; line-height:1.15;
 }
+.head-title{ font-weight:700; font-size:15.5px; }
+.head-sub{ font-size:12.5px; opacity:.9 }
 
-/* Logo on top of header */
-.chat-logo {
-  width: 110px;
-  height: 110px;
-  object-fit: contain;
-  margin: 10px auto 0;
-  display: block;
-  filter: drop-shadow(0px 3px 5px rgba(0,0,0,0.2));
+/* Messages area */
+.messages{
+  flex:1; overflow:auto; padding:16px 12px;
+  background:#f9fbff;
 }
-
-/* ========================================= */
-/* 💬 MESSAGES AREA                           */
-/* ========================================= */
-.messages {
-  flex: 1;
-  padding: 20px 15px;
-  overflow-y: auto;
-  background: #f7fcff;
-  background-image: url("../SKYTRUFIBER.png");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 250px;
-  background-blend-mode: lighten;
+.msg-row{
+  display:flex; gap:8px; margin:8px 0; align-items:flex-end;
 }
+.msg-in .avatar{ order:1 }
+.msg-in .bubble{ order:2 }
+.msg-out{ justify-content:flex-end }
+.msg-out .avatar{ order:2 }
+.msg-out .bubble{ order:1 }
 
-.message-bubble {
-  padding: 12px 16px;
-  border-radius: 18px;
-  margin: 8px 0;
-  max-width: 78%;
-  word-break: break-word;
-  line-height: 1.4;
-  font-size: 14.3px;
-  position: relative;
-  box-shadow: 0 3px 7px rgba(0,0,0,0.08);
+/* Avatar circles */
+.avatar{
+  width:32px; height:32px; border-radius:50%;
+  background:#e6e6e6; color:#333;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:13px;
+  user-select:none;
+  overflow:hidden;
 }
+.avatar img{ width:100%; height:100%; object-fit:cover }
 
-/* CSR messages */
-.message-csr {
-  background: #e1f1ff;
-  border-left: 4px solid #0080c6;
-  color: #003355;
-  align-self: flex-start;
+/* Bubbles */
+.bubble{
+  max-width:75%;
+  padding:10px 12px;
+  border-radius:18px;
+  box-shadow:0 3px 8px rgba(0,0,0,.06);
+  word-wrap:break-word; white-space:pre-wrap;
+  font-size:14.3px; line-height:1.38;
 }
-
-/* User messages */
-.message-user {
-  background: #ccffd8;
-  border-right: 4px solid #189444;
-  align-self: flex-end;
-  color: #083713;
+.msg-in .bubble{
+  background:var(--incoming); color:var(--text-on-gray);
+  border-top-left-radius:6px;
+}
+.msg-out .bubble{
+  background:var(--outgoing); color:var(--text-on-blue);
+  border-top-right-radius:6px;
 }
 
 /* Timestamp */
-.timestamp {
-  font-size: 11px;
-  opacity: 0.6;
-  margin-top: 6px;
+.time{
+  font-size:11px; opacity:.6; margin-top:4px;
 }
 
-/* ========================================= */
-/* ✏️ INPUT BAR                               */
-/* ========================================= */
-.input-area {
-  display: flex;
-  padding: 12px;
-  background: #f4f4f4;
-  border-top: 1px solid #ddd;
+/* Typing indicator (client-side only) */
+.typing{
+  display:none; gap:6px; align-items:center; margin:8px 0 4px 40px;
+  color:#555; font-size:12.5px;
+}
+.dot{
+  width:6px; height:6px; border-radius:50%;
+  background:#999; opacity:.6; animation: blink 1.2s infinite ease-in-out;
+}
+.dot:nth-child(2){ animation-delay:.2s }
+.dot:nth-child(3){ animation-delay:.4s }
+@keyframes blink{
+  0%,80%,100%{opacity:.3; transform:translateY(0)}
+  40%{opacity:.9; transform:translateY(-2px)}
 }
 
-.input-area input {
-  flex: 1;
-  border: none;
-  outline: none;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  background: #fff;
+/* Input */
+.input-bar{
+  display:flex; gap:8px; padding:10px; border-top:var(--border);
+  background:#fff;
+}
+.input-bar input{
+  flex:1; padding:12px 14px; border-radius:999px; border:1px solid #dcdcdc; font-size:14px;
+}
+.send-btn{
+  border:none; background:var(--outgoing); color:#fff; font-weight:700;
+  padding:12px 16px; border-radius:999px; cursor:pointer;
+}
+.send-btn:hover{ background:#0073db }
+
+/* Scrollbar (webkit) */
+.messages::-webkit-scrollbar{ width:8px }
+.messages::-webkit-scrollbar-thumb{
+  background:#c9dff0; border-radius:8px;
 }
 
-.btn-send {
-  margin-left: 10px;
-  background: #0099cc;
-  color: #fff;
-  border: none;
-  padding: 12px 18px;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.btn-send:hover {
-  background: #007eb1;
-}
-
-/* Scrollbar */
-.messages::-webkit-scrollbar {
-  width: 8px;
-}
-.messages::-webkit-scrollbar-thumb {
-  background: #b8dcf0;
-  border-radius: 8px;
-}
-
-/* Mobile */
-@media (max-width: 500px) {
-  .chat-box-wrapper {
-    height: 92vh;
-  }
+@media (max-width:420px){
+  .chat-wrap{ height:94vh }
 }
 </style>
 </head>
-
 <body>
 
-<div class="chat-box-wrapper">
-
-  <img src="../SKYTRUFIBER.png" class="chat-logo">
-
+<div class="chat-wrap">
   <!-- Header -->
-  <div class="header">
-    <div class="header-title">Welcome, <?= htmlspecialchars($username) ?></div>
-    <div class="header-sub">Connected to <?= $csr_name_display ?></div>
+  <div class="chat-header">
+    <div class="logo">
+      <img src="../SKYTRUFIBER.png" alt="Logo">
+    </div>
+    <div class="head-text">
+      <div class="head-title">SkyTruFiber Support</div>
+      <div class="head-sub">Connected to <?= e($csr_name_display) ?></div>
+    </div>
   </div>
 
   <!-- Messages -->
-  <div class="messages" id="chatBox"></div>
+  <div id="chatBox" class="messages"></div>
 
-  <!-- Input -->
-  <div class="input-area">
-    <input type="text" id="message" placeholder="Type your message...">
-    <button class="btn-send" onclick="sendMessage()">Send</button>
+  <!-- Typing indicator (shown while user typing) -->
+  <div id="typing" class="typing">
+    <span>Typing</span>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
   </div>
 
+  <!-- Input -->
+  <div class="input-bar">
+    <input id="message" type="text" placeholder="Write a message…" autocomplete="off" />
+    <button class="send-btn" onclick="sendMessage()">Send</button>
+  </div>
 </div>
 
 <script>
-const username = <?= json_encode($username) ?>;
-const chatBox = document.getElementById('chatBox');
+/* ===== Client side logic (keep your endpoints) ===== */
 
-// Load messages
-function loadChat() {
-  fetch(`load_chat.php?client=${encodeURIComponent(username)}`)
-    .then(r=>r.json())
-    .then(data=>{
-      chatBox.innerHTML = "";
-      data.forEach(msg=>{
-        const wrap = document.createElement('div');
-        wrap.className = "message-bubble " + (msg.sender_type === "csr" ? "message-csr" : "message-user");
-        wrap.innerHTML = `
-          ${msg.message}
-          <div class="timestamp">${new Date(msg.created_at).toLocaleString()}</div>
-        `;
-        chatBox.appendChild(wrap);
-      });
-      chatBox.scrollTop = chatBox.scrollHeight;
-    });
+const USERNAME = <?= json_encode($username, JSON_UNESCAPED_UNICODE) ?>;
+const chatBox  = document.getElementById('chatBox');
+const typingEl = document.getElementById('typing');
+const inputEl  = document.getElementById('message');
+
+let typingTimer;
+
+/* Render one message row */
+function renderRow(m){
+  const isCSR = m.sender_type === 'csr';
+  const row = document.createElement('div');
+  row.className = isCSR ? 'msg-row msg-in' : 'msg-row msg-out';
+
+  // avatar
+  const av = document.createElement('div');
+  av.className = 'avatar';
+  if (isCSR){
+    // CSR avatar - show initials C
+    av.textContent = 'C';
+  } else {
+    // user avatar - first initial
+    av.textContent = (USERNAME || 'U').trim().charAt(0).toUpperCase() || 'U';
+  }
+
+  // bubble
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = m.message || '';
+
+  // time
+  const t = document.createElement('div');
+  t.className = 'time';
+  const dt = new Date(m.created_at || Date.now());
+  t.textContent = dt.toLocaleString();
+  bubble.appendChild(t);
+
+  // assemble
+  row.appendChild(av);
+  row.appendChild(bubble);
+  chatBox.appendChild(row);
 }
 
-function sendMessage() {
-  const text = document.getElementById('message').value.trim();
-  if (!text) return;
-  fetch("save_chat.php", {
-    method: "POST",
-    headers: {"Content-Type":"application/x-www-form-urlencoded"},
-    body: new URLSearchParams({
-      sender_type: "client",
-      message: text,
-      client: username
+/* Load messages */
+function loadChat(){
+  fetch('load_chat.php?client=' + encodeURIComponent(USERNAME))
+    .then(r => r.json())
+    .then(list => {
+      chatBox.innerHTML = '';
+      list.forEach(renderRow);
+      chatBox.scrollTop = chatBox.scrollHeight;
     })
-  }).then(()=>{
-    document.getElementById('message').value="";
+    .catch(()=>{ /* ignore */ });
+}
+
+/* Send message */
+function sendMessage(){
+  const text = (inputEl.value || '').trim();
+  if (!text) return;
+
+  fetch('save_chat.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: new URLSearchParams({
+      sender_type: 'client',
+      message: text,
+      client: USERNAME
+    })
+  }).then(() => {
+    inputEl.value = '';
+    hideTyping();
     loadChat();
   });
 }
 
+/* Typing indicator (client-side only) */
+function showTyping(){
+  typingEl.style.display = 'flex';
+  if (typingTimer) clearTimeout(typingTimer);
+  typingTimer = setTimeout(hideTyping, 1200);
+}
+function hideTyping(){
+  typingEl.style.display = 'none';
+}
+inputEl.addEventListener('input', showTyping);
+
+/* Poll messages */
 setInterval(loadChat, 1500);
-window.onload = loadChat;
+window.addEventListener('load', loadChat);
 </script>
 
 </body>
