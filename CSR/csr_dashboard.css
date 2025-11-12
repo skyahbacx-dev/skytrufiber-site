@@ -21,24 +21,22 @@
 }
 .topbar .left { display:flex; align-items:center; gap:12px; }
 .logo { height:40px; border-radius:6px; }
-#hamb { font-size:20px; background:none; color:white; border:none; cursor:pointer; }
 .logout { color:white; text-decoration:none; font-weight:600 }
 
-/* tabs row */
-.tabs-row { background: #ecfff4; border-bottom:1px solid #d6efe0; }
-.tabs { display:flex; gap:6px; padding:8px 12px; align-items:center; }
-.tab {
-  background:transparent; border:none; padding:8px 12px; border-radius:8px;
-  font-weight:700; color:var(--green-dark); cursor:pointer; text-decoration:none;
-}
-.tab.active { background:var(--green); color:white; }
-
 /* layout */
-.wrap { display:grid; grid-template-columns:260px 1fr; height:calc(100vh - 112px); }
+.wrap { display:grid; grid-template-columns:260px 1fr; height:calc(100vh - 64px); }
 .sidebar { background:#ecfff4; border-right:1px solid #d6efe0; overflow:auto; padding:14px; }
 .sidebar h3 { margin:0 0 8px 0; color:var(--green-dark); }
 .client-list { display:flex; flex-direction:column; gap:8px; }
 
+.tab {
+  background:transparent; border:none; padding:8px 12px; border-radius:8px;
+  font-weight:700; color:var(--green-dark); cursor:pointer; text-align:left;
+  width:100%;
+}
+.tab.active { background:var(--green); color:white; }
+
+/* Client list */
 .client-item {
   background:white; padding:10px; border-radius:10px; display:flex; gap:10px; align-items:center;
   border:1px solid #e5efe7; cursor:pointer;
@@ -82,11 +80,8 @@
 .typing span:nth-child(3){animation-delay:0.3s}
 @keyframes blink { 0%, 80%, 100% { opacity:0.2 } 40% { opacity:1 } }
 
-/* small screens */
+/* responsive */
 @media (max-width:1000px){
-  .wrap { grid-template-columns: 0 1fr; } /* collapsed sidebar by default for small screens */
-  body.sidebar-collapsed .wrap { grid-template-columns: 260px 1fr; } /* show when toggled */
+  .wrap { grid-template-columns: 0 1fr; }
+  body.sidebar-collapsed .wrap { grid-template-columns: 260px 1fr; }
 }
-
-/* sidebar collapse behavior for desktop */
-body.sidebar-collapsed .wrap { grid-template-columns: 0 1fr; }
