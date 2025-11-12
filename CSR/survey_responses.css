@@ -24,7 +24,7 @@ header {
   justify-content:space-between;
   background:linear-gradient(135deg,#0fb572,#0aa05b);
   color:#fff;
-  padding:12px 20px;
+  padding:5px 20px;
   box-shadow:var(--shadow);
 }
 header img { height:42px; border-radius:10px; }
