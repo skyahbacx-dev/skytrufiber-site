@@ -9,227 +9,216 @@ if (!isset($_SESSION['csr_user'])) {
 
 $csr_user = $_SESSION['csr_user'];
 
-// ========== AJAX HANDLERS ==========
+// Get CSR info
+$stmt = $conn->prepare("SELECT full_name, profile_pic FROM csr_users WHERE username = :u LIMIT 1");
+$stmt->execute([':u' => $csr_user]);
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$csr_fullname = $row['full_name'] ?? $csr_user;
+$csr_avatar = $row['profile_pic'] ?? 'CSR/default_avatar.png';
+
+/* ========= AJAX HANDLERS ========= */
 if (isset($_GET['ajax'])) {
     header('Content-Type: application/json');
 
-    switch ($_GET['ajax']) {
-        case 'clients':
-            $tab = $_GET['tab'] ?? 'all';
-            if ($tab === 'mine') {
-                $stmt = $conn->prepare("SELECT id, name AS full_name, assigned_csr, is_online FROM clients WHERE assigned_csr = :c ORDER BY name ASC");
-                $stmt->execute([':c' => $csr_user]);
-            } else {
-                $stmt = $conn->query("SELECT id, name AS full_name, assigned_csr, is_online FROM clients ORDER BY name ASC");
-            }
-            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-            exit;
+    /* Load Clients */
+    if ($_GET['ajax'] === 'load_clients') {
+        $tab = $_GET['tab'] ?? 'all';
+        if ($tab === 'mine') {
+            $stmt = $conn->prepare("SELECT * FROM clients WHERE assigned_csr = :csr ORDER BY name ASC");
+            $stmt->execute([':csr' => $csr_user]);
+        } else {
+            $stmt = $conn->query("SELECT * FROM clients ORDER BY name ASC");
+        }
 
-        case 'chat':
-            $cid = (int)$_GET['id'];
-            $stmt = $conn->prepare("
-                SELECT message, sender_type, csr_fullname, created_at,
-                (SELECT name FROM clients WHERE id = chat.client_id LIMIT 1) AS client_name
-                FROM chat WHERE client_id = :id ORDER BY created_at ASC
-            ");
-            $stmt->execute([':id' => $cid]);
-            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-            exit;
-
-        case 'send':
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                $cid = (int)$_POST['client_id'];
-                $msg = trim($_POST['msg']);
-                if ($cid && $msg) {
-                    $q = $conn->prepare("INSERT INTO chat (client_id, sender_type, message, csr_fullname, created_at) VALUES (:cid, 'csr', :m, :csr, NOW())");
-                    $q->execute([':cid' => $cid, ':m' => $msg, ':csr' => $csr_user]);
-                    echo json_encode(['ok' => 1]);
-                } else echo json_encode(['ok' => 0]);
-            }
-            exit;
-
-        case 'assign':
-            $cid = (int)$_POST['client_id'];
-            $assign = $_POST['assign'] ?? 'none';
-            if ($assign === 'assign') {
-                $stmt = $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :cid");
-                $stmt->execute([':csr' => $csr_user, ':cid' => $cid]);
-            } else {
-                $stmt = $conn->prepare("UPDATE clients SET assigned_csr = NULL WHERE id = :cid");
-                $stmt->execute([':cid' => $cid]);
-            }
-            echo json_encode(['ok' => 1]);
-            exit;
+        $clients = [];
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $clients[] = [
+                'id' => $r['id'],
+                'name' => $r['name'],
+                'status' => (strtotime($r['last_active']) > time() - 60) ? 'Online' : 'Offline',
+                'assigned_csr' => $r['assigned_csr']
+            ];
+        }
+        echo json_encode($clients);
+        exit;
     }
+
+    /* Load Chat */
+    if ($_GET['ajax'] === 'load_chat') {
+        $cid = (int)$_GET['client_id'];
+        $stmt = $conn->prepare("SELECT c.full_name AS client, ch.* FROM chat ch JOIN clients c ON ch.client_id = c.id WHERE ch.client_id = :cid ORDER BY ch.created_at ASC");
+        $stmt->execute([':cid' => $cid]);
+        $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode($messages);
+        exit;
+    }
+
+    /* Send Message */
+    if ($_GET['ajax'] === 'send_msg') {
+        $cid = (int)$_POST['client_id'];
+        $msg = trim($_POST['msg']);
+        if ($msg) {
+            $stmt = $conn->prepare("INSERT INTO chat (client_id, sender_type, message, csr_fullname) VALUES (:cid, 'csr', :msg, :csr)");
+            $stmt->execute([':cid' => $cid, ':msg' => $msg, ':csr' => $csr_fullname]);
+        }
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+
+    /* Typing Status */
+    if ($_GET['ajax'] === 'typing_status') {
+        echo json_encode(['typing' => rand(0, 1)]); // Simulated typing
+        exit;
+    }
+
     exit;
 }
-
-// ========== MAIN DASHBOARD ==========
-$stmt = $conn->prepare("SELECT full_name FROM csr_users WHERE username = :u LIMIT 1");
-$stmt->execute([':u' => $csr_user]);
-$r = $stmt->fetch(PDO::FETCH_ASSOC);
-$csr_fullname = $r['full_name'] ?? $csr_user;
-$logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : '../SKYTRUFIBER/AHBALOGO.png';
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="csr_dashboard.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="csr_dashboard.css">
 </head>
 <body>
 
 <header>
-  <div class="header-left">
-    <img src="<?= $logoPath ?>" alt="Logo">
-    <span>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></span>
-  </div>
-  <div class="header-right">
-    <a href="csr_logout.php">Logout</a>
-  </div>
+    <div class="logo">
+        <img src="AHBALOGO.png" alt="Logo">
+        <h1>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></h1>
+    </div>
+    <a href="csr_logout.php" class="logout-btn">Logout</a>
 </header>
 
-<div class="sidebar">
-  <button class="tab active" data-tab="all">💬 All Clients</button>
-  <button class="tab" data-tab="mine">👤 My Clients</button>
-  <button onclick="window.location='survey_responses.php'">📝 Survey Responses</button>
-  <button onclick="window.location='update_profile.php'">👤 Update Profile</button>
-</div>
+<div class="container">
+    <aside class="sidebar">
+        <button class="tab active" onclick="switchTab('all')">💬 All Clients</button>
+        <button class="tab" onclick="switchTab('mine')">👤 My Clients</button>
+        <button class="tab" onclick="switchTab('rem')">⏰ Reminders</button>
+        <button class="tab" onclick="window.location.href='survey_responses.php'">📝 Survey Responses</button>
+        <button class="tab" onclick="window.location.href='update_profile.php'">👤 Update Profile</button>
+    </aside>
 
-<div id="main">
-  <div id="clientList"></div>
-  <div id="chat">
-    <div id="chatHeader">
-      <div>
-        <span id="clientName">Select a client</span><br>
-        <small id="csrName">You are <?= htmlspecialchars($csr_fullname) ?></small>
-      </div>
-      <div id="assignBtn"></div>
-    </div>
+    <section class="clients" id="clientList"></section>
 
-    <div id="messages"></div>
+    <section class="chat">
+        <div class="chat-header">
+            <img id="clientAvatar" class="avatar" src="CSR/lion.PNG" alt="Client Avatar">
+            <div>
+                <h2 id="clientName">Select a client</h2>
+                <span id="clientStatus">Offline</span>
+            </div>
+        </div>
 
-    <div id="composer" style="display:none;">
-      <input id="msgInput" placeholder="Type a reply...">
-      <button onclick="sendMsg()">Send</button>
-    </div>
-  </div>
+        <div class="messages" id="messages"></div>
+
+        <div id="typingIndicator" class="typing" style="display:none;">
+            <span></span><span></span><span></span>
+        </div>
+
+        <div class="chat-input">
+            <input type="text" id="msg" placeholder="Type a reply…" onkeyup="typingEvent(event)">
+            <button onclick="sendMsg()">Send</button>
+        </div>
+    </section>
 </div>
 
 <script>
-const CSR_NAME = <?= json_encode($csr_fullname) ?>;
 let currentClient = null;
-let currentClientName = '';
-let chatRefreshInterval = null;
+let refreshInterval;
 
-// Sidebar tab switching
-document.querySelectorAll('.sidebar .tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.sidebar .tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    loadClients(btn.dataset.tab);
-  });
-});
-
-// Load client list
+// === Load Clients ===
 function loadClients(tab='all') {
-  fetch(`?ajax=clients&tab=${tab}`)
-    .then(r => r.json())
-    .then(d => {
-      const box = document.getElementById('clientList');
-      if (!d.length) {
-        box.innerHTML = '<div class="empty">No clients found</div>';
-        return;
-      }
-      box.innerHTML = '';
-      d.forEach(c => {
-        const onlineDot = c.is_online == 1 ? '<span class="dot online"></span>' : '<span class="dot offline"></span>';
-        const div = document.createElement('div');
-        div.className = 'client';
-        div.innerHTML = `
-          <div class="client-row">
-            ${onlineDot}
-            <div class="client-info">
-              <div><strong>${c.full_name}</strong></div>
-              <div class='assign'>Assigned: ${c.assigned_csr || 'Unassigned'}</div>
-            </div>
-          </div>`;
-        div.onclick = () => selectClient(c.id, c.full_name, c.assigned_csr);
-        box.appendChild(div);
-      });
+    fetch(`?ajax=load_clients&tab=${tab}`)
+    .then(res => res.json())
+    .then(clients => {
+        let html = '';
+        clients.forEach(c => {
+            let avatar = c.name[0].toUpperCase() <= 'M' ? 'CSR/lion.PNG' : 'CSR/penguin.PNG';
+            html += `
+                <div class="client-item" onclick="selectClient(${c.id}, '${c.name}')">
+                    <div>
+                        <strong>${c.name}</strong><br>
+                        <small>${c.status}</small>
+                    </div>
+                    <img src="${avatar}" class="msg-avatar">
+                </div>`;
+        });
+        document.getElementById('clientList').innerHTML = html;
     });
 }
 
-// Select client and show chat
-function selectClient(id, name, assigned) {
-  currentClient = id;
-  currentClientName = name;
-  document.getElementById('clientName').textContent = `Chatting with ${name}`;
-  document.getElementById('composer').style.display = 'flex';
-  document.getElementById('assignBtn').innerHTML =
-    assigned === null
-      ? `<button onclick="assignClient('assign')">Assign to me</button>`
-      : `<button onclick="assignClient('unassign')">Unassign</button>`;
-
-  if (chatRefreshInterval) clearInterval(chatRefreshInterval);
-  loadChat();
-  chatRefreshInterval = setInterval(loadChat, 5000);
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    loadClients(tab);
 }
 
-// Load chat messages
+// === Select Client ===
+function selectClient(id, name) {
+    currentClient = id;
+    document.getElementById('clientName').innerText = name;
+    document.getElementById('clientAvatar').src = (name[0].toUpperCase() <= 'M') ? 'CSR/lion.PNG' : 'CSR/penguin.PNG';
+    loadChat();
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(() => { loadChat(); checkTyping(); }, 3000);
+}
+
+// === Load Chat ===
 function loadChat() {
-  if (!currentClient) return;
-  fetch(`?ajax=chat&id=${currentClient}`)
-    .then(r => r.json())
-    .then(msgs => {
-      const box = document.getElementById('messages');
-      box.innerHTML = '';
-      msgs.forEach(m => {
-        const div = document.createElement('div');
-        div.className = 'msg ' + (m.sender_type === 'csr' ? 'csrmsg' : 'clientmsg');
-        const senderName = (m.sender_type === 'csr') ? m.csr_fullname : m.client_name;
-        div.innerHTML = `<strong>${senderName}:</strong> ${m.message}`;
-        box.appendChild(div);
-      });
-      box.scrollTop = box.scrollHeight;
+    if (!currentClient) return;
+    fetch(`?ajax=load_chat&client_id=${currentClient}`)
+    .then(res => res.json())
+    .then(data => {
+        let html = '';
+        data.forEach(msg => {
+            let avatar = (msg.sender_type === 'csr') ? '<?= $csr_avatar ?>' : (msg.client[0].toUpperCase() <= 'M' ? 'CSR/lion.PNG' : 'CSR/penguin.PNG');
+            let sender = (msg.sender_type === 'csr') ? '<?= htmlspecialchars($csr_fullname) ?>' : msg.client;
+            html += `
+                <div class="msg ${msg.sender_type}">
+                    <img src="${avatar}" class="msg-avatar">
+                    <div class="msg-bubble">
+                        <strong>${sender}:</strong> ${msg.message}
+                        <div class="msg-time">${msg.created_at}</div>
+                    </div>
+                </div>`;
+        });
+        const m = document.getElementById('messages');
+        m.innerHTML = html;
+        m.scrollTop = m.scrollHeight;
     });
 }
 
-// Send message
+// === Send Message ===
 function sendMsg() {
-  const val = document.getElementById('msgInput').value.trim();
-  if (!val || !currentClient) return;
-  const fd = new FormData();
-  fd.append('client_id', currentClient);
-  fd.append('msg', val);
-  fetch('?ajax=send', { method: 'POST', body: fd })
-    .then(r => r.json())
-    .then(res => {
-      if (res.ok) {
-        document.getElementById('msgInput').value = '';
+    const msg = document.getElementById('msg').value.trim();
+    if (!msg || !currentClient) return;
+    fetch(`?ajax=send_msg`, {
+        method: 'POST',
+        body: new URLSearchParams({ client_id: currentClient, msg })
+    }).then(() => {
+        document.getElementById('msg').value = '';
         loadChat();
-      }
     });
 }
 
-// Assign or unassign client
-function assignClient(action) {
-  if (!currentClient) return;
-  const fd = new FormData();
-  fd.append('client_id', currentClient);
-  fd.append('assign', action);
-  fetch('?ajax=assign', { method: 'POST', body: fd })
-    .then(r => r.json())
-    .then(() => {
-      loadClients(document.querySelector('.sidebar .tab.active').dataset.tab);
-      loadChat();
+// === Typing Event ===
+function typingEvent(e) {
+    if (e.key === 'Enter') sendMsg();
+}
+
+// === Check Typing ===
+function checkTyping() {
+    fetch(`?ajax=typing_status&client_id=${currentClient || 0}`)
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('typingIndicator').style.display = data.typing ? 'flex' : 'none';
     });
 }
 
+// === Initialize ===
 loadClients();
 </script>
-
 </body>
 </html>
