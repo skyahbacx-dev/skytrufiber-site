@@ -179,9 +179,10 @@ let currentClient=null;
 let refreshInterval=null;
 let canChat=false;
 
-// Sidebar toggle for mobile
+// Sidebar toggle (desktop + mobile)
 document.getElementById("toggleSidebar").addEventListener("click",()=>{
-  document.body.classList.toggle("sidebar-collapsed");
+  const sidebar=document.getElementById("sidebar");
+  sidebar.classList.toggle("collapsed");
 });
 
 // === Load Clients ===
