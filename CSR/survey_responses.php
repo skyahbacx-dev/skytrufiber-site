@@ -39,15 +39,84 @@ $totalRows = $stmt->fetchColumn();
 $totalPages = ceil($totalRows / $limit);
 
 // Fetch data
-$stmt = $conn->prepare("
+$query = "
     SELECT id, client_name, account_number, district, location, email, feedback, created_at
     FROM survey_responses
     $where
     ORDER BY $sort $dir
-    LIMIT $limit OFFSET $offset
-");
+";
+$stmt = $conn->prepare($query . " LIMIT $limit OFFSET $offset");
 $stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+/* =====================
+   EXPORT HANDLERS
+===================== */
+if (isset($_GET['export'])) {
+    $exportType = $_GET['export'];
+    $exportStmt = $conn->prepare($query);
+    $exportStmt->execute($params);
+    $exportData = $exportStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // CSV Export
+    if ($exportType === 'csv') {
+        header("Content-Type: text/csv");
+        header("Content-Disposition: attachment; filename=survey_responses.csv");
+        $out = fopen("php://output", "w");
+        fputcsv($out, ["Client Name", "Account #", "District", "Location", "Email", "Feedback", "Date Installed"]);
+        foreach ($exportData as $r) {
+            fputcsv($out, [
+                $r['client_name'],
+                $r['account_number'],
+                $r['district'],
+                $r['location'],
+                $r['email'],
+                $r['feedback'],
+                date('Y-m-d', strtotime($r['created_at']))
+            ]);
+        }
+        fclose($out);
+        exit;
+    }
+
+    // Excel Export
+    if ($exportType === 'excel') {
+        header("Content-Type: application/vnd.ms-excel");
+        header("Content-Disposition: attachment; filename=survey_responses.xls");
+        echo "Client Name\tAccount #\tDistrict\tLocation\tEmail\tFeedback\tDate Installed\n";
+        foreach ($exportData as $r) {
+            echo "{$r['client_name']}\t{$r['account_number']}\t{$r['district']}\t{$r['location']}\t{$r['email']}\t{$r['feedback']}\t" . date('Y-m-d', strtotime($r['created_at'])) . "\n";
+        }
+        exit;
+    }
+
+    // PDF Export
+    if ($exportType === 'pdf') {
+        require_once('../vendor/autoload.php');
+        $html = "<h2>Survey Responses</h2>
+                 <table border='1' cellspacing='0' cellpadding='5'>
+                    <thead><tr>
+                        <th>Client Name</th><th>Account #</th><th>District</th><th>Location</th><th>Email</th><th>Feedback</th><th>Date Installed</th>
+                    </tr></thead><tbody>";
+        foreach ($exportData as $r) {
+            $html .= "<tr>
+                <td>{$r['client_name']}</td>
+                <td>{$r['account_number']}</td>
+                <td>{$r['district']}</td>
+                <td>{$r['location']}</td>
+                <td>{$r['email']}</td>
+                <td>{$r['feedback']}</td>
+                <td>" . date('Y-m-d', strtotime($r['created_at'])) . "</td>
+            </tr>";
+        }
+        $html .= "</tbody></table>";
+
+        $mpdf = new \Mpdf\Mpdf();
+        $mpdf->WriteHTML($html);
+        $mpdf->Output("survey_responses.pdf", "D");
+        exit;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -86,7 +155,9 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <form method="GET" class="search-box">
             <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search by name, account, etc.">
             <button type="submit" class="btn-search">Search</button>
-            <button type="submit" name="export" value="csv" class="btn-export">Export CSV</button>
+            <button type="submit" name="export" value="csv" class="btn-export">CSV</button>
+            <button type="submit" name="export" value="excel" class="btn-export">Excel</button>
+            <button type="submit" name="export" value="pdf" class="btn-export">PDF</button>
         </form>
     </div>
 
