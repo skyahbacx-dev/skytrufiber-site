@@ -72,168 +72,140 @@ if (isset($_GET['ajax'])) {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CSR Dashboard — <?= htmlspecialchars($csr_user) ?></title>
-<link rel="stylesheet" href="csr_dashboard.css?v=5">
+<title>CSR Dashboard — <?= htmlspecialchars($csr_name) ?></title>
+<link rel="stylesheet" href="csr_dashboard.css?v=7">
 <style>
-:root {
-  --green:#0aa05b;
-  --green-dark:#056b3d;
-  --light:#eefcf4;
-  --soft:#f6fff9;
-  --line:#e2ece5;
-}
 body {
-  margin:0;
-  font-family:'Segoe UI',Arial,sans-serif;
-  background:var(--light);
-  color:#042;
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #eefcf4;
+  color: #042;
 }
 header {
-  background:var(--green);
-  color:#fff;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:10px 16px;
+  background: #007743;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
 }
-.header-left { display:flex; align-items:center; gap:10px; }
-.logo { height:40px; border-radius:6px; }
-.logout { color:#fff; text-decoration:none; font-weight:bold; }
+header img { height: 40px; border-radius: 8px; }
+.logout { color: white; text-decoration: none; font-weight: bold; }
+
+.tabs {
+  display: flex;
+  background: #e6f9ee;
+  border-bottom: 1px solid #c5e7d1;
+}
+.tabs button {
+  background: transparent;
+  border: none;
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #046b3a;
+}
+.tabs button.active {
+  background: #0aa05b;
+  color: white;
+  border-radius: 10px 10px 0 0;
+}
+
 .container {
-  display:grid;
-  grid-template-columns:280px 1fr;
-  height:calc(100vh - 60px);
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: calc(100vh - 110px);
 }
 .sidebar {
-  background:#e9fdf0;
-  padding:10px;
-  overflow-y:auto;
-  border-right:1px solid var(--line);
-}
-.sidebar-tabs { margin-bottom: 10px; }
-.sidebar .tab {
-  display:block;
-  width:100%;
-  padding:10px 12px;
-  border:none;
-  border-radius:10px;
-  margin-bottom:8px;
-  background:white;
-  cursor:pointer;
-  font-weight:bold;
-  color:var(--green-dark);
-}
-.sidebar .tab.active {
-  background:var(--green);
-  color:white;
-}
-.client-list {
-  overflow-y:auto;
-  max-height:calc(100vh - 240px);
+  background: #e9fdf0;
+  padding: 10px;
+  overflow-y: auto;
+  border-right: 1px solid #cde5d4;
 }
 .client-item {
-  display:flex;
-  align-items:center;
-  gap:8px;
-  background:white;
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:8px;
-  margin-bottom:8px;
-  cursor:pointer;
+  background: white;
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  cursor: pointer;
+  gap: 8px;
+  border: 1px solid #d9e8dd;
 }
-.client-item:hover { background:#f7fff9; }
-.client-avatar {
-  width:32px; height:32px;
-  border-radius:50%;
-}
+.client-item:hover { background: #f4fff9; }
+.client-avatar { width: 30px; height: 30px; border-radius: 50%; }
+
 .chat-area {
-  display:flex;
-  flex-direction:column;
-  background:white;
+  display: flex;
+  flex-direction: column;
+  background: white;
 }
 .chat-header {
-  display:flex;
-  align-items:center;
-  gap:12px;
-  background:var(--green-dark);
-  color:white;
-  padding:10px 16px;
+  background: #007743;
+  color: white;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-.chat-header .avatar {
-  width:40px; height:40px;
-  border-radius:50%;
-  border:2px solid white;
-}
-.chat-info h2 { margin:0; font-size:18px; }
-.chat-info p { margin:0; font-size:13px; }
+.chat-header img { width: 40px; height: 40px; border-radius: 50%; }
 .chat-body {
-  flex:1;
-  padding:16px;
-  overflow-y:auto;
-  background:var(--soft);
-}
-.placeholder {
-  color:#888;
-  text-align:center;
-  margin-top:40px;
-}
-.message {
-  margin:8px 0;
-  max-width:70%;
-}
-.message.client .bubble {
-  background:#eaffef;
-  margin-right:auto;
-}
-.message.csr .bubble {
-  background:#e6f3ff;
-  margin-left:auto;
-}
-.bubble {
-  border-radius:10px;
-  padding:10px 12px;
-  box-shadow:0 1px 3px rgba(0,0,0,0.1);
-}
-.meta {
-  font-size:11px;
-  color:#666;
-  margin-top:4px;
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  background: #f9fffb;
 }
 .chat-input {
-  display:flex;
-  padding:10px;
-  border-top:1px solid var(--line);
-  background:white;
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #cde5d4;
 }
 .chat-input input {
-  flex:1;
-  padding:10px;
-  border:1px solid var(--line);
-  border-radius:8px;
+  flex: 1;
+  border: 1px solid #cde5d4;
+  border-radius: 8px;
+  padding: 10px;
 }
 .chat-input button {
-  margin-left:8px;
-  background:var(--green);
-  color:white;
-  border:none;
-  border-radius:8px;
-  padding:10px 16px;
-  font-weight:bold;
+  margin-left: 8px;
+  border: none;
+  background: #0aa05b;
+  color: white;
+  font-weight: bold;
+  border-radius: 8px;
+  padding: 10px 16px;
 }
+.message {
+  margin: 6px 0;
+  max-width: 70%;
+}
+.message.csr .bubble {
+  background: #e7f3ff;
+  margin-left: auto;
+}
+.message.client .bubble {
+  background: #eaffef;
+  margin-right: auto;
+}
+.bubble {
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.meta { font-size: 11px; color: #666; margin-top: 4px; }
+
 .typing {
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:20px;
+  display: flex;
+  justify-content: center;
+  height: 20px;
 }
 .typing span {
-  width:6px;
-  height:6px;
-  background:#999;
-  border-radius:50%;
-  margin:0 2px;
-  animation:blink 1.2s infinite ease-in-out;
+  width: 6px;
+  height: 6px;
+  background: #999;
+  border-radius: 50%;
+  margin: 0 2px;
+  animation: blink 1.2s infinite ease-in-out;
 }
 .typing span:nth-child(2){animation-delay:0.2s;}
 .typing span:nth-child(3){animation-delay:0.4s;}
@@ -243,157 +215,138 @@ header {
 <body>
 
 <header>
-    <div class="header-left">
-        <img src="<?= $logoPath ?>" alt="Logo" class="logo">
-        <h1>CSR Dashboard — <?= htmlspecialchars($csr_name) ?></h1>
-    </div>
-    <a href="csr_logout.php" class="logout">Logout</a>
+  <div>
+    <img src="<?= $logoPath ?>" alt="Logo">
+    <strong>CSR Dashboard — <?= htmlspecialchars($csr_name) ?></strong>
+  </div>
+  <a href="csr_logout.php" class="logout">Logout</a>
 </header>
 
+<div class="tabs">
+  <button class="active" id="btnAll" onclick="loadClients('all')">💬 All Clients</button>
+  <button id="btnMine" onclick="loadClients('mine')">👤 My Clients</button>
+  <button onclick="window.location.href='survey_responses.php'">📝 Survey Responses</button>
+  <button onclick="window.location.href='update_profile.php'">👤 Update Profile</button>
+</div>
+
 <div class="container">
-    <aside class="sidebar">
-        <div class="sidebar-tabs">
-            <button class="tab active" id="btnAll" onclick="loadClients('all')">💬 All Clients</button>
-            <button class="tab" id="btnMine" onclick="loadClients('mine')">👤 My Clients</button>
-            <button class="tab" onclick="window.location.href='survey_responses.php'">📝 Survey Responses</button>
-            <button class="tab" onclick="window.location.href='update_profile.php'">👤 Update Profile</button>
-        </div>
-        <div id="clientList" class="client-list"></div>
-    </aside>
+  <aside class="sidebar">
+    <div id="clientList"></div>
+  </aside>
 
-    <main class="chat-area">
-        <div class="chat-header">
-            <img src="CSR/lion.PNG" id="clientAvatar" class="avatar" alt="">
-            <div class="chat-info">
-                <h2 id="clientName">Select a client</h2>
-                <p id="clientStatus">Offline</p>
-            </div>
-        </div>
-
-        <div class="chat-body" id="chatMessages">
-            <p class="placeholder">Select a client to start chatting.</p>
-        </div>
-
-        <div id="typingIndicator" class="typing" style="display:none;">
-            <span></span><span></span><span></span>
-        </div>
-
-        <div class="chat-input">
-            <input type="text" id="msgInput" placeholder="Type your message…" onkeyup="handleTyping(event)">
-            <button onclick="sendMessage()">Send</button>
-        </div>
-    </main>
+  <main class="chat-area">
+    <div class="chat-header">
+      <img src="CSR/lion.PNG" id="clientAvatar" alt="">
+      <div>
+        <strong id="clientName">Select a client</strong><br>
+        <small id="clientStatus">Offline</small>
+      </div>
+    </div>
+    <div class="chat-body" id="chatMessages">
+      <p style="text-align:center;color:#888;">Select a client to start chatting.</p>
+    </div>
+    <div id="typingIndicator" class="typing" style="display:none;">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="chat-input">
+      <input type="text" id="msgInput" placeholder="Type your message…" onkeyup="handleTyping(event)">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </main>
 </div>
 
 <script>
 let currentClient = null;
 let refreshInterval = null;
 
-// === LOAD CLIENTS ===
 function loadClients(type='all') {
-    document.getElementById('btnAll').classList.toggle('active', type==='all');
-    document.getElementById('btnMine').classList.toggle('active', type==='mine');
+  document.getElementById('btnAll').classList.toggle('active', type==='all');
+  document.getElementById('btnMine').classList.toggle('active', type==='mine');
 
-    fetch(`csr_dashboard.php?ajax=load_clients&type=${type}`)
-        .then(res => res.json())
-        .then(data => {
-            console.log("Clients loaded:", data); // 👈 check browser console (F12)
-            const list = document.getElementById('clientList');
-            list.innerHTML = '';
-
-            if (!data || data.length === 0) {
-                list.innerHTML = '<p style="text-align:center;color:#666;">No clients found.</p>';
-                return;
-            }
-
-            data.forEach(client => {
-                const div = document.createElement('div');
-                div.className = 'client-item';
-                div.innerHTML = `
-                    <img src="${client.name[0].toUpperCase()<='M'?'CSR/lion.PNG':'CSR/penguin.PNG'}" class="client-avatar">
-                    <div><strong>${client.name}</strong><br><small>${client.status}</small></div>`;
-                div.onclick = () => selectClient(client.id, client.name, client.status);
-                list.appendChild(div);
-            });
-        })
-        .catch(err => {
-            console.error("Error loading clients:", err);
-            document.getElementById('clientList').innerHTML =
-              '<p style="text-align:center;color:red;">Failed to load clients.</p>';
-        });
-}
-
-// === SELECT CLIENT ===
-function selectClient(id,name,status) {
-    currentClient = id;
-    document.getElementById('clientName').innerText = name;
-    document.getElementById('clientStatus').innerText = status;
-    document.getElementById('clientAvatar').src = (name[0].toUpperCase()<='M')?'CSR/lion.PNG':'CSR/penguin.PNG';
-    loadChat();
-    if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(loadChat, 3000);
-}
-
-// === LOAD CHAT ===
-function loadChat() {
-    if (!currentClient) return;
-    fetch(`csr_dashboard.php?ajax=load_chat&client_id=${currentClient}`)
-        .then(res => res.json())
-        .then(data => {
-            const chat = document.getElementById('chatMessages');
-            chat.innerHTML = '';
-            if (!data || data.length === 0) {
-                chat.innerHTML = '<p class="placeholder">No messages yet.</p>';
-                return;
-            }
-            data.forEach(m => {
-                const div = document.createElement('div');
-                div.className = `message ${m.sender_type}`;
-                div.innerHTML = `
-                    <div class="bubble">
-                        <strong>${m.sender_name}:</strong> ${m.message}
-                        <div class="meta">${m.created_at}</div>
-                    </div>`;
-                chat.appendChild(div);
-            });
-            chat.scrollTop = chat.scrollHeight;
-        })
-        .catch(err => console.error("Chat load error:", err));
-}
-
-// === SEND MESSAGE ===
-function sendMessage() {
-    const msg = document.getElementById('msgInput').value.trim();
-    if (!msg || !currentClient) return;
-    fetch('csr_dashboard.php?ajax=send_msg', {
-        method: 'POST',
-        body: new URLSearchParams({ client_id: currentClient, message: msg })
+  fetch(`csr_dashboard.php?ajax=load_clients&type=${type}`)
+    .then(res => res.json())
+    .then(data => {
+      const list = document.getElementById('clientList');
+      list.innerHTML = '';
+      if (!data || data.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:#666;">No clients found.</p>';
+        return;
+      }
+      data.forEach(client => {
+        const div = document.createElement('div');
+        div.className = 'client-item';
+        div.innerHTML = `
+          <img src="${client.name[0].toUpperCase()<='M'?'CSR/lion.PNG':'CSR/penguin.PNG'}" class="client-avatar">
+          <div><strong>${client.name}</strong><br><small>${client.status}</small></div>`;
+        div.onclick = () => selectClient(client.id, client.name, client.status);
+        list.appendChild(div);
+      });
     })
-    .then(() => {
-        document.getElementById('msgInput').value = '';
-        loadChat();
+    .catch(err => console.error("Error loading clients:", err));
+}
+
+function selectClient(id,name,status) {
+  currentClient = id;
+  document.getElementById('clientName').innerText = name;
+  document.getElementById('clientStatus').innerText = status;
+  document.getElementById('clientAvatar').src = (name[0].toUpperCase()<='M')?'CSR/lion.PNG':'CSR/penguin.PNG';
+  loadChat();
+  if (refreshInterval) clearInterval(refreshInterval);
+  refreshInterval = setInterval(loadChat, 3000);
+}
+
+function loadChat() {
+  if (!currentClient) return;
+  fetch(`csr_dashboard.php?ajax=load_chat&client_id=${currentClient}`)
+    .then(res => res.json())
+    .then(data => {
+      const chat = document.getElementById('chatMessages');
+      chat.innerHTML = '';
+      if (!data || data.length === 0) {
+        chat.innerHTML = '<p style="text-align:center;color:#888;">No messages yet.</p>';
+        return;
+      }
+      data.forEach(m => {
+        const div = document.createElement('div');
+        div.className = `message ${m.sender_type}`;
+        div.innerHTML = `
+          <div class="bubble">
+            <strong>${m.sender_name}:</strong> ${m.message}
+            <div class="meta">${m.created_at}</div>
+          </div>`;
+        chat.appendChild(div);
+      });
+      chat.scrollTop = chat.scrollHeight;
     });
 }
 
-// === TYPING ===
+function sendMessage() {
+  const msg = document.getElementById('msgInput').value.trim();
+  if (!msg || !currentClient) return;
+  fetch('csr_dashboard.php?ajax=send_msg', {
+    method: 'POST',
+    body: new URLSearchParams({ client_id: currentClient, message: msg })
+  })
+  .then(() => {
+    document.getElementById('msgInput').value = '';
+    loadChat();
+  });
+}
+
 let typingTimeout;
 function handleTyping(e) {
-    if (e.key === 'Enter') sendMessage();
-    if (!currentClient) return;
-    document.getElementById('typingIndicator').style.display = 'flex';
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(()=>document.getElementById('typingIndicator').style.display='none',1500);
-    fetch('csr_dashboard.php?ajax=typing', {
-        method:'POST',
-        body:new URLSearchParams({client_id:currentClient})
-    });
+  if (e.key === 'Enter') sendMessage();
+  if (!currentClient) return;
+  document.getElementById('typingIndicator').style.display = 'flex';
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(()=>document.getElementById('typingIndicator').style.display='none',1500);
+  fetch('csr_dashboard.php?ajax=typing', {
+    method:'POST',
+    body:new URLSearchParams({client_id:currentClient})
+  });
 }
 
-// === AUTO INIT ===
-document.addEventListener("DOMContentLoaded", () => {
-    loadClients('all'); // Always load "All Clients" on start
-});
+document.addEventListener("DOMContentLoaded", () => loadClients('all'));
 </script>
-
 </body>
 </html>
