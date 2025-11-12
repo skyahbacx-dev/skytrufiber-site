@@ -1,36 +1,34 @@
-/* ---------------------------------
-   CSR DASHBOARD LAYOUT + STYLES
----------------------------------- */
+/* -------------------------
+   CSR Dashboard CSS
+-------------------------- */
 
 :root {
   --green: #0a7f46;
   --green-dark: #066b3a;
   --soft: #e9fff4;
-  --bg: #f8fff9;
+  --bg: #f3fff8;
   --muted: #6b746d;
   --border: #d6efe0;
 }
 
-/* ========= GLOBAL ========= */
+/* === General === */
 body {
   margin: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
+  font-family: "Segoe UI", sans-serif;
   background: var(--bg);
-  color: #222;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
+  color: #083c2c;
+  overflow: hidden;
 }
 
-/* ========= TOP BAR ========= */
+/* === Header / Topbar === */
 .topbar {
   background: var(--green);
   color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 18px;
-  height: 55px;
+  padding: 10px 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .topbar .left {
@@ -40,83 +38,113 @@ body {
 }
 
 .logo {
-  height: 38px;
-  border-radius: 4px;
+  height: 40px;
+  border-radius: 6px;
 }
 
 .logout {
-  background: #fff;
-  color: var(--green-dark);
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-weight: 600;
+  color: white;
   text-decoration: none;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  border-radius: 6px;
   transition: 0.2s;
 }
 .logout:hover {
-  background: var(--soft);
+  background: rgba(255, 255, 255, 0.25);
 }
 
-/* ========= TABS ROW ========= */
+/* === Tabs Row === */
 .tabs-row {
   background: #ecfff4;
   border-bottom: 1px solid var(--border);
+  padding: 8px 12px;
   display: flex;
-  align-items: center;
-  padding: 6px 10px;
-  gap: 8px;
+  gap: 6px;
 }
-.tabs-row .tab-btn {
+
+.tab-btn {
   background: transparent;
   border: none;
   padding: 8px 14px;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--green-dark);
   cursor: pointer;
   transition: 0.2s;
 }
-.tabs-row .tab-btn:hover {
+
+.tab-btn:hover {
   background: var(--soft);
 }
-.tabs-row .tab-btn.active {
+
+.tab-btn.active {
   background: var(--green);
-  color: #fff;
+  color: white;
 }
 
-/* ========= MAIN WRAP ========= */
+/* === Layout Grid === */
 .wrap {
   display: grid;
   grid-template-columns: 260px 1fr;
-  flex: 1;
-  overflow: hidden;
+  height: calc(100vh - 100px);
+  transition: grid-template-columns 0.3s ease;
 }
 
-/* ========= SIDEBAR ========= */
+/* === Sidebar === */
 .sidebar {
   background: #ecfff4;
   border-right: 1px solid var(--border);
   padding: 14px;
-  display: flex;
-  flex-direction: column;
   overflow-y: auto;
+  width: 260px;
+  transition: all 0.3s ease;
+  z-index: 50;
 }
 
-.sidebar h3 {
+/* Sidebar Header */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.sidebar-header h3 {
   color: var(--green-dark);
-  margin-bottom: 8px;
+  font-size: 18px;
+  margin: 0;
 }
 
+.hamburger {
+  background: white;
+  border: 1px solid var(--border);
+  color: var(--green-dark);
+  font-size: 20px;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.hamburger:hover {
+  background: var(--soft);
+}
+
+/* Sidebar Tabs */
 .tab {
   background: transparent;
   border: none;
   padding: 8px 12px;
   border-radius: 8px;
-  font-weight: 600;
-  text-align: left;
+  font-weight: 700;
   color: var(--green-dark);
   cursor: pointer;
-  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  width: 100%;
   transition: 0.2s;
 }
 .tab:hover {
@@ -124,31 +152,33 @@ body {
 }
 .tab.active {
   background: var(--green);
-  color: #fff;
+  color: white;
 }
 
+/* === Clients List === */
 .client-list {
-  margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-/* ========= CLIENT CARDS ========= */
 .client-item {
-  background: #fff;
-  border: 1px solid #dfeede;
+  background: white;
+  padding: 10px;
   border-radius: 10px;
-  padding: 8px;
   display: flex;
-  align-items: center;
   gap: 10px;
+  align-items: center;
+  border: 1px solid var(--border);
   cursor: pointer;
   transition: 0.2s;
 }
+
 .client-item:hover {
   background: #f6fff8;
+  transform: translateY(-1px);
 }
+
 .client-item.locked {
   opacity: 0.6;
   cursor: not-allowed;
@@ -158,89 +188,92 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 1px solid #dfeede;
   object-fit: cover;
+  border: 1px solid #dfeede;
 }
+
 .client-meta {
   display: flex;
   flex-direction: column;
 }
+
 .client-title {
-  font-weight: 700;
+  font-weight: 800;
   color: #083c2c;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
 }
+
+.lock-icon {
+  font-size: 14px;
+  margin-left: 4px;
+}
+
 .client-sub {
   font-size: 12px;
   color: var(--muted);
 }
-.lock-icon {
-  margin-left: 6px;
-}
 
-/* Assign/Unassign buttons */
-.client-item button {
-  background: var(--green);
-  color: white;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: 0.2s;
-}
-.client-item button:hover {
-  background: var(--green-dark);
-}
-
-/* ========= CHAT AREA ========= */
+/* === Main Chat Area === */
 .main-area {
   display: flex;
   flex-direction: column;
+  background: var(--bg);
   height: 100%;
 }
 
+/* Chat Header */
 .chat-header {
-  background: var(--green-dark);
-  color: white;
   display: flex;
+  justify-content: space-between;
   align-items: center;
   padding: 10px 14px;
-  justify-content: space-between;
+  background: var(--green-dark);
+  color: white;
 }
+
 .chat-header-left {
   display: flex;
-  align-items: center;
   gap: 12px;
+  align-items: center;
 }
+
 .chat-header .avatar {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   border: 3px solid rgba(255, 255, 255, 0.2);
 }
+
 .chat-header .client-name {
-  font-weight: 700;
+  font-weight: 800;
 }
+
 .chat-header .client-status {
   font-size: 12px;
   opacity: 0.9;
 }
 
-/* ========= MESSAGES ========= */
+/* === Messages === */
 .messages {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
   background: #f7fff9;
-}
-.placeholder {
-  text-align: center;
-  color: #aaa;
-  margin-top: 20px;
+  scroll-behavior: smooth;
 }
 
+.placeholder {
+  color: #9aa29a;
+  text-align: center;
+  margin-top: 40px;
+}
+
+/* Message bubbles */
 .message {
-  margin: 10px 0;
+  margin: 8px 0;
   max-width: 70%;
   clear: both;
 }
@@ -248,13 +281,6 @@ body {
   padding: 10px 12px;
   border-radius: 12px;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
-  font-size: 14px;
-}
-.message.csr {
-  float: right;
-}
-.message.csr .bubble {
-  background: #e7f3ff;
 }
 .message.client {
   float: left;
@@ -262,17 +288,23 @@ body {
 .message.client .bubble {
   background: #eaffef;
 }
+.message.csr {
+  float: right;
+}
+.message.csr .bubble {
+  background: #e7f3ff;
+}
 .meta {
   font-size: 11px;
   color: #6c7a70;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
-/* ========= INPUT AREA ========= */
+/* === Input Area === */
 .input-area {
   display: flex;
   gap: 8px;
-  padding: 10px 14px;
+  padding: 10px 12px;
   border-top: 1px solid var(--border);
   background: white;
 }
@@ -281,13 +313,12 @@ body {
   padding: 10px;
   border-radius: 10px;
   border: 1px solid #d1e7d8;
-  font-size: 14px;
 }
 .input-area button {
   background: var(--green);
   color: white;
   border: none;
-  padding: 10px 16px;
+  padding: 10px 14px;
   border-radius: 10px;
   cursor: pointer;
   font-weight: 700;
@@ -296,23 +327,20 @@ body {
 .input-area button:hover {
   background: var(--green-dark);
 }
-
-/* Disabled (locked) input area */
 .input-area.locked {
   opacity: 0.5;
 }
 .input-area.locked input,
 .input-area.locked button {
-  background: #eee;
   cursor: not-allowed;
 }
 
-/* ========= TYPING INDICATOR ========= */
+/* === Typing Indicator === */
 .typing {
   display: flex;
   justify-content: center;
   gap: 6px;
-  padding: 6px 0;
+  padding: 8px 0;
 }
 .typing span {
   width: 8px;
@@ -328,28 +356,44 @@ body {
   animation-delay: 0.3s;
 }
 @keyframes blink {
-  0%, 80%, 100% { opacity: 0.2; }
-  40% { opacity: 1; }
+  0%, 80%, 100% { opacity: 0.2 }
+  40% { opacity: 1 }
 }
 
-/* ========= RESPONSIVE ========= */
+/* === Sidebar Collapse === */
+.sidebar.collapsed {
+  width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: none;
+}
+.wrap {
+  transition: grid-template-columns 0.3s ease;
+}
+.sidebar.collapsed ~ .main-area {
+  grid-column: 1 / span 2;
+}
+
+/* === Responsive Mobile Sidebar === */
 @media (max-width: 1000px) {
-  .wrap {
-    grid-template-columns: 0 1fr;
+  body {
+    overflow: hidden;
   }
-  body.sidebar-collapsed .wrap {
-    grid-template-columns: 260px 1fr;
+  .wrap {
+    grid-template-columns: 1fr;
   }
   .sidebar {
-    position: absolute;
-    z-index: 999;
-    width: 260px;
-    height: 100%;
-    left: -260px;
-    top: 110px;
-    transition: 0.3s;
-  }
-  body.sidebar-collapsed .sidebar {
+    position: fixed;
+    top: 0;
     left: 0;
+    height: 100%;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+    transform: translateX(0);
+  }
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+  }
+  .main-area {
+    height: 100vh;
   }
 }
