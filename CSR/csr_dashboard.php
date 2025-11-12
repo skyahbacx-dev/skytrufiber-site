@@ -47,12 +47,13 @@ if (isset($_GET['ajax'])) {
     if ($_GET['ajax'] === 'load_chat' && isset($_GET['client_id'])) {
         $cid = (int)$_GET['client_id'];
         $stmt = $conn->prepare("
-            SELECT c.full_name AS client, ch.*
-            FROM chat ch 
-            JOIN clients c ON ch.client_id = c.id 
-            WHERE ch.client_id = :cid 
-            ORDER BY ch.created_at ASC
-        ");
+        SELECT c.name AS client, ch.*
+        FROM chat ch 
+        JOIN clients c ON ch.client_id = c.id 
+        WHERE ch.client_id = :cid 
+        ORDER BY ch.created_at ASC
+    ");
+
         $stmt->execute([':cid' => $cid]);
         echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
         exit;
