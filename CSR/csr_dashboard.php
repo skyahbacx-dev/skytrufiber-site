@@ -73,7 +73,7 @@ if (isset($_GET['ajax'])) {
         exit;
     }
 
-    // === Typing Status (simulation or live if you add logic) ===
+    // === Typing Status (simulation or live if implemented) ===
     if ($_GET['ajax'] === 'typing_status') {
         echo json_encode(['typing' => rand(0, 1)]);
         exit;
@@ -87,56 +87,56 @@ if (isset($_GET['ajax'])) {
 <head>
 <meta charset="UTF-8">
 <title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
-<link rel="stylesheet" href="csr_dashboard.css?v=3">
+<link rel="stylesheet" href="csr_dashboard.css?v=4">
 </head>
 <body>
 
-<header>
-    <div class="logo">
-        <img src="AHBALOGO.png" alt="Logo">
-        <h1>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></h1>
-    </div>
-    <a href="csr_logout.php" class="logout-btn">Logout</a>
+<header class="topbar">
+  <div class="left">
+    <img src="AHBALOGO.png" alt="Logo" class="logo">
+    <h1>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></h1>
+  </div>
+  <a href="csr_logout.php" class="logout">Logout</a>
 </header>
 
-<div class="container">
-    <!-- Sidebar with Tabs -->
+<div class="wrap">
+    <!-- Sidebar -->
     <aside class="sidebar">
+        <h3>Navigation</h3>
         <button class="tab active" data-tab="all" onclick="switchTab(this, 'all')">💬 All Clients</button>
         <button class="tab" data-tab="mine" onclick="switchTab(this, 'mine')">👤 My Clients</button>
-        <button class="tab" data-tab="rem" onclick="switchTab(this, 'rem')">⏰ Reminders</button>
         <button class="tab" onclick="window.location.href='survey_responses.php'">📝 Survey Responses</button>
         <button class="tab" onclick="window.location.href='update_profile.php'">👤 Update Profile</button>
     </aside>
 
     <!-- Client List -->
-    <section class="clients" id="clientList">
-        <!-- Clients loaded here -->
-    </section>
+    <section class="sidebar client-list-section" id="clientList"></section>
 
-    <!-- Chat Section -->
-    <section class="chat">
+    <!-- Chat -->
+    <main class="main-area">
         <div class="chat-header">
-            <img id="clientAvatar" class="avatar" src="CSR/lion.PNG" alt="Client Avatar">
-            <div>
-                <h2 id="clientName">Select a client</h2>
-                <span id="clientStatus">Offline</span>
+            <div class="chat-header-left">
+                <img id="clientAvatar" class="avatar" src="CSR/lion.PNG" alt="Client Avatar">
+                <div>
+                    <div class="client-name" id="clientName">Select a client</div>
+                    <div class="client-status" id="clientStatus">Offline</div>
+                </div>
             </div>
         </div>
 
         <div class="messages" id="messages">
-            <p style="text-align:center;color:#888;">Select a client to start chatting.</p>
+            <p class="placeholder">Select a client to start chatting.</p>
         </div>
 
         <div id="typingIndicator" class="typing" style="display:none;">
             <span></span><span></span><span></span>
         </div>
 
-        <div class="chat-input">
-            <input type="text" id="msg" placeholder="Type a reply…" onkeyup="typingEvent(event)">
+        <div class="input-area">
+            <input type="text" id="msg" placeholder="Type your message…" onkeyup="typingEvent(event)">
             <button onclick="sendMsg()">Send</button>
         </div>
-    </section>
+    </main>
 </div>
 
 <script>
@@ -158,16 +158,15 @@ function loadClients(tab = 'all') {
                 const avatar = c.name[0].toUpperCase() <= 'M' ? 'CSR/lion.PNG' : 'CSR/penguin.PNG';
                 const html = `
                     <div class="client-item" onclick="selectClient(${c.id}, '${c.name.replace(/'/g, "\\'")}')">
-                        <div>
-                            <strong>${c.name}</strong><br>
-                            <small>${c.status}</small>
+                        <img src="${avatar}" class="client-avatar">
+                        <div class="client-meta">
+                            <div class="client-title">${c.name}</div>
+                            <div class="client-sub">${c.status}</div>
                         </div>
-                        <img src="${avatar}" class="msg-avatar">
                     </div>`;
                 list.insertAdjacentHTML('beforeend', html);
             });
-        })
-        .catch(err => console.error('Error loading clients:', err));
+        });
 }
 
 // === Switch Tab ===
@@ -199,7 +198,7 @@ function loadChat() {
             const m = document.getElementById('messages');
             m.innerHTML = '';
             if (!data.length) {
-                m.innerHTML = '<p style="text-align:center;color:#888;">No messages yet.</p>';
+                m.innerHTML = '<p class="placeholder">No messages yet.</p>';
                 return;
             }
             data.forEach(msg => {
@@ -210,11 +209,10 @@ function loadChat() {
                     ? '<?= htmlspecialchars($csr_fullname) ?>'
                     : msg.client;
                 m.innerHTML += `
-                    <div class="msg ${msg.sender_type}">
-                        <img src="${avatar}" class="msg-avatar">
-                        <div class="msg-bubble">
+                    <div class="message ${msg.sender_type}">
+                        <div class="bubble">
                             <strong>${sender}:</strong> ${msg.message}
-                            <div class="msg-time">${msg.created_at}</div>
+                            <div class="meta">${msg.created_at}</div>
                         </div>
                     </div>`;
             });
@@ -235,12 +233,12 @@ function sendMsg() {
     });
 }
 
-// === Typing Event ===
+// === Typing Indicator ===
 function typingEvent(e) {
     if (e.key === 'Enter') sendMsg();
 }
 
-// === Check Typing ===
+// === Simulated Typing Check ===
 function checkTyping() {
     if (!currentClient) return;
     fetch(`?ajax=typing_status&client_id=${currentClient}`)
