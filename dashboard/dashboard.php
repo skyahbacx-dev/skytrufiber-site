@@ -240,21 +240,12 @@
         <img src="../AHBALOGO.png" alt="AHBA Development Logo">
       </a>
 
-      
+       <div class="logo-group">
+      <a href="../SKYTRUFIBER/skytrufiber.php" target="_blank" class="stf-trigger" aria-haspopup="true" aria-expanded="false">
+      <img src="../SKYTRUFIBER.png" alt="Sky TruFiber Logo">
+      </a>
 
-      <!-- SkyTruFiber Dropdown -->
-      <div class="stf-dropdown" tabindex="0">
-        <a href="../SKYTRUFIBER/skytrufiber.php" target="_blank" class="stf-trigger" aria-haspopup="true" aria-expanded="false">
-          <img src="../SKYTRUFIBER.png" alt="Sky TruFiber Logo">
-          <span class="stf-caret">▼</span>
-        </a>
-        <div class="stf-menu" role="menu" aria-label="SkyTruFiber menu">
-          <a class="stf-item" role="menuitem" href="SKYTRUFIBER/services.php" target="_blank">Services</a>
-          <a class="stf-item" role="menuitem" href="SKYTRUFIBER/offers.php" target="_blank">Offers</a>
-          <a class="stf-item" role="menuitem" href="SKYTRUFIBER/partnerships.php" target="_blank">Partnerships</a>
-        </div>
-      </div>
-    </div>
+  
 
     <nav>
       <a href="#">HOME</a>
