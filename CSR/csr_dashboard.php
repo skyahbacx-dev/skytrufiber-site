@@ -12,7 +12,7 @@ $csr_name = strtoupper($csr_user);
 $logoPath = file_exists("AHBALOGO.png") ? "AHBALOGO.png" : "../SKYTRUFIBER/AHBALOGO.png";
 
 /* -------------------------------
-   AJAX HANDLERS (merged)
+   AJAX HANDLERS
 --------------------------------*/
 if (isset($_GET['ajax'])) {
     header('Content-Type: application/json');
@@ -73,7 +73,172 @@ if (isset($_GET['ajax'])) {
 <head>
 <meta charset="UTF-8">
 <title>CSR Dashboard — <?= htmlspecialchars($csr_user) ?></title>
-<link rel="stylesheet" href="csr_dashboard.css?v=4">
+<link rel="stylesheet" href="csr_dashboard.css?v=5">
+<style>
+:root {
+  --green:#0aa05b;
+  --green-dark:#056b3d;
+  --light:#eefcf4;
+  --soft:#f6fff9;
+  --line:#e2ece5;
+}
+body {
+  margin:0;
+  font-family:'Segoe UI',Arial,sans-serif;
+  background:var(--light);
+  color:#042;
+}
+header {
+  background:var(--green);
+  color:#fff;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 16px;
+}
+.header-left { display:flex; align-items:center; gap:10px; }
+.logo { height:40px; border-radius:6px; }
+.logout { color:#fff; text-decoration:none; font-weight:bold; }
+.container {
+  display:grid;
+  grid-template-columns:280px 1fr;
+  height:calc(100vh - 60px);
+}
+.sidebar {
+  background:#e9fdf0;
+  padding:10px;
+  overflow-y:auto;
+  border-right:1px solid var(--line);
+}
+.sidebar-tabs { margin-bottom: 10px; }
+.sidebar .tab {
+  display:block;
+  width:100%;
+  padding:10px 12px;
+  border:none;
+  border-radius:10px;
+  margin-bottom:8px;
+  background:white;
+  cursor:pointer;
+  font-weight:bold;
+  color:var(--green-dark);
+}
+.sidebar .tab.active {
+  background:var(--green);
+  color:white;
+}
+.client-list {
+  overflow-y:auto;
+  max-height:calc(100vh - 240px);
+}
+.client-item {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:white;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:8px;
+  margin-bottom:8px;
+  cursor:pointer;
+}
+.client-item:hover { background:#f7fff9; }
+.client-avatar {
+  width:32px; height:32px;
+  border-radius:50%;
+}
+.chat-area {
+  display:flex;
+  flex-direction:column;
+  background:white;
+}
+.chat-header {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:var(--green-dark);
+  color:white;
+  padding:10px 16px;
+}
+.chat-header .avatar {
+  width:40px; height:40px;
+  border-radius:50%;
+  border:2px solid white;
+}
+.chat-info h2 { margin:0; font-size:18px; }
+.chat-info p { margin:0; font-size:13px; }
+.chat-body {
+  flex:1;
+  padding:16px;
+  overflow-y:auto;
+  background:var(--soft);
+}
+.placeholder {
+  color:#888;
+  text-align:center;
+  margin-top:40px;
+}
+.message {
+  margin:8px 0;
+  max-width:70%;
+}
+.message.client .bubble {
+  background:#eaffef;
+  margin-right:auto;
+}
+.message.csr .bubble {
+  background:#e6f3ff;
+  margin-left:auto;
+}
+.bubble {
+  border-radius:10px;
+  padding:10px 12px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.1);
+}
+.meta {
+  font-size:11px;
+  color:#666;
+  margin-top:4px;
+}
+.chat-input {
+  display:flex;
+  padding:10px;
+  border-top:1px solid var(--line);
+  background:white;
+}
+.chat-input input {
+  flex:1;
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:8px;
+}
+.chat-input button {
+  margin-left:8px;
+  background:var(--green);
+  color:white;
+  border:none;
+  border-radius:8px;
+  padding:10px 16px;
+  font-weight:bold;
+}
+.typing {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:20px;
+}
+.typing span {
+  width:6px;
+  height:6px;
+  background:#999;
+  border-radius:50%;
+  margin:0 2px;
+  animation:blink 1.2s infinite ease-in-out;
+}
+.typing span:nth-child(2){animation-delay:0.2s;}
+.typing span:nth-child(3){animation-delay:0.4s;}
+@keyframes blink { 0%,80%,100%{opacity:0.3;} 40%{opacity:1;} }
+</style>
 </head>
 <body>
 
@@ -86,11 +251,14 @@ if (isset($_GET['ajax'])) {
 </header>
 
 <div class="container">
-    <aside class="sidebar" id="clientList">
-        <button class="tab active" onclick="loadClients('all')">💬 All Clients</button>
-        <button class="tab" onclick="loadClients('mine')">👤 My Clients</button>
-        <button class="tab" onclick="window.location.href='survey_responses.php'">📝 Survey Responses</button>
-        <button class="tab" onclick="window.location.href='update_profile.php'">👤 Update Profile</button>
+    <aside class="sidebar">
+        <div class="sidebar-tabs">
+            <button class="tab active" id="btnAll" onclick="loadClients('all')">💬 All Clients</button>
+            <button class="tab" id="btnMine" onclick="loadClients('mine')">👤 My Clients</button>
+            <button class="tab" onclick="window.location.href='survey_responses.php'">📝 Survey Responses</button>
+            <button class="tab" onclick="window.location.href='update_profile.php'">👤 Update Profile</button>
+        </div>
+        <div id="clientList" class="client-list"></div>
     </aside>
 
     <main class="chat-area">
@@ -118,22 +286,18 @@ if (isset($_GET['ajax'])) {
 </div>
 
 <script>
-// === GLOBAL VARS ===
 let currentClient = null;
 let refreshInterval = null;
 
-// === LOAD CLIENTS ===
 function loadClients(type='all') {
+    document.getElementById('btnAll').classList.toggle('active', type==='all');
+    document.getElementById('btnMine').classList.toggle('active', type==='mine');
+
     fetch(`csr_dashboard.php?ajax=load_clients&type=${type}`)
         .then(res => res.json())
         .then(data => {
             const list = document.getElementById('clientList');
-            list.innerHTML = `
-                <button class="tab ${type==='all'?'active':''}" onclick="loadClients('all')">💬 All Clients</button>
-                <button class="tab ${type==='mine'?'active':''}" onclick="loadClients('mine')">👤 My Clients</button>
-                <button class="tab" onclick="window.location.href='survey_responses.php'">📝 Survey Responses</button>
-                <button class="tab" onclick="window.location.href='update_profile.php'">👤 Update Profile</button>
-            `;
+            list.innerHTML = '';
             data.forEach(client => {
                 const div = document.createElement('div');
                 div.className = 'client-item';
@@ -146,7 +310,6 @@ function loadClients(type='all') {
         });
 }
 
-// === SELECT CLIENT ===
 function selectClient(id,name,status) {
     currentClient = id;
     document.getElementById('clientName').innerText = name;
@@ -157,7 +320,6 @@ function selectClient(id,name,status) {
     refreshInterval = setInterval(loadChat, 3000);
 }
 
-// === LOAD CHAT ===
 function loadChat() {
     if (!currentClient) return;
     fetch(`csr_dashboard.php?ajax=load_chat&client_id=${currentClient}`)
@@ -179,7 +341,6 @@ function loadChat() {
         });
 }
 
-// === SEND MESSAGE ===
 function sendMessage() {
     const msg = document.getElementById('msgInput').value.trim();
     if (!msg || !currentClient) return;
@@ -193,7 +354,6 @@ function sendMessage() {
     });
 }
 
-// === TYPING INDICATOR ===
 let typingTimeout;
 function handleTyping(e) {
     if (e.key === 'Enter') sendMessage();
@@ -207,7 +367,6 @@ function handleTyping(e) {
     });
 }
 
-// Init
 loadClients();
 </script>
 </body>
