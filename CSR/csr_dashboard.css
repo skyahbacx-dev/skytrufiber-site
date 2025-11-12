@@ -1,72 +1,66 @@
-* { box-sizing: border-box; }
 body, html {
   margin: 0;
-  padding: 0;
   height: 100%;
   font-family: Arial, sans-serif;
   background: #eaf9f0;
-  color: #034;
 }
 
 header {
   background: #007a4d;
-  color: #fff;
+  color: white;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   padding: 8px 16px;
 }
-
 header img {
   height: 40px;
   margin-right: 8px;
-  vertical-align: middle;
 }
-
 header a {
-  color: #fff;
+  color: white;
   text-decoration: none;
   font-weight: bold;
 }
 
-.tabs {
-  display: flex;
-  gap: 6px;
+.sidebar {
+  width: 230px;
   background: #fefefe;
-  padding: 8px;
-  border-bottom: 2px solid #007a4d;
-}
-
-.tabs button {
-  padding: 8px 14px;
-  border: 1px solid #007a4d;
-  border-radius: 6px;
-  background: #fff;
-  color: #007a4d;
-  cursor: pointer;
-  font-weight: bold;
-  transition: 0.2s;
-}
-
-.tabs button:hover {
-  background: #007a4d;
-  color: #fff;
-}
-
-.tabs button.active {
-  background: #007a4d;
-  color: #fff;
-}
-
-#layout {
+  border-right: 2px solid #007a4d;
+  position: fixed;
+  top: 58px;
+  bottom: 0;
+  left: 0;
+  padding-top: 10px;
   display: flex;
-  height: calc(100vh - 100px);
+  flex-direction: column;
+}
+.sidebar button {
+  background: none;
+  border: none;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  color: #007a4d;
+  font-weight: 600;
+  border-bottom: 1px solid #eee;
+}
+.sidebar button:hover,
+.sidebar button.active {
+  background: #007a4d;
+  color: white;
+}
+
+#main {
+  margin-left: 230px;
+  display: flex;
+  height: calc(100vh - 58px);
 }
 
 #clientList {
-  width: 280px;
-  background: #fff;
-  border-right: 1px solid #ddd;
+  width: 300px;
+  border-right: 1px solid #ccc;
+  background: white;
   overflow-y: auto;
 }
 
@@ -74,34 +68,39 @@ header a {
   padding: 10px;
   border-bottom: 1px solid #eee;
   cursor: pointer;
-  transition: background 0.2s;
 }
-
 .client:hover {
   background: #e9f9ef;
 }
 
-.client-name {
-  font-weight: bold;
-  color: #007a4d;
+.client-row {
+  display: flex;
+  align-items: center;
 }
-
-.assign {
-  font-size: 12px;
-  color: #777;
+.dot {
+  height: 10px;
+  width: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
 }
-
-.empty {
-  padding: 20px;
-  text-align: center;
-  color: #777;
-}
+.online { background: #00d084; }
+.offline { background: #999; }
 
 #chat {
   flex: 1;
   display: flex;
   flex-direction: column;
   background: #f6fffa;
+}
+
+#chatHeader {
+  background: #007a4d;
+  color: white;
+  padding: 10px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 #messages {
@@ -112,16 +111,14 @@ header a {
 
 .msg {
   margin: 6px 0;
-  max-width: 70%;
+  max-width: 80%;
   word-wrap: break-word;
 }
-
 .clientmsg {
   background: #fff;
   border-radius: 10px 10px 10px 0;
   padding: 8px 12px;
 }
-
 .csrmsg {
   background: #dff0ff;
   border-radius: 10px 10px 0 10px;
@@ -132,28 +129,24 @@ header a {
 #composer {
   display: flex;
   padding: 10px;
-  background: #fff;
+  background: white;
   border-top: 1px solid #ccc;
 }
-
 #composer input {
   flex: 1;
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
-
 #composer button {
   background: #007a4d;
-  color: #fff;
+  color: white;
   border: none;
   padding: 8px 16px;
   margin-left: 6px;
   border-radius: 4px;
   cursor: pointer;
-  transition: 0.2s;
 }
-
 #composer button:hover {
   background: #005f3b;
 }
