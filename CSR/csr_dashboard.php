@@ -73,7 +73,7 @@ if (isset($_GET['ajax'])) {
 <head>
 <meta charset="UTF-8">
 <title>CSR Dashboard — <?= htmlspecialchars($csr_name) ?></title>
-<link rel="stylesheet" href="csr_dashboard.css?v=7">
+<link rel="stylesheet" href="csr_dashboard.css?v=10">
 <style>
 body {
   margin: 0;
@@ -81,6 +81,8 @@ body {
   background: #eefcf4;
   color: #042;
 }
+
+/* HEADER */
 header {
   background: #007743;
   color: white;
@@ -91,7 +93,39 @@ header {
 }
 header img { height: 40px; border-radius: 8px; }
 .logout { color: white; text-decoration: none; font-weight: bold; }
+.hamburger {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: white;
+  cursor: pointer;
+  margin-right: 10px;
+}
 
+/* CONTAINER */
+.container {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: calc(100vh - 60px);
+  transition: grid-template-columns 0.3s;
+}
+.container.collapsed {
+  grid-template-columns: 0 1fr;
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: #e9fdf0;
+  padding: 10px;
+  overflow-y: auto;
+  border-right: 1px solid #cde5d4;
+  transition: transform 0.3s ease;
+}
+.container.collapsed .sidebar {
+  transform: translateX(-100%);
+}
+
+/* TABS */
 .tabs {
   display: flex;
   background: #e6f9ee;
@@ -111,17 +145,7 @@ header img { height: 40px; border-radius: 8px; }
   border-radius: 10px 10px 0 0;
 }
 
-.container {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  height: calc(100vh - 110px);
-}
-.sidebar {
-  background: #e9fdf0;
-  padding: 10px;
-  overflow-y: auto;
-  border-right: 1px solid #cde5d4;
-}
+/* CLIENTS */
 .client-item {
   background: white;
   padding: 10px;
@@ -136,6 +160,7 @@ header img { height: 40px; border-radius: 8px; }
 .client-item:hover { background: #f4fff9; }
 .client-avatar { width: 30px; height: 30px; border-radius: 50%; }
 
+/* CHAT */
 .chat-area {
   display: flex;
   flex-direction: column;
@@ -176,36 +201,18 @@ header img { height: 40px; border-radius: 8px; }
   border-radius: 8px;
   padding: 10px 16px;
 }
-.message {
-  margin: 6px 0;
-  max-width: 70%;
-}
-.message.csr .bubble {
-  background: #e7f3ff;
-  margin-left: auto;
-}
-.message.client .bubble {
-  background: #eaffef;
-  margin-right: auto;
-}
-.bubble {
-  border-radius: 10px;
-  padding: 10px 12px;
-}
+
+/* MESSAGES */
+.message { margin: 6px 0; max-width: 70%; }
+.message.csr .bubble { background: #e7f3ff; margin-left: auto; }
+.message.client .bubble { background: #eaffef; margin-right: auto; }
+.bubble { border-radius: 10px; padding: 10px 12px; }
 .meta { font-size: 11px; color: #666; margin-top: 4px; }
 
-.typing {
-  display: flex;
-  justify-content: center;
-  height: 20px;
-}
+.typing { display: flex; justify-content: center; height: 20px; }
 .typing span {
-  width: 6px;
-  height: 6px;
-  background: #999;
-  border-radius: 50%;
-  margin: 0 2px;
-  animation: blink 1.2s infinite ease-in-out;
+  width: 6px; height: 6px; background: #999; border-radius: 50%;
+  margin: 0 2px; animation: blink 1.2s infinite ease-in-out;
 }
 .typing span:nth-child(2){animation-delay:0.2s;}
 .typing span:nth-child(3){animation-delay:0.4s;}
@@ -215,7 +222,8 @@ header img { height: 40px; border-radius: 8px; }
 <body>
 
 <header>
-  <div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
     <img src="<?= $logoPath ?>" alt="Logo">
     <strong>CSR Dashboard — <?= htmlspecialchars($csr_name) ?></strong>
   </div>
@@ -229,7 +237,7 @@ header img { height: 40px; border-radius: 8px; }
   <button onclick="window.location.href='update_profile.php'">👤 Update Profile</button>
 </div>
 
-<div class="container">
+<div class="container" id="mainContainer">
   <aside class="sidebar">
     <div id="clientList"></div>
   </aside>
@@ -259,10 +267,15 @@ header img { height: 40px; border-radius: 8px; }
 let currentClient = null;
 let refreshInterval = null;
 
+// SIDEBAR TOGGLE
+function toggleSidebar() {
+  document.getElementById('mainContainer').classList.toggle('collapsed');
+}
+
+// LOAD CLIENTS
 function loadClients(type='all') {
   document.getElementById('btnAll').classList.toggle('active', type==='all');
   document.getElementById('btnMine').classList.toggle('active', type==='mine');
-
   fetch(`csr_dashboard.php?ajax=load_clients&type=${type}`)
     .then(res => res.json())
     .then(data => {
@@ -281,10 +294,10 @@ function loadClients(type='all') {
         div.onclick = () => selectClient(client.id, client.name, client.status);
         list.appendChild(div);
       });
-    })
-    .catch(err => console.error("Error loading clients:", err));
+    });
 }
 
+// SELECT CLIENT
 function selectClient(id,name,status) {
   currentClient = id;
   document.getElementById('clientName').innerText = name;
@@ -295,6 +308,7 @@ function selectClient(id,name,status) {
   refreshInterval = setInterval(loadChat, 3000);
 }
 
+// LOAD CHAT
 function loadChat() {
   if (!currentClient) return;
   fetch(`csr_dashboard.php?ajax=load_chat&client_id=${currentClient}`)
@@ -320,6 +334,7 @@ function loadChat() {
     });
 }
 
+// SEND MESSAGE
 function sendMessage() {
   const msg = document.getElementById('msgInput').value.trim();
   if (!msg || !currentClient) return;
@@ -333,6 +348,7 @@ function sendMessage() {
   });
 }
 
+// TYPING INDICATOR
 let typingTimeout;
 function handleTyping(e) {
   if (e.key === 'Enter') sendMessage();
