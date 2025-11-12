@@ -397,3 +397,53 @@ body {
     height: 100vh;
   }
 }
+/* === Collapsible Client Info === */
+.client-info {
+  margin-top: 8px;
+  background: #f9fff9;
+  border: 1px solid #d6efe0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #063b2e;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.info-details strong {
+  color: var(--green-dark);
+}
+
+.assign-btn {
+  margin-top: 8px;
+  background: var(--green);
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+.assign-btn:hover {
+  background: var(--green-dark);
+}
+.assign-btn.assign-now {
+  background: #0b944a;
+}
+
+/* Unassigned Tag */
+.unassigned-tag {
+  background: #c1ffd7;
+  color: #065f2a;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  margin-left: 6px;
+  font-weight: 600;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
