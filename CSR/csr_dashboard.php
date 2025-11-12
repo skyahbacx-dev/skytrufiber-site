@@ -73,7 +73,7 @@ if (isset($_GET['ajax'])) {
         exit;
     }
 
-    // === Typing Status (simulation or live if implemented) ===
+    // === Typing Status (simulated) ===
     if ($_GET['ajax'] === 'typing_status') {
         echo json_encode(['typing' => rand(0, 1)]);
         exit;
@@ -87,7 +87,7 @@ if (isset($_GET['ajax'])) {
 <head>
 <meta charset="UTF-8">
 <title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
-<link rel="stylesheet" href="csr_dashboard.css?v=4">
+<link rel="stylesheet" href="csr_dashboard.css?v=5">
 </head>
 <body>
 
@@ -100,43 +100,43 @@ if (isset($_GET['ajax'])) {
 </header>
 
 <div class="wrap">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <h3>Navigation</h3>
-        <button class="tab active" data-tab="all" onclick="switchTab(this, 'all')">💬 All Clients</button>
-        <button class="tab" data-tab="mine" onclick="switchTab(this, 'mine')">👤 My Clients</button>
-        <button class="tab" onclick="window.location.href='survey_responses.php'">📝 Survey Responses</button>
-        <button class="tab" onclick="window.location.href='update_profile.php'">👤 Update Profile</button>
-    </aside>
+  <!-- Left Sidebar (Navigation + Clients) -->
+  <aside class="sidebar">
+    <h3>Navigation</h3>
+    <button class="tab active" data-tab="all" onclick="switchTab(this, 'all')">💬 All Clients</button>
+    <button class="tab" data-tab="mine" onclick="switchTab(this, 'mine')">👤 My Clients</button>
+    <button class="tab" onclick="window.location.href='survey_responses.php'">📝 Survey Responses</button>
+    <button class="tab" onclick="window.location.href='update_profile.php'">👤 Update Profile</button>
 
-    <!-- Client List -->
-    <section class="sidebar client-list-section" id="clientList"></section>
+    <h3 style="margin-top:20px;">Clients</h3>
+    <div id="clientList" class="client-list"></div>
+  </aside>
 
-    <!-- Chat -->
-    <main class="main-area">
-        <div class="chat-header">
-            <div class="chat-header-left">
-                <img id="clientAvatar" class="avatar" src="CSR/lion.PNG" alt="Client Avatar">
-                <div>
-                    <div class="client-name" id="clientName">Select a client</div>
-                    <div class="client-status" id="clientStatus">Offline</div>
-                </div>
-            </div>
+  <!-- Right Column: Chat Area -->
+  <main class="main-area">
+    <div class="chat-header">
+      <div class="chat-header-left">
+        <img id="clientAvatar" class="avatar" src="CSR/lion.PNG" alt="Client Avatar">
+        <div>
+          <div class="client-name" id="clientName">Select a client</div>
+          <div class="client-status" id="clientStatus">Offline</div>
         </div>
+      </div>
+    </div>
 
-        <div class="messages" id="messages">
-            <p class="placeholder">Select a client to start chatting.</p>
-        </div>
+    <div class="messages" id="messages">
+      <p class="placeholder">Select a client to start chatting.</p>
+    </div>
 
-        <div id="typingIndicator" class="typing" style="display:none;">
-            <span></span><span></span><span></span>
-        </div>
+    <div id="typingIndicator" class="typing" style="display:none;">
+      <span></span><span></span><span></span>
+    </div>
 
-        <div class="input-area">
-            <input type="text" id="msg" placeholder="Type your message…" onkeyup="typingEvent(event)">
-            <button onclick="sendMsg()">Send</button>
-        </div>
-    </main>
+    <div class="input-area">
+      <input type="text" id="msg" placeholder="Type your message…" onkeyup="typingEvent(event)">
+      <button onclick="sendMsg()">Send</button>
+    </div>
+  </main>
 </div>
 
 <script>
@@ -145,107 +145,107 @@ let refreshInterval = null;
 
 // === Load Clients ===
 function loadClients(tab = 'all') {
-    fetch(`?ajax=load_clients&tab=${tab}`)
-        .then(res => res.json())
-        .then(clients => {
-            const list = document.getElementById('clientList');
-            list.innerHTML = '';
-            if (!clients.length) {
-                list.innerHTML = `<p style="text-align:center;color:#666;">No clients found.</p>`;
-                return;
-            }
-            clients.forEach(c => {
-                const avatar = c.name[0].toUpperCase() <= 'M' ? 'CSR/lion.PNG' : 'CSR/penguin.PNG';
-                const html = `
-                    <div class="client-item" onclick="selectClient(${c.id}, '${c.name.replace(/'/g, "\\'")}')">
-                        <img src="${avatar}" class="client-avatar">
-                        <div class="client-meta">
-                            <div class="client-title">${c.name}</div>
-                            <div class="client-sub">${c.status}</div>
-                        </div>
-                    </div>`;
-                list.insertAdjacentHTML('beforeend', html);
-            });
-        });
+  fetch(`?ajax=load_clients&tab=${tab}`)
+    .then(res => res.json())
+    .then(clients => {
+      const list = document.getElementById('clientList');
+      list.innerHTML = '';
+      if (!clients.length) {
+        list.innerHTML = `<p style="text-align:center;color:#666;">No clients found.</p>`;
+        return;
+      }
+      clients.forEach(c => {
+        const avatar = c.name[0].toUpperCase() <= 'M' ? 'CSR/lion.PNG' : 'CSR/penguin.PNG';
+        const html = `
+          <div class="client-item" onclick="selectClient(${c.id}, '${c.name.replace(/'/g, "\\'")}')">
+            <img src="${avatar}" class="client-avatar">
+            <div class="client-meta">
+              <div class="client-title">${c.name}</div>
+              <div class="client-sub">${c.status}</div>
+            </div>
+          </div>`;
+        list.insertAdjacentHTML('beforeend', html);
+      });
+    });
 }
 
 // === Switch Tab ===
 function switchTab(btn, tab) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-    loadClients(tab);
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  loadClients(tab);
 }
 
 // === Select Client ===
 function selectClient(id, name) {
-    currentClient = id;
-    document.getElementById('clientName').innerText = name;
-    document.getElementById('clientAvatar').src = name[0].toUpperCase() <= 'M' ? 'CSR/lion.PNG' : 'CSR/penguin.PNG';
+  currentClient = id;
+  document.getElementById('clientName').innerText = name;
+  document.getElementById('clientAvatar').src = name[0].toUpperCase() <= 'M' ? 'CSR/lion.PNG' : 'CSR/penguin.PNG';
+  loadChat();
+  if (refreshInterval) clearInterval(refreshInterval);
+  refreshInterval = setInterval(() => {
     loadChat();
-    if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(() => {
-        loadChat();
-        checkTyping();
-    }, 3000);
+    checkTyping();
+  }, 3000);
 }
 
 // === Load Chat ===
 function loadChat() {
-    if (!currentClient) return;
-    fetch(`?ajax=load_chat&client_id=${currentClient}`)
-        .then(res => res.json())
-        .then(data => {
-            const m = document.getElementById('messages');
-            m.innerHTML = '';
-            if (!data.length) {
-                m.innerHTML = '<p class="placeholder">No messages yet.</p>';
-                return;
-            }
-            data.forEach(msg => {
-                const avatar = (msg.sender_type === 'csr')
-                    ? '<?= $csr_avatar ?>'
-                    : (msg.client[0].toUpperCase() <= 'M' ? 'CSR/lion.PNG' : 'CSR/penguin.PNG');
-                const sender = (msg.sender_type === 'csr')
-                    ? '<?= htmlspecialchars($csr_fullname) ?>'
-                    : msg.client;
-                m.innerHTML += `
-                    <div class="message ${msg.sender_type}">
-                        <div class="bubble">
-                            <strong>${sender}:</strong> ${msg.message}
-                            <div class="meta">${msg.created_at}</div>
-                        </div>
-                    </div>`;
-            });
-            m.scrollTop = m.scrollHeight;
-        });
+  if (!currentClient) return;
+  fetch(`?ajax=load_chat&client_id=${currentClient}`)
+    .then(res => res.json())
+    .then(data => {
+      const m = document.getElementById('messages');
+      m.innerHTML = '';
+      if (!data.length) {
+        m.innerHTML = '<p class="placeholder">No messages yet.</p>';
+        return;
+      }
+      data.forEach(msg => {
+        const avatar = (msg.sender_type === 'csr')
+          ? '<?= $csr_avatar ?>'
+          : (msg.client[0].toUpperCase() <= 'M' ? 'CSR/lion.PNG' : 'CSR/penguin.PNG');
+        const sender = (msg.sender_type === 'csr')
+          ? '<?= htmlspecialchars($csr_fullname) ?>'
+          : msg.client;
+        m.innerHTML += `
+          <div class="message ${msg.sender_type}">
+            <div class="bubble">
+              <strong>${sender}:</strong> ${msg.message}
+              <div class="meta">${msg.created_at}</div>
+            </div>
+          </div>`;
+      });
+      m.scrollTop = m.scrollHeight;
+    });
 }
 
 // === Send Message ===
 function sendMsg() {
-    const msg = document.getElementById('msg').value.trim();
-    if (!msg || !currentClient) return;
-    fetch('?ajax=send_msg', {
-        method: 'POST',
-        body: new URLSearchParams({ client_id: currentClient, msg })
-    }).then(() => {
-        document.getElementById('msg').value = '';
-        loadChat();
-    });
+  const msg = document.getElementById('msg').value.trim();
+  if (!msg || !currentClient) return;
+  fetch('?ajax=send_msg', {
+    method: 'POST',
+    body: new URLSearchParams({ client_id: currentClient, msg })
+  }).then(() => {
+    document.getElementById('msg').value = '';
+    loadChat();
+  });
 }
 
 // === Typing Indicator ===
 function typingEvent(e) {
-    if (e.key === 'Enter') sendMsg();
+  if (e.key === 'Enter') sendMsg();
 }
 
 // === Simulated Typing Check ===
 function checkTyping() {
-    if (!currentClient) return;
-    fetch(`?ajax=typing_status&client_id=${currentClient}`)
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('typingIndicator').style.display = data.typing ? 'flex' : 'none';
-        });
+  if (!currentClient) return;
+  fetch(`?ajax=typing_status&client_id=${currentClient}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('typingIndicator').style.display = data.typing ? 'flex' : 'none';
+    });
 }
 
 // === Initialize ===
