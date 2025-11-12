@@ -289,6 +289,7 @@ header {
 let currentClient = null;
 let refreshInterval = null;
 
+// === LOAD CLIENTS ===
 function loadClients(type='all') {
     document.getElementById('btnAll').classList.toggle('active', type==='all');
     document.getElementById('btnMine').classList.toggle('active', type==='mine');
@@ -296,8 +297,15 @@ function loadClients(type='all') {
     fetch(`csr_dashboard.php?ajax=load_clients&type=${type}`)
         .then(res => res.json())
         .then(data => {
+            console.log("Clients loaded:", data); // 👈 check browser console (F12)
             const list = document.getElementById('clientList');
             list.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                list.innerHTML = '<p style="text-align:center;color:#666;">No clients found.</p>';
+                return;
+            }
+
             data.forEach(client => {
                 const div = document.createElement('div');
                 div.className = 'client-item';
@@ -307,9 +315,15 @@ function loadClients(type='all') {
                 div.onclick = () => selectClient(client.id, client.name, client.status);
                 list.appendChild(div);
             });
+        })
+        .catch(err => {
+            console.error("Error loading clients:", err);
+            document.getElementById('clientList').innerHTML =
+              '<p style="text-align:center;color:red;">Failed to load clients.</p>';
         });
 }
 
+// === SELECT CLIENT ===
 function selectClient(id,name,status) {
     currentClient = id;
     document.getElementById('clientName').innerText = name;
@@ -320,6 +334,7 @@ function selectClient(id,name,status) {
     refreshInterval = setInterval(loadChat, 3000);
 }
 
+// === LOAD CHAT ===
 function loadChat() {
     if (!currentClient) return;
     fetch(`csr_dashboard.php?ajax=load_chat&client_id=${currentClient}`)
@@ -327,6 +342,10 @@ function loadChat() {
         .then(data => {
             const chat = document.getElementById('chatMessages');
             chat.innerHTML = '';
+            if (!data || data.length === 0) {
+                chat.innerHTML = '<p class="placeholder">No messages yet.</p>';
+                return;
+            }
             data.forEach(m => {
                 const div = document.createElement('div');
                 div.className = `message ${m.sender_type}`;
@@ -338,9 +357,11 @@ function loadChat() {
                 chat.appendChild(div);
             });
             chat.scrollTop = chat.scrollHeight;
-        });
+        })
+        .catch(err => console.error("Chat load error:", err));
 }
 
+// === SEND MESSAGE ===
 function sendMessage() {
     const msg = document.getElementById('msgInput').value.trim();
     if (!msg || !currentClient) return;
@@ -354,6 +375,7 @@ function sendMessage() {
     });
 }
 
+// === TYPING ===
 let typingTimeout;
 function handleTyping(e) {
     if (e.key === 'Enter') sendMessage();
@@ -367,7 +389,11 @@ function handleTyping(e) {
     });
 }
 
-loadClients();
+// === AUTO INIT ===
+document.addEventListener("DOMContentLoaded", () => {
+    loadClients('all'); // Always load "All Clients" on start
+});
 </script>
+
 </body>
 </html>
