@@ -25,7 +25,8 @@ $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : (file_exists('../SKYT
   <meta charset="utf-8">
   <title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="csr_dashboard.css">
+  <link rel="stylesheet" href="csr_dashboard.css?v=<?php echo time(); ?>">
+
 </head>
 <body>
 
@@ -102,6 +103,7 @@ $logoPath = file_exists('AHBALOGO.png') ? 'AHBALOGO.png' : (file_exists('../SKYT
   const CSR_FULLNAME = <?= json_encode($csr_fullname) ?>;
   const AJAX_URL = "csr_dashboard_ajax.php";
 </script>
-<script src="csr_dashboard.js"></script>
+<script src="csr_dashboard.js?v=<?php echo time(); ?>"></script>
+
 </body>
 </html>
