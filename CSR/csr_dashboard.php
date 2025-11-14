@@ -1,5 +1,6 @@
 <?php
 session_start();
+include '../db_connect.php';
 if (!isset($_SESSION['csr_id'])) { header('Location: csr_login.php'); exit; }
 $csr_user = $_SESSION['csr_user'];
 ?>
