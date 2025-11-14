@@ -1,8 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['csr_id'])) { header('Location: csr_login.php'); exit; }
-$csr_id = $_SESSION['csr_id'];
-$csr_user = $_SESSION['csr_user'] ?? '';
+$csr_user = $_SESSION['csr_user'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
