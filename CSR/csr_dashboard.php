@@ -2,131 +2,77 @@
 session_start();
 include '../db_connect.php';
 
-if (!isset($_SESSION['csr_user'])) {
-    header("Location: csr_login.php");
-    exit;
-}
-
-$csr_user = $_SESSION['csr_user'];
-
-$stmt = $conn->prepare("SELECT full_name, profile_pic FROM csr_users WHERE username = :u LIMIT 1");
-$stmt->execute([':u' => $csr_user]);
-$row = $stmt->fetch(PDO::FETCH_ASSOC);
-$csr_fullname = $row['full_name'] ?? $csr_user;
-$csr_avatar = $row['profile_pic'] ?? 'CSR/default_avatar.png';
-
-if (isset($_GET['ajax'])) {
-    header('Content-Type: application/json');
-
-    // Load clients
-    if ($_GET['ajax'] === 'load_clients') {
-        $stmt = $conn->query("
-            SELECT id, name, assigned_csr, last_active,
-            (CASE WHEN last_active > NOW() - INTERVAL '60 seconds' THEN 1 ELSE 0 END) AS online
-            FROM clients ORDER BY name ASC
-        ");
-        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-        exit;
-    }
-
-    // Load single client info
-    if ($_GET['ajax'] === 'client_info') {
-        $id = (int)$_GET['id'];
-        $stmt = $conn->prepare("SELECT * FROM clients WHERE id = :i");
-        $stmt->execute([':i' => $id]);
-        echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));
-        exit;
-    }
-
-    // Load chat
-    if ($_GET['ajax'] === 'chat') {
-        $cid = (int)$_GET['client_id'];
-        $stmt = $conn->prepare("
-            SELECT * FROM chat WHERE client_id = :cid ORDER BY created_at ASC
-        ");
-        $stmt->execute([':cid' => $cid]);
-        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-        exit;
-    }
-
-    // Send message
-    if ($_GET['ajax'] === 'send' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-        $cid = (int)$_POST['client_id'];
-        $msg = trim($_POST['msg']);
-
-        if ($msg !== '') {
-            $stmt = $conn->prepare("
-                INSERT INTO chat (client_id, sender_type, message, csr_fullname, created_at)
-                VALUES (:cid, 'csr', :m, :c, NOW())
-            ");
-            $stmt->execute([':cid' => $cid, ':m' => $msg, ':c' => $csr_fullname]);
-        }
-        echo json_encode(['ok' => true]);
-        exit;
-    }
-}
+$csr_user = $_SESSION['username'] ?? '';
+$csr_fullname = $_SESSION['full_name'] ?? '';
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
-<link rel="stylesheet" href="csr_dashboard.css?v=10">
+<meta charset="UTF-8">
+<title>CSR Dashboard - SkyTruFiber</title>
+<link rel="stylesheet" href="csr_dashboard.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 
 <body>
 
-<header class="topbar">
-    <div class="left">
-        <img src="AHBALOGO.png" class="logo">
-        <h1>CSR DASHBOARD - <?= htmlspecialchars($csr_fullname) ?></h1>
+<header class="top-header">
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <div class="logo-area">
+        <img src="../SKYTRUFIBER.png" class="logo">
+        <h1>CSR DASHBOARD - <?php echo strtoupper($csr_user); ?></h1>
     </div>
-    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
-    <a class="logout" href="csr_logout.php">Logout</a>
+
+    <a href="csr_logout.php" class="logout-btn">🔒 LOGOUT</a>
 </header>
 
-<div class="layout">
+<div class="wrap">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar collapsed" id="sidebar">
-        <button class="close-btn" onclick="toggleSidebar()">✖</button>
-
-        <button class="nav-btn">💬 Chat Dashboard</button>
-        <button class="nav-btn">👤 My Clients</button>
-        <button class="nav-btn">📝 Survey Responses</button>
-        <button class="nav-btn">⚙ Update Profile</button>
-
-        <h3>CLIENTS</h3>
-        <input type="text" id="search" placeholder="Search clients">
-
-        <div id="clientList"></div>
+    <!-- SIDEBAR NAV -->
+    <aside id="sidebar" class="sidebar hidden">
+        <button class="close-sidebar" onclick="toggleSidebar()">✖</button>
+        <ul class="menu-links">
+            <li><a href="csr_dashboard.php">💬 Chat Dashboard</a></li>
+            <li><a href="csr_clients.php">👥 My Clients</a></li>
+            <li><a href="reminders.php">⏰ Reminders</a></li>
+            <li><a href="survey_responses.php">📝 Survey Responses</a></li>
+            <li><a href="update_profile.php">👤 Edit Profile</a></li>
+        </ul>
     </aside>
 
-    <!-- MAIN CHAT -->
+    <!-- CLIENT LIST COLUMN -->
+    <section class="client-panel">
+        <div class="client-title">
+            <img src="icons/clients.svg" width="40">
+            <h2>CLIENTS</h2>
+        </div>
+
+        <div class="client-search">
+            <input type="text" id="searchClient" placeholder="Search client...">
+            <span>🔍</span>
+        </div>
+
+        <div id="clientList" class="client-container"></div>
+    </section>
+
+    <!-- CHAT PANEL -->
     <main class="chat-area">
         <div class="chat-header">
-            <span id="selected-client">Select a client</span>
+            <h2 id="clientName">SELECT CLIENT</h2>
+            <button class="client-info-btn" onclick="toggleClientInfo()">ℹ️</button>
         </div>
 
-        <div class="messages" id="messages">
-            <p class="placeholder">Select a client to start chatting.</p>
-        </div>
+        <div id="clientInfo" class="client-info hidden"></div>
+        <div id="messages" class="messages"></div>
 
-        <div class="chat-input">
-            <input type="text" id="msg" placeholder="Type a message..." onkeyup="if(event.key==='Enter') sendMessage()">
+        <div id="chatInput" class="chat-input hidden">
+            <input id="msg" type="text" placeholder="Type a message...">
             <button onclick="sendMessage()">➤</button>
         </div>
     </main>
-
-    <!-- SLIDING INFO PANEL -->
-    <aside id="clientInfoPanel" class="info-panel">
-        <button class="close-info" onclick="closeInfo()">✖</button>
-        <h2>Client Information</h2>
-        <div id="client-info-content"></div>
-    </aside>
-
 </div>
 
-<script src="client_panel.js?v=3"></script>
-
+<script src="csr_dashboard.js"></script>
 </body>
 </html>
