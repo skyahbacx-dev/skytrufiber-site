@@ -73,13 +73,13 @@ if (isset($_GET['ajax'])) {
 <head>
 <meta charset="UTF-8">
 <title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
-<link rel="stylesheet" href="csr_dashboard.css?v=22">
+<link rel="stylesheet" href="csr_dashboard.css?v=99">
 </head>
 <body>
 
 <header class="topnav">
   <img src="AHBALOGO.png" class="nav-logo">
-  <h2>CSR DASHBOARD — CSR ONE</h2>
+  <h2>CSR DASHBOARD — <?=$csr_fullname?></h2>
 
   <nav class="nav-buttons">
     <button class="nav-btn active" onclick="switchTab(this,'all')">💬 CHAT DASHBOARD</button>
@@ -94,42 +94,41 @@ if (isset($_GET['ajax'])) {
 
 <div class="layout">
 
-<!-- LEFT CLIENT PANEL -->
 <section class="client-panel">
   <h3>CLIENTS</h3>
   <input class="search" placeholder="Search clients...">
   <div id="clientList" class="client-list"></div>
 </section>
 
-<!-- CHAT PANEL -->
 <main class="chat-panel">
+
   <div class="chat-header">
-    <img id="chatAvatar" src="CSR/lion.PNG" class="chat-avatar">
-    <div>
-      <div id="chatName" class="chat-name">Select a client</div>
-      <div class="chat-status">
-        <span id="statusDot" class="status-dot offline"></span>
-        <span id="chatStatus">---</span>
+    <div class="chat-header-left">
+      <img id="chatAvatar" src="CSR/lion.PNG" class="chat-avatar">
+      <div>
+        <div id="chatName" class="chat-name">Select a client</div>
+        <div class="chat-status">
+          <span id="statusDot" class="status-dot offline"></span>
+          <span id="chatStatus">---</span>
+        </div>
       </div>
     </div>
+
     <button id="infoBtn" class="info-btn">ⓘ</button>
   </div>
 
   <div id="chatBox" class="chat-box"><p class="placeholder">Select a client to start chatting.</p></div>
 
-  <div id="uploadPreview" class="photo-preview-group" style="display:none;">
-    <div class="photo-item"><span class="remove-photo">✖</span><img id="previewImg" src=""></div>
-  </div>
+  <div id="uploadPreview" class="photo-preview-group" style="display:none;"></div>
 
   <div id="chatInput" class="chat-input disabled">
     <label for="fileUpload" class="upload-icon">🖼</label>
     <input type="file" id="fileUpload" style="display:none">
-    <input type="text" id="msg" placeholder="type anything....." disabled>
+    <input type="text" id="msg" placeholder="Type anything....." disabled>
     <button id="sendBtn" class="send-btn" disabled>✈</button>
   </div>
 </main>
 
-<!-- SLIDE PANEL -->
 <aside id="clientInfoPanel" class="client-info-panel">
   <button class="close-info">✖</button>
   <h3>Clients Information</h3>
@@ -142,45 +141,209 @@ if (isset($_GET['ajax'])) {
 </div>
 
 <script>
-// ---- SAME JS AS YOUR CURRENT FILE WITH UI ENHANCEMENTS ADDED ----
-// (Status dot)
-function openClient(id, name){
-  currentClient = id;
-  document.getElementById('chatName').innerText = name;
+let currentClient  = null;
+let canChat        = false;
+let selectedFile   = null;
+let csr_user       = "<?= $csr_user ?>";
+let csr_fullname   = "<?= htmlspecialchars($csr_fullname, ENT_QUOTES) ?>";
+let refreshTimer   = null;
 
-  const avatar = (name && name[0].toUpperCase() <= 'M') ? 'CSR/lion.PNG' : 'CSR/penguin.PNG';
-  document.getElementById('chatAvatar').src = avatar;
+/* Toggle info panel */
+document.getElementById("infoBtn").onclick = ()=>document.getElementById("clientInfoPanel").classList.add("active");
+document.querySelector(".close-info").onclick = ()=>document.getElementById("clientInfoPanel").classList.remove("active");
+
+/* Load Clients */
+function loadClients(tab='all'){
+  fetch(`/CSR/csr_dashboard.php?ajax=load_clients&tab=${tab}`)
+    .then(r=>r.json())
+    .then(clients=>{
+      const list=document.getElementById("clientList");
+      list.innerHTML="";
+      if(!clients.length){
+        list.innerHTML="<p>No clients found.</p>";
+        return;
+      }
+
+      clients.forEach(c=>{
+        const avatar=(c.name && c.name[0].toUpperCase()<="M") ? "CSR/lion.PNG" : "CSR/penguin.PNG";
+
+        let actionBtn='';
+        if(!c.assigned_csr){
+          actionBtn=`<button class="pill green" onclick="event.stopPropagation();assignClient(${c.id});">＋</button>`;
+        } else if(c.assigned_csr===csr_user){
+          actionBtn=`<button class="pill red" onclick="event.stopPropagation();unassignClient(${c.id});">−</button>`;
+        } else {
+          actionBtn=`<button class="pill gray" disabled>🔒</button>`;
+        }
+
+        list.insertAdjacentHTML("beforeend",`
+          <div class="client-item ${c.assigned_csr && c.assigned_csr!==csr_user?'locked':''}"
+               onclick="openClient(${c.id}, '${(c.name||'').replace(/'/g,"\\'")}')">
+            <div class="client-main">
+              <img src="${avatar}" class="client-avatar">
+              <div class="client-meta">
+                <div class="client-name">${c.name||''}</div>
+                <div class="client-sub">
+                  <span class="${c.status==='Online'?'online-dot':'offline-dot'}"></span>
+                  ${c.status || 'Offline'} • ${c.assigned_csr?`CSR: ${c.assigned_csr}`:'Unassigned'}
+                </div>
+              </div>
+            </div>
+            <div class="client-actions">${actionBtn}</div>
+          </div>`);
+      });
+    });
+}
+
+function switchTab(btn,tab){
+  document.querySelectorAll(".nav-btn").forEach(el=>el.classList.remove("active"));
+  btn.classList.add("active");
+  loadClients(tab);
+}
+
+/* Assign and unassign */
+function assignClient(id){
+  fetch(`/CSR/csr_dashboard.php?ajax=assign&id=${id}`)
+  .then(()=>loadClients());
+}
+
+function unassignClient(id){
+  if(!confirm("Unassign this client?"))return;
+  fetch(`/CSR/csr_dashboard.php?ajax=unassign&id=${id}`)
+  .then(()=>loadClients());
+}
+
+/* Open client chat */
+function openClient(id,name){
+  currentClient=id;
+  document.getElementById("chatName").innerText=name;
+
+  const avatar=(name && name[0].toUpperCase()<="M")?"CSR/lion.PNG":"CSR/penguin.PNG";
+  document.getElementById("chatAvatar").src=avatar;
 
   fetch(`/CSR/csr_dashboard.php?ajax=get_client&id=${id}`)
     .then(r=>r.json())
     .then(c=>{
-      canChat = (!c.assigned_csr || c.assigned_csr === "<?= $csr_user ?>");
+      canChat = (!c.assigned_csr || c.assigned_csr===csr_user);
 
       document.getElementById("chatStatus").innerText =
         !c.assigned_csr ? "Unassigned — you can claim this client." :
-        c.assigned_csr === "<?= $csr_user ?>" ? "Assigned to you" :
-        "Assigned to CSR: " + c.assigned_csr;
+        c.assigned_csr===csr_user ? "Assigned to you" :
+        "Assigned to CSR: "+c.assigned_csr;
 
       document.getElementById("statusDot").className =
-        "status-dot " + (c.status === "Online" ? "online" : "offline");
+        "status-dot " + (c.status==="Online"?"online":"offline");
 
-      document.getElementById("infoName").innerText = c.name;
-      document.getElementById("infoEmail").innerText = c.email;
-      document.getElementById("infoDistrict").innerText = c.district;
-      document.getElementById("infoBrgy").innerText = c.barangay;
+      document.getElementById("infoName").innerText=c.name;
+      document.getElementById("infoEmail").innerText=c.email;
+      document.getElementById("infoDistrict").innerText=c.district;
+      document.getElementById("infoBrgy").innerText=c.barangay;
 
-      document.getElementById('chatInput').classList.toggle('disabled', !canChat);
-      document.getElementById('msg').disabled = !canChat;
-      document.getElementById('sendBtn').disabled = !canChat;
+      document.getElementById("chatInput").classList.toggle("disabled",!canChat);
+      document.getElementById("msg").disabled=!canChat;
+      document.getElementById("sendBtn").disabled=!canChat;
 
       loadChat();
-      if(refreshTimer) clearInterval(refreshTimer);
-      refreshTimer = setInterval(loadChat, 3000);
+      if(refreshTimer)clearInterval(refreshTimer);
+      refreshTimer=setInterval(loadChat,3000);
+    });
+}
+
+/* Load Chat */
+function loadChat(){
+  if(!currentClient)return;
+  fetch(`/SKYTRUFIBER/load_chat.php?client_id=${currentClient}&viewer=csr`)
+    .then(r=>r.json())
+    .then(rows=>{
+      const box=document.getElementById("chatBox");
+      box.innerHTML="";
+
+      if(!rows.length){
+        box.innerHTML='<p class="placeholder">No messages yet.</p>';
+        return;
+      }
+
+      rows.forEach(m=>{
+        let fileItem="";
+        if(m.file_path){
+          if(/\.(jpg|jpeg|png|gif)$/i.test(m.file_path)){
+            fileItem=`<img src="${m.file_path}" class="file-img">`;
+          } else {
+            fileItem=`<a href="${m.file_path}" download>📎 Download</a>`;
+          }
+        }
+
+        let meta=m.created_at;
+        if(m.sender_type==="csr"){
+          const seen=(m.is_seen==1);
+          meta=`${seen?"✔✔":"✔"} ${meta}`;
+        }
+
+        box.insertAdjacentHTML("beforeend",`
+          <div class="msg ${m.sender_type}">
+            <div class="bubble">${m.message||""}${fileItem?'<br>'+fileItem:""}
+              <div class="meta">${meta}</div>
+            </div>
+          </div>`);
+      });
+
+      box.scrollTop=box.scrollHeight;
+    });
+}
+
+/* File Preview */
+document.getElementById("fileUpload").addEventListener("change",function(){
+  const file=this.files[0];
+  if(!file)return;
+
+  selectedFile=file;
+  const url=URL.createObjectURL(file);
+
+  const preview=document.getElementById("uploadPreview");
+  preview.style.display="flex";
+  preview.innerHTML=`<div class="photo-item">
+      <span class="remove-photo">✖</span>
+      <img src="${url}">
+    </div>`;
+
+  document.querySelector(".remove-photo").onclick=()=>{
+    selectedFile=null;
+    document.getElementById("fileUpload").value="";
+    preview.style.display="none";
+  };
+});
+
+/* Send Chat */
+document.getElementById("sendBtn").addEventListener("click",sendMsg);
+document.getElementById("msg").addEventListener("keyup",e=>{if(e.key==="Enter")sendMsg();});
+
+function sendMsg(){
+  if(!currentClient||!canChat)return;
+  const text=document.getElementById("msg").value.trim();
+  if(!text && !selectedFile)return;
+
+  const fd=new FormData();
+  fd.append("sender_type","csr");
+  fd.append("message",text);
+  fd.append("client_id",currentClient);
+  fd.append("csr_user",csr_user);
+  fd.append("csr_fullname",csr_fullname);
+  if(selectedFile)fd.append("file",selectedFile);
+
+  fetch(`/SKYTRUFIBER/save_chat.php`,{method:"POST",body:fd})
+    .then(r=>r.json())
+    .then(res=>{
+      if(res.status==="ok"){
+        document.getElementById("msg").value="";
+        selectedFile=null;
+        document.getElementById("fileUpload").value="";
+        document.getElementById("uploadPreview").style.display="none";
+        loadChat();
+      } else alert(res.msg||"Send failed");
     });
 }
 
 loadClients();
 </script>
-
 </body>
 </html>
