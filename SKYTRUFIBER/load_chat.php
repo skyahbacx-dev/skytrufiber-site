@@ -7,19 +7,25 @@ date_default_timezone_set("Asia/Manila");
 
 $client_id = 0;
 
-// Accept client_id OR client username
+// Accept client_id OR username OR client
 if (isset($_GET['client_id'])) {
     $client_id = (int)$_GET['client_id'];
+} elseif (isset($_GET['username'])) {
+    $stmt = $conn->prepare("SELECT id FROM clients WHERE name = :name LIMIT 1");
+    $stmt->execute([":name" => $_GET['username']]);
+    $client_id = $stmt->fetchColumn();
 } elseif (isset($_GET['client'])) {
     $stmt = $conn->prepare("SELECT id FROM clients WHERE name = :name LIMIT 1");
     $stmt->execute([":name" => $_GET['client']]);
     $client_id = $stmt->fetchColumn();
 }
 
+// If not found, return empty
 if (!$client_id) {
     echo json_encode([]);
     exit;
 }
+
 $stmt = $conn->prepare("
     SELECT 
         ch.message,
@@ -43,13 +49,10 @@ $messages = [];
 
 foreach ($rows as $row) {
 
-    // Format PH time nicely
-    $time = date("M d g:i A", strtotime($row['created_at']));
-
     $messages[] = [
         'message'      => $row['message'],
         'sender_type'  => $row['sender_type'],
-        'created_at'   => $time,
+        'created_at'   => $row['created_at'],  // already PH converted
         'media_path'   => $row['media_path'],
         'media_type'   => $row['media_type'],
         'client_name'  => $row['client_name'],
