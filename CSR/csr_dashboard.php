@@ -10,11 +10,11 @@ if (!isset($_SESSION['csr_user'])) {
 $csr_user = $_SESSION['csr_user'];
 
 // Get CSR info
-$stmt = $conn->prepare("SELECT full_name, profile_pic FROM csr_users WHERE username = :u LIMIT 1");
+$stmt = $conn->prepare("SELECT fullname, profile_pic FROM csr_users WHERE username = :u LIMIT 1");
 $stmt->execute([':u' => $csr_user]);
 $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$csr_fullname = $data['full_name'] ?? $csr_user;
+$csr_fullname = $data['fullname'] ?? $csr_user;
 $csr_avatar   = $data['profile_pic'] ?? 'CSR/default_avatar.png';
 
 /* ==========================================================
@@ -54,7 +54,7 @@ if (isset($_GET['ajax'])) {
         exit;
     }
 
-    // Assign client to this CSR
+    // Assign client
     if ($_GET['ajax'] === 'assign' && isset($_GET['id'])) {
         $id = (int)$_GET['id'];
         $stmt = $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :id AND (assigned_csr IS NULL OR assigned_csr = '')");
@@ -63,7 +63,7 @@ if (isset($_GET['ajax'])) {
         exit;
     }
 
-    // Unassign only if owned by this CSR
+    // Unassign
     if ($_GET['ajax'] === 'unassign' && isset($_GET['id'])) {
         $id = (int)$_GET['id'];
         $stmt = $conn->prepare("UPDATE clients SET assigned_csr = NULL WHERE id = :id AND assigned_csr = :csr");
@@ -80,7 +80,7 @@ if (isset($_GET['ajax'])) {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
+<title>CSR Dashboard — <?= htmlspecialchars($csr_fullname ?? "CSR") ?></title>
 <link rel="stylesheet" href="csr_dashboard.css?v=11">
 </head>
 <body>
@@ -196,9 +196,7 @@ function loadClients(tab='all'){
                 </div>
               </div>
             </div>
-            <div class="client-actions">
-              ${actionBtn}
-            </div>
+            <div class="client-actions">${actionBtn}</div>
           </div>
         `);
       });
@@ -214,15 +212,11 @@ function switchTab(btn, tab){
 
 /* Assign / unassign */
 function assignClient(id){
-  fetch(`?ajax=assign&id=${id}`)
-    .then(r=>r.json())
-    .then(()=>loadClients());
+  fetch(`?ajax=assign&id=${id}`).then(()=>loadClients());
 }
 function unassignClient(id){
   if(!confirm('Unassign this client from you?')) return;
-  fetch(`?ajax=unassign&id=${id}`)
-    .then(r=>r.json())
-    .then(()=>loadClients());
+  fetch(`?ajax=unassign&id=${id}`).then(()=>loadClients());
 }
 
 /* Open selected client */
@@ -240,13 +234,9 @@ function openClient(id, name){
       canChat = (!assigned || assigned === csr_user);
 
       const statusEl = document.getElementById('chatStatus');
-      if (!assigned) {
-        statusEl.innerText = 'Unassigned — you can claim this client.';
-      } else if (assigned === csr_user) {
-        statusEl.innerText = 'Assigned to you';
-      } else {
-        statusEl.innerText = `Assigned to CSR: ${assigned} (you can only view, not reply)`;
-      }
+      if (!assigned) statusEl.innerText = 'Unassigned — you can claim this client.';
+      else if (assigned === csr_user) statusEl.innerText = 'Assigned to you';
+      else statusEl.innerText = `Assigned to CSR: ${assigned} (view only)`;
 
       const input = document.getElementById('chatInput');
       const msg   = document.getElementById('msg');
@@ -256,16 +246,16 @@ function openClient(id, name){
       msg.disabled  = !canChat;
       btn.disabled  = !canChat;
 
-      loadChat(); // first load
+      loadChat();
       if (refreshTimer) clearInterval(refreshTimer);
       refreshTimer = setInterval(loadChat, 4000);
     });
 }
 
-/* Load chat with seen/delivered */
+/* Load chat */
 function loadChat(){
   if (!currentClient) return;
-  fetch(`load_chat.php?client_id=${currentClient}&viewer=csr`)
+  fetch(`../SKYTRUFIBER/load_chat.php?client_id=${currentClient}&viewer=csr`)
     .then(r=>r.json())
     .then(rows=>{
       const box = document.getElementById('chatBox');
@@ -286,12 +276,10 @@ function loadChat(){
           }
         }
 
-        // Seen / delivered checks for CSR messages
         let meta = m.created_at;
         if (m.sender_type === 'csr') {
-          const seen = (m.is_seen == 1 || m.is_seen === '1' || m.is_seen === true);
-          const checks = seen ? '✔✔' : '✔';
-          meta = `${checks} ${meta}`;
+          const seen = (m.is_seen == 1);
+          meta = `${seen ? '✔✔' : '✔'} ${meta}`;
         }
 
         box.insertAdjacentHTML('beforeend', `
@@ -308,62 +296,3 @@ function loadChat(){
       box.scrollTop = box.scrollHeight;
     });
 }
-
-/* File upload preview */
-document.getElementById('fileUpload').addEventListener('change', function(){
-  const file = this.files[0];
-  if (!file) {
-    selectedFile = null;
-    document.getElementById('uploadPreview').style.display = 'none';
-    return;
-  }
-  selectedFile = file;
-  const preview = document.getElementById('uploadPreview');
-  preview.style.display = 'block';
-  preview.innerText = 'Attached: ' + file.name;
-});
-
-/* Send message */
-document.getElementById('sendBtn').addEventListener('click', sendMsg);
-document.getElementById('msg').addEventListener('keyup', e=>{
-  if (e.key === 'Enter') sendMsg();
-});
-
-function sendMsg(){
-  if (!currentClient || !canChat) {
-    alert("You can't reply to a client not assigned to you.");
-    return;
-  }
-  const text = document.getElementById('msg').value.trim();
-  if (!text && !selectedFile) return;
-
-  const fd = new FormData();
-  fd.append('sender_type', 'csr');
-  fd.append('message', text);
-  fd.append('client_id', currentClient);
-  fd.append('csr_user', csr_user);
-  fd.append('csr_fullname', csr_fullname);
-  if (selectedFile) {
-    fd.append('file', selectedFile);
-  }
-
-  fetch('save_chat.php', { method: 'POST', body: fd })
-    .then(r=>r.json())
-    .then(res=>{
-      if (res.status === 'ok') {
-        document.getElementById('msg').value = '';
-        selectedFile = null;
-        document.getElementById('fileUpload').value = '';
-        document.getElementById('uploadPreview').style.display = 'none';
-        loadChat();
-      } else {
-        alert(res.msg || 'Failed to send');
-      }
-    });
-}
-
-// Initial load
-loadClients();
-</script>
-</body>
-</html>
