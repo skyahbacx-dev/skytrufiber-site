@@ -3,117 +3,85 @@ session_start();
 include '../db_connect.php';
 header('Content-Type: application/json');
 
-date_default_timezone_set("Asia/Manila");
-
 $sender_type  = $_POST['sender_type'] ?? 'client';
 $message      = trim($_POST['message'] ?? '');
 $username     = $_SESSION['name'] ?? ($_POST['username'] ?? '');
 $csr_user     = $_POST['csr_user'] ?? '';
 $csr_fullname = $_POST['csr_fullname'] ?? '';
 
-$media_path = null;
-$media_type = null;
-
-/* ===== MEDIA UPLOAD ===== */
-if (!empty($_FILES['file']['name'])){
-    $ext = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
-
-    if(in_array($ext,['jpg','jpeg','png','gif','webp'])){
-        $media_type = 'image'; 
-        $folder="../uploads/chat_images/";
-    } elseif(in_array($ext,['mp4','mov','avi','mkv','webm'])){
-        $media_type = 'video';
-        $folder="../uploads/chat_videos/";
-    }
-
-    if($media_type){
-        $newName = time()."_".rand(1000,9999).".".$ext;
-        $path = $folder.$newName;
-        move_uploaded_file($_FILES['file']['tmp_name'], $path);
-        $media_path = str_replace("../","",$path);
-    }
-}
-
-if($message==='' && $media_path===null){
-    echo json_encode(['status'=>'error','msg'=>'Empty message']);
+if ($message === '') {
+    echo json_encode(['status' => 'error', 'msg' => 'Empty message']);
     exit;
 }
 
-/* ===== CLIENT MESSAGE ===== */
-if($sender_type === 'client'){
-
-    // Check or create client
-    $stmt = $conn->prepare("SELECT id, assigned_csr FROM clients WHERE name=:u LIMIT 1");
-    $stmt->execute([':u'=>$username]);
+/* ===========================================================
+   🧑‍💻 CLIENT MESSAGE HANDLER
+   =========================================================== */
+if ($sender_type === 'client') {
+    $stmt = $conn->prepare("SELECT id, assigned_csr FROM clients WHERE name = :username LIMIT 1");
+    $stmt->execute([':username' => $username]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if(!$row){
-        // pick any available CSR
-        $csrQ = $conn->query("SELECT username, full_name FROM csr_users WHERE status='active' ORDER BY is_online DESC LIMIT 1");
+    if (!$row) {
+        // Pick an active CSR
+        $csrQ = $conn->query("SELECT username, full_name FROM csr_users WHERE status='active' AND is_online=TRUE ORDER BY RANDOM() LIMIT 1");
         $csr = $csrQ->fetch(PDO::FETCH_ASSOC);
+        $assigned_csr = $csr['username'] ?? 'Unassigned';
+        $assigned_csr_full = $csr['full_name'] ?? '';
 
-        $assigned = $csr['username'] ?? 'CSR Support';
-        $assigned_full = $csr['full_name'] ?? 'Support Team';
-
-        $ins = $conn->prepare("INSERT INTO clients (name, assigned_csr, created_at) VALUES (:n,:csr,NOW()) RETURNING id");
-        $ins->execute([':n'=>$username, ':csr'=>$assigned]);
+        $ins = $conn->prepare("INSERT INTO clients (name, assigned_csr, created_at) VALUES (:n, :csr, NOW()) RETURNING id");
+        $ins->execute([':n' => $username, ':csr' => $assigned_csr]);
         $client_id = $ins->fetchColumn();
     } else {
         $client_id = $row['id'];
-        $assigned = $row['assigned_csr'];
-        $assigned_full = $csr_fullname;
+        $assigned_csr = $row['assigned_csr'];
+        $csrNameQ = $conn->prepare("SELECT full_name FROM csr_users WHERE username = :csr LIMIT 1");
+        $csrNameQ->execute([':csr' => $assigned_csr]);
+        $assigned_csr_full = $csrNameQ->fetchColumn() ?: $assigned_csr;
     }
 
     // Insert client message
-    $insert=$conn->prepare("
-        INSERT INTO chat (client_id, sender_type, message, media_path, media_type, assigned_csr, csr_fullname, created_at)
-        VALUES (:cid,'client',:msg,:mp,:mt,:csr,:csrfull,NOW())
-    ");
-    $insert->execute([
-        ':cid'=>$client_id, ':msg'=>$message,
-        ':mp'=>$media_path, ':mt'=>$media_type,
-        ':csr'=>$assigned, ':csrfull'=>$assigned_full
-    ]);
+    $stmt2 = $conn->prepare("INSERT INTO chat (client_id, sender_type, message, created_at) VALUES (:cid, 'client', :msg, NOW())");
+    $stmt2->execute([':cid' => $client_id, ':msg' => $message]);
 
-    /* ===== AUTO GREETING (only if 1st message) ===== */
-    $count = $conn->prepare("SELECT COUNT(*) FROM chat WHERE client_id=:cid");
-    $count->execute([':cid'=>$client_id]);
-    $total = $count->fetchColumn();
-
-    if ($total == 1){
-        $greet = "👋 Hi $username! This is $assigned_full from SkyTruFiber Support. How can I help you today?";
-
-        $greetStmt=$conn->prepare("
-          INSERT INTO chat (client_id,sender_type,message,assigned_csr,csr_fullname,created_at)
-          VALUES (:cid,'csr',:msg,:csr,:full,NOW())
+    // Auto greeting
+    $count = $conn->query("SELECT COUNT(*) FROM chat WHERE client_id=$client_id")->fetchColumn();
+    if ($count <= 2 && $assigned_csr !== 'Unassigned') {
+        $greet = "👋 Hi $username! This is $assigned_csr_full from SkyTruFiber. How can I assist you today?";
+        $stmt3 = $conn->prepare("
+            INSERT INTO chat (client_id, sender_type, message, assigned_csr, csr_fullname, created_at)
+            VALUES (:cid, 'csr', :msg, :csr, :csr_full, NOW())
         ");
-        $greetStmt->execute([
-            ':cid'=>$client_id, ':msg'=>$greet,
-            ':csr'=>$assigned, ':full'=>$assigned_full
+        $stmt3->execute([
+            ':cid' => $client_id,
+            ':msg' => $greet,
+            ':csr' => $assigned_csr,
+            ':csr_full' => $assigned_csr_full
         ]);
     }
 
-    echo json_encode(['status'=>'ok','client_id'=>$client_id]);
+    echo json_encode(['status' => 'ok', 'client_id' => $client_id]);
     exit;
 }
 
-/* ===== CSR MESSAGE ===== */
-if($sender_type==='csr' && isset($_POST['client_id'])){
+/* ===========================================================
+   🧑‍💼 CSR MESSAGE HANDLER
+   =========================================================== */
+if ($sender_type === 'csr' && isset($_POST['client_id'])) {
     $client_id = (int)$_POST['client_id'];
-
-    $cStmt=$conn->prepare("
-      INSERT INTO chat(client_id,sender_type,message,media_path,media_type,assigned_csr,csr_fullname,created_at)
-      VALUES(:cid,'csr',:msg,:mp,:mt,:csr,:full,NOW())
+    $stmt = $conn->prepare("
+        INSERT INTO chat (client_id, sender_type, message, assigned_csr, csr_fullname, created_at)
+        VALUES (:cid, 'csr', :msg, :csr, :csr_full, NOW())
     ");
-    $cStmt->execute([
-      ':cid'=>$client_id,':msg'=>$message,
-      ':mp'=>$media_path,':mt'=>$media_type,
-      ':csr'=>$csr_user, ':full'=>$csr_fullname
+    $stmt->execute([
+        ':cid' => $client_id,
+        ':msg' => $message,
+        ':csr' => $csr_user,
+        ':csr_full' => $csr_fullname
     ]);
-
-    echo json_encode(['status'=>'ok']);
+    echo json_encode(['status' => 'ok']);
     exit;
 }
 
-echo json_encode(['status'=>'error','msg'=>'Invalid']);
+echo json_encode(['status' => 'error', 'msg' => 'Invalid request']);
 ?>
