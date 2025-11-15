@@ -23,7 +23,7 @@ body{margin:0;display:flex;justify-content:center;align-items:center;height:100v
 .bubble{padding:10px 12px;border-radius:18px;max-width:70%;font-size:14px;white-space:pre-wrap}
 .msg-in .bubble{background:#ececec;border-top-left-radius:6px;color:#000}
 .msg-out .bubble{background:#0084FF;color:#fff;border-top-right-radius:6px}
-.avatar{width:28px;height:28px;background:#bbb;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#000}
+.avatar{width:28px;height:28px;background:#bbb;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
 .time{font-size:10px;margin-top:4px;opacity:.6}
 .media-img{max-width:200px;margin-top:6px;border-radius:10px}
 .media-video{max-width:240px;margin-top:6px;border-radius:10px}
@@ -38,7 +38,7 @@ button{border:none;padding:10px 14px;border-radius:14px;background:#0084FF;color
 <div class="chat-wrap">
   <div class="chat-header">
     <img src="../SKYTRUFIBER.png">
-    <div><b>SkyTruFiber Support</b><br><span style="font-size:11px;">Connected</span></div>
+    <div><b>SkyTruFiber Support</b><br><span style="font-size:11px;">Support Team Active</span></div>
   </div>
 
   <div id="chatBox" class="messages"></div>
@@ -63,15 +63,15 @@ fileInput.addEventListener("change",()=>{ selectedFile = fileInput.files[0]; sen
 function renderRow(m){
   const row=document.createElement("div");
   const isCSR=(m.sender_type==="csr");
-
   row.className=isCSR?"msg-row msg-in":"msg-row msg-out";
 
   const av=document.createElement("div");
   av.className="avatar";
-  av.textContent = isCSR?"C":USERNAME.charAt(0).toUpperCase();
+  av.textContent=isCSR?"C":USERNAME.charAt(0).toUpperCase();
 
   const bubble=document.createElement("div");
   bubble.className="bubble";
+
   if(m.message) bubble.append(m.message);
 
   if(m.media_path){
@@ -87,24 +87,26 @@ function renderRow(m){
   }
 
   const t=document.createElement("div");
-  t.className="time"; t.textContent=m.created_at;
-  bubble.append(document.createElement("br")); bubble.append(t);
+  t.className="time";
+  t.textContent=m.created_at;
+  bubble.append(document.createElement("br"));
+  bubble.append(t);
 
   row.append(av); row.append(bubble);
   chatBox.append(row);
 }
 
 function loadChat(){
-  fetch("load_chat.php?username="+encodeURIComponent(USERNAME))
+  fetch("load_chat_client.php?username="+encodeURIComponent(USERNAME))
   .then(r=>r.json()).then(list=>{
     chatBox.innerHTML="";
     list.forEach(renderRow);
-    chatBox.scrollTop=chatBox.scrollHeight;
+    chatBox.scrollTop = chatBox.scrollHeight;
   });
 }
 
 function sendMessage(){
-  const msg=messageInput.value.trim();
+  const msg = messageInput.value.trim();
   if(!msg && !selectedFile) return;
 
   const form=new FormData();
@@ -113,11 +115,17 @@ function sendMessage(){
   form.append("username",USERNAME);
   if(selectedFile) form.append("file",selectedFile);
 
-  fetch("save_chat.php",{method:"POST",body:form}).then(()=>{
-    messageInput.value=""; selectedFile=null; fileInput.value="";
+  fetch("save_chat_client.php",{method:"POST",body:form}).then(()=>{
+    messageInput.value="";
+    selectedFile=null;
+    fileInput.value="";
     loadChat();
   });
 }
+
+messageInput.addEventListener("keydown",e=>{
+  if(e.key==="Enter" && !e.shiftKey){e.preventDefault(); sendMessage();}
+});
 
 setInterval(loadChat, 1000);
 loadChat();
