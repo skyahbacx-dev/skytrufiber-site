@@ -86,17 +86,28 @@ body{
 }
 button{border:none;padding:10px 14px;border-radius:14px;background:var(--outgoing);color:#fff;cursor:pointer}
 button:hover{background:#0073db}
+
+/* ===== Preview Modal ===== */
+#previewModal{
+  position:fixed; inset:0; background:rgba(0,0,0,.6);
+  display:none; align-items:center; justify-content:center; z-index:9999;
+}
+#previewBox{
+  background:#fff; padding:16px; border-radius:14px;
+  width:90%; max-width:330px; text-align:center;
+}
 </style>
 </head>
 
 <body>
+
 <div class="chat-wrap">
 
   <div class="chat-header">
     <img src="../SKYTRUFIBER.png">
     <div>
       <div class="head-title">SkyTruFiber Support</div>
-      <div class="head-sub">Chat Support Online</div>
+      <div class="head-sub">Support Team Active</div>
     </div>
   </div>
 
@@ -104,12 +115,22 @@ button:hover{background:#0073db}
   <div id="typing" class="typing">Typing <span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
 
   <div class="input-bar">
-    <input id="message" placeholder="Write a message…" autocomplete="off" />
+    <input id="message" placeholder="Write a message…" autocomplete="off"/>
     <input type="file" id="fileUpload" accept="image/*,video/*" style="display:none;">
     <button onclick="document.getElementById('fileUpload').click()">📎</button>
     <button onclick="sendMessage()">Send</button>
   </div>
+</div>
 
+<!-- ===== Preview Modal ===== -->
+<div id="previewModal">
+  <div id="previewBox">
+    <h3 style="margin:0 0 10px;font-size:16px;">Send this media?</h3>
+    <div id="previewContent" style="margin-bottom:12px;"></div>
+
+    <button onclick="confirmSendMedia(true)" style="background:#0084FF;color:#fff;padding:8px 16px;border:none;border-radius:8px;margin-right:6px;">Send</button>
+    <button onclick="confirmSendMedia(false)" style="background:#bbb;color:#000;padding:8px 16px;border:none;border-radius:8px;">Cancel</button>
+  </div>
 </div>
 
 <script>
@@ -117,14 +138,37 @@ const USERNAME = <?= json_encode($username) ?>;
 const chatBox  = document.getElementById('chatBox');
 const inputEl  = document.getElementById('message');
 const fileEl   = document.getElementById('fileUpload');
+const typingElement = document.getElementById('typing');
 
+let selectedFile = null;
+
+/* ========== RELATIVE TIME ========== */
+function relativeTime(dateStr){
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = (now - date) / 1000;
+
+  if(diff < 60) return "Just now";
+  if(diff < 3600) return Math.floor(diff/60)+" minute(s) ago";
+  if(diff < 86400) return Math.floor(diff/3600)+" hour(s) ago";
+
+  const days = Math.floor(diff/86400);
+  if(days === 1) return "Yesterday";
+  if(days < 7) return days+" day(s) ago";
+
+  return date.toLocaleString("en-US", {
+    month:"short",day:"numeric",hour:"numeric",minute:"numeric",hour12:true
+  });
+}
+
+/* ========== RENDER MESSAGE BUBBLE ========== */
 function renderRow(m){
   const row = document.createElement('div');
   const isCSR = m.sender_type === 'csr';
   row.className = isCSR ? 'msg-row msg-in' : 'msg-row msg-out';
 
   const av = document.createElement('div');
-  av.className='avatar';
+  av.className = 'avatar';
   av.textContent = isCSR ? 'C' : USERNAME.charAt(0).toUpperCase();
 
   const bubble = document.createElement('div');
@@ -134,11 +178,10 @@ function renderRow(m){
 
   if(m.media_path){
     if(m.media_type==='image'){
-      const img = document.createElement('img');
-      img.src = m.media_path; img.className='media-img';
+      const img=document.createElement('img');
+      img.src=m.media_path; img.className='media-img';
       bubble.appendChild(img);
-    }
-    if(m.media_type==='video'){
+    } else {
       const vid=document.createElement('video');
       vid.src=m.media_path; vid.controls=true; vid.className='media-video';
       bubble.appendChild(vid);
@@ -146,48 +189,95 @@ function renderRow(m){
   }
 
   const t = document.createElement('div');
-  t.className='time'; t.textContent=m.created_at;
+  t.className='time';
+  t.textContent = relativeTime(m.created_at);
+  t.title = m.created_at;
   bubble.appendChild(t);
 
   row.appendChild(av);
   row.appendChild(bubble);
+
   chatBox.appendChild(row);
 }
 
+/* ================= POLL CHATS ================= */
 function loadChat(){
   fetch('load_chat.php?client=' + encodeURIComponent(USERNAME))
-  .then(r=>r.json())
-  .then(list=>{
-    chatBox.innerHTML='';
-    list.forEach(renderRow);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  });
+    .then(r=>r.json())
+    .then(list=>{
+      chatBox.innerHTML='';
+      list.forEach(renderRow);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
 }
 
+/* ================= SEND MESSAGE ================= */
 function sendMessage(){
   const msg = inputEl.value.trim();
-  if(!msg && !fileEl.files.length) return;
+  if(!msg && !selectedFile) return;
 
   const form = new FormData();
   form.append('sender_type','client');
   form.append('message',msg);
   form.append('username',USERNAME);
 
-  if(fileEl.files.length){
-    form.append('file', fileEl.files[0]);
+  if(selectedFile){
+    form.append('file',selectedFile);
   }
 
   fetch('save_chat.php',{method:'POST',body:form})
-  .then(()=>{ inputEl.value=''; fileEl.value=''; loadChat(); });
+    .then(()=>{
+      inputEl.value='';
+      selectedFile=null;
+      fileEl.value='';
+      loadChat();
+    });
 }
 
-inputEl.addEventListener('keydown', e=>{
-  if(e.key==='Enter' && !e.shiftKey){
-    e.preventDefault(); sendMessage();
+/* ========= Media Preview ========= */
+fileEl.addEventListener('change', ()=>{
+  if(!fileEl.files.length) return;
+  selectedFile = fileEl.files[0];
+
+  const ext = selectedFile.name.split('.').pop().toLowerCase();
+  const preview = document.getElementById("previewContent");
+  preview.innerHTML = "";
+
+  if(['jpg','jpeg','png','gif','webp'].includes(ext)){
+    const img=document.createElement('img');
+    img.src=URL.createObjectURL(selectedFile);
+    img.style.maxWidth="100%";
+    img.style.borderRadius="10px";
+    preview.appendChild(img);
+  } else {
+    const video=document.createElement('video');
+    video.src=URL.createObjectURL(selectedFile);
+    video.controls = true;
+    video.style.maxWidth="100%";
+    video.style.borderRadius="10px";
+    preview.appendChild(video);
   }
+
+  document.getElementById("previewModal").style.display="flex";
 });
 
-fileEl.addEventListener('change', sendMessage);
+function confirmSendMedia(confirmed){
+  document.getElementById("previewModal").style.display="none";
+  if(!confirmed){
+    selectedFile=null;
+    fileEl.value="";
+    return;
+  }
+  sendMessage(true);
+}
+
+/* ENTER TO SEND */
+inputEl.addEventListener('keydown', e=>{
+  if(e.key==="Enter" && !e.shiftKey){
+    e.preventDefault();
+    sendMessage();
+  }
+});
 
 setInterval(loadChat,1000);
 loadChat();
