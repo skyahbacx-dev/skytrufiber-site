@@ -35,9 +35,9 @@ $stmt->execute([':n'=>$username]);
 $client_id=$stmt->fetchColumn();
 
 if(!$client_id){
-   $ins=$conn->prepare("INSERT INTO clients(name,created_at) VALUES (:n,NOW()) RETURNING id");
-   $ins->execute([':n'=>$username]);
-   $client_id=$ins->fetchColumn();
+    $ins=$conn->prepare("INSERT INTO clients(name,created_at) VALUES (:n,NOW()) RETURNING id");
+    $ins->execute([':n'=>$username]);
+    $client_id=$ins->fetchColumn();
 }
 
 /* SAVE MESSAGE */
