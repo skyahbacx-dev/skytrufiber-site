@@ -1,17 +1,20 @@
 <?php
+session_start();
 include '../db_connect.php';
 header('Content-Type: application/json');
 
 date_default_timezone_set("Asia/Manila");
 
-$username = $_GET['username'] ?? null;
-$client_id = 0;
+$username = $_GET['client'] ?? $_GET['username'] ?? '';
 
-if ($username) {
-    $stmt = $conn->prepare("SELECT id FROM clients WHERE LOWER(name)=LOWER(:n) LIMIT 1");
-    $stmt->execute([":n"=>$username]);
-    $client_id = $stmt->fetchColumn();
+if (!$username) {
+    echo json_encode([]);
+    exit;
 }
+
+$stmt = $conn->prepare("SELECT id FROM clients WHERE name = :name LIMIT 1");
+$stmt->execute([":name" => $username]);
+$client_id = $stmt->fetchColumn();
 
 if (!$client_id) {
     echo json_encode([]);
@@ -19,17 +22,26 @@ if (!$client_id) {
 }
 
 $stmt = $conn->prepare("
-    SELECT 
-        message,
-        sender_type,
-        media_path,
-        media_type,
-        DATE_FORMAT(CONVERT_TZ(created_at,'+00:00','+08:00'),'%b %d %l:%i %p') AS created_at
+    SELECT message, sender_type, created_at, media_path, media_type, csr_fullname
     FROM chat
     WHERE client_id = :cid
-    ORDER BY id ASC
+    ORDER BY created_at ASC
 ");
-$stmt->execute([':cid'=>$client_id]);
+$stmt->execute([':cid' => $client_id]);
 
-echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$messages = [];
+
+foreach ($rows as $row) {
+    $messages[] = [
+        "message"      => $row["message"],
+        "sender_type"  => $row["sender_type"],
+        "created_at"   => date("M d g:i A", strtotime($row["created_at"])),
+        "media_path"   => $row["media_path"],
+        "media_type"   => $row["media_type"],
+        "csr_fullname" => $row["csr_fullname"]
+    ];
+}
+
+echo json_encode($messages);
 ?>
