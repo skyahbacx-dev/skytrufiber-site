@@ -178,3 +178,46 @@ tbody tr:hover { background:#f8fff9; }
   margin-left: 5px;
 }
 .btn-export:hover { background: #066b3a; }
+/* HORIZONTAL TAB NAVIGATION */
+.nav-tabs {
+  width:100%;
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  padding:14px 10px;
+  background:var(--soft);
+  border-bottom:1px solid var(--line);
+  margin-bottom:18px;
+}
+
+.tab-btn {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:10px 22px;
+  font-size:15px;
+  font-weight:700;
+  border-radius:40px;
+  border:2px solid var(--green-600);
+  background:white;
+  text-decoration:none;
+  color:var(--green-700);
+  white-space:nowrap;
+  transition:.25s;
+}
+
+.tab-btn:hover {
+  background:var(--green-600);
+  color:white;
+}
+
+.tab-btn.active {
+  background:var(--green-700);
+  color:white;
+  border-color:var(--green-700);
+}
+
+/* Ensure page pushes below nav */
+main {
+  padding-top:5px;
+}
