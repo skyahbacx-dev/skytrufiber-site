@@ -14,13 +14,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $remarks = trim($_POST['remarks']);
     $password = $account_number; // auto password
 
-    if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
+    // Privacy consent validation
+    if (!isset($_POST['privacy_consent'])) {
+        $message = '⚠️ You must agree to the Data Privacy Consent before submitting.';
+    } elseif ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
 
         try {
 
             $conn->beginTransaction();
 
-            // ✅ 1. Insert into users
+            // Insert into users
             $hash = password_hash($password, PASSWORD_BCRYPT);
 
             $stmt = $conn->prepare("
@@ -37,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':installed' => $date_installed
             ]);
 
-            // ✅ 2. Insert feedback into survey_responses
+            // Insert feedback into survey_responses
             if ($remarks) {
                 $stmt2 = $conn->prepare("
                     INSERT INTO survey_responses (client_name, account_number, district, location, feedback, created_at)
@@ -162,10 +165,8 @@ a:hover { text-decoration: underline; }
   <select id="district" name="district" required>
     <option value="">Select District</option>
     <option value="District 1">District 1</option>
-
     <option value="District 3">District 3</option>
     <option value="District 4">District 4</option>
-
   </select>
 
   <label for="location">Barangay (Quezon City):</label>
@@ -179,133 +180,57 @@ a:hover { text-decoration: underline; }
   <label for="remarks">📝 Feedback / Comments:</label>
   <textarea name="remarks" placeholder="Write your feedback here..." required></textarea>
 
+  <!-- DATA PRIVACY CONSENT ADDED -->
+  <label style="margin-top:15px; font-weight:bold; color:#004466;">🔒 Data Privacy Consent</label>
+  <div style="font-size:13px; color:#333; background:#f7f7f7; padding:10px; border-radius:8px; border:1px solid #ccc; margin-top:5px;">
+      By submitting this form, I hereby consent to the collection and processing of my personal information in accordance with
+      Republic Act 10173 – Data Privacy Act of 2012. I allow SkyTruFiber to store and use my data for account creation, service
+      updates, and customer support purposes. My information will be protected and not shared with third parties without my authorization.
+  </div>
+
+  <div style="margin-top:10px;">
+    <input type="checkbox" id="privacy_consent" name="privacy_consent" required>
+    <label for="privacy_consent" style="font-size:14px;">I agree to the Data Privacy terms and conditions.</label>
+  </div>
+  <!-- END DATA PRIVACY -->
+
   <button type="submit">Submit</button>
   <?php if ($message): ?><p class="message"><?= htmlspecialchars($message) ?></p><?php endif; ?>
   <p style="text-align:center; margin-top:10px;">Already registered? <a href="skytrufiber.php">Login here</a></p>
 </form>
 
 <script>
-// --- Barangays by District ---
+// Barangays by District
 const barangays = {
   "District 1": [
-    "Alicia (Bago Bantay)",
-    "Bagong Pag-asa (North EDSA / Triangle Park)",
-    "Bahay Toro (Project 8)",
-    "Balingasa (Balintawak / Cloverleaf)",
-    "Bungad (Project 7)",
-    "Damar",
-    "Damayan (San Francisco del Monte / Frisco)",
-    "Del Monte (San Francisco del Monte / Frisco)",
-    "Katipunan (Muñoz)",
-    "Lourdes (Sta. Mesa Heights)",
-    "Maharlika (Sta. Mesa Heights)",
-    "Manresa",
-    "Mariblo (SFDM / Frisco)",
-    "Masambong",
-    "N.S. Amoranto (Gintong Silahis, La Loma)",
-    "Nayong Kanluran",
-    "Paang Bundok (La Loma)",
-    "Pag-ibig sa Nayon (Balintawak)",
-    "Paltok (SFDM / Frisco)",
-    "Paraiso (SFDM / Frisco)",
-    "Phil-Am (West Triangle)",
-    "Project 6 (Diliman / Triangle Park)",
-    "Ramon Magsaysay (Bago Bantay)",
-    "Saint Peter (Sta. Mesa Heights)",
-    "Salvacion (La Loma)",
-    "San Antonio (SFDM / Frisco)",
-    "San Isidro Labrador (La Loma)",
-    "San Jose (La Loma)",
-    "Santa Cruz (Pantranco / Heroes Hill)",
-    "Santa Teresita (Sta. Mesa Heights)",
-    "Santo Domingo (Matalahib)",
-    "Siena",
-    "Sto. Cristo (Bago Bantay)",
-    "Talayan",
-    "Vasra (Diliman)",
-    "Veterans Village (Project 7 / Muñoz)",
-    "West Triangle"
+    "Alicia (Bago Bantay)", "Bagong Pag-asa (North EDSA / Triangle Park)", "Bahay Toro (Project 8)", "Balingasa (Balintawak / Cloverleaf)", "Bungad (Project 7)",
+    "Damar", "Damayan (San Francisco del Monte / Frisco)", "Del Monte (San Francisco del Monte / Frisco)", "Katipunan (Muñoz)", "Lourdes (Sta. Mesa Heights)",
+    "Maharlika (Sta. Mesa Heights)", "Manresa", "Mariblo (SFDM / Frisco)", "Masambong", "N.S. Amoranto (Gintong Silahis, La Loma)",
+    "Nayong Kanluran", "Paang Bundok (La Loma)", "Pag-ibig sa Nayon (Balintawak)", "Paltok (SFDM / Frisco)", "Paraiso (SFDM / Frisco)",
+    "Phil-Am (West Triangle)", "Project 6 (Diliman / Triangle Park)", "Ramon Magsaysay (Bago Bantay)", "Saint Peter (Sta. Mesa Heights)", "Salvacion (La Loma)",
+    "San Antonio (SFDM / Frisco)", "San Isidro Labrador (La Loma)", "San Jose (La Loma)", "Santa Cruz (Pantranco / Heroes Hill)", "Santa Teresita (Sta. Mesa Heights)",
+    "Santo Domingo (Matalahib)", "Siena", "Sto. Cristo (Bago Bantay)", "Talayan", "Vasra (Diliman)", "Veterans Village (Project 7 / Muñoz)", "West Triangle"
   ],
 
   "District 3": [
-    "Amihan (Project 3)",
-    "Bagumbayan (Eastwood)",
-    "Bagumbuhay (Project 4)",
-    "Bayanihan (Project 4)",
-    "Blue Ridge A (Project 4)",
-    "Blue Ridge B (Project 4)",
-    "Camp Aguinaldo",
-    "Claro (Quirino 3-B)",
-    "Dioquino Zobel (Project 4)",
-    "Duyan-duyan (Project 3)",
-    "East Kamias (Project 1)",
-    "Escopa I",
-    "Escopa II",
-    "Escopa III",
-    "Escopa IV",
-    "E. Rodriguez (Project 5 / Cubao)",
-    "Libis (Eastwood)",
-    "Loyola Heights (Katipunan)",
-    "Mangga (Cubao)",
-    "Marilag (Project 4)",
-    "Masagana (Jacobo Zobel)",
-    "Matandang Balara (Old Balara)",
-    "Milagrosa (Project 4)",
-    "Pansol (Balara)",
-    "Quirino 2-A (Project 2 / Anonas)",
-    "Quirino 2-B (Project 2 / Anonas)",
-    "Quirino 2-C (Project 2 / Anonas)",
-    "Quirino 3-A (Project 3 / Anonas)",
-    "San Roque (Cubao)",
-    "Silangan (Cubao)",
-    "Socorro (Araneta City)",
-    "St. Ignatius",
-    "Tagumpay (Project 4)",
-    "Ugong Norte (Green Meadows / Corinthian / Ortigas)",
-    "Villa Maria Clara (Project 4)",
-    "West Kamias (Project 5 / Kamias)",
-    "White Plains"
+    "Amihan (Project 3)", "Bagumbayan (Eastwood)", "Bagumbuhay (Project 4)", "Bayanihan (Project 4)", "Blue Ridge A (Project 4)", "Blue Ridge B (Project 4)",
+    "Camp Aguinaldo", "Claro (Quirino 3-B)", "Dioquino Zobel (Project 4)", "Duyan-duyan (Project 3)", "East Kamias (Project 1)", "Escopa I", "Escopa II",
+    "Escopa III", "Escopa IV", "E. Rodriguez (Project 5 / Cubao)", "Libis (Eastwood)", "Loyola Heights (Katipunan)", "Mangga (Cubao)",
+    "Marilag (Project 4)", "Masagana (Jacobo Zobel)", "Matandang Balara (Old Balara)", "Milagrosa (Project 4)", "Pansol (Balara)",
+    "Quirino 2-A (Project 2 / Anonas)", "Quirino 2-B (Project 2 / Anonas)", "Quirino 2-C (Project 2 / Anonas)", "Quirino 3-A (Project 3 / Anonas)",
+    "San Roque (Cubao)", "Silangan (Cubao)", "Socorro (Araneta City)", "St. Ignatius", "Tagumpay (Project 4)", "Ugong Norte (Green Meadows / Corinthian / Ortigas)",
+    "Villa Maria Clara (Project 4)", "West Kamias (Project 5 / Kamias)", "White Plains"
   ],
 
   "District 4": [
-    "Bagong Lipunan ng Crame (Camp Crame)",
-    "Botocan (Diliman)",
-    "Central (Diliman)",
-    "Damayang Lagi (New Manila)",
-    "Don Manuel (Galas)",
-    "Doña Aurora (Galas)",
-    "Doña Imelda (Sta. Mesa / Galas)",
-    "Doña Josefa (Galas)",
-    "Horseshoe",
-    "Immaculate Concepcion (Cubao)",
-    "Kalusugan (St. Luke’s)",
-    "Kamuning",
-    "Kaunlaran (Cubao)",
-    "Kristong Hari",
-    "Krus na Ligas (Diliman)",
-    "Laging Handa (Diliman)",
-    "Malaya (Diliman)",
-    "Mariana (New Manila)",
-    "Obrero (Project 1)",
-    "Old Capitol Site (Diliman)",
-    "Paligsahan (Diliman)",
-    "Pinagkaisahan (Cubao)",
-    "Pinyahan (Triangle Park)",
-    "Roxas (Project 1)",
-    "Sacred Heart (Kamuning)",
-    "San Isidro Galas (Galas)",
-    "San Martin de Porres (Cubao)",
-    "San Vicente (Diliman)",
-    "Santol",
-    "Sikatuna Village (Diliman)",
-    "South Triangle (Diliman)",
-    "Sto. Niño (Galas)",
-    "Tatalon",
-    "Teacher's Village East (Diliman)",
-    "Teacher's Village West (Diliman)",
-    "U.P. Campus (Diliman)",
-    "U.P. Village (Diliman)",
-    "Valencia (Gilmore / N. Domingo)"
+    "Bagong Lipunan ng Crame (Camp Crame)", "Botocan (Diliman)", "Central (Diliman)", "Damayang Lagi (New Manila)", "Don Manuel (Galas)",
+    "Doña Aurora (Galas)", "Doña Imelda (Sta. Mesa / Galas)", "Doña Josefa (Galas)", "Horseshoe", "Immaculate Concepcion (Cubao)",
+    "Kalusugan (St. Luke’s)", "Kamuning", "Kaunlaran (Cubao)", "Kristong Hari", "Krus na Ligas (Diliman)", "Laging Handa (Diliman)",
+    "Malaya (Diliman)", "Mariana (New Manila)", "Obrero (Project 1)", "Old Capitol Site (Diliman)", "Paligsahan (Diliman)",
+    "Pinagkaisahan (Cubao)", "Pinyahan (Triangle Park)", "Roxas (Project 1)", "Sacred Heart (Kamuning)", "San Isidro Galas (Galas)",
+    "San Martin de Porres (Cubao)", "San Vicente (Diliman)", "Santol", "Sikatuna Village (Diliman)", "South Triangle (Diliman)",
+    "Sto. Niño (Galas)", "Tatalon", "Teacher's Village East (Diliman)", "Teacher's Village West (Diliman)", "U.P. Campus (Diliman)",
+    "U.P. Village (Diliman)", "Valencia (Gilmore / N. Domingo)"
   ]
 };
 
@@ -322,7 +247,7 @@ document.getElementById('district').addEventListener('change', function() {
   }
 });
 
-// --- Auto-fill today's date ---
+// Auto-fill today's date
 document.addEventListener('DOMContentLoaded', () => {
   const today = new Date();
   const yyyy = today.getFullYear();
