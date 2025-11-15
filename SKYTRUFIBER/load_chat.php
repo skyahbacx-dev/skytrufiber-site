@@ -20,12 +20,11 @@ if (!$client_id) {
     echo json_encode([]);
     exit;
 }
-
 $stmt = $conn->prepare("
     SELECT 
         ch.message,
         ch.sender_type,
-        ch.created_at,
+        CONVERT_TZ(ch.created_at, '+00:00', '+08:00') AS created_at,
         ch.media_path,
         ch.media_type,
         ch.assigned_csr,
@@ -36,6 +35,7 @@ $stmt = $conn->prepare("
     WHERE ch.client_id = :cid
     ORDER BY ch.created_at ASC
 ");
+
 $stmt->execute([':cid' => $client_id]);
 
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
