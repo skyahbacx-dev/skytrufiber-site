@@ -25,7 +25,7 @@ $stmt = $conn->prepare("
     SELECT 
         ch.message,
         ch.sender_type,
-        ch.created_at,
+       CONVERT_TZ(ch.created_at, '+00:00', '+08:00') AS created_at,
         ch.media_path,
         ch.media_type,
         ch.assigned_csr,
