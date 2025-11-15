@@ -16,54 +16,56 @@ $data = $stmt->fetch(PDO::FETCH_ASSOC);
 $csr_fullname = $data['full_name'] ?? $csr_user;
 $csr_avatar   = $data['profile_pic'] ?? 'CSR/default_avatar.png';
 
-/* ================= AJAX HANDLERS ================== */
 if (isset($_GET['ajax'])) {
-    header("Content-Type: application/json");
+    header('Content-Type: application/json');
 
     if ($_GET['ajax'] === 'load_clients') {
         $tab = $_GET['tab'] ?? 'all';
 
         if ($tab === 'mine') {
             $stmt = $conn->prepare("SELECT * FROM clients WHERE assigned_csr = :csr ORDER BY name ASC");
-            $stmt->execute([':csr'=>$csr_user]);
+            $stmt->execute([':csr' => $csr_user]);
         } else {
             $stmt = $conn->query("SELECT * FROM clients ORDER BY name ASC");
         }
 
-        $rows=[];
-        while($r=$stmt->fetch(PDO::FETCH_ASSOC)) {
-            $last=$r['last_active'] ?? null;
-            $status = ($last && strtotime($last) > time()-60) ? "Online" : "Offline";
-            $r['status']=$status;
-            $rows[]=$r;
+        $rows = [];
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $last = $r['last_active'] ?? null;
+            $status = ($last && strtotime($last) > time() - 60) ? 'Online' : 'Offline';
+            $r['status'] = $status;
+            $rows[] = $r;
         }
         echo json_encode($rows);
         exit;
     }
 
-    if ($_GET['ajax']==='get_client' && isset($_GET['id'])) {
-        $id=(int)$_GET['id'];
-        $stmt=$conn->prepare("SELECT * FROM clients WHERE id=:id LIMIT 1");
-        $stmt->execute([':id'=>$id]);
+    if ($_GET['ajax'] === 'get_client' && isset($_GET['id'])) {
+        $id = (int)$_GET['id'];
+        $stmt = $conn->prepare("SELECT * FROM clients WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
         echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));
         exit;
     }
 
-    if ($_GET['ajax']==='assign' && isset($_GET['id'])) {
-        $id=(int)$_GET['id'];
-        $stmt=$conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id=:id");
-        $stmt->execute([':csr'=>$csr_user,':id'=>$id]);
-        echo json_encode(['ok'=>true]);
+    if ($_GET['ajax'] === 'assign' && isset($_GET['id'])) {
+        $id = (int)$_GET['id'];
+        $stmt = $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :id AND (assigned_csr IS NULL OR assigned_csr = '')");
+        $stmt->execute([':csr' => $csr_user, ':id' => $id]);
+        echo json_encode(['ok' => true]);
         exit;
     }
 
-    if ($_GET['ajax']==='unassign' && isset($_GET['id'])) {
-        $id=(int)$_GET['id'];
-        $stmt=$conn->prepare("UPDATE clients SET assigned_csr=NULL WHERE id=:id AND assigned_csr=:csr");
-        $stmt->execute([':id'=>$id,':csr'=>$csr_user]);
-        echo json_encode(['ok'=>true]);
+    if ($_GET['ajax'] === 'unassign' && isset($_GET['id'])) {
+        $id = (int)$_GET['id'];
+        $stmt = $conn->prepare("UPDATE clients SET assigned_csr = NULL WHERE id = :id AND assigned_csr = :csr");
+        $stmt->execute([':id' => $id, ':csr' => $csr_user]);
+        echo json_encode(['ok' => true]);
         exit;
     }
+
+    echo json_encode(['error' => 'bad request']);
+    exit;
 }
 ?>
 <!DOCTYPE html>
@@ -71,9 +73,8 @@ if (isset($_GET['ajax'])) {
 <head>
 <meta charset="UTF-8">
 <title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
-<link rel="stylesheet" href="csr_dashboard.css?v=100">
+<link rel="stylesheet" href="csr_dashboard.css?v=99">
 </head>
-
 <body>
 
 <header class="topnav">
@@ -86,8 +87,9 @@ if (isset($_GET['ajax'])) {
     <button class="nav-btn" onclick="window.location.href='reminders.php'">⏱ REMINDERS</button>
     <button class="nav-btn" onclick="window.location.href='survey_responses.php'">📑 SURVEY RESPONSE</button>
     <button class="nav-btn" onclick="window.location.href='update_profile.php'">👤 EDIT PROFILE</button>
-    <a href="csr_logout.php" class="logout-btn">Logout</a>
   </nav>
+
+  <a href="csr_logout.php" class="logout-btn">Logout</a>
 </header>
 
 <div class="layout">
@@ -99,6 +101,7 @@ if (isset($_GET['ajax'])) {
 </section>
 
 <main class="chat-panel">
+
   <div class="chat-header">
     <div class="chat-header-left">
       <img id="chatAvatar" src="CSR/lion.PNG" class="chat-avatar">
@@ -119,87 +122,161 @@ if (isset($_GET['ajax'])) {
   <div id="chatInput" class="chat-input disabled">
     <label for="fileUpload" class="upload-icon">🖼</label>
     <input type="file" id="fileUpload" style="display:none" accept="image/*,video/*">
-    <input type="text" id="msg" placeholder="Type anything..." disabled>
-    <button id="sendBtn" disabled>✈</button>
+    <input type="text" id="msg" placeholder="Type anything....." disabled>
+    <button id="sendBtn" class="send-btn" disabled>✈</button>
   </div>
 </main>
+
+<aside id="clientInfoPanel" class="client-info-panel">
+  <button class="close-info">✖</button>
+  <h3>Clients Information</h3>
+  <p><strong id="infoName"></strong></p>
+  <p id="infoEmail"></p>
+  <p>District:</p><p id="infoDistrict"></p>
+  <p>Barangay:</p><p id="infoBrgy"></p>
+</aside>
+
 </div>
 
-
 <script>
-let currentClient=null;
-let selectedFile=null;
-let csr_user="<?= $csr_user ?>";
-let csr_fullname="<?= htmlspecialchars($csr_fullname, ENT_QUOTES) ?>";
-let refreshTimer=null;
+let currentClient  = null;
+let canChat        = false;
+let selectedFile   = null;
+let csr_user       = "<?= $csr_user ?>";
+let csr_fullname   = "<?= htmlspecialchars($csr_fullname, ENT_QUOTES) ?>";
+let refreshTimer   = null;
 
-/* Load client list */
+/* Toggle info panel */
+document.getElementById("infoBtn")?.addEventListener('click',()=>document.getElementById("clientInfoPanel").classList.add("active"));
+document.querySelector(".close-info").onclick = ()=>document.getElementById("clientInfoPanel").classList.remove("active");
+
+/* Load Clients */
 function loadClients(tab='all'){
-  fetch(`/CSR/csr_dashboard.php?ajax=load_clients&tab=${tab}`)
+  fetch(`csr_dashboard.php?ajax=load_clients&tab=${tab}`)
     .then(r=>r.json())
     .then(clients=>{
       const list=document.getElementById("clientList");
       list.innerHTML="";
+      if(!clients.length){
+        list.innerHTML="<p>No clients found.</p>";
+        return;
+      }
 
       clients.forEach(c=>{
-        const avatar=(c.name && c.name[0].toUpperCase()<="M")?"CSR/lion.PNG":"CSR/penguin.PNG";
+        const avatar=(c.name && c.name[0].toUpperCase()<="M") ? "CSR/lion.PNG" : "CSR/penguin.PNG";
+
+        let actionBtn='';
+        if(!c.assigned_csr){
+          actionBtn=`<button class="pill green" onclick="event.stopPropagation();assignClient(${c.id});">＋</button>`;
+        } else if(c.assigned_csr===csr_user){
+          actionBtn=`<button class="pill red" onclick="event.stopPropagation();unassignClient(${c.id});">−</button>`;
+        } else {
+          actionBtn=`<button class="pill gray" disabled>🔒</button>`;
+        }
 
         list.insertAdjacentHTML("beforeend",`
-          <div class="client-item" onclick="openClient(${c.id}, '${c.name}')">
+          <div class="client-item ${c.assigned_csr && c.assigned_csr!==csr_user?'locked':''}"
+               onclick="openClient(${c.id}, '${(c.name||'').replace(/'/g,"\\'")}')">
             <div class="client-main">
               <img src="${avatar}" class="client-avatar">
               <div class="client-meta">
-                <div class="client-name">${c.name}</div>
-                <div class="client-sub">${c.status} • ${c.assigned_csr?("CSR: "+c.assigned_csr):"Unassigned"}</div>
+                <div class="client-name">${c.name||''}</div>
+                <div class="client-sub">
+                  <span class="${c.status==='Online'?'online-dot':'offline-dot'}"></span>
+                  ${c.status || 'Offline'} • ${c.assigned_csr?`CSR: ${c.assigned_csr}`:'Unassigned'}
+                </div>
               </div>
             </div>
+            <div class="client-actions">${actionBtn}</div>
           </div>`);
       });
     });
 }
 
 function switchTab(btn,tab){
-  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(el=>el.classList.remove("active"));
   btn.classList.add("active");
   loadClients(tab);
+}
+
+/* Assign and unassign */
+function assignClient(id){
+  fetch(`csr_dashboard.php?ajax=assign&id=${id}`)
+  .then(()=>loadClients());
+}
+
+function unassignClient(id){
+  if(!confirm("Unassign this client?"))return;
+  fetch(`csr_dashboard.php?ajax=unassign&id=${id}`)
+  .then(()=>loadClients());
 }
 
 /* Open client chat */
 function openClient(id,name){
   currentClient=id;
   document.getElementById("chatName").innerText=name;
-  document.getElementById("msg").disabled=false;
-  document.getElementById("sendBtn").disabled=false;
 
-  loadChat();
-  if(refreshTimer)clearInterval(refreshTimer);
-  refreshTimer=setInterval(loadChat,1500);
+  const avatar=(name && name[0].toUpperCase()<="M")?"CSR/lion.PNG":"CSR/penguin.PNG";
+  document.getElementById("chatAvatar").src=avatar;
+
+  fetch(`csr_dashboard.php?ajax=get_client&id=${id}`)
+    .then(r=>r.json())
+    .then(c=>{
+      canChat = (!c.assigned_csr || c.assigned_csr===csr_user);
+
+      document.getElementById("chatStatus").innerText =
+        !c.assigned_csr ? "Unassigned — you can claim this client." :
+        c.assigned_csr===csr_user ? "Assigned to you" :
+        "Assigned to CSR: "+c.assigned_csr;
+
+      document.getElementById("statusDot").className =
+        "status-dot " + (c.status==="Online"?"online":"offline");
+
+      document.getElementById("infoName").innerText=c.name;
+      document.getElementById("infoEmail").innerText=c.email;
+      document.getElementById("infoDistrict").innerText=c.district;
+      document.getElementById("infoBrgy").innerText=c.barangay;
+
+      document.getElementById("chatInput").classList.toggle("disabled",!canChat);
+      document.getElementById("msg").disabled=!canChat;
+      document.getElementById("sendBtn").disabled=!canChat;
+
+      loadChat();
+      if(refreshTimer)clearInterval(refreshTimer);
+      refreshTimer=setInterval(loadChat,3000);
+    });
 }
 
-/* Load chat messages */
+/* Load Chat – now uses load_chat_csr.php */
 function loadChat(){
-  fetch(`/CSR/load_chat_csr.php?client_id=${currentClient}`)
+  if(!currentClient)return;
+  fetch(`load_chat_csr.php?client_id=${currentClient}`)
     .then(r=>r.json())
     .then(rows=>{
       const box=document.getElementById("chatBox");
       box.innerHTML="";
 
-      rows.forEach(m=>{
-        const align = m.sender_type === "csr" ? "msg-out" : "msg-in";
-        let media="";
+      if(!rows.length){
+        box.innerHTML='<p class="placeholder">No messages yet.</p>';
+        return;
+      }
 
+      rows.forEach(m=>{
+        let mediaHTML='';
         if(m.media_path){
-          if(m.media_type==="image"){
-            media=`<img src="../${m.media_path}" class="file-img">`;
+          if(m.media_type==='image'){
+            mediaHTML = `<br><img src="../${m.media_path}" class="file-img">`;
           } else {
-            media=`<video src="../${m.media_path}" class="file-video" controls></video>`;
+            mediaHTML = `<br><video src="../${m.media_path}" class="file-video" controls></video>`;
           }
         }
+
+        const align = (m.sender_type==='csr') ? 'msg-out' : 'msg-in';
 
         box.insertAdjacentHTML("beforeend",`
           <div class="msg ${align}">
             <div class="bubble">
-              ${m.message?m.message:""}<br>${media}
+              ${m.message||''}${mediaHTML}
               <div class="meta">${m.created_at}</div>
             </div>
           </div>`);
@@ -209,28 +286,34 @@ function loadChat(){
     });
 }
 
-/* Upload preview */
-document.getElementById("fileUpload").addEventListener("change",()=>{
-  const file=document.getElementById("fileUpload").files[0];
+/* File Preview */
+document.getElementById("fileUpload").addEventListener("change",function(){
+  const file=this.files[0];
   if(!file)return;
 
   selectedFile=file;
+  const url=URL.createObjectURL(file);
+
   const preview=document.getElementById("uploadPreview");
   preview.style.display="flex";
-  preview.innerHTML=`<div><span onclick="cancelUpload()" style="cursor:pointer">✖</span><p>${file.name}</p></div>`;
+  preview.innerHTML=`<div class="photo-item">
+      <span class="remove-photo">✖</span>
+      <img src="${url}">
+    </div>`;
+
+  document.querySelector(".remove-photo").onclick=()=>{
+    selectedFile=null;
+    document.getElementById("fileUpload").value="";
+    preview.style.display="none";
+  };
 });
 
-function cancelUpload(){
-  selectedFile=null;
-  document.getElementById("fileUpload").value="";
-  document.getElementById("uploadPreview").style.display="none";
-}
-
-/* Send message */
+/* Send Chat – now uses save_chat_csr.php */
 document.getElementById("sendBtn").addEventListener("click",sendMsg);
-document.getElementById("msg").addEventListener("keypress",e=>{if(e.key==="Enter")sendMsg();});
+document.getElementById("msg").addEventListener("keyup",e=>{if(e.key==="Enter")sendMsg();});
 
 function sendMsg(){
+  if(!currentClient||!canChat)return;
   const text=document.getElementById("msg").value.trim();
   if(!text && !selectedFile)return;
 
@@ -238,21 +321,24 @@ function sendMsg(){
   fd.append("sender_type","csr");
   fd.append("message",text);
   fd.append("client_id",currentClient);
-  fd.append("csr_fullname",csr_fullname);
   fd.append("csr_user",csr_user);
+  fd.append("csr_fullname",csr_fullname);
   if(selectedFile)fd.append("file",selectedFile);
 
-  fetch(`/CSR/save_chat_csr.php`,{method:"POST",body:fd})
+  fetch("save_chat_csr.php",{method:"POST",body:fd})
     .then(r=>r.json())
     .then(res=>{
-      document.getElementById("msg").value="";
-      cancelUpload();
-      loadChat();
+      if(res.status==="ok"){
+        document.getElementById("msg").value="";
+        selectedFile=null;
+        document.getElementById("fileUpload").value="";
+        document.getElementById("uploadPreview").style.display="none";
+        loadChat();
+      } else alert(res.msg||"Send failed");
     });
 }
 
 loadClients();
 </script>
-
 </body>
 </html>
