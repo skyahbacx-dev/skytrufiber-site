@@ -2,7 +2,7 @@
 include '../db_connect.php';
 header('Content-Type: text/html; charset=UTF-8');
 
-$username = $_GET['client'] ?? $_GET['username'] ?? 'Guest';
+$username = $_GET['username'] ?? $_GET['client'] ?? 'Guest';
 
 date_default_timezone_set("Asia/Manila");
 
@@ -128,7 +128,6 @@ button:hover{background:#0073db}
   <div id="previewBox">
     <h3 style="margin:0 0 10px;font-size:16px;">Send this media?</h3>
     <div id="previewContent" style="margin-bottom:12px;"></div>
-
     <button onclick="confirmSendMedia(true)" style="background:#0084FF;color:#fff;padding:8px 16px;border:none;border-radius:8px;margin-right:6px;">Send</button>
     <button onclick="confirmSendMedia(false)" style="background:#bbb;color:#000;padding:8px 16px;border:none;border-radius:8px;">Cancel</button>
   </div>
@@ -139,7 +138,6 @@ const USERNAME = <?= json_encode($username) ?>;
 const chatBox  = document.getElementById('chatBox');
 const inputEl  = document.getElementById('message');
 const fileEl   = document.getElementById('fileUpload');
-const typingElement = document.getElementById('typing');
 
 let selectedFile = null;
 
@@ -157,9 +155,7 @@ function relativeTime(dateStr){
   if(days === 1) return "Yesterday";
   if(days < 7) return days+" day(s) ago";
 
-  return date.toLocaleString("en-US", {
-    month:"short",day:"numeric",hour:"numeric",minute:"numeric",hour12:true
-  });
+  return date.toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"numeric",hour12:true});
 }
 
 /* ========== RENDER MESSAGE BUBBLE ========== */
@@ -192,18 +188,16 @@ function renderRow(m){
   const t = document.createElement('div');
   t.className='time';
   t.textContent = relativeTime(m.created_at);
-  t.title = m.created_at;
   bubble.appendChild(t);
 
   row.appendChild(av);
   row.appendChild(bubble);
-
   chatBox.appendChild(row);
 }
 
 /* ================= POLL CHATS ================= */
 function loadChat(){
-  fetch('load_chat.php?client=' + encodeURIComponent(USERNAME))
+  fetch('load_chat.php?username=' + encodeURIComponent(USERNAME))
     .then(r=>r.json())
     .then(list=>{
       chatBox.innerHTML='';
@@ -228,9 +222,7 @@ function sendMessage(){
 
   fetch('save_chat.php',{method:'POST',body:form})
     .then(()=>{
-      inputEl.value='';
-      selectedFile=null;
-      fileEl.value='';
+      inputEl.value=''; selectedFile=null; fileEl.value='';
       loadChat();
     });
 }
@@ -264,11 +256,7 @@ fileEl.addEventListener('change', ()=>{
 
 function confirmSendMedia(confirmed){
   document.getElementById("previewModal").style.display="none";
-  if(!confirmed){
-    selectedFile=null;
-    fileEl.value="";
-    return;
-  }
+  if(!confirmed){ selectedFile=null; fileEl.value=""; return; }
   sendMessage(true);
 }
 
