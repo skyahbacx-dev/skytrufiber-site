@@ -7,7 +7,7 @@ date_default_timezone_set("Asia/Manila");
 
 $client_id = 0;
 
-// Accept client_id or client username
+// Accept client_id or client fullname
 if (isset($_GET['client_id'])) {
     $client_id = (int)$_GET['client_id'];
 } elseif (isset($_GET['client'])) {
