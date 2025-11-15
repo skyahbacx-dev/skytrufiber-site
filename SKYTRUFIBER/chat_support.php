@@ -2,7 +2,8 @@
 include '../db_connect.php';
 header('Content-Type: text/html; charset=UTF-8');
 
-$username = $_GET['username'] ?? $_GET['client'] ?? 'Guest';
+$username = $_GET['client'] ?? $_GET['username'] ?? 'Guest';
+
 date_default_timezone_set("Asia/Manila");
 
 function e($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
@@ -26,21 +27,17 @@ function e($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 }
 
 body{
-  margin:0; display:flex; justify-content:center; align-items:center;
-  height:100vh; overflow:hidden;
-  background:linear-gradient(135deg,#c2e1ff,#f3f8ff);
-  font-family:'Segoe UI',sans-serif;
+  margin:0;display:flex;justify-content:center;align-items:center;height:100vh;
+  background:linear-gradient(135deg,#c2e1ff,#f3f8ff);font-family:'Segoe UI',sans-serif;
 }
 
 .chat-wrap{
-  width:min(430px,95vw); height:min(92vh,800px);
-  background:#fff; border-radius:18px; box-shadow:var(--shadow);
-  display:flex; flex-direction:column; overflow:hidden; border:var(--border);
+  width:min(430px,95vw);height:min(92vh,800px);background:#fff;border-radius:18px;
+  display:flex;flex-direction:column;box-shadow:var(--shadow);overflow:hidden;border:var(--border);
 }
 
 .chat-header{
-  padding:12px; display:flex; align-items:center; gap:10px;
-  background:var(--header); color:#fff;
+  padding:12px;display:flex;align-items:center;gap:10px;background:var(--header);color:#fff;
 }
 .chat-header img{width:34px;height:34px}
 
@@ -48,44 +45,41 @@ body{
 .head-sub{font-size:12px;opacity:.9}
 
 .messages{
-  flex:1; overflow:auto; padding:14px;
-  background:#f9fbff;
+  flex:1;overflow:auto;padding:14px;background:#f9fbff;
 }
 
-.msg-row{margin:8px 0; display:flex; gap:8px; align-items:flex-end}
+.msg-row{margin:8px 0;display:flex;gap:8px;align-items:flex-end}
 .msg-in .bubble{background:var(--incoming);color:var(--text-on-gray);border-top-left-radius:6px}
 .msg-out{justify-content:flex-end}
 .msg-out .bubble{background:var(--outgoing);color:var(--text-on-blue);border-top-right-radius:6px}
 
-.avatar{
-  width:30px; height:30px; background:#ddd; border-radius:50%;
-  display:flex; justify-content:center; align-items:center; font-size:14px; font-weight:700
-}
+.avatar{width:30px;height:30px;background:#ddd;border-radius:50%;display:flex;
+  justify-content:center;align-items:center;font-size:14px;font-weight:700}
 
-.bubble{
-  max-width:70%; padding:10px 12px; border-radius:18px;
-  box-shadow:0 3px 8px rgba(0,0,0,.06); font-size:14px; white-space:pre-wrap
-}
-.time{font-size:10px; margin-top:5px; opacity:.6}
+.bubble{max-width:70%;padding:10px 12px;border-radius:18px;box-shadow:0 3px 8px rgba(0,0,0,.06);
+  font-size:14px;white-space:pre-wrap}
+
+.time{font-size:10px;margin-top:5px;opacity:.6}
 
 .media-img{max-width:200px;border-radius:12px;margin-top:6px}
 .media-video{max-width:240px;border-radius:12px;margin-top:6px}
 
-.input-bar{display:flex; gap:6px; padding:10px; border-top:var(--border);}
+.input-bar{
+  display:flex;gap:6px;padding:10px;border-top:var(--border);
+}
 .input-bar input{
-  flex:1; padding:12px; border:1px solid #ddd; border-radius:999px; font-size:14px;
+  flex:1;padding:12px;border:1px solid #ddd;border-radius:999px;font-size:14px;
 }
 button{border:none;padding:10px 14px;border-radius:14px;background:var(--outgoing);color:#fff;cursor:pointer}
 button:hover{background:#0073db}
 
-/* Preview modal */
+/* PREVIEW MODAL */
 #previewModal{
-  position:fixed; inset:0; background:rgba(0,0,0,.6);
-  display:none; align-items:center; justify-content:center; z-index:9999;
+  position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;
+  align-items:center;justify-content:center;z-index:9999;
 }
 #previewBox{
-  background:#fff; padding:16px; border-radius:14px;
-  width:90%; max-width:330px; text-align:center;
+  background:#fff;padding:16px;border-radius:14px;width:90%;max-width:330px;text-align:center;
 }
 </style>
 </head>
@@ -93,6 +87,7 @@ button:hover{background:#0073db}
 <body>
 
 <div class="chat-wrap">
+
   <div class="chat-header">
     <img src="../SKYTRUFIBER.png">
     <div>
@@ -111,14 +106,13 @@ button:hover{background:#0073db}
   </div>
 </div>
 
-<!-- Preview Modal -->
+<!-- PREVIEW MODAL -->
 <div id="previewModal">
   <div id="previewBox">
-    <h3 style="margin:0 0 10px;font-size:16px;">Send this media?</h3>
+    <h3 style="margin-bottom:10px;">Send this media?</h3>
     <div id="previewContent" style="margin-bottom:12px;"></div>
-
-    <button onclick="confirmSendMedia(true)" style="background:#0084FF;color:#fff;padding:8px 16px;border:none;border-radius:8px;margin-right:6px;">Send</button>
-    <button onclick="confirmSendMedia(false)" style="background:#bbb;color:#000;padding:8px 16px;border:none;border-radius:8px;">Cancel</button>
+    <button onclick="confirmSendMedia(true)">Send</button>
+    <button onclick="confirmSendMedia(false)" style="background:#bbb;color:#000;">Cancel</button>
   </div>
 </div>
 
@@ -129,37 +123,22 @@ const inputEl  = document.getElementById('message');
 const fileEl   = document.getElementById('fileUpload');
 
 let selectedFile = null;
-let clientID = null;
 
-/* Relative time formatting */
 function relativeTime(dateStr){
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = (now - date) / 1000;
-
-  if(diff < 60) return "Just now";
-  if(diff < 3600) return Math.floor(diff/60)+" min ago";
-  if(diff < 86400) return Math.floor(diff/3600)+" hrs ago";
-
-  const days = Math.floor(diff/86400);
-  if(days===1) return "Yesterday";
-  if(days<7) return days+" days ago";
-
-  return date.toLocaleString();
+  return dateStr; // already formatted in PHP
 }
 
-/* Render each message */
+/* RENDER MESSAGE */
 function renderRow(m){
-  const row = document.createElement('div');
-  const isCSR = m.sender_type === 'csr';
+  const row=document.createElement('div');
+  const isCSR=(m.sender_type === 'csr');
+  row.className=isCSR?'msg-row msg-in':'msg-row msg-out';
 
-  row.className = isCSR ? 'msg-row msg-in' : 'msg-row msg-out';
+  const av=document.createElement('div');
+  av.className='avatar';
+  av.textContent=isCSR?'C':USERNAME.charAt(0).toUpperCase();
 
-  const av = document.createElement('div');
-  av.className = 'avatar';
-  av.textContent = isCSR ? 'C' : USERNAME.charAt(0).toUpperCase();
-
-  const bubble = document.createElement('div');
+  const bubble=document.createElement('div');
   bubble.className='bubble';
 
   if(m.message) bubble.appendChild(document.createTextNode(m.message));
@@ -167,103 +146,87 @@ function renderRow(m){
   if(m.media_path){
     if(m.media_type==='image'){
       const img=document.createElement('img');
-      img.src=m.media_path; img.className='media-img';
+      img.src="../"+m.media_path;
+      img.className='media-img';
       bubble.appendChild(img);
     } else {
       const vid=document.createElement('video');
-      vid.src=m.media_path; vid.controls=true; vid.className='media-video';
+      vid.src="../"+m.media_path;
+      vid.controls=true; vid.className='media-video';
       bubble.appendChild(vid);
     }
   }
 
-  const t = document.createElement('div');
-  t.className='time';
-  t.textContent = relativeTime(m.created_at);
+  const t=document.createElement('div');
+  t.className='time'; t.textContent=m.created_at;
   bubble.appendChild(t);
 
   row.appendChild(av);
   row.appendChild(bubble);
+
   chatBox.appendChild(row);
 }
 
-/* Load chat */
+/* LOAD CHAT */
 function loadChat(){
-  const url = clientID
-    ? `load_chat.php?client_id=${clientID}`
-    : `load_chat.php?username=${encodeURIComponent(USERNAME)}`;
-
-  fetch(url)
-    .then(r=>r.json())
-    .then(list=>{
+  fetch('load_chat.php?client=' + encodeURIComponent(USERNAME))
+  .then(r=>r.json())
+  .then(list=>{
       chatBox.innerHTML='';
       list.forEach(renderRow);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    });
+      chatBox.scrollTop=chatBox.scrollHeight;
+  });
 }
 
-/* Send message / media */
+/* SEND MESSAGE */
 function sendMessage(){
-  const msg = inputEl.value.trim();
+  const msg=inputEl.value.trim();
   if(!msg && !selectedFile) return;
 
-  const form = new FormData();
+  const form=new FormData();
   form.append('sender_type','client');
   form.append('message',msg);
   form.append('username',USERNAME);
-
   if(selectedFile) form.append('file',selectedFile);
 
   fetch('save_chat.php',{method:'POST',body:form})
-    .then(r=>r.json())
-    .then(res=>{
-      if(res.client_id) clientID = res.client_id;
-      inputEl.value='';
-      selectedFile=null; fileEl.value='';
-      loadChat();
-    });
+  .then(()=>{inputEl.value='';selectedFile=null;fileEl.value='';loadChat();});
 }
 
-/* Media preview & confirmation */
+/* File Preview */
 fileEl.addEventListener('change', ()=>{
   if(!fileEl.files.length) return;
-  selectedFile = fileEl.files[0];
+  selectedFile=fileEl.files[0];
 
-  const preview = document.getElementById("previewContent");
+  const ext=selectedFile.name.split('.').pop().toLowerCase();
+  const preview=document.getElementById("previewContent");
   preview.innerHTML="";
 
-  if(selectedFile.type.startsWith("image")){
+  if(['jpg','jpeg','png','gif','webp'].includes(ext)){
     const img=document.createElement('img');
     img.src=URL.createObjectURL(selectedFile);
-    img.style.maxWidth="100%";
-    img.style.borderRadius="10px";
+    img.style.maxWidth="100%"; img.style.borderRadius="10px";
     preview.appendChild(img);
   } else {
     const video=document.createElement('video');
     video.src=URL.createObjectURL(selectedFile);
-    video.controls=true;
-    video.style.maxWidth="100%";
-    video.style.borderRadius="10px";
+    video.controls=true; video.style.maxWidth="100%";
     preview.appendChild(video);
   }
 
   document.getElementById("previewModal").style.display="flex";
 });
 
-function confirmSendMedia(confirmed){
+function confirmSendMedia(ok){
   document.getElementById("previewModal").style.display="none";
-  if(!confirmed){ selectedFile=null; fileEl.value=""; return;}
+  if(!ok){ selectedFile=null;fileEl.value="";return; }
   sendMessage();
 }
 
-/* Enter to send */
 inputEl.addEventListener('keydown', e=>{
-  if(e.key==="Enter" && !e.shiftKey){
-    e.preventDefault();
-    sendMessage();
-  }
+  if(e.key==="Enter"){e.preventDefault();sendMessage();}
 });
 
-/* Start polling */
 setInterval(loadChat,1000);
 loadChat();
 </script>
