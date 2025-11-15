@@ -129,6 +129,14 @@ if (isset($_GET['export'])) {
     <a href="update_profile.php">👤 Edit Profile</a>
     <a href="csr_logout.php">🚪 Logout</a>
 </aside>
+<!-- HORIZONTAL NAVIGATION BUTTONS -->
+<div class="nav-tabs">
+    <a href="csr_dashboard.php" class="tab-btn">💬 Chat Dashboard</a>
+    <a href="csr_dashboard.php?tab=mine" class="tab-btn">👥 My Clients</a>
+    <a href="csr_dashboard.php?tab=rem" class="tab-btn">⏰ Reminders</a>
+    <a href="survey_responses.php" class="tab-btn active">📋 Survey Response</a>
+    <a href="update_profile.php" class="tab-btn">👤 Edit Profile</a>
+</div>
 
 <main class="content">
     <h1 class="page-title">📝 Survey Responses</h1>
