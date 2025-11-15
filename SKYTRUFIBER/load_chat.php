@@ -7,7 +7,7 @@ date_default_timezone_set("Asia/Manila");
 
 $client_id = 0;
 
-// Accept client_id OR client username
+// Accept client_id or client username
 if (isset($_GET['client_id'])) {
     $client_id = (int)$_GET['client_id'];
 } elseif (isset($_GET['client'])) {
@@ -28,7 +28,6 @@ $stmt = $conn->prepare("
         CONVERT_TZ(ch.created_at, '+00:00', '+08:00') AS created_at,
         ch.media_path,
         ch.media_type,
-        ch.assigned_csr,
         ch.csr_fullname,
         c.fullname AS client_name
     FROM chat ch
@@ -36,7 +35,7 @@ $stmt = $conn->prepare("
     WHERE ch.client_id = :cid
     ORDER BY ch.id ASC
 ");
-$stmt->execute([':cid' => $client_id]);
+$stmt->execute([':cid'=>$client_id]);
 
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
