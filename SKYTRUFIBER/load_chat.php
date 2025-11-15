@@ -3,9 +3,11 @@ session_start();
 include '../db_connect.php';
 header('Content-Type: application/json');
 
+date_default_timezone_set("Asia/Manila");
+
 $client_id = 0;
 
-// ✅ Accept client_id OR username
+// Accept client_id OR client username
 if (isset($_GET['client_id'])) {
     $client_id = (int)$_GET['client_id'];
 } elseif (isset($_GET['client'])) {
@@ -24,6 +26,8 @@ $stmt = $conn->prepare("
         ch.message,
         ch.sender_type,
         ch.created_at,
+        ch.media_path,
+        ch.media_type,
         ch.assigned_csr,
         ch.csr_fullname,
         c.name AS client_name
@@ -38,10 +42,16 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $messages = [];
 
 foreach ($rows as $row) {
+
+    // Format PH time nicely
+    $time = date("M d g:i A", strtotime($row['created_at']));
+
     $messages[] = [
         'message'      => $row['message'],
         'sender_type'  => $row['sender_type'],
-        'created_at'   => $row['created_at'],
+        'created_at'   => $time,
+        'media_path'   => $row['media_path'],
+        'media_type'   => $row['media_type'],
         'client_name'  => $row['client_name'],
         'assigned_csr' => $row['assigned_csr'],
         'csr_fullname' => $row['csr_fullname'],
