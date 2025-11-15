@@ -42,10 +42,7 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $messages = [];
 
 foreach ($rows as $row) {
-
-    // Format PH time nicely
     $time = date("M d g:i A", strtotime($row['created_at']));
-
     $messages[] = [
         'message'      => $row['message'],
         'sender_type'  => $row['sender_type'],
