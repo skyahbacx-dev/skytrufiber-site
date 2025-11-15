@@ -13,6 +13,59 @@ body{
   background:var(--bg);
   overflow:hidden;
 }
+/* SIDEBAR */
+.sidebar{
+  width:230px;
+  background:var(--green-dark);
+  height:100vh;
+  position:fixed;
+  top:0;
+  left:0;
+  padding-top:70px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  transition:0.3s;
+  z-index:9999;
+  box-shadow:3px 0 10px rgba(0,0,0,0.25);
+}
+
+.sidebar.collapsed{
+  width:65px;
+}
+
+.toggle-btn{
+  position:absolute;top:15px;right:-45px;
+  background:var(--green-dark);
+  color:#fff;
+  border:none;
+  font-size:26px;
+  padding:6px 10px;
+  cursor:pointer;
+  border-radius:6px;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);
+}
+
+.side-title{
+  color:#fff;
+  font-size:18px;
+  padding-left:20px;
+  font-weight:700;
+}
+
+.side-item{
+  background:none;
+  border:none;
+  color:#fff;
+  text-align:left;
+  padding:12px 20px;
+  font-size:15px;
+  cursor:pointer;
+  transition:.2s;
+}
+.side-item:hover{background:#0b6e35;}
+.side-item.logout{margin-top:auto;background:#dd4747;}
+.side-item.logout:hover{background:#b63636;}
 
 /* ========= TOP NAVIGATION BAR ========= */
 .topnav{
