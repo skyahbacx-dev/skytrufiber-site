@@ -21,9 +21,24 @@ $csr_avatar   = $data['profile_pic'] ?? 'CSR/default_avatar.png';
 <head>
 <meta charset="UTF-8">
 <title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
-<link rel="stylesheet" href="csr_dashboard.css?v=100">
+<link rel="stylesheet" href="csr_dashboard.css?v=200">
 </head>
 <body>
+
+<!-- SIDEBAR -->
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <button id="toggleSidebar" class="toggle-btn">☰</button>
+    <span class="side-title">Menu</span>
+  </div>
+
+  <button class="side-item" onclick="switchTab(document.querySelector('.nav-btn:nth-child(1)'),'all')">💬 Chat Dashboard</button>
+  <button class="side-item" onclick="switchTab(document.querySelector('.nav-btn:nth-child(2)'),'mine')">👤 My Clients</button>
+  <button class="side-item" onclick="window.location.href='reminders.php'">⏱ Reminders</button>
+  <button class="side-item" onclick="window.location.href='survey_responses.php'">📑 Survey Response</button>
+  <button class="side-item" onclick="window.location.href='update_profile.php'">👤 Edit Profile</button>
+  <button class="side-item logout" onclick="window.location.href='csr_logout.php'">🚪 Logout</button>
+</div>
 
 <header class="topnav">
   <img src="AHBALOGO.png" class="nav-logo">
@@ -40,7 +55,7 @@ $csr_avatar   = $data['profile_pic'] ?? 'CSR/default_avatar.png';
   <a href="csr_logout.php" class="logout-btn">Logout</a>
 </header>
 
-<div class="layout">
+<div id="layout" class="layout">
 
 <section class="client-panel">
   <h3>CLIENTS</h3>
@@ -94,9 +109,15 @@ let csr_user="<?= $csr_user ?>";
 let csr_fullname="<?= htmlspecialchars($csr_fullname, ENT_QUOTES) ?>";
 let selectedFile=null;
 
-document.getElementById("infoBtn").onclick = ()=>document.getElementById("clientInfoPanel").classList.add("active");
-document.querySelector(".close-info").onclick = ()=>document.getElementById("clientInfoPanel").classList.remove("active");
+/* SIDEBAR TOGGLE */
+const sidebar=document.getElementById("sidebar");
+const layout=document.getElementById("layout");
+document.getElementById("toggleSidebar").onclick = () =>{
+  sidebar.classList.toggle("collapsed");
+  layout.classList.toggle("shifted");
+};
 
+/* Load Clients */
 function loadClients(tab="all"){
   fetch(`load_clients.php?tab=${tab}`)
   .then(r=>r.json())
@@ -104,17 +125,14 @@ function loadClients(tab="all"){
     const box=document.getElementById("clientList");
     box.innerHTML="";
     list.forEach(c=>{
-      const avatar=(c.name[0].toUpperCase()<="M")?"CSR/lion.PNG":"CSR/penguin.PNG";
+      let avatar=(c.name[0].toUpperCase()<="M")?"CSR/lion.PNG":"CSR/penguin.PNG";
       box.insertAdjacentHTML("beforeend",`
         <div class="client-item" onclick="openClient(${c.id},'${c.name}')">
           <div class="client-main">
             <img src="${avatar}" class="client-avatar">
             <div class="client-meta">
               <div class="client-name">${c.name}</div>
-              <div class="client-sub">
-                <span class="${c.status==='Online'?'online-dot':'offline-dot'}"></span>
-                ${c.status}
-              </div>
+              <div class="client-sub"><span class="${c.status==='Online'?'online-dot':'offline-dot'}"></span>${c.status}</div>
             </div>
           </div>
         </div>
@@ -135,7 +153,7 @@ function openClient(id,name){
 }
 
 function loadChat(){
-  if(!currentClient) return;
+  if(!currentClient)return;
 
   fetch(`../SKYTRUFIBER/load_chat_csr.php?client_id=${currentClient}`)
   .then(r=>r.json())
@@ -144,16 +162,16 @@ function loadChat(){
     box.innerHTML="";
 
     rows.forEach(m=>{
-      let media = "";
+      let media="";
       if(m.media_path){
         if(m.media_type==="image"){
-          media = `<img src="../${m.media_path}" class="file-img">`;
+          media=`<img src="../${m.media_path}" class="file-img">`;
         } else {
-          media = `<video src="../${m.media_path}" controls class="file-img"></video>`;
+          media=`<video src="../${m.media_path}" controls class="file-img"></video>`;
         }
       }
 
-      const side = (m.sender_type==="csr")?"csr":"client";
+      const side=(m.sender_type==="csr")?"csr":"client";
 
       box.insertAdjacentHTML("beforeend",`
         <div class="msg ${side}">
@@ -165,7 +183,7 @@ function loadChat(){
       `);
     });
 
-    box.scrollTop = box.scrollHeight;
+    box.scrollTop=box.scrollHeight;
   });
 }
 
@@ -174,7 +192,7 @@ document.getElementById("msg").addEventListener("keyup",e=>{if(e.key==="Enter")s
 
 function sendMsg(){
   const text=document.getElementById("msg").value.trim();
-  if(!text) return;
+  if(!text)return;
 
   const fd=new FormData();
   fd.append("client_id",currentClient);
