@@ -1,30 +1,37 @@
 <?php
+session_start();
 include '../db_connect.php';
 header('Content-Type: application/json');
 
 date_default_timezone_set("Asia/Manila");
 
-$client_id = $_GET['client_id'] ?? 0;
-$client_id = (int)$client_id;
-
+$client_id = $_GET["client_id"] ?? 0;
 if (!$client_id) {
     echo json_encode([]);
     exit;
 }
 
 $stmt = $conn->prepare("
-    SELECT 
-        ch.message,
-        ch.sender_type,
-        ch.media_path,
-        ch.media_type,
-        c.name AS client_name,
-        DATE_FORMAT(CONVERT_TZ(ch.created_at,'+00:00','+08:00'),'%b %d %l:%i %p') AS created_at
-    FROM chat ch
-    JOIN clients c ON ch.client_id = c.id
-    WHERE ch.client_id = :cid
-    ORDER BY ch.id ASC
+    SELECT message, sender_type, created_at, media_path, media_type, csr_fullname
+    FROM chat
+    WHERE client_id = :cid
+    ORDER BY created_at ASC
 ");
-$stmt->execute([':cid'=>$client_id]);
-echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+$stmt->execute([":cid" => $client_id]);
+
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$result = [];
+
+foreach ($rows as $m) {
+    $result[] = [
+        "message"     => $m["message"],
+        "sender_type" => $m["sender_type"],
+        "created_at"  => date("M d g:i A", strtotime($m["created_at"])),
+        "media_path"  => $m["media_path"],
+        "media_type"  => $m["media_type"],
+        "csr_fullname"=> $m["csr_fullname"]
+    ];
+}
+
+echo json_encode($result);
 ?>
