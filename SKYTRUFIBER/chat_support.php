@@ -3,7 +3,6 @@ include '../db_connect.php';
 header('Content-Type: text/html; charset=UTF-8');
 
 $username = $_GET['username'] ?? $_GET['client'] ?? 'Guest';
-
 date_default_timezone_set("Asia/Manila");
 
 function e($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
@@ -16,8 +15,6 @@ function e($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <style>
-/* =============== Messenger Style UI =============== */
-
 :root{
   --header:#0084FF;
   --outgoing:#0084FF;
@@ -69,26 +66,19 @@ body{
   max-width:70%; padding:10px 12px; border-radius:18px;
   box-shadow:0 3px 8px rgba(0,0,0,.06); font-size:14px; white-space:pre-wrap
 }
-
 .time{font-size:10px; margin-top:5px; opacity:.6}
 
 .media-img{max-width:200px;border-radius:12px;margin-top:6px}
 .media-video{max-width:240px;border-radius:12px;margin-top:6px}
 
-.typing{display:none;padding-left:40px;font-size:12px;color:#555}
-.dot{width:6px;height:6px;background:#777;border-radius:50%;display:inline-block;margin:0 1px;animation:blink 1.2s infinite}
-@keyframes blink{50%{opacity:.1}}
-
-.input-bar{
-  display:flex; gap:6px; padding:10px; border-top:var(--border);
-}
+.input-bar{display:flex; gap:6px; padding:10px; border-top:var(--border);}
 .input-bar input{
   flex:1; padding:12px; border:1px solid #ddd; border-radius:999px; font-size:14px;
 }
 button{border:none;padding:10px 14px;border-radius:14px;background:var(--outgoing);color:#fff;cursor:pointer}
 button:hover{background:#0073db}
 
-/* ===== Preview Modal ===== */
+/* Preview modal */
 #previewModal{
   position:fixed; inset:0; background:rgba(0,0,0,.6);
   display:none; align-items:center; justify-content:center; z-index:9999;
@@ -103,7 +93,6 @@ button:hover{background:#0073db}
 <body>
 
 <div class="chat-wrap">
-
   <div class="chat-header">
     <img src="../SKYTRUFIBER.png">
     <div>
@@ -113,7 +102,6 @@ button:hover{background:#0073db}
   </div>
 
   <div id="chatBox" class="messages"></div>
-  <div id="typing" class="typing">Typing <span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
 
   <div class="input-bar">
     <input id="message" placeholder="Write a message…" autocomplete="off"/>
@@ -123,11 +111,12 @@ button:hover{background:#0073db}
   </div>
 </div>
 
-<!-- ===== Preview Modal ===== -->
+<!-- Preview Modal -->
 <div id="previewModal">
   <div id="previewBox">
     <h3 style="margin:0 0 10px;font-size:16px;">Send this media?</h3>
     <div id="previewContent" style="margin-bottom:12px;"></div>
+
     <button onclick="confirmSendMedia(true)" style="background:#0084FF;color:#fff;padding:8px 16px;border:none;border-radius:8px;margin-right:6px;">Send</button>
     <button onclick="confirmSendMedia(false)" style="background:#bbb;color:#000;padding:8px 16px;border:none;border-radius:8px;">Cancel</button>
   </div>
@@ -140,28 +129,30 @@ const inputEl  = document.getElementById('message');
 const fileEl   = document.getElementById('fileUpload');
 
 let selectedFile = null;
+let clientID = null;
 
-/* ========== RELATIVE TIME ========== */
+/* Relative time formatting */
 function relativeTime(dateStr){
   const date = new Date(dateStr);
   const now = new Date();
   const diff = (now - date) / 1000;
 
   if(diff < 60) return "Just now";
-  if(diff < 3600) return Math.floor(diff/60)+" minute(s) ago";
-  if(diff < 86400) return Math.floor(diff/3600)+" hour(s) ago";
+  if(diff < 3600) return Math.floor(diff/60)+" min ago";
+  if(diff < 86400) return Math.floor(diff/3600)+" hrs ago";
 
   const days = Math.floor(diff/86400);
-  if(days === 1) return "Yesterday";
-  if(days < 7) return days+" day(s) ago";
+  if(days===1) return "Yesterday";
+  if(days<7) return days+" days ago";
 
-  return date.toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"numeric",hour12:true});
+  return date.toLocaleString();
 }
 
-/* ========== RENDER MESSAGE BUBBLE ========== */
+/* Render each message */
 function renderRow(m){
   const row = document.createElement('div');
   const isCSR = m.sender_type === 'csr';
+
   row.className = isCSR ? 'msg-row msg-in' : 'msg-row msg-out';
 
   const av = document.createElement('div');
@@ -195,9 +186,13 @@ function renderRow(m){
   chatBox.appendChild(row);
 }
 
-/* ================= POLL CHATS ================= */
+/* Load chat */
 function loadChat(){
-  fetch('load_chat.php?username=' + encodeURIComponent(USERNAME))
+  const url = clientID
+    ? `load_chat.php?client_id=${clientID}`
+    : `load_chat.php?username=${encodeURIComponent(USERNAME)}`;
+
+  fetch(url)
     .then(r=>r.json())
     .then(list=>{
       chatBox.innerHTML='';
@@ -206,7 +201,7 @@ function loadChat(){
     });
 }
 
-/* ================= SEND MESSAGE ================= */
+/* Send message / media */
 function sendMessage(){
   const msg = inputEl.value.trim();
   if(!msg && !selectedFile) return;
@@ -216,27 +211,27 @@ function sendMessage(){
   form.append('message',msg);
   form.append('username',USERNAME);
 
-  if(selectedFile){
-    form.append('file',selectedFile);
-  }
+  if(selectedFile) form.append('file',selectedFile);
 
   fetch('save_chat.php',{method:'POST',body:form})
-    .then(()=>{
-      inputEl.value=''; selectedFile=null; fileEl.value='';
+    .then(r=>r.json())
+    .then(res=>{
+      if(res.client_id) clientID = res.client_id;
+      inputEl.value='';
+      selectedFile=null; fileEl.value='';
       loadChat();
     });
 }
 
-/* ========= Media Preview ========= */
+/* Media preview & confirmation */
 fileEl.addEventListener('change', ()=>{
   if(!fileEl.files.length) return;
   selectedFile = fileEl.files[0];
 
-  const ext = selectedFile.name.split('.').pop().toLowerCase();
   const preview = document.getElementById("previewContent");
-  preview.innerHTML = "";
+  preview.innerHTML="";
 
-  if(['jpg','jpeg','png','gif','webp'].includes(ext)){
+  if(selectedFile.type.startsWith("image")){
     const img=document.createElement('img');
     img.src=URL.createObjectURL(selectedFile);
     img.style.maxWidth="100%";
@@ -245,7 +240,7 @@ fileEl.addEventListener('change', ()=>{
   } else {
     const video=document.createElement('video');
     video.src=URL.createObjectURL(selectedFile);
-    video.controls = true;
+    video.controls=true;
     video.style.maxWidth="100%";
     video.style.borderRadius="10px";
     preview.appendChild(video);
@@ -256,11 +251,11 @@ fileEl.addEventListener('change', ()=>{
 
 function confirmSendMedia(confirmed){
   document.getElementById("previewModal").style.display="none";
-  if(!confirmed){ selectedFile=null; fileEl.value=""; return; }
-  sendMessage(true);
+  if(!confirmed){ selectedFile=null; fileEl.value=""; return;}
+  sendMessage();
 }
 
-/* ENTER TO SEND */
+/* Enter to send */
 inputEl.addEventListener('keydown', e=>{
   if(e.key==="Enter" && !e.shiftKey){
     e.preventDefault();
@@ -268,6 +263,7 @@ inputEl.addEventListener('keydown', e=>{
   }
 });
 
+/* Start polling */
 setInterval(loadChat,1000);
 loadChat();
 </script>
