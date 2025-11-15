@@ -2,7 +2,8 @@
 include '../db_connect.php';
 header('Content-Type: text/html; charset=UTF-8');
 
-$username = $_GET['username'] ?? 'Guest';
+$username = $_GET['client'] ?? $_GET['username'] ?? 'Guest';
+
 date_default_timezone_set("Asia/Manila");
 
 function e($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
