@@ -25,7 +25,7 @@ $stmt = $conn->prepare("
     SELECT 
         ch.message,
         ch.sender_type,
-       CONVERT_TZ(ch.created_at, '+00:00', '+08:00') AS created_at,
+        CONVERT_TZ(ch.created_at, '+00:00', '+08:00') AS created_at,
         ch.media_path,
         ch.media_type,
         ch.assigned_csr,
@@ -34,7 +34,7 @@ $stmt = $conn->prepare("
     FROM chat ch
     JOIN clients c ON ch.client_id = c.id
     WHERE ch.client_id = :cid
-    ORDER BY ch.created_at ASC
+    ORDER BY ch.id ASC
 ");
 $stmt->execute([':cid' => $client_id]);
 
@@ -42,7 +42,7 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $messages = [];
 
 foreach ($rows as $row) {
-    $time = date("M d g:i A", strtotime($row['created_at']." +8 hours"));
+    $time = date("M d g:i A", strtotime($row['created_at']));
     $messages[] = [
         'message'      => $row['message'],
         'sender_type'  => $row['sender_type'],
