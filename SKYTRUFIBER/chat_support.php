@@ -71,7 +71,6 @@ function renderRow(m){
 
   const bubble=document.createElement("div");
   bubble.className="bubble";
-
   if(m.message) bubble.append(m.message);
 
   if(m.media_path){
@@ -87,10 +86,8 @@ function renderRow(m){
   }
 
   const t=document.createElement("div");
-  t.className="time";
-  t.textContent=m.created_at;
-  bubble.append(document.createElement("br"));
-  bubble.append(t);
+  t.className="time"; t.textContent=m.created_at;
+  bubble.append(document.createElement("br")); bubble.append(t);
 
   row.append(av); row.append(bubble);
   chatBox.append(row);
@@ -127,7 +124,7 @@ messageInput.addEventListener("keydown",e=>{
   if(e.key==="Enter" && !e.shiftKey){e.preventDefault(); sendMessage();}
 });
 
-setInterval(loadChat, 1000);
+setInterval(loadChat,1000);
 loadChat();
 </script>
 </body>
