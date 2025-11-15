@@ -9,11 +9,11 @@ if (!isset($_SESSION['csr_user'])) {
 
 $csr_user = $_SESSION['csr_user'];
 
-$stmt = $conn->prepare("SELECT csr_fullname, profile_pic FROM csr_users WHERE username = :u LIMIT 1");
+$stmt = $conn->prepare("SELECT full_name, profile_pic FROM csr_users WHERE username = :u LIMIT 1");
 $stmt->execute([':u' => $csr_user]);
 $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$csr_fullname = $data['csr_fullname'] ?? $csr_user;
+$csr_fullname = $data['full_name'] ?? $csr_user;
 $csr_avatar   = $data['profile_pic'] ?? 'CSR/default_avatar.png';
 
 if (isset($_GET['ajax'])) {
