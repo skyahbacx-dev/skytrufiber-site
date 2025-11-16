@@ -1,36 +1,54 @@
 let selectedClient = 0;
 let filesToSend = [];
 
+/* SIDEBAR TOGGLE */
 function toggleSidebar() {
-    document.querySelector(".sidebar").classList.toggle("open");
-
+    const sb = document.querySelector(".sidebar");
     const overlay = document.querySelector(".sidebar-overlay");
+    
+    sb.classList.toggle("open");
     overlay.classList.toggle("show");
 
-    // Disable scrolling when sidebar is open
-    if (overlay.classList.contains("show")) {
-        document.body.style.overflow = "hidden";
-    } else {
-        document.body.style.overflow = "auto";
-    }
+    document.body.style.overflow = overlay.classList.contains("show") ? "hidden" : "auto";
 }
 
-
+/* CLIENT INFO PANEL */
 function toggleClientInfo() {
     document.getElementById("clientInfoPanel").classList.toggle("show");
 }
 
-
-/* Load clients list */
+/* LOAD CLIENT LIST */
 function loadClients() {
     $.get("client_list.php", data => {
         $("#clientList").html(data);
+
+        // ENABLE CLIENT CLICK SELECTION
+        $(".client-item").off("click").on("click", function () {
+            selectedClient = $(this).data("id");
+            loadClientInfo(selectedClient);
+            loadMessages();
+        });
     });
 }
 
-/* Load Messages */
+/* LOAD CLIENT INFO RIGHT SLIDE PANEL */
+function loadClientInfo(id) {
+    $.getJSON("client_info.php?id=" + id, res => {
+
+        $("#clientInfoName").text(res.name);
+        $("#clientInfoEmail").text(res.email);
+        $("#clientInfoDistrict").text(res.district);
+        $("#clientInfoBarangay").text(res.barangay);
+        $("#clientInfoAssigned").text(res.assigned);
+
+        $("#clientInfoPanel").addClass("show");  // slide out animation
+    });
+}
+
+/* LOAD MESSAGES */
 function loadMessages() {
     if (!selectedClient) return;
+
     $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
         let html = "";
         messages.forEach(m => {
@@ -46,7 +64,6 @@ function loadMessages() {
                             </video>`;
                 }
             }
-
             html += `<div class="meta">${m.created_at}</div></div>`;
         });
 
@@ -55,18 +72,20 @@ function loadMessages() {
     });
 }
 
-/***** FILE SELECTION & PREVIEW *****/
+/* PREVIEW SELECTED FILES */
 $("#fileInput").on("change", function(e) {
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
     filesToSend.forEach(file => {
         let reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = e => {
             $("#previewArea").append(`
                 <div class="preview-item">
-                    ${file.type.includes("video") ? `<video src="${e.target.result}" muted></video>` :
-                    `<img src="${e.target.result}">`}
+                    ${file.type.includes("video") ?
+                        `<video src="${e.target.result}" muted></video>` :
+                        `<img src="${e.target.result}">`
+                    }
                 </div>
             `);
         };
@@ -74,7 +93,7 @@ $("#fileInput").on("change", function(e) {
     });
 });
 
-/* SEND */
+/* SEND MESSAGE & FILES */
 $("#sendBtn").click(function(){
     let msg = $("#messageInput").val();
     if (!msg && filesToSend.length === 0) return;
@@ -82,7 +101,7 @@ $("#sendBtn").click(function(){
     let formData = new FormData();
     formData.append("message", msg);
     formData.append("client_id", selectedClient);
-    formData.append("csr_fullname", "<?php echo $csrFullName; ?>");
+    formData.append("csr_fullname", csrFullname);
 
     filesToSend.forEach(f => formData.append("files[]", f));
 
@@ -92,7 +111,7 @@ $("#sendBtn").click(function(){
         data: formData,
         contentType: false,
         processData: false,
-        success: function() {
+        success: () => {
             $("#messageInput").val("");
             $("#previewArea").html("");
             filesToSend = [];
@@ -100,19 +119,18 @@ $("#sendBtn").click(function(){
         }
     });
 });
+
+/* ONLINE STATUS */
 function checkStatus() {
     if (!selectedClient) return;
 
-    $.get("check_status.php?id=" + selectedClient, function(res){
-        if(res.status === "online"){
-            $("#statusDot").removeClass("offline").addClass("online");
-        } else {
-            $("#statusDot").removeClass("online").addClass("offline");
-        }
+    $.get("check_status.php?id=" + selectedClient, res => {
+        $("#statusDot")
+            .toggleClass("online", res.status === "online")
+            .toggleClass("offline", res.status !== "online");
     });
 }
 
 setInterval(checkStatus, 3000);
-
-setInterval(loadMessages, 1800);
+setInterval(loadMessages, 2000);
 loadClients();
