@@ -99,12 +99,17 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
         </div>
     </div>
 
-    <!-- CLIENT INFO SLIDING PANEL -->
-    <div class="client-info-panel" id="clientInfoPanel">
-        <button class="close-info" onclick="toggleClientInfo()">×</button>
-        <h3>Client Information</h3>
-        <div id="clientInfoData"></div>
-    </div>
+  <!-- CLIENT INFO PANEL -->
+    <div id="clientInfoPanel" class="client-info-panel">
+    <button class="close-info" onclick="toggleClientInfo()">×</button>
+    <h3>Client Information</h3>
+
+    <p><strong>Name:</strong> <span id="infoName"></span></p>
+    <p><strong>Email:</strong> <span id="infoEmail"></span></p>
+    <p><strong>District:</strong> <span id="infoDistrict"></span></p>
+    <p><strong>Barangay:</strong> <span id="infoBarangay"></span></p>
+</div>
+
 
 </div>
 <script src="csr_chat.js?v=<?= time() ?>"></script>
