@@ -3,8 +3,18 @@ let filesToSend = [];
 
 function toggleSidebar() {
     document.querySelector(".sidebar").classList.toggle("open");
-    document.querySelector(".sidebar-overlay").classList.toggle("show");
+
+    const overlay = document.querySelector(".sidebar-overlay");
+    overlay.classList.toggle("show");
+
+    // Disable scrolling when sidebar is open
+    if (overlay.classList.contains("show")) {
+        document.body.style.overflow = "hidden";
+    } else {
+        document.body.style.overflow = "auto";
+    }
 }
+
 
 function toggleClientInfo() {
     document.getElementById("clientInfoPanel").classList.toggle("open");
