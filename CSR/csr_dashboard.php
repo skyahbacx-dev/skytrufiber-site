@@ -130,6 +130,16 @@ $("#sendBtn").click(function(){
         loadMessages();
     });
 });
+if(m.media_path){
+    if(m.media_type === "image"){
+        html += `<img src="${m.media_path}" class="file-img">`;
+    }
+    if(m.media_type === "video"){
+        html += `<video controls class="file-video">
+                    <source src="${m.media_path}">
+                 </video>`;
+    }
+}
 
 setInterval(loadMessages, 2000);
 loadClients();
