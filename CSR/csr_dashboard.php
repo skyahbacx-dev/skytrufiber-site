@@ -1,6 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION["csr_username"])) {
+if (!isset($_SESSION['csr_user'])) {
     header("Location: csr_login.php");
     exit;
 }
