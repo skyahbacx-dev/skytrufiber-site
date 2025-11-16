@@ -1,12 +1,15 @@
 <?php
 session_start();
-include "../db_connect.php";
-header("Content-Type: application/json");
+include '../db_connect.php';
+header('Content-Type: application/json');
 
 date_default_timezone_set("Asia/Manila");
 
 $client_id = $_GET["client_id"] ?? 0;
-if (!$client_id) { echo json_encode([]); exit; }
+if (!$client_id) {
+    echo json_encode([]);
+    exit;
+}
 
 $stmt = $conn->prepare("
     SELECT message, sender_type, created_at, media_path, media_type, csr_fullname
@@ -16,8 +19,10 @@ $stmt = $conn->prepare("
 ");
 $stmt->execute([":cid" => $client_id]);
 
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $data = [];
-while ($m = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+foreach ($rows as $m) {
     $data[] = [
         "message"     => $m["message"],
         "sender_type" => $m["sender_type"],
