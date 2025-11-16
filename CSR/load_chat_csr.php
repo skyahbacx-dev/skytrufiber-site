@@ -12,24 +12,25 @@ if (!$client_id) {
 }
 
 $stmt = $conn->prepare("
-    SELECT message, sender_type, created_at, media_path, media_type, csr_fullname
+    SELECT id, message, sender_type, created_at, media_path, media_type, assigned_csr, csr_fullname, is_seen
     FROM chat
     WHERE client_id = :cid
-    ORDER BY created_at ASC
+    ORDER BY id ASC
 ");
 $stmt->execute([":cid" => $client_id]);
 
-$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $result = [];
-
-foreach ($rows as $m) {
+while ($m = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $result[] = [
+        "id"          => $m["id"],
         "message"     => $m["message"],
         "sender_type" => $m["sender_type"],
         "created_at"  => date("M d g:i A", strtotime($m["created_at"])),
-        "media_path"  => $m["media_path"],
-        "media_type"  => $m["media_type"],
-        "csr_fullname"=> $m["csr_fullname"]
+        "file_path"   => $m["media_path"],   // 👈 Match JS key
+        "file_type"   => $m["media_type"],   // 👈 Match JS key
+        "assigned_csr"=> $m["assigned_csr"],
+        "csr_fullname"=> $m["csr_fullname"],
+        "is_seen"     => $m["is_seen"] ?? 0
     ];
 }
 
