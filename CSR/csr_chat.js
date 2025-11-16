@@ -1,4 +1,17 @@
 let selectedClient = 0;
+function selectClient(id, name) {
+    selectedClient = id;
+
+    // Update UI header
+    $("#clientName").text(name);
+
+    // Show client info panel with slide animation
+    $("#clientInfoPanel").addClass("show");
+
+    loadMessages();
+    loadClientInfo();
+}
+
 let filesToSend = [];
 
 /* Load client list */
@@ -30,6 +43,16 @@ function loadMessages() {
 
         $("#chatMessages").html(html);
         $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
+    });
+}
+/* Load Client Info */
+function loadClientInfo() {
+    $.getJSON("client_info.php?id=" + selectedClient, info => {
+        $("#infoName").text(info.name);
+        $("#infoEmail").text(info.email);
+        $("#infoDistrict").text(info.district);
+        $("#infoBarangay").text(info.barangay);
+        $("#infoPhone").text(info.phone);
     });
 }
 
@@ -81,3 +104,19 @@ $("#sendBtn").click(function(){
         }
     });
 });
+function checkStatus() {
+    if (!selectedClient) return;
+
+    $.get("check_status.php?id=" + selectedClient, res => {
+        if(res === "online") {
+            $("#statusDot").removeClass("offline").addClass("online");
+        } else {
+            $("#statusDot").removeClass("online").addClass("offline");
+        }
+    });
+}
+
+setInterval(checkStatus, 3000);
+function closeClientInfo(){
+    $("#clientInfoPanel").removeClass("show");
+}
