@@ -148,3 +148,14 @@ function sendMessage(){
         }
     });
 }
+/* TYPING INDICATOR */
+let typingTimer;
+
+document.getElementById("messageInput").addEventListener("input", ()=>{
+    fetch("typing.php?client_id="+currentClient+"&who=csr");
+
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(()=> {
+        fetch("typing.php?client_id="+currentClient+"&stop=1");
+    }, 1500);
+});
