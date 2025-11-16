@@ -1,13 +1,11 @@
 <?php
 session_start();
-include "../db_connect.php";
-
 if (!isset($_SESSION['csr_user'])) {
     header("Location: csr_login.php");
     exit;
 }
 
-$csr_user = $_SESSION['csr_user'];
+$csrUser = $_SESSION["csr_user"];
 $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 ?>
 
@@ -15,35 +13,37 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CSR Dashboard — <?= htmlspecialchars($csr_fullname) ?></title>
-<link rel="stylesheet" href="csr_dashboard.css?v=<?= time() ?>">
+<title>CSR Dashboard — <?php echo $csrFullName; ?></title>
+<link rel="stylesheet" href="csr_dashboard.css">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="csr_chat.js"></script>
 </head>
 
-<body>
+<body class="sidebar-collapsed">
 
-<!-- ===== COLLAPSIBLE SIDEBAR ===== -->
+<!-- OVERLAY SIDEBAR -->
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 <div class="sidebar" id="sidebar">
-    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+    <button class="sidebar-close" onclick="toggleSidebar()">×</button>
 
-    <div class="side-title">Menu</div>
+    <div class="side-title">MENU</div>
+
     <button class="side-item" onclick="window.location='csr_dashboard.php'">💬 Chat Dashboard</button>
     <button class="side-item" onclick="window.location='my_clients.php'">👥 My Clients</button>
     <button class="side-item" onclick="window.location='reminders.php'">⏱ Reminders</button>
     <button class="side-item" onclick="window.location='survey_responses.php'">📄 Survey Responses</button>
     <button class="side-item" onclick="window.location='update_profile.php'">👤 Edit Profile</button>
-
     <button class="side-item logout" onclick="window.location='csr_logout.php'">🚪 Logout</button>
 </div>
 
-<div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
+<!-- TOP NAVBAR -->
+<div class="topnav">
+    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
 
-<!-- ===== TOP NAV ===== -->
-<header class="topnav">
-    <div class="left">
-        <button class="top-toggle" onclick="toggleSidebar()">☰</button>
+    <div class="nav-center">
         <img src="upload/AHBALOGO.png" class="nav-logo">
-        <h2 class="nav-title">CSR DASHBOARD — <?= strtoupper($csr_user) ?></h2>
+        <h2>CSR DASHBOARD — <?php echo strtoupper($csrUser); ?></h2>
     </div>
 
     <div class="nav-buttons">
@@ -54,59 +54,59 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
         <button class="nav-btn" onclick="window.location='update_profile.php'">👤 EDIT PROFILE</button>
         <a href="csr_logout.php" class="logout-btn">Logout</a>
     </div>
-</header>
-
-<div class="layout">
-
-    <!-- ===== CLIENT LIST PANEL ===== -->
-    <section class="client-panel">
-        <h3>CLIENTS</h3>
-        <input class="search" placeholder="Search clients...">
-        <div id="clientList" class="client-list"></div>
-    </section>
-
-    <!-- ===== CHAT PANEL ===== -->
-    <main class="chat-panel">
-        <div class="chat-header">
-            <div class="chat-header-left">
-                <img id="chatAvatar" src="CSR/lion.PNG" class="chat-avatar">
-                <div>
-                    <div id="chatName" class="chat-name">Select a client</div>
-                    <div class="chat-status">
-                        <span id="statusDot" class="status-dot offline"></span>
-                        <span id="chatStatus">---</span>
-                    </div>
-                </div>
-            </div>
-            <button id="infoBtn" class="info-btn">ⓘ</button>
-        </div>
-
-        <div id="chatBox" class="chat-box">
-            <div class="placeholder">Select a client to start chatting.</div>
-        </div>
-
-        <div id="uploadPreview" class="photo-preview-group" style="display:none;"></div>
-
-        <div id="chatInput" class="chat-input disabled">
-            <label for="fileUpload" class="upload-icon">🖼</label>
-            <input type="file" id="fileUpload" multiple style="display:none">
-            <input type="text" id="msg" placeholder="Type a message..." disabled>
-            <button id="sendBtn" class="send-btn" disabled>✈</button>
-        </div>
-    </main>
-
-    <!-- ===== CLIENT INFO SLIDE PANEL ===== -->
-    <aside id="clientInfoPanel" class="client-info-panel">
-        <button class="close-info">✖</button>
-        <h3>Client Information</h3>
-        <p><strong id="infoName"></strong></p>
-        <p id="infoEmail"></p>
-        <p>District:</p><p id="infoDistrict"></p>
-        <p>Barangay:</p><p id="infoBrgy"></p>
-    </aside>
-
 </div>
 
+<!-- MAIN LAYOUT -->
+<div class="layout">
+
+    <!-- CLIENT LIST -->
+    <div class="client-panel">
+        <h3>CLIENTS</h3>
+        <input type="text" class="search" placeholder="Search clients...">
+
+        <div class="client-list" id="clientList"></div>
+    </div>
+
+    <!-- CHAT PANEL -->
+    <div class="chat-panel">
+
+        <div class="chat-header">
+            <div class="chat-info">
+                <img id="chatAvatar" class="chat-avatar">
+                <div>
+                    <div class="chat-name" id="chatName">Select a client</div>
+                    <div class="chat-status"><span class="status-dot offline"></span>---</div>
+                </div>
+            </div>
+
+            <button class="info-btn" onclick="toggleClientInfo()">ℹ</button>
+        </div>
+
+        <div class="chat-box" id="chatMessages">
+            <p class="placeholder">Select a client to start chatting.</p>
+        </div>
+
+        <!-- INPUT AREA + PREVIEW -->
+        <div id="previewArea"></div>
+
+        <div class="chat-input">
+            <label class="file-btn">
+                📁
+                <input type="file" id="fileInput" multiple accept="image/*,video/*">
+            </label>
+            <input type="text" id="messageInput" placeholder="Type a message..." disabled>
+            <button class="send-btn" id="sendBtn">✈</button>
+        </div>
+    </div>
+
+    <!-- CLIENT INFO SLIDING PANEL -->
+    <div class="client-info-panel" id="clientInfoPanel">
+        <button class="close-info" onclick="toggleClientInfo()">×</button>
+        <h3>Client Information</h3>
+        <div id="clientInfoData"></div>
+    </div>
+
+</div>
 <script src="csr_chat.js?v=<?= time() ?>"></script>
 </body>
 </html>
