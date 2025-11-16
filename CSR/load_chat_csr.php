@@ -3,8 +3,13 @@ session_start();
 include "../db_connect.php";
 header("Content-Type: application/json");
 
+date_default_timezone_set("Asia/Manila");
+
 $client_id = $_GET["client_id"] ?? 0;
-if (!$client_id) { echo json_encode([]); exit; }
+if (!$client_id) {
+    echo json_encode([]);
+    exit;
+}
 
 $stmt = $conn->prepare("
     SELECT message, sender_type, media_path, media_type, created_at
@@ -14,16 +19,17 @@ $stmt = $conn->prepare("
 ");
 $stmt->execute([":cid" => $client_id]);
 
-$list = [];
-while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $list[] = [
-        "message"     => $r["message"],
-        "sender_type" => $r["sender_type"],
-        "media_path"  => $r["media_path"],
-        "media_type"  => $r["media_type"],
-        "created_at"  => date("M d g:i A", strtotime($r["created_at"]))
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$messages = [];
+
+foreach ($rows as $m) {
+    $messages[] = [
+        "message"     => $m["message"],
+        "sender_type" => $m["sender_type"],
+        "media_path"  => $m["media_path"],
+        "media_type"  => $m["media_type"],
+        "created_at"  => date("M d g:i A", strtotime($m["created_at"]))
     ];
 }
 
-echo json_encode($list);
-?>
+echo json_encode($messages);
