@@ -1,28 +1,29 @@
 let selectedClient = 0;
 let filesToSend = [];
 
-/* Toggle sidebar */
-function toggleSidebar(){
-    document.getElementById("sidebar").classList.toggle("open");
+/* ========== SIDEBAR TOGGLE ========== */
+function toggleSidebar() {
+    document.querySelector(".sidebar").classList.toggle("open");
     document.querySelector(".sidebar-overlay").classList.toggle("show");
 }
 
-/* Toggle client info panel */
-function toggleClientInfo(){
+/* ========== SLIDE CLIENT INFO ========== */
+function toggleClientInfo() {
     document.getElementById("clientInfoPanel").classList.toggle("show");
 }
 
-/* Load Client List */
-function loadClients(){
-    $.get("client_list.php", res=>{
-        $("#clientList").html(res);
+/* ========== LOAD CLIENT LIST ========== */
+function loadClients() {
+    $.get("client_list.php", data => {
+        $("#clientList").html(data);
     });
 }
 
-/* Select Client */
-function selectClient(id, name){
+/* ========== SELECT CLIENT ========== */
+function selectClient(id, name) {
     selectedClient = id;
     $("#chatName").text(name);
+    $("#chatStatus").text("Active Chat");
     $("#messageInput").prop("disabled", false);
     $("#sendBtn").prop("disabled", false);
 
@@ -30,40 +31,41 @@ function selectClient(id, name){
     loadMessages();
 }
 
-/* Client Info Slide Panel */
-function loadClientInfo(){
-    $.getJSON("client_info.php?id=" + selectedClient, data=>{
-        $("#infoName").text(data.name);
-        $("#infoEmail").text(data.email);
-        $("#infoDistrict").text(data.district);
-        $("#infoBrgy").text(data.barangay);
-        $("#infoPhone").text(data.phone);
-        $("#infoAssigned").text(data.assigned_csr);
+/* ========== LOAD CLIENT INFO PANEL ========== */
+function loadClientInfo() {
+    $.getJSON("client_info.php?id=" + selectedClient, info => {
+        $("#infoName").text(info.name);
+        $("#infoEmail").text(info.email);
+        $("#infoDistrict").text(info.district);
+        $("#infoBrgy").text(info.barangay);
     });
 }
 
-/* Load Messages */
-function loadMessages(){
-    if(!selectedClient) return;
+/* ========== LOAD MESSAGES ========== */
+function loadMessages() {
+    if (!selectedClient) return;
 
-    $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages=>{
+    $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
         let html = "";
-        messages.forEach(m=>{
+        messages.forEach(m => {
             let side = (m.sender_type === "csr") ? "csr" : "client";
 
-            html += `
-            <div class="msg ${side}">
-              <div class="bubble">${m.message || ""}`;
+            html += `<div class="msg ${side}">
+                        <div class="bubble">
+                            ${m.message || ""}`;
 
-            if (m.media_path){
-                if(m.media_type==="image"){
+            // render media
+            if (m.media_path) {
+                if (m.media_type === "image") {
                     html += `<img src="${m.media_path}" class="file-img">`;
                 } else {
-                    html += `<video controls class="file-video"><source src="${m.media_path}"></video>`;
+                    html += `<video controls class="file-img"><source src="${m.media_path}"></video>`;
                 }
             }
 
-            html += `</div><div class="meta">${m.created_at}</div></div>`;
+            html += `<div class="meta">${m.created_at}</div>
+                        </div>
+                    </div>`;
         });
 
         $("#chatMessages").html(html);
@@ -71,53 +73,64 @@ function loadMessages(){
     });
 }
 
-/* File Preview */
-$("#fileInput").change(e=>{
+/* ========== PREVIEW UPLOAD MULTIPLE FILES ========== */
+$("#fileInput").on("change", function(e) {
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
-    filesToSend.forEach(f=>{
+    filesToSend.forEach(file => {
         let reader = new FileReader();
-        reader.onload = e=>{
+        reader.onload = function(ev) {
             $("#previewArea").append(`
                 <div class="preview-item">
-                    ${f.type.includes("video")
-                        ? `<video muted src="${e.target.result}"></video>`
-                        : `<img src="${e.target.result}">`}
+                    ${file.type.includes("video")
+                        ? `<video src="${ev.target.result}" muted></video>`
+                        : `<img src="${ev.target.result}">`}
                 </div>
             `);
         };
-        reader.readAsDataURL(f);
+        reader.readAsDataURL(file);
     });
 });
 
-/* Send Message */
+
+/* ========== SEND MESSAGE ========== */
 $("#sendBtn").click(function(){
-    let msg = $("#messageInput").val();
-    if(!msg && filesToSend.length===0) return;
+    let message = $("#messageInput").val();
+    if (!message && filesToSend.length === 0) return;
 
-    let fd = new FormData();
-    fd.append("message", msg);
-    fd.append("client_id", selectedClient);
-    fd.append("csr_fullname", csrFullname);
+    let formData = new FormData();
+    formData.append("message", message);
+    formData.append("client_id", selectedClient);
+    formData.append("csr_fullname", csrFullname);
 
-    filesToSend.forEach(f=>fd.append("files[]", f));
+    filesToSend.forEach(f => formData.append("files[]", f));
 
     $.ajax({
         url: "save_chat_csr.php",
         method: "POST",
-        data: fd,
-        processData:false,
-        contentType:false,
-        success:()=>{
+        data: formData,
+        contentType: false,
+        processData: false,
+        success: function() {
             $("#messageInput").val("");
             $("#previewArea").html("");
+            $("#fileInput").val("");
             filesToSend = [];
             loadMessages();
         }
     });
 });
 
-/* Auto reload */
-setInterval(loadMessages, 1500);
+/* ========== STATUS CHECKER (ONLINE DOT) ========== */
+function checkStatus() {
+    if (!selectedClient) return;
+    $.getJSON("check_status.php?id=" + selectedClient, res => {
+        $("#statusDot").removeClass("online offline").addClass(res.status);
+    });
+}
+
+setInterval(loadMessages, 2000);
+setInterval(checkStatus, 3000);
+
 loadClients();
