@@ -1,16 +1,16 @@
 <?php
 include "../db_connect.php";
 
-$stmt = $conn->query("SELECT id, name, assigned_csr, last_active FROM clients ORDER BY last_active DESC");
-$clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$stmt = $conn->query("SELECT id,name,assigned_csr,last_active FROM clients ORDER BY last_active DESC");
+$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-foreach ($clients as $c) {
+foreach ($data as $row) {
     echo "
-    <div class='client-row' onclick='selectClient({$c['id']}, `{$c['name']}`)'>
-        <img src='lion.png' class='client-avatar'>
-        <div class='client-info'>
-            <b>{$c['name']}</b>
-            <span>Assigned to {$c['assigned_csr']}</span>
+    <div class='client-item' onclick='selectClient({$row['id']}, \"{$row['name']}\")'>
+        <img src='upload/default-avatar.png' class='client-avatar'>
+        <div>
+            <b>{$row['name']}</b>
+            <p>Assigned to {$row['assigned_csr']}</p>
         </div>
     </div>
     ";
