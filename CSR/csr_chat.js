@@ -17,8 +17,9 @@ function toggleSidebar() {
 
 
 function toggleClientInfo() {
-    document.getElementById("clientInfoPanel").classList.toggle("open");
+    document.getElementById("clientInfoPanel").classList.toggle("show");
 }
+
 
 /* Load clients list */
 function loadClients() {
@@ -99,6 +100,19 @@ $("#sendBtn").click(function(){
         }
     });
 });
+function checkStatus() {
+    if (!selectedClient) return;
+
+    $.get("check_status.php?id=" + selectedClient, function(res){
+        if(res.status === "online"){
+            $("#statusDot").removeClass("offline").addClass("online");
+        } else {
+            $("#statusDot").removeClass("online").addClass("offline");
+        }
+    });
+}
+
+setInterval(checkStatus, 3000);
 
 setInterval(loadMessages, 1800);
 loadClients();
