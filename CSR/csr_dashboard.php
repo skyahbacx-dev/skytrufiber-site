@@ -107,6 +107,6 @@ $csr_fullname = $_SESSION['csr_fullname'];
 
 </div>
 
-<script src="csr_dashboard_logic.js?v=<?= time() ?>"></script>
+<script src="csr_chat.js?v=<?= time() ?>"></script>
 </body>
 </html>
