@@ -1,14 +1,15 @@
 <?php
 session_start();
+
 if (!isset($_SESSION['csr_user'])) {
     header("Location: csr_login.php");
     exit;
 }
 
-$csrUser = $_SESSION["csr_username"];
+// CORRECT SESSION VARIABLES
+$csrUser = $_SESSION["csr_user"];
 $csrFullName = $_SESSION["csr_fullname"];
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,7 +31,6 @@ $csrFullName = $_SESSION["csr_fullname"];
     <button class="side-item" onclick="window.location='reminders.php'">⏱ Reminders</button>
     <button class="side-item" onclick="window.location='survey_responses.php'">📄 Survey Responses</button>
     <button class="side-item" onclick="window.location='update_profile.php'">👤 Edit Profile</button>
-
     <button class="side-item logout" onclick="window.location='csr_logout.php'">🚪 Logout</button>
 </div>
 
@@ -42,15 +42,6 @@ $csrFullName = $_SESSION["csr_fullname"];
         <img src="upload/AHBALOGO.png" class="nav-logo">
         <h2>CSR DASHBOARD — <?php echo strtoupper($csrUser); ?></h2>
     </div>
-
-    <div class="nav-buttons">
-        <button class="nav-btn active">💬 CHAT DASHBOARD</button>
-        <button class="nav-btn" onclick="window.location='my_clients.php'">👥 MY CLIENTS</button>
-        <button class="nav-btn" onclick="window.location='reminders.php'">⏱ REMINDERS</button>
-        <button class="nav-btn" onclick="window.location='survey_responses.php'">📄 SURVEY RESPONSE</button>
-        <button class="nav-btn" onclick="window.location='update_profile.php'">👤 EDIT PROFILE</button>
-        <a href="csr_logout.php" class="logout-btn">Logout</a>
-    </div>
 </div>
 
 <!-- ===== MAIN LAYOUT ===== -->
@@ -60,9 +51,7 @@ $csrFullName = $_SESSION["csr_fullname"];
         <h3>CLIENTS</h3>
         <input type="text" class="search" placeholder="Search clients...">
 
-        <div class="client-list" id="clientList">
-            <!-- Loaded via AJAX -->
-        </div>
+        <div class="client-list" id="clientList"></div>
     </div>
 
     <!-- CHAT PANEL -->
@@ -83,7 +72,7 @@ $csrFullName = $_SESSION["csr_fullname"];
 
         <div class="chat-input">
             <input type="text" id="messageInput" placeholder="Type a message..." disabled>
-            <button class="send-btn" id="sendBtn">✈</button>
+            <button class="send-btn" id="sendBtn" disabled>✈</button>
         </div>
     </div>
 </div>
@@ -95,51 +84,61 @@ let selectedClient = 0;
 function loadClients() {
     $.get("client_list.php", function(data){
         $("#clientList").html(data);
+
+        $(".client-item").click(function () {
+            selectedClient = $(this).data("id");
+            $("#messageInput, #sendBtn").prop("disabled", false);
+
+            $("#chatName").text($(this).data("name"));
+            loadMessages();
+        });
     });
 }
 
 // Load Messages
 function loadMessages() {
     if (!selectedClient) return;
-    $.get("load_chat_csr.php?client_id="+selectedClient, function(res){
+
+    $.get("load_chat_csr.php?client_id=" + selectedClient, function(res){
         let html = "";
         res.forEach(m => {
-            let side = (m.sender_type === "csr") ? "csr" : "client";
+            let side = m.sender_type === "csr" ? "csr" : "client";
+
             html += `
             <div class="msg ${side}">
-                <div class="bubble">${m.message}</div>
-                <div class="meta">${m.created_at}</div>
-            </div>`;
+                <div class="bubble">${m.message ? m.message : ""}</div>`;
+
+            if (m.media_path) {
+                if (m.media_type === "image") {
+                    html += `<img src="${m.media_path}" class="file-img">`;
+                }
+                if (m.media_type === "video") {
+                    html += `<video controls class="file-video"><source src="${m.media_path}"></video>`;
+                }
+            }
+
+            html += `<div class="meta">${m.created_at}</div></div>`;
         });
+
         $("#chatMessages").html(html);
         $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
     });
 }
 
-// Send message
+// SEND Message
 $("#sendBtn").click(function(){
     let message = $("#messageInput").val();
-    if(!message.trim()) return;
+    if (!message.trim()) return;
 
     $.post("save_chat_csr.php", {
-        message: message,
         client_id: selectedClient,
+        message: message,
         csr_fullname: "<?php echo $csrFullName; ?>"
     }, function(){
         $("#messageInput").val("");
         loadMessages();
     });
 });
-if(m.media_path){
-    if(m.media_type === "image"){
-        html += `<img src="${m.media_path}" class="file-img">`;
-    }
-    if(m.media_type === "video"){
-        html += `<video controls class="file-video">
-                    <source src="${m.media_path}">
-                 </video>`;
-    }
-}
 
 setInterval(loadMessages, 2000);
 loadClients();
