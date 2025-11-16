@@ -268,27 +268,28 @@ body {
     border-radius: 8px;
 }
 
-/* ===== CLIENT INFO SLIDE PANEL ===== */
 .client-info-panel {
-    width: 300px;
-    height: 100%;
-    background: white;
-    position: absolute;
+    position: fixed;
     top: 0;
-    right: -300px;
-    transition: 0.35s;
-    border-left: 1px solid #ccc;
+    right: -350px;
+    width: 350px;
+    height: 100vh;
+    background: white;
+    border-left: 2px solid #ccc;
     padding: 20px;
+    transition: 0.3s ease;
+    z-index: 9999;
 }
 
-.client-info-panel.open {
+.client-info-panel.show {
     right: 0;
 }
 
 .close-info {
-    float: right;
-    font-size: 26px;
-    border: none;
     background: none;
+    border: none;
+    font-size: 28px;
     cursor: pointer;
+    float: right;
 }
+
