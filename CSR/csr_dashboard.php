@@ -19,31 +19,15 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 <script src="csr_chat.js"></script>
 </head>
 
-<body class="sidebar-collapsed">
+<body>
 
-<!-- OVERLAY SIDEBAR -->
-<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-<div class="sidebar" id="sidebar">
-    <button class="sidebar-close" onclick="toggleSidebar()">×</button>
-
-    <div class="side-title">MENU</div>
-
-    <button class="side-item" onclick="window.location='csr_dashboard.php'">💬 Chat Dashboard</button>
-    <button class="side-item" onclick="window.location='my_clients.php'">👥 My Clients</button>
-    <button class="side-item" onclick="window.location='reminders.php'">⏱ Reminders</button>
-    <button class="side-item" onclick="window.location='survey_responses.php'">📄 Survey Responses</button>
-    <button class="side-item" onclick="window.location='update_profile.php'">👤 Edit Profile</button>
-    <button class="side-item logout" onclick="window.location='csr_logout.php'">🚪 Logout</button>
-</div>
-
-<!-- TOP NAVBAR -->
+<!-- ====== TOP NAV BAR ====== -->
 <div class="topnav">
-    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
 
-    <div class="nav-center">
-        <img src="AHBALOGO.png" class="nav-logo">
-        <h2>CSR DASHBOARD — <?php echo strtoupper($csrUser); ?></h2>
+    <div class="nav-title">
+        <img src="../upload/AHBALOGO.png" style="height:55px;margin-right:10px;">
+        <h2>CSR DASHBOARD — <?php echo strtoupper($_SESSION['csr_user']); ?></h2>
     </div>
 
     <div class="nav-buttons">
@@ -56,29 +40,38 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
     </div>
 </div>
 
-<!-- MAIN LAYOUT -->
+<!-- ====== SLIDING SIDEBAR ====== -->
+<div class="sidebar" id="sidebar">
+    <button class="toggle-btn" onclick="toggleSidebar()">×</button>
+    <div class="side-title">Menu</div>
+    <button class="side-item" onclick="window.location='csr_dashboard.php'">💬 Chat Dashboard</button>
+    <button class="side-item" onclick="window.location='my_clients.php'">👥 My Clients</button>
+    <button class="side-item" onclick="window.location='reminders.php'">⏱ Reminders</button>
+    <button class="side-item" onclick="window.location='survey_responses.php'">📄 Survey Responses</button>
+    <button class="side-item" onclick="window.location='update_profile.php'">👤 Edit Profile</button>
+    <button class="side-item logout" onclick="window.location='csr_logout.php'">🚪 Logout</button>
+</div>
+
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- ====== MAIN LAYOUT (RESTORED) ====== -->
 <div class="layout">
 
-    <!-- CLIENT LIST -->
+    <!-- LEFT: CLIENT LIST -->
     <div class="client-panel">
         <h3>CLIENTS</h3>
         <input type="text" class="search" placeholder="Search clients...">
-
-        <div class="client-list" id="clientList"></div>
+        <div id="clientList"></div>
     </div>
 
-    <!-- CHAT PANEL -->
+    <!-- RIGHT: CHAT PANEL -->
     <div class="chat-panel">
-
         <div class="chat-header">
-            <div class="chat-info">
-                <img id="chatAvatar" class="chat-avatar">
-                <div>
-                    <div class="chat-name" id="chatName">Select a client</div>
-                    <div class="chat-status"><span class="status-dot offline"></span>---</div>
-                </div>
+            <img id="chatAvatar" class="chat-avatar">
+            <div>
+                <div class="chat-name" id="chatName">Select a client</div>
+                <div class="chat-status"><span id="statusDot" class="status-dot offline"></span>---</div>
             </div>
-
             <button class="info-btn" onclick="toggleClientInfo()">ℹ</button>
         </div>
 
@@ -86,32 +79,29 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
             <p class="placeholder">Select a client to start chatting.</p>
         </div>
 
-        <!-- INPUT AREA + PREVIEW -->
-        <div id="previewArea"></div>
+        <div class="preview-area" id="previewArea"></div>
 
         <div class="chat-input">
-            <label class="file-btn">
-                📁
-                <input type="file" id="fileInput" multiple accept="image/*,video/*">
-            </label>
+            <label for="fileInput" class="file-btn">📁</label>
+            <input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none;">
             <input type="text" id="messageInput" placeholder="Type a message..." disabled>
             <button class="send-btn" id="sendBtn">✈</button>
         </div>
     </div>
+</div>
 
-  <!-- CLIENT INFO PANEL -->
-    <div id="clientInfoPanel" class="client-info-panel">
+<!-- ===== CLIENT INFO SLIDING PANEL ===== -->
+<div id="clientInfoPanel">
     <button class="close-info" onclick="toggleClientInfo()">×</button>
     <h3>Client Information</h3>
-
-    <p><strong>Name:</strong> <span id="infoName"></span></p>
-    <p><strong>Email:</strong> <span id="infoEmail"></span></p>
-    <p><strong>District:</strong> <span id="infoDistrict"></span></p>
-    <p><strong>Barangay:</strong> <span id="infoBarangay"></span></p>
+    <p><b>Name:</b> <span id="infoName"></span></p>
+    <p><b>Email:</b> <span id="infoEmail"></span></p>
+    <p><b>District:</b> <span id="infoDistrict"></span></p>
+    <p><b>Barangay:</b> <span id="infoBarangay"></span></p>
+    <p><b>Phone:</b> <span id="infoPhone"></span></p>
 </div>
 
+<script src="csr_chat.js"></script>
 
-</div>
-<script src="csr_chat.js?v=<?= time() ?>"></script>
 </body>
 </html>
