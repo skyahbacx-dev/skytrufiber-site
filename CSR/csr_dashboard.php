@@ -42,7 +42,7 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
     <button class="menu-btn" onclick="toggleSidebar()">☰</button>
 
     <div class="nav-center">
-        <img src="upload/AHBALOGO.png" class="nav-logo">
+        <img src="AHBALOGO.png" class="nav-logo">
         <h2>CSR DASHBOARD — <?php echo strtoupper($csrUser); ?></h2>
     </div>
 
