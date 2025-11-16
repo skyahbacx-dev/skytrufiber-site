@@ -292,4 +292,16 @@ body {
     cursor: pointer;
     float: right;
 }
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.status-dot.online {
+    background: #4CAF50;
+}
+.status-dot.offline {
+    background: #999;
+}
 
