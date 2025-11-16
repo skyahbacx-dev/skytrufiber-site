@@ -1,4 +1,14 @@
 let selectedClient = 0;
+function selectClient(id, name) {
+    selectedClient = id;
+    $("#chatName").text(name);
+
+    loadMessages();
+    loadClientInfo(id);
+
+    $("#messageInput").prop("disabled", false);
+}
+
 let filesToSend = [];
 
 /* SIDEBAR TOGGLE */
