@@ -100,12 +100,14 @@ body {
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.5);
-    display: none;
+    display: none !important;   /* <<< always hidden unless toggled */
     z-index: 1900;
+    pointer-events: none;       /* <<< prevents blocking clicks */
 }
 
 .sidebar-overlay.show {
-    display: block;
+    display: block !important;
+    pointer-events: auto;
 }
 
 .side-title {
