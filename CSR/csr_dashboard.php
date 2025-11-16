@@ -7,7 +7,7 @@ if (!isset($_SESSION['csr_user'])) {
 }
 
 $csrUser = $_SESSION['csr_user'];
-$csrFullName = $_SESSION['csr_fullname'];
+$csr_fullname = $_SESSION['csr_fullname'] ?? $csr_user;
 ?>
 
 <!DOCTYPE html>
