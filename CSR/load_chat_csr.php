@@ -1,7 +1,7 @@
 <?php
 session_start();
-include '../db_connect.php';
-header('Content-Type: application/json');
+include "../db_connect.php";
+header("Content-Type: application/json");
 
 date_default_timezone_set("Asia/Manila");
 
@@ -20,17 +20,17 @@ $stmt = $conn->prepare("
 $stmt->execute([":cid" => $client_id]);
 
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$response = [];
+$data = [];
 
-foreach ($rows as $row) {
-    $response[] = [
-        "message"     => $row["message"],
-        "sender_type" => $row["sender_type"],
-        "created_at"  => date("M d g:i A", strtotime($row["created_at"])),
-        "media_path"  => $row["media_path"],
-        "media_type"  => $row["media_type"],
-        "csr_fullname"=> $row["csr_fullname"]
+foreach ($rows as $m) {
+    $data[] = [
+        "message"     => $m["message"],
+        "sender_type" => $m["sender_type"],
+        "created_at"  => date("M d g:i A", strtotime($m["created_at"])),
+        "media_path"  => $m["media_path"],
+        "media_type"  => $m["media_type"],
+        "csr_fullname"=> $m["csr_fullname"]
     ];
 }
 
-echo json_encode($response);
+echo json_encode($data);
