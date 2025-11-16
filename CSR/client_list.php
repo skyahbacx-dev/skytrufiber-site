@@ -1,24 +1,18 @@
 <?php
 include "../db_connect.php";
-session_start();
 
-$csr = $_SESSION["csr_user"];
+$stmt = $conn->query("SELECT id, name, assigned_csr, last_active FROM clients ORDER BY last_active DESC");
+$clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$query = $conn->query("
-    SELECT id, name, assigned_csr, last_active
-    FROM clients
-    ORDER BY last_active DESC
-");
-
-while ($r = $query->fetch(PDO::FETCH_ASSOC)) {
-    echo '
-    <div class="client-item" onclick="openChat('.$r['id'].', \''.$r['name'].'\')">
-        <img src="lion.png" class="client-avatar">
-        <div class="client-info">
-            <b>'.$r["name"].'</b>
-            <p>Assigned to '.$r["assigned_csr"].'</p>
+foreach ($clients as $c) {
+    echo "
+    <div class='client-row' onclick='selectClient({$c['id']}, `{$c['name']}`)'>
+        <img src='lion.png' class='client-avatar'>
+        <div class='client-info'>
+            <b>{$c['name']}</b>
+            <span>Assigned to {$c['assigned_csr']}</span>
         </div>
     </div>
-    ';
+    ";
 }
 ?>
