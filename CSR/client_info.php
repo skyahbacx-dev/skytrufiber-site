@@ -1,30 +1,22 @@
 <?php
 include "../db_connect.php";
 
-$client_id = $_GET["id"] ?? $_GET["client_id"] ?? 0;
+$stmt = $conn->query("SELECT id,name,assigned_csr,last_active FROM clients ORDER BY last_active DESC");
+$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$stmt = $conn->prepare("
-    SELECT 
-        c.name,
-        c.district,
-        c.barangay,
-        c.assigned_csr,
-        c.contact,
-        u.email
-    FROM clients c
-    LEFT JOIN users u ON u.account_number = c.account_number
-    WHERE c.id = :id
-    LIMIT 1
-");
-$stmt->execute([":id" => $client_id]);
-$c = $stmt->fetch(PDO::FETCH_ASSOC);
+foreach ($data as $c) {
+    $status = (strtotime($c["last_active"]) > time()-60) ? "online" : "offline";
 
-echo json_encode([
-    "name"       => $c["name"] ?? "",
-    "email"      => $c["email"] ?? "No email",
-    "district"   => $c["district"] ?? "",
-    "barangay"   => $c["barangay"] ?? "",
-    "assigned_csr" => $c["assigned_csr"] ?? "Unassigned",
-    "phone"      => $c["contact"] ?? "Not available"
-]);
+    echo "
+    <div class='client-item' onclick='selectClient({$c["id"]}, \"{$c["name"]}\")'>
+        <img src='upload/default-avatar.png' class='client-avatar'>
+        <div>
+            <div class='client-name'>{$c["name"]}</div>
+            <div class='client-sub'>
+                <span class='{$status}-dot'></span> $status • CSR: {$c["assigned_csr"]}
+            </div>
+        </div>
+    </div>
+    ";
+}
 ?>
