@@ -1,38 +1,34 @@
 let selectedClient = 0;
 let filesToSend = [];
 
-/* ========== SIDEBAR TOGGLE ========== */
-function toggleSidebar() {
+/* SIDEBAR */
+function toggleSidebar(){
     document.querySelector(".sidebar").classList.toggle("open");
     document.querySelector(".sidebar-overlay").classList.toggle("show");
 }
 
-/* ========== SLIDE CLIENT INFO ========== */
-function toggleClientInfo() {
+/* SLIDING PANEL */
+function toggleClientInfo(){
     document.getElementById("clientInfoPanel").classList.toggle("show");
 }
 
-/* ========== LOAD CLIENT LIST ========== */
-function loadClients() {
-    $.get("client_list.php", data => {
-        $("#clientList").html(data);
-    });
+/* LOAD CLIENT LIST */
+function loadClients(){
+    $.get("client_list.php", d => $("#clientList").html(d));
 }
 
-/* ========== SELECT CLIENT ========== */
-function selectClient(id, name) {
+/* SELECT CLIENT */
+function selectClient(id, name){
     selectedClient = id;
     $("#chatName").text(name);
-    $("#chatStatus").text("Active Chat");
     $("#messageInput").prop("disabled", false);
     $("#sendBtn").prop("disabled", false);
-
     loadClientInfo();
     loadMessages();
 }
 
-/* ========== LOAD CLIENT INFO PANEL ========== */
-function loadClientInfo() {
+/* LOAD CLIENT INFO */
+function loadClientInfo(){
     $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name);
         $("#infoEmail").text(info.email);
@@ -41,31 +37,28 @@ function loadClientInfo() {
     });
 }
 
-/* ========== LOAD MESSAGES ========== */
-function loadMessages() {
+/* LOAD MESSAGES */
+function loadMessages(){
     if (!selectedClient) return;
-
     $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
         let html = "";
-        messages.forEach(m => {
-            let side = (m.sender_type === "csr") ? "csr" : "client";
+        messages.forEach(m =>{
+            const side = (m.sender_type === "csr") ? "csr" : "client";
 
-            html += `<div class="msg ${side}">
-                        <div class="bubble">
-                            ${m.message || ""}`;
+            html += `
+            <div class="msg ${side}">
+                <div class="bubble">${m.message || ""}`;
 
-            // render media
             if (m.media_path) {
+                const path = "/CSR/upload/chat/" + m.media_path.split("/").pop();
                 if (m.media_type === "image") {
-                    html += `<img src="${m.media_path}" class="file-img">`;
+                    html += `<img src="${path}" class="file-img">`;
                 } else {
-                    html += `<video controls class="file-img"><source src="${m.media_path}"></video>`;
+                    html += `<video controls class="file-img"><source src="${path}"></video>`;
                 }
             }
 
-            html += `<div class="meta">${m.created_at}</div>
-                        </div>
-                    </div>`;
+            html += `<div class="meta">${m.created_at}</div></div></div>`;
         });
 
         $("#chatMessages").html(html);
@@ -73,19 +66,17 @@ function loadMessages() {
     });
 }
 
-/* ========== PREVIEW UPLOAD MULTIPLE FILES ========== */
-$("#fileInput").on("change", function(e) {
+/* PREVIEW MULTIPLE FILES */
+$("#fileInput").on("change", e =>{
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
-    filesToSend.forEach(file => {
+    filesToSend.forEach(file =>{
         let reader = new FileReader();
-        reader.onload = function(ev) {
+        reader.onload = ev =>{
             $("#previewArea").append(`
                 <div class="preview-item">
-                    ${file.type.includes("video")
-                        ? `<video src="${ev.target.result}" muted></video>`
-                        : `<img src="${ev.target.result}">`}
+                ${file.type.includes("video") ? `<video src="${ev.target.result}" muted></video>` : `<img src="${ev.target.result}">`}
                 </div>
             `);
         };
@@ -93,26 +84,22 @@ $("#fileInput").on("change", function(e) {
     });
 });
 
+/* SEND */
+$("#sendBtn").click(()=>{
+    let form = new FormData();
+    form.append("message", $("#messageInput").val());
+    form.append("client_id", selectedClient);
+    form.append("csr_fullname", csrFullname);
 
-/* ========== SEND MESSAGE ========== */
-$("#sendBtn").click(function(){
-    let message = $("#messageInput").val();
-    if (!message && filesToSend.length === 0) return;
-
-    let formData = new FormData();
-    formData.append("message", message);
-    formData.append("client_id", selectedClient);
-    formData.append("csr_fullname", csrFullname);
-
-    filesToSend.forEach(f => formData.append("files[]", f));
+    filesToSend.forEach(f => form.append("files[]", f));
 
     $.ajax({
-        url: "save_chat_csr.php",
-        method: "POST",
-        data: formData,
-        contentType: false,
-        processData: false,
-        success: function() {
+        url:"save_chat_csr.php",
+        method:"POST",
+        data:form,
+        processData:false,
+        contentType:false,
+        success(){
             $("#messageInput").val("");
             $("#previewArea").html("");
             $("#fileInput").val("");
@@ -122,15 +109,6 @@ $("#sendBtn").click(function(){
     });
 });
 
-/* ========== STATUS CHECKER (ONLINE DOT) ========== */
-function checkStatus() {
-    if (!selectedClient) return;
-    $.getJSON("check_status.php?id=" + selectedClient, res => {
-        $("#statusDot").removeClass("online offline").addClass(res.status);
-    });
-}
-
-setInterval(loadMessages, 2000);
-setInterval(checkStatus, 3000);
-
+/* AUTO REFRESH */
+setInterval(loadMessages,2000);
 loadClients();
