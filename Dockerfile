@@ -1,18 +1,8 @@
-# Use official PHP image
-FROM php:8.2-apache
+FROM php:8.2-cli
 
-# Install required extensions (PDO + PostgreSQL)
-RUN apt-get update && apt-get install -y libpq-dev \
-    && docker-php-ext-install pdo pdo_pgsql pgsql
+WORKDIR /app
+COPY . .
 
-# Copy project files into the container
-COPY . /var/www/html/
+RUN docker-php-ext-install pdo pgsql pdo_pgsql
 
-# Set working directory
-WORKDIR /var/www/html
-
-# Expose web port
-EXPOSE 80
-
-# Start Apache
-CMD ["apache2-foreground"]
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "."]
