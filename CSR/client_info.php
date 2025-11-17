@@ -1,22 +1,21 @@
 <?php
 include "../db_connect.php";
 
-$stmt = $conn->query("SELECT id,name,assigned_csr,last_active FROM clients ORDER BY last_active DESC");
-$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$client_id = $_GET["id"] ?? 0;
 
-foreach ($data as $c) {
-    $status = (strtotime($c["last_active"]) > time()-60) ? "online" : "offline";
+$stmt = $conn->prepare("
+    SELECT c.name, c.district, c.barangay, u.email
+    FROM clients c
+    LEFT JOIN users u ON u.account_number = c.account_number
+    WHERE c.id = :id LIMIT 1
+");
+$stmt->execute([":id"=>$client_id]);
+$c = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    echo "
-    <div class='client-item' onclick='selectClient({$c["id"]}, \"{$c["name"]}\")'>
-        <img src='lion.png' class='client-avatar'>
-        <div>
-            <div class='client-name'>{$c["name"]}</div>
-            <div class='client-sub'>
-                <span class='{$status}-dot'></span> $status • CSR: {$c["assigned_csr"]}
-            </div>
-        </div>
-    </div>
-    ";
-}
+echo json_encode([
+    "name"     => $c["name"],
+    "email"    => $c["email"],
+    "district" => $c["district"],
+    "barangay" => $c["barangay"]
+]);
 ?>
