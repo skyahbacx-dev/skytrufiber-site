@@ -3,8 +3,8 @@ session_start();
 include "../db_connect.php";
 header("Content-Type: application/json");
 
-$message      = trim($_POST["message"] ?? "");
-$client_id    = $_POST["client_id"] ?? 0;
+$message  = trim($_POST["message"] ?? "");
+$client_id = $_POST["client_id"] ?? 0;
 $csr_fullname = $_POST["csr_fullname"] ?? "";
 
 if (!$client_id) {
@@ -12,56 +12,60 @@ if (!$client_id) {
     exit;
 }
 
-$media_path = null;
-$media_type = null;
+// Insert text message first (if exists)
+if ($message !== "") {
+    $stmt = $conn->prepare("
+        INSERT INTO chat (client_id, sender_type, message, csr_fullname, created_at)
+        VALUES (:cid, 'csr', :msg, :csr, NOW())
+    ");
+    $stmt->execute([
+        ":cid" => $client_id,
+        ":msg" => $message,
+        ":csr" => $csr_fullname
+    ]);
+}
 
-/* Upload multiple files */
-if (!empty($_FILES['files']['name'][0])) {
-    foreach ($_FILES['files']['name'] as $i => $filename) {
-        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+// Handle multiple uploaded files
+if (!empty($_FILES["files"]["name"][0])) {
 
-        if (in_array($ext, ['jpg','jpeg','png','gif','webp'])) {
+    for ($i = 0; $i < count($_FILES["files"]["name"]); $i++) {
+
+        $fileName = $_FILES["files"]["name"][$i];
+        $tmpName  = $_FILES["files"]["tmp_name"][$i];
+        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+        $folder = "";
+        $media_type = "";
+
+        if (in_array($ext, ["jpg","jpeg","png","gif","webp"])) {
+            $folder = "../CSR/upload/chat/";
             $media_type = "image";
-            $folder = "upload/chat/";
-        } elseif (in_array($ext, ['mp4','mov','avi','mkv','webm'])) {
+        } elseif (in_array($ext, ["mp4","mov","avi","mkv","webm"])) {
+            $folder = "../CSR/upload/chat/";
             $media_type = "video";
-            $folder = "upload/chat/";
         }
 
         if ($media_type) {
             $newName = time() . "_" . rand(1000,9999) . "." . $ext;
-            $path = "../$folder" . $newName;
-            move_uploaded_file($_FILES['files']['tmp_name'][$i], $path);
-            $media_path = $folder . $newName;
+            $finalPath = $folder . $newName;
+            move_uploaded_file($tmpName, $finalPath);
 
-            /* Insert media bubble message */
-            $stmt = $conn->prepare("
-                INSERT INTO chat (client_id, sender_type, message, media_path, media_type, csr_fullname, created_at)
-                VALUES (:cid, 'csr', :msg, :mp, :mt, :csr, NOW())
+            $dbPath = "CSR/upload/chat/" . $newName;
+
+            $ins = $conn->prepare("
+                INSERT INTO chat (client_id, sender_type, media_path, media_type, csr_fullname, created_at)
+                VALUES (:cid, 'csr', :mp, :mt, :csr, NOW())
             ");
-            $stmt->execute([
+            $ins->execute([
                 ":cid" => $client_id,
-                ":msg" => $message,
-                ":mp"  => $media_path,
+                ":mp"  => $dbPath,
                 ":mt"  => $media_type,
                 ":csr" => $csr_fullname
             ]);
         }
     }
-
-    echo json_encode(["status"=>"ok"]);
-    exit;
 }
 
-/* Normal text message */
-$stmt = $conn->prepare("
-    INSERT INTO chat (client_id, sender_type, message, created_at, csr_fullname)
-    VALUES (:cid, 'csr', :msg, NOW(), :csr)
-");
-$stmt->execute([
-    ":cid"=>$client_id,
-    ":msg"=>$message,
-    ":csr"=>$csr_fullname
-]);
-
-echo json_encode(["status"=>"ok"]);
+echo json_encode(["status" => "ok"]);
+exit;
+?>
