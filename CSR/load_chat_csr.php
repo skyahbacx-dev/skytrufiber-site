@@ -16,10 +16,10 @@ $stmt = $conn->prepare("
     SELECT 
         message,
         sender_type,
+        created_at,
         media_path,
         media_type,
-        csr_fullname,
-        created_at
+        csr_fullname
     FROM chat
     WHERE client_id = :cid
     ORDER BY created_at ASC
@@ -27,18 +27,20 @@ $stmt = $conn->prepare("
 $stmt->execute([":cid" => $client_id]);
 
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$result = [];
+$output = [];
 
-foreach ($rows as $m) {
-    $result[] = [
-        "message"     => $m["message"],
-        "sender_type" => $m["sender_type"],
-        "media_path"  => $m["media_path"],
-        "media_type"  => $m["media_type"],
-        "csr_fullname"=> $m["csr_fullname"],
-        "created_at"  => date("M d g:i A", strtotime($m["created_at"]))
+foreach ($rows as $row) {
+
+    $output[] = [
+        "message"     => $row["message"],
+        "sender_type" => $row["sender_type"],        // IMPORTANT for alignment
+        "csr_fullname"=> $row["csr_fullname"] ?? "",
+        "created_at"  => date("M d, g:i A", strtotime($row["created_at"])),
+        "media_path"  => $row["media_path"],
+        "media_type"  => $row["media_type"]
     ];
 }
 
-echo json_encode($result);
+echo json_encode($output);
+exit;
 ?>
