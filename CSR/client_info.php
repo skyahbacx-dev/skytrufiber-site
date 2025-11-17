@@ -9,7 +9,7 @@ foreach ($data as $c) {
 
     echo "
     <div class='client-item' onclick='selectClient({$c["id"]}, \"{$c["name"]}\")'>
-        <img src='upload/default-avatar.png' class='client-avatar'>
+        <img src='lion.png' class='client-avatar'>
         <div>
             <div class='client-name'>{$c["name"]}</div>
             <div class='client-sub'>
