@@ -13,8 +13,8 @@ function toggleClientInfo(){
     document.getElementById("clientInfoPanel").classList.toggle("show");
 }
 
-/******** LOAD CLIENT LIST ********/
-function loadClients(search="") {
+/******** SEARCH + LOAD CLIENT LIST ********/
+function loadClients(search = "") {
     $.get("client_list.php?search=" + search, data => {
         $("#clientList").html(data);
     });
@@ -33,15 +33,16 @@ function selectClient(id, name, assigned) {
     $("#client-" + id).addClass("active-client");
 
     $("#chatName").text(name);
+    $("#messageInput").prop("disabled", assigned && assigned !== csrFullname);
+    $("#sendBtn").prop("disabled", assigned && assigned !== csrFullname);
 
-    let locked = (assigned && assigned !== csrFullname);
-
-    $("#messageInput").prop("disabled", locked);
-    $("#sendBtn").prop("disabled", locked);
-    $("#fileInput").prop("disabled", locked);
-
-    if (locked) $(".upload-icon").hide();
-    else $(".upload-icon").show();
+    if (assigned && assigned !== csrFullname) {
+        $(".upload-icon").hide();
+        $("#fileInput").prop("disabled", true);
+    } else {
+        $(".upload-icon").show();
+        $("#fileInput").prop("disabled", false);
+    }
 
     loadClientInfo();
     loadMessages();
@@ -49,14 +50,19 @@ function selectClient(id, name, assigned) {
 
 /******** ASSIGN / UNASSIGN ********/
 function assignClient(id){
-    $.post("assign_client.php", { client_id:id }, () => loadClients());
-}
-function unassignClient(id){
-    if(!confirm("Remove this client from your assignment?")) return;
-    $.post("unassign_client.php", { client_id:id }, () => loadClients());
+    $.post("assign_client.php", { client_id:id }, function(){
+        loadClients();
+    });
 }
 
-/******** LOAD CLIENT INFO ********/
+function unassignClient(id){
+    if(!confirm("Remove this client from your assignment?")) return;
+    $.post("unassign_client.php", { client_id:id }, function(){
+        loadClients();
+    });
+}
+
+/******** LOAD CLIENT INFORMATION ********/
 function loadClientInfo() {
     $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name);
@@ -66,13 +72,12 @@ function loadClientInfo() {
     });
 }
 
-/******** LOAD MESSAGES ********/
+/******** LOAD CHAT MESSAGES ********/
 function loadMessages(){
     if (!selectedClient) return;
 
     $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
         let html = "";
-
         messages.forEach(m => {
             let side = (m.sender_type === "csr") ? "csr" : "client";
 
@@ -83,15 +88,15 @@ function loadMessages(){
                 if (m.media_type === "image") {
                     html += `<img src="${m.media_path}" class="file-img" onclick="openMedia('${m.media_path}')">`;
                 } else {
-                    html += `
-                        <video controls class="file-img" onclick="openMedia('${m.media_path}')">
-                            <source src="${m.media_path}">
-                        </video>`;
+                    html += `<video controls class="file-img" onclick="openMedia('${m.media_path}')">
+                                <source src="${m.media_path}">
+                             </video>`;
                 }
             }
 
             html += `<div class="meta">${m.created_at}</div>
-                     </div></div>`;
+                     </div>
+                    </div>`;
         });
 
         $("#chatMessages").html(html);
@@ -99,12 +104,12 @@ function loadMessages(){
     });
 }
 
-/******** PREVIEW MULTIPLE FILES ********/
+/******** FILE PREVIEW ********/
 $("#fileInput").on("change", function(e){
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
-    filesToSend.forEach(file => {
+    filesToSend.forEach((file, index) => {
         let reader = new FileReader();
         reader.onload = ev => {
             $("#previewArea").append(`
@@ -112,12 +117,18 @@ $("#fileInput").on("change", function(e){
                     ${file.type.includes("video")
                         ? `<video src="${ev.target.result}" muted></video>`
                         : `<img src="${ev.target.result}">`}
+                    <span class="remove-preview" onclick="removePreview(${index})">✖</span>
                 </div>
             `);
         };
         reader.readAsDataURL(file);
     });
 });
+
+function removePreview(index){
+    filesToSend.splice(index,1);
+    $("#fileInput").trigger("change");
+}
 
 /******** SEND MESSAGE ********/
 $("#sendBtn").click(function(){
@@ -143,20 +154,18 @@ $("#sendBtn").click(function(){
             $("#fileInput").val("");
             filesToSend = [];
             loadMessages();
-            loadClients();
         }
     });
 });
 
-/******** FULLSCREEN MEDIA MODAL ********/
+/******** MODAL VIEW MEDIA ********/
 function openMedia(src){
     $("#mediaModal").addClass("show");
     $("#mediaModalContent").attr("src", src);
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-/******** AUTO REFRESH ********/
-setInterval(loadClients, 5000);
-setInterval(loadMessages, 1800);
+setInterval(loadClients, 4000);
+setInterval(loadMessages, 1500);
 
 loadClients();
