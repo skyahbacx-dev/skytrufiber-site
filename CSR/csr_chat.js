@@ -15,10 +15,13 @@ function toggleClientInfo(){
 
 /******** LOAD CLIENT LIST ********/
 function loadClients() {
-    $.get("client_list.php", data => {
+$(".search").on("keyup", function(){
+    let txt = $(this).val();
+    $.get("client_list.php?search=" + txt, data => {
         $("#clientList").html(data);
     });
-}
+});
+
 
 /******** SELECT CLIENT ********/
 function selectClient(id, name, assigned) {
