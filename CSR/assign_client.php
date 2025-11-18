@@ -1,14 +1,19 @@
 <?php
+// CSR/assign_client.php
 session_start();
-require "../db_connect.php";
+require_once "../db_connect.php";
+header("Content-Type: application/json");
 
-$csrUser = $_SESSION["csr_user"] ?? null;
-$client_id = $_POST["client_id"] ?? 0;
+$csrUser = $_SESSION["csr_user"] ?? "";
+$clientId = isset($_POST["client_id"]) ? (int)$_POST["client_id"] : 0;
 
-if (!$csrUser || !$client_id) die("error");
+if (!$csrUser || !$clientId) {
+    echo json_encode(["status" => "error"]);
+    exit;
+}
 
-$stmt = $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :id");
-$stmt->execute([":csr" => $csrUser, ":id" => $client_id]);
+$sql = "UPDATE clients SET assigned_csr = :csr WHERE id = :id";
+$stmt = $conn->prepare($sql);
+$stmt->execute([":csr" => $csrUser, ":id" => $clientId]);
 
-echo "assigned";
-?>
+echo json_encode(["status" => "ok"]);
