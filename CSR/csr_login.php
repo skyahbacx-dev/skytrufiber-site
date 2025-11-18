@@ -2,7 +2,6 @@
 session_start();
 include '../db_connect.php';
 
-// If already logged in
 if (isset($_SESSION['csr_user']) && $_SESSION['csr_user'] !== '') {
     header("Location: csr_dashboard.php");
     exit;
@@ -10,32 +9,34 @@ if (isset($_SESSION['csr_user']) && $_SESSION['csr_user'] !== '') {
 
 $error = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $username = trim($_POST["username"] ?? '');
+    $pass = $_POST["password"] ?? '';
 
-    if ($username === "" || $password === "") {
-        $error = "Please fill in both fields.";
+    if ($username === "" || $pass === "") {
+        $error = "Please enter username & password.";
     } else {
-        $stmt = $conn->prepare("SELECT username, password, fullname, status FROM csr_users WHERE username = :u LIMIT 1");
+        $stmt = $conn->prepare("SELECT username, full_name, password, status FROM csr_users WHERE username = :u LIMIT 1");
         $stmt->execute([":u" => $username]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($row && strtolower($row['status']) === "active") {
-            if (password_verify($password, $row['password']) ||
-                (strlen($row['password']) === 32 && md5($password) === strtolower($row['password']))) {
+        if ($row && strtolower($row["status"]) === "active") {
 
-                $_SESSION['csr_user'] = $row['username'];
-                $_SESSION['csr_fullname'] = $row['fullname'];
+            if (password_verify($pass, $row["password"])) {
+                session_regenerate_id(true);
 
-                $update = $conn->prepare("UPDATE csr_users SET last_seen = NOW() WHERE username = :u");
-                $update->execute([":u" => $row['username']]);
+                $_SESSION["csr_user"] = $row["username"];
+                $_SESSION["csr_fullname"] = $row["full_name"];
+
+                $conn->prepare("UPDATE csr_users SET last_seen = NOW() WHERE username = :u")
+                    ->execute([":u" => $row["username"]]);
 
                 header("Location: csr_dashboard.php");
                 exit;
             } else {
-                $error = "Invalid username or password.";
+                $error = "Invalid password.";
             }
+
         } else {
             $error = "Account not found or inactive.";
         }
