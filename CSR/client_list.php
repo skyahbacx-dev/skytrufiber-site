@@ -30,7 +30,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
     echo "<div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
             <div class='client-main'>
-                <img src='lion.PNG' class='client-avatar'>
+                <img src='upload/default-avatar.png' class='client-avatar'>
                 <div>
                     <div class='client-name'>$name</div>
                     <div class='client-sub'>" .
