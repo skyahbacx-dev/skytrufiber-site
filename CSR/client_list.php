@@ -1,8 +1,8 @@
 <?php
-session_start(); // REQUIRED
+session_start();
 include "../db_connect.php";
 
-$csrUser = $_SESSION["csr_user"] ?? ""; // prevent undefined error
+$csrUser = $_SESSION["csr_user"] ?? "";
 
 $stmt = $conn->query("
     SELECT id, name, assigned_csr, last_active
@@ -21,17 +21,19 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 <div>
                     <div class='client-name'>$name</div>
                     <div class='client-sub'>"
-                    . ($assigned ? "Assigned to $assigned" : "Unassigned") .
-                "</div>
+                     . ($assigned ? "Assigned to $assigned" : "Unassigned") .
+                    "</div>
                 </div>
             </div>
             <div class='client-actions'>";
     
     if ($assigned === null || $assigned === "") {
         echo "<button class='pill green' onclick='event.stopPropagation(); assignClient($id)'>➕</button>";
-    } elseif ($assigned === $csrUser) {
+    }
+    elseif ($assigned === $csrUser) {
         echo "<button class='pill red' onclick='event.stopPropagation(); unassignClient($id)'>➖</button>";
-    } else {
+    }
+    else {
         echo "<button class='pill gray' disabled title='Handled by $assigned'>🔒</button>";
     }
 
