@@ -1,12 +1,14 @@
 let selectedClient = 0;
 let filesToSend = [];
 
-/* ===== LOAD CLIENTS ===== */
+/* Load clients list */
 function loadClients() {
-    $.get("client_list.php", data => $("#clientList").html(data));
+    $.get("client_list.php", data => {
+        $("#clientList").html(data);
+    });
 }
 
-/* ===== SELECT CLIENT ===== */
+/* Select client */
 function selectClient(id, name) {
     selectedClient = id;
     $("#chatName").text(name);
@@ -17,7 +19,7 @@ function selectClient(id, name) {
     loadMessages();
 }
 
-/* ===== LOAD CLIENT INFO ===== */
+/* Load client info */
 function loadClientInfo() {
     $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name);
@@ -27,28 +29,28 @@ function loadClientInfo() {
     });
 }
 
-/* ===== LOAD MESSAGES ===== */
+/* Load Messages */
 function loadMessages() {
     if (!selectedClient) return;
-    $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
 
+    $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
         let html = "";
         messages.forEach(m => {
-            let side = (m.sender_type === "csr") ? "csr" : "client";
+            let side = m.sender_type === "csr" ? "csr" : "client";
 
-            html += `<div class="msg ${side}">
-                        <div class="bubble">
-                            ${m.message || ""}`;
+            html += `
+            <div class="msg ${side}">
+                <div class="bubble">${m.message || ""}`;
 
             if (m.media_path) {
                 if (m.media_type === "image") {
-                    html += `<img src="${m.media_path}" class="file-img">`;
+                    html += `<img src="${m.media_path}" class="file-img bubble-img">`;
                 } else {
-                    html += `<video controls class="file-img"><source src="${m.media_path}"></video>`;
+                    html += `<video controls class="file-img bubble-img"><source src="${m.media_path}"></video>`;
                 }
             }
 
-            html += `<div class="meta">${m.created_at}</div></div></div>`;
+            html += `</div><div class="meta">${m.created_at}</div></div>`;
         });
 
         $("#chatMessages").html(html);
@@ -56,43 +58,70 @@ function loadMessages() {
     });
 }
 
-/* ===== PREVIEW MEDIA ===== */
-$("#fileInput").on("change", e => {
+/* Preview Multiple Images & Videos */
+$("#fileInput").on("change", function(e) {
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
-    filesToSend.forEach(f => {
+    filesToSend.forEach((file, idx) => {
         let reader = new FileReader();
-        reader.onload = ev => {
+        reader.onload = function(ev) {
             $("#previewArea").append(`
-                <div class="preview-item">
-                    ${f.type.includes("video")
-                    ? `<video src="${ev.target.result}" muted></video>`
-                    : `<img src="${ev.target.result}">`}
-                </div>`);
+                <div class="preview-item fade-in">
+                    <span class="remove-preview" onclick="removePreview(${idx})">✖</span>
+                    ${
+                        file.type.includes("video")
+                        ? `<video src="${ev.target.result}" muted></video>`
+                        : `<img src="${ev.target.result}">`
+                    }
+                </div>
+            `);
         };
-        reader.readAsDataURL(f);
+        reader.readAsDataURL(file);
     });
 });
 
-/* ===== SEND MESSAGE ===== */
-$("#sendBtn").click(() => {
+/* Remove Preview Item */
+function removePreview(index) {
+    filesToSend.splice(index, 1);
+    $("#fileInput").val("");
+    $("#previewArea").html("");
+    filesToSend.forEach((f, i) => {
+        let reader = new FileReader();
+        reader.onload = function(ev) {
+            $("#previewArea").append(`
+                <div class="preview-item fade-in">
+                    <span class="remove-preview" onclick="removePreview(${i})">✖</span>
+                    ${
+                        f.type.includes("video")
+                        ? `<video src="${ev.target.result}" muted></video>`
+                        : `<img src="${ev.target.result}">`
+                    }
+                </div>
+            `);
+        };
+        reader.readAsDataURL(f);
+    });
+}
+
+/* Send message + media */
+$("#sendBtn").click(function(){
     let msg = $("#messageInput").val();
     if (!msg && filesToSend.length === 0) return;
 
-    let formData = new FormData();
-    formData.append("message", msg);
-    formData.append("client_id", selectedClient);
-    formData.append("csr_fullname", csrFullname);
+    let fd = new FormData();
+    fd.append("message", msg);
+    fd.append("client_id", selectedClient);
+    fd.append("csr_fullname", csrFullname);
 
-    filesToSend.forEach(f => formData.append("files[]", f));
+    filesToSend.forEach(f => fd.append("files[]", f));
 
     $.ajax({
         url: "save_chat_csr.php",
         method: "POST",
-        data: formData,
-        processData: false,
+        data: fd,
         contentType: false,
+        processData: false,
         success: () => {
             $("#messageInput").val("");
             $("#previewArea").html("");
@@ -103,14 +132,6 @@ $("#sendBtn").click(() => {
     });
 });
 
-/* ===== ASSIGN & REMOVE CONTROLS ===== */
-function assignClient(id) {
-    $.post("assign_client.php", {client_id:id}, () => loadClients());
-}
-
-function removeClient(id) {
-    $.post("remove_client.php", {client_id:id}, () => loadClients());
-}
-
+/* Refresh messages */
 setInterval(loadMessages, 2000);
 loadClients();
