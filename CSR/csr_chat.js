@@ -25,6 +25,10 @@ function selectClient(id, name, assigned) {
     selectedClient = id;
     assignedTo = assigned;
 
+    // Highlight Selected
+    $(".client-item").removeClass("active-client");
+    $("#client-" + id).addClass("active-client");
+
     $("#chatName").text(name);
     $("#messageInput").prop("disabled", assigned && assigned !== csrFullname);
     $("#sendBtn").prop("disabled", assigned && assigned !== csrFullname);
@@ -40,6 +44,8 @@ function selectClient(id, name, assigned) {
     loadClientInfo();
     loadMessages();
 }
+
+/******** ASSIGN / UNASSIGN ********/
 function assignClient(id){
     $.post("assign_client.php", { client_id:id }, function(){
         loadClients();
@@ -47,11 +53,11 @@ function assignClient(id){
 }
 
 function unassignClient(id){
+    if(!confirm("Remove this client from your assignment?")) return;
     $.post("unassign_client.php", { client_id:id }, function(){
         loadClients();
     });
 }
-
 
 /******** LOAD CLIENT INFO ********/
 function loadClientInfo() {
@@ -66,6 +72,7 @@ function loadClientInfo() {
 /******** LOAD MESSAGES ********/
 function loadMessages(){
     if (!selectedClient) return;
+
     $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
         let html = "";
         messages.forEach(m => {
@@ -86,6 +93,7 @@ function loadMessages(){
 
             html += `<div class="meta">${m.created_at}</div></div></div>`;
         });
+
         $("#chatMessages").html(html);
         $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
     });
@@ -146,6 +154,8 @@ function openMedia(src){
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
+/******** AUTO REFRESH ********/
 setInterval(loadClients, 4000);
 setInterval(loadMessages, 1500);
+
 loadClients();
