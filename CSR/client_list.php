@@ -1,38 +1,46 @@
 <?php
-include "../db_connect.php";
 session_start();
+include "../db_connect.php";
 
-$csr = $_SESSION["csr_fullname"] ?? $_SESSION["csr_user"];
+$csrUser = $_SESSION["csr_user"];
 
 $stmt = $conn->query("
     SELECT id, name, assigned_csr, last_active
     FROM clients
-    ORDER BY last_active DESC NULLS LAST
+    ORDER BY last_active DESC
 ");
 
-while ($c = $stmt->fetch(PDO::FETCH_ASSOC)) {
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $id   = $row["id"];
+    $name = htmlspecialchars($row["name"]);
+    $assigned = $row["assigned_csr"];
 
-    // Determine status icon
-    $statusIcon = "<span class='status-dot offline'></span>";
+    echo "<div class='client-item' onclick='selectClient($id, \"$name\")'>
+            <div class='client-main'>
+                <img src='upload/default-avatar.png' class='client-avatar'>
+                <div>
+                    <div class='client-name'>$name</div>
+                    <div class='client-sub'>
+                        " . ($assigned ? "Assigned to $assigned" : "Unassigned") . "
+                    </div>
+                </div>
+            </div>
+            <div class='client-actions'>";
 
-    // Determine control button
-    if ($c["assigned_csr"] === NULL) {
-        // UNASSIGNED
-        $control = "<button class='assign-btn' onclick=\"assignClient({$c['id']})\">➕</button>";
+    // ADD if null
+    if ($assigned === null || $assigned === "") {
+        echo "<button class='pill green' onclick='event.stopPropagation(); assignClient($id)'>➕</button>";
     }
-    elseif ($c["assigned_csr"] === $csr) {
-        // ASSIGNED TO ME
-        $control = "<button class='remove-btn' onclick=\"removeClient({$c['id']})\">➖</button>";
+    // MINUS if owner
+    elseif ($assigned === $csrUser) {
+        echo "<button class='pill red' onclick='event.stopPropagation(); unassignClient($id)'>➖</button>";
     }
+    // LOCK if assigned to another CSR
     else {
-        // ASSIGNED TO ANOTHER CSR
-        $control = "<button class='lock-btn' disabled>🔒</button>";
+        echo "<button class='pill gray' disabled title='Handled by $assigned'>🔒</button>";
     }
 
-    echo "
-    <div class='client-item' onclick=\"selectClient({$c['id']}, '{$c['name']}')\">
-        <div class='c-name'>{$c['name']}</div>
-        <div class='c-controls'>$control</div>
-    </div>";
+    echo "  </div>
+        </div>";
 }
 ?>
