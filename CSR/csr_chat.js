@@ -1,36 +1,30 @@
-/* =========================================================
-   CSR CHAT.JS  — FULL FILE (STRICT: DO NOT MODIFY LAYOUT)
-   ========================================================= */
-
 let selectedClient = 0;
 let assignedTo = "";
 let filesToSend = [];
 
 /******** SIDEBAR ********/
-function toggleSidebar(){
+function toggleSidebar() {
     document.querySelector(".sidebar").classList.toggle("open");
     document.querySelector(".sidebar-overlay").classList.toggle("show");
 }
 
-/******** SLIDING CLIENT INFO PANEL ********/
-function toggleClientInfo(){
+/******** CLIENT INFO SLIDER ********/
+function toggleClientInfo() {
     document.getElementById("clientInfoPanel").classList.toggle("show");
 }
 
 /******** LOAD CLIENT LIST ********/
-function loadClients(search = ""){
+function loadClients() {
+    let search = $(".search").val();
     $.get("client_list.php?search=" + search, data => {
         $("#clientList").html(data);
     });
 }
 
-/******** SEARCH ********/
-$(document).on("keyup", ".search", function(){
-    loadClients($(this).val());
-});
+$(".search").on("keyup", loadClients);
 
 /******** SELECT CLIENT ********/
-function selectClient(id, name, assigned){
+function selectClient(id, name, assigned) {
     selectedClient = id;
     assignedTo = assigned;
 
@@ -41,7 +35,7 @@ function selectClient(id, name, assigned){
     $("#messageInput").prop("disabled", assigned && assigned !== csrFullname);
     $("#sendBtn").prop("disabled", assigned && assigned !== csrFullname);
 
-    if (assigned && assigned !== csrFullname){
+    if (assigned && assigned !== csrFullname) {
         $(".upload-icon").hide();
         $("#fileInput").prop("disabled", true);
     } else {
@@ -53,17 +47,19 @@ function selectClient(id, name, assigned){
     loadMessages();
 }
 
-/******** ASSIGN / UNASSIGN ********/
-function assignClient(id){
-    $.post("assign_client.php", {client_id:id}, () => loadClients());
+/******** ASSIGN ********/
+function assignClient(id) {
+    $.post("assign_client.php", { client_id:id }, loadClients);
 }
-function unassignClient(id){
-    if(!confirm("Remove this client from your assignment?")) return;
-    $.post("unassign_client.php", {client_id:id}, () => loadClients());
+
+/******** UNASSIGN ********/
+function unassignClient(id) {
+    if (!confirm("Remove this client from your assignments?")) return;
+    $.post("unassign_client.php", { client_id:id }, loadClients);
 }
 
 /******** LOAD CLIENT INFO ********/
-function loadClientInfo(){
+function loadClientInfo() {
     $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name);
         $("#infoEmail").text(info.email);
@@ -73,7 +69,7 @@ function loadClientInfo(){
 }
 
 /******** LOAD MESSAGES ********/
-function loadMessages(){
+function loadMessages() {
     if (!selectedClient) return;
 
     $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
@@ -83,15 +79,15 @@ function loadMessages(){
             let side = (m.sender_type === "csr") ? "csr" : "client";
 
             html += `<div class="msg ${side}">
-                        <div class="bubble">${m.message ?? ""}`;
+                        <div class="bubble">${m.message || ""}`;
 
-            if (m.media_path){
-                if (m.media_type === "image"){
-                    html += `<img src="${m.media_path}" class="file-img" onclick="openMedia('${m.media_path}', 'image')">`;
+            if (m.media_path) {
+                if (m.media_type === "image") {
+                    html += `<img src="${m.media_path}" class="file-img" onclick="openMedia('${m.media_path}')">`;
                 } else {
-                    html += `<video class="file-img" onclick="openMedia('${m.media_path}', 'video')" controls>
+                    html += `<video class="file-img" onclick="openMedia('${m.media_path}')" controls>
                                 <source src="${m.media_path}">
-                             </video>`;
+                            </video>`;
                 }
             }
 
@@ -103,8 +99,8 @@ function loadMessages(){
     });
 }
 
-/******** PREVIEW MULTIPLE ********/
-$("#fileInput").on("change", function(e){
+/******** PREVIEW MULTIPLE FILES ********/
+$("#fileInput").on("change", function (e) {
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
@@ -124,7 +120,7 @@ $("#fileInput").on("change", function(e){
 });
 
 /******** SEND MESSAGE ********/
-$("#sendBtn").click(function(){
+$("#sendBtn").click(function () {
     let msg = $("#messageInput").val();
     if (!msg && filesToSend.length === 0) return;
 
@@ -139,9 +135,9 @@ $("#sendBtn").click(function(){
         url: "save_chat_csr.php",
         method: "POST",
         data: fd,
-        processData:false,
-        contentType:false,
-        success: function(){
+        processData: false,
+        contentType: false,
+        success: function () {
             $("#messageInput").val("");
             $("#previewArea").html("");
             $("#fileInput").val("");
@@ -151,64 +147,16 @@ $("#sendBtn").click(function(){
     });
 });
 
-/******** FULLSCREEN MODAL VIEWER WITH ZOOM & DRAG ********/
-let scale = 1, posX = 0, posY = 0, dragging = false, startX, startY;
-
-function openMedia(src, type){
+/******** FULLSCREEN MEDIA VIEW ********/
+function openMedia(src) {
     $("#mediaModal").addClass("show");
-
-    if(type === "image"){
-        $("#mediaModalContent").replaceWith(`<img id="mediaModalContent" class="modal-content" src="${src}">`);
-    } else {
-        $("#mediaModalContent").replaceWith(`
-            <video id="mediaModalContent" class="modal-content" controls autoplay>
-                <source src="${src}">
-            </video>`);
-    }
-
-    resetZoom();
+    $("#mediaModalContent").attr("src", src);
 }
+$("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-function resetZoom(){
-    scale = 1; posX = 0; posY = 0;
-    transform();
-}
-
-function transform(){
-    document.getElementById("mediaModalContent").style.transform =
-        `translate(${posX}px, ${posY}px) scale(${scale})`;
-}
-
-$("#mediaModalContent").on("wheel", function(e){
-    e.preventDefault();
-    scale += e.originalEvent.deltaY * -0.001;
-    scale = Math.min(Math.max(.5, scale), 4);
-    transform();
-});
-
-$(document).on("mousedown", "#mediaModalContent", function(e){
-    dragging = true; startX = e.pageX - posX; startY = e.pageY - posY;
-});
-
-$(document).on("mousemove", function(e){
-    if(dragging){
-        posX = e.pageX - startX;
-        posY = e.pageY - startY;
-        transform();
-    }
-});
-$(document).on("mouseup", () => dragging = false);
-
-$("#closeMediaModal, #mediaModal").click(function(e){
-    if(e.target.id !== "mediaModalContent") $("#mediaModal").removeClass("show");
-});
-
-$(document).on("keydown", function(e){
-    if(e.key === "Escape") $("#mediaModal").removeClass("show");
-});
-
-/******** AUTO REFRESH ********/
-setInterval(loadClients, 4000);
+/******** AUTO UPDATE ********/
+setInterval(loadClients, 5000);
 setInterval(loadMessages, 1500);
 
+// Initial load
 loadClients();
