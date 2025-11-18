@@ -8,19 +8,17 @@ function toggleSidebar(){
     document.querySelector(".sidebar-overlay").classList.toggle("show");
 }
 
-/******** SLIDING CLIENT INFO PANEL ********/
-function toggleClientInfo(){
-    document.getElementById("clientInfoPanel").classList.toggle("show");
-}
-
-/******** LOAD CLIENT LIST ********/
+/******** CLIENT LIST LOADING + SEARCH ********/
 function loadClients() {
     $.get("client_list.php", data => {
+        if (data === "SESSION_EXPIRED") {
+            window.location = "csr_login.php";
+            return;
+        }
         $("#clientList").html(data);
     });
 }
 
-/******** SEARCH LIVE FILTER ********/
 $(".search").on("keyup", function(){
     let txt = $(this).val();
     $.get("client_list.php?search=" + txt, data => {
@@ -67,7 +65,7 @@ function unassignClient(id){
 }
 
 /******** LOAD CLIENT INFO ********/
-function loadClientInfo() {
+function loadClientInfo(){
     $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name);
         $("#infoEmail").text(info.email);
@@ -76,12 +74,13 @@ function loadClientInfo() {
     });
 }
 
-/******** LOAD MESSAGES ********/
+/******** LOAD CHAT ********/
 function loadMessages(){
     if (!selectedClient) return;
 
     $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
         let html = "";
+
         messages.forEach(m => {
             let side = (m.sender_type === "csr") ? "csr" : "client";
 
@@ -106,7 +105,7 @@ function loadMessages(){
     });
 }
 
-/******** PREVIEW MULTIPLE ********/
+/******** MEDIA PREVIEW BEFORE SENDING ********/
 $("#fileInput").on("change", function(e){
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
@@ -154,7 +153,7 @@ $("#sendBtn").click(function(){
     });
 });
 
-/******** MODAL VIEW MEDIA ********/
+/******** IMAGE / VIDEO MODAL ********/
 function openMedia(src){
     $("#mediaModal").addClass("show");
     $("#mediaModalContent").attr("src", src);
