@@ -27,14 +27,13 @@ const csrFullname = "<?= $csrFullName ?>";
 <!-- ===== SIDEBAR ===== -->
 <div class="sidebar" id="sidebar">
     <button class="toggle-btn" onclick="toggleSidebar()">❐</button>
-    
+
     <div class="side-title">MENU</div>
     <button class="side-item" onclick="window.location='csr_dashboard.php'">💬 Chat Dashboard</button>
     <button class="side-item" onclick="window.location='my_clients.php'">👥 My Clients</button>
     <button class="side-item" onclick="window.location='reminders.php'">⏱ Reminders</button>
     <button class="side-item" onclick="window.location='survey_responses.php'">📄 Survey Responses</button>
     <button class="side-item" onclick="window.location='update_profile.php'">👤 Edit Profile</button>
-
     <button class="side-item logout" onclick="window.location='csr_logout.php'">🚪 Logout</button>
 </div>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -85,10 +84,8 @@ const csrFullname = "<?= $csrFullName ?>";
 
         <div class="chat-box" id="chatMessages"></div>
 
-        <!-- PREVIEW -->
         <div id="previewArea" class="preview-area"></div>
 
-        <!-- INPUT -->
         <div class="chat-input">
             <label for="fileInput" class="upload-icon">📎</label>
             <input type="file" id="fileInput" multiple style="display:none;">
@@ -97,7 +94,7 @@ const csrFullname = "<?= $csrFullName ?>";
         </div>
     </div>
 
-    <!-- SLIDING CLIENT INFO -->
+    <!-- CLIENT INFO -->
     <aside id="clientInfoPanel" class="client-info-panel">
         <button class="close-info" onclick="toggleClientInfo()">✖</button>
         <h3>Client Information</h3>
@@ -108,6 +105,8 @@ const csrFullname = "<?= $csrFullName ?>";
     </aside>
 
 </div>
+
+<!-- FULLSCREEN MEDIA -->
 <div id="mediaModal" class="media-modal">
     <span id="closeMediaModal" class="close-modal">✖</span>
     <img id="mediaModalContent" class="modal-content">
