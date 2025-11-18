@@ -151,5 +151,6 @@ function openMedia(src){
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
+setInterval(loadClients, 4000);
 setInterval(loadMessages, 1500);
 loadClients();
