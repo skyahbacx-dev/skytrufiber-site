@@ -1,10 +1,14 @@
 <?php
 session_start();
-include "../db_connect.php";
+require "../db_connect.php";
 
-$cid = $_POST["client_id"];
-$csr = $_SESSION["csr_user"];
+$csrUser = $_SESSION["csr_user"] ?? "";
+$client_id = $_POST["client_id"] ?? 0;
 
-$stmt = $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :cid");
-$stmt->execute([":csr" => $csr, ":cid" => $cid]);
+if ($csrUser && $client_id) {
+    $stmt = $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :id");
+    $stmt->execute([":csr" => $csrUser, ":id" => $client_id]);
+}
+
 echo "ok";
+?>
