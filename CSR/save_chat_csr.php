@@ -1,83 +1,92 @@
 <?php
 session_start();
-require "../db_connect.php";
+include "../db_connect.php";
+
+use Aws\S3\S3Client;
+require '../vendor/autoload.php';
+
+header("Content-Type: application/json");
 
 $sender_type  = "csr";
 $message      = trim($_POST["message"] ?? '');
-$client_id    = (int)($_POST["client_id"] ?? 0);
+$client_id    = intval($_POST["client_id"] ?? 0);
 $csr_fullname = $_POST["csr_fullname"] ?? '';
 
-if (!$client_id) exit("missing client");
+if (!$client_id) {
+    echo json_encode(["status" => "error", "msg" => "Missing client"]);
+    exit;
+}
 
-// ===== BACKBLAZE B2 CONFIG =====
-require '../vendor/autoload.php';
-
-use Aws\S3\S3Client;
-
+# Backblaze Credentials
 $bucketName = "ahba-chat-media";
+$region     = "s3.us-east-005";
+$folder     = "CSR_CHAT";
 
 $s3 = new S3Client([
-    'version' => 'latest',
-    'region'  => 'us-east-005',
-    'endpoint' => 'https://s3.us-east-005.backblazeb2.com',
-    'credentials' => [
-        'key'    => '005a548887f9c4f0000000002',
-        'secret' => 'K005fOYaprINPto/Qdm9wex0w4v/L2k',
-    ],
+    "version" => "latest",
+    "region"  => $region,
+    "endpoint" => "https://$region.backblazeb2.com",
+    "use_path_style_endpoint" => true,
+    "credentials" => [
+        "key"    => "005a548887f9c4f0000000002",
+        "secret" => "K005fOYaprINPto/Qdm9wex0w4v/L2k"
+    ]
 ]);
 
-$media_path = null;
-$media_type = null;
+$uploadedMedia = [];
 
-// ===== MULTIPLE FILE SUPPORT =====
 if (!empty($_FILES["files"]["name"][0])) {
+    foreach ($_FILES["files"]["name"] as $index => $name) {
+        $tmp = $_FILES["files"]["tmp_name"][$index];
+        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
 
-    $fileName = $_FILES["files"]["name"][0];
-    $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-    $tmp = $_FILES["files"]["tmp_name"][0];
+        $mediaType = (in_array($ext, ["jpg","jpeg","png","gif","webp"])) ? "image" : "video";
 
-    if (in_array($ext, ["jpg","jpeg","png","gif","webp"])) {
-        $media_type = "image";
-    } elseif (in_array($ext, ["mp4","mov","avi","mkv","webm"])) {
-        $media_type = "video";
-    }
-
-    if ($media_type) {
-        // === create dated directory ===
-        $datePath = date("Y/m/d");
-        $newName = time() . "_" . rand(1000,9999) . "." . $ext;
-        $uploadPath = "$datePath/$newName"; // FILE KEY
+        $key = "$folder/$client_id/" . ($mediaType === "image" ? "images/" : "videos/") . time() . "_".rand(1000,9999).".".$ext;
 
         try {
             $s3->putObject([
                 'Bucket' => $bucketName,
-                'Key'    => $uploadPath,
+                'Key'    => $key,
                 'SourceFile' => $tmp,
-                'ACL' => 'public-read'
+                'ACL'    => 'public-read'
             ]);
 
-            $media_path = "https://$bucketName.s3.us-east-005.backblazeb2.com/$uploadPath";
+            $publicURL = "https://$region.backblazeb2.com/$bucketName/$key";
 
-        } catch (Exception $e) {
-            die("Upload failed: " . $e->getMessage());
+            $uploadedMedia[] = [
+                "url" => $publicURL,
+                "type" => $mediaType
+            ];
+
+        } catch(Exception $e) {
+            echo json_encode(["status" => "error", "msg" => $e->getMessage()]);
+            exit;
         }
     }
 }
 
-// ===== SAVE MESSAGE & MEDIA IN DB =====
-$stmt = $conn->prepare("
-    INSERT INTO chat (client_id, sender_type, message, media_path, media_type, csr_fullname, created_at)
-    VALUES (:cid, :stype, :msg, :mp, :mt, :csr, NOW())
-");
-
+# Insert message to chat
+$stmt = $conn->prepare("INSERT INTO chat (client_id, sender_type, message, csr_fullname, created_at)
+                        VALUES (:cid, :type, :msg, :csr, NOW())");
 $stmt->execute([
-    ":cid"   => $client_id,
-    ":stype" => $sender_type,
-    ":msg"   => $message,
-    ":mp"    => $media_path,
-    ":mt"    => $media_type,
-    ":csr"   => $csr_fullname
+    ":cid" => $client_id,
+    ":type" => $sender_type,
+    ":msg" => $message,
+    ":csr" => $csr_fullname
 ]);
 
-echo "ok";
-?>
+$chat_id = $conn->lastInsertId();
+
+# Insert media
+foreach ($uploadedMedia as $m) {
+    $stmt2 = $conn->prepare("INSERT INTO chat_media (chat_id, media_path, media_type, created_at)
+                             VALUES (:cid, :path, :type, NOW())");
+    $stmt2->execute([
+        ":cid"  => $chat_id,
+        ":path" => $m["url"],
+        ":type" => $m["type"]
+    ]);
+}
+
+echo json_encode(["status" => "ok"]);
