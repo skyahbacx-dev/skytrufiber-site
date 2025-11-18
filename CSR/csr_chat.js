@@ -40,23 +40,18 @@ function selectClient(id, name, assigned) {
     loadClientInfo();
     loadMessages();
 }
-/* ASSIGN BUTTON */
 function assignClient(id){
-    $.post("assignClient.php", {client_id:id}, function(res){
-        if(res === "ok"){
-            loadClients();
-        }
+    $.post("assign_client.php", { client_id:id }, function(){
+        loadClients();
     });
 }
 
-/* UNASSIGN BUTTON */
 function unassignClient(id){
-    $.post("unassignClient.php", {client_id:id}, function(res){
-        if(res === "ok"){
-            loadClients();
-        }
+    $.post("unassign_client.php", { client_id:id }, function(){
+        loadClients();
     });
 }
+
 
 /******** LOAD CLIENT INFO ********/
 function loadClientInfo() {
