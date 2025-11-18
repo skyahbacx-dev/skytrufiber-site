@@ -7,8 +7,8 @@ $csr = $_SESSION["csr_user"] ?? "";
 
 if (!$cid || !$csr) { echo "error"; exit; }
 
-$stmt = $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :id");
-$stmt->execute([":csr" => $csr, ":id" => $cid]);
+$stmt = $conn->prepare("UPDATE clients SET assigned_csr = NULL WHERE id = :id AND assigned_csr = :csr");
+$stmt->execute([":id" => $cid, ":csr" => $csr]);
 
 echo "ok";
 ?>
