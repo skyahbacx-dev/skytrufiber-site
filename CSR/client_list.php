@@ -15,7 +15,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $name = htmlspecialchars($row["name"]);
     $assigned = $row["assigned_csr"];
 
-    echo "<div class='client-item' onclick='selectClient($id, \"$name\")'>
+    echo "<div class='client-item' onclick='selectClient($id, \"$name\", \"$assigned\")'>
             <div class='client-main'>
                 <img src='upload/default-avatar.png' class='client-avatar'>
                 <div>
@@ -27,20 +27,16 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             </div>
             <div class='client-actions'>";
 
-    // ADD if null
     if ($assigned === null || $assigned === "") {
         echo "<button class='pill green' onclick='event.stopPropagation(); assignClient($id)'>➕</button>";
     }
-    // MINUS if owner
     elseif ($assigned === $csrUser) {
         echo "<button class='pill red' onclick='event.stopPropagation(); unassignClient($id)'>➖</button>";
     }
-    // LOCK if assigned to another CSR
     else {
         echo "<button class='pill gray' disabled title='Handled by $assigned'>🔒</button>";
     }
 
-    echo "  </div>
-        </div>";
+    echo "</div></div>";
 }
 ?>
