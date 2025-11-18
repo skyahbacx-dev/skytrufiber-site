@@ -1,12 +1,12 @@
 <?php
-include "../db_connect.php";
 session_start();
+include "../db_connect.php";
 
-$csr = $_SESSION["csr_fullname"] ?? $_SESSION["csr_user"];
-$client_id = $_POST["client_id"];
+$cid = $_POST["client_id"] ?? 0;
+$csr = $_SESSION["csr_user"] ?? "";
+
+if(!$cid || !$csr){ exit; }
 
 $stmt = $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :id");
-$stmt->execute([":csr"=>$csr, ":id"=>$client_id]);
-
+$stmt->execute([":csr"=>$csr, ":id"=>$cid]);
 echo "ok";
-?>
