@@ -3,91 +3,66 @@ session_start();
 include '../db_connect.php';
 header('Content-Type: application/json');
 
-$username = $_POST["username"] ?? '';
-$message  = trim($_POST["message"] ?? '');
-$sender   = "client";
+$sender_type  = "csr";
+$message      = trim($_POST["message"] ?? '');
+$client_id    = (int)($_POST["client_id"] ?? 0);
+$csr_fullname = $_POST["csr_fullname"] ?? '';
 
-// Prevent empty message + no file
-if ($message === "" && empty($_FILES['files']['name'][0])) {
-    echo json_encode(["status" => "error", "msg" => "Empty"]);
+if (!$client_id) {
+    echo json_encode(["status" => "error", "msg" => "missing client"]);
     exit;
 }
 
-// GET OR CREATE CLIENT RECORD
-$stmt = $conn->prepare("SELECT id, assigned_csr FROM clients WHERE name = :name LIMIT 1");
-$stmt->execute([":name" => $username]);
-$data = $stmt->fetch(PDO::FETCH_ASSOC);
+// prepare upload
+$uploadBaseDir = __DIR__ . "/../upload/";
+$media_path = null;
+$media_type = null;
 
-if (!$data) {
-    $ins = $conn->prepare("INSERT INTO clients (name, created_at) VALUES (:n, NOW()) RETURNING id");
-    $ins->execute([':n' => $username]);
-    $client_id = $ins->fetchColumn();
-} else {
-    $client_id = $data["id"];
-}
-
-$uploaded_files = [];
-
-// Ensure folders exist
-$upload_base = "../CSR/upload/chat/";
-if (!file_exists($upload_base)) {
-    mkdir($upload_base, 0777, true);
-}
-
-// MULTIPLE FILE HANDLING
+// MULTIPLE files support (files[])
 if (!empty($_FILES['files']['name'][0])) {
-    foreach ($_FILES['files']['name'] as $index => $fileName) {
+    // We'll only save the *first* file as main media; others could be extended if needed
+    // but your DB has a single media_path / media_type column.
+    $name0 = $_FILES['files']['name'][0];
+    $tmp0  = $_FILES['files']['tmp_name'][0];
+    $ext   = strtolower(pathinfo($name0, PATHINFO_EXTENSION));
 
-        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+    if (in_array($ext, ['jpg','jpeg','png','gif','webp'])) {
+        $media_type = 'image';
+        $folder = $uploadBaseDir . "chat_images/";
+        $relFolder = "upload/chat_images/";
+    } elseif (in_array($ext, ['mp4','mov','avi','mkv','webm'])) {
+        $media_type = 'video';
+        $folder = $uploadBaseDir . "chat_videos/";
+        $relFolder = "upload/chat_videos/";
+    } else {
+        $media_type = null;
+    }
 
-        if (in_array($ext, ['jpg','jpeg','png','gif','webp'])) {
-            $media_type = "image";
-        } elseif (in_array($ext, ['mp4','mov','avi','mkv','webm'])) {
-            $media_type = "video";
-        } else {
-            continue;
+    if ($media_type) {
+        if (!is_dir($folder)) {
+            @mkdir($folder, 0775, true);
         }
+        $newName = time() . "_" . rand(1000, 9999) . "." . $ext;
+        $fullPath = $folder . $newName;
 
-        // Save file
-        $newName = time() . "_" . rand(1000,9999) . "." . $ext;
-        $filePath = $upload_base . $newName;
-
-        if (move_uploaded_file($_FILES['files']['tmp_name'][$index], $filePath)) {
-            $relativePath = "CSR/upload/chat/" . $newName;
-
-            $uploaded_files[] = [
-                "path" => $relativePath,
-                "type" => $media_type
-            ];
+        if (move_uploaded_file($tmp0, $fullPath)) {
+            // path used in <img src="..."> from csr_dashboard.php
+            $media_path = $relFolder . $newName;
         }
     }
 }
 
-// Insert text message if exists
-if ($message !== "" || empty($uploaded_files)) {
-    $stmt2 = $conn->prepare("
-        INSERT INTO chat (client_id, sender_type, message, created_at)
-        VALUES (:cid, 'client', :msg, NOW())
-    ");
-    $stmt2->execute([
-        ":cid" => $client_id,
-        ":msg" => $message
-    ]);
-}
+$stmt = $conn->prepare("
+    INSERT INTO chat (client_id, sender_type, message, media_path, media_type, csr_fullname, created_at)
+    VALUES (:cid, :stype, :msg, :mp, :mt, :csr, NOW())
+");
+$stmt->execute([
+    ":cid"   => $client_id,
+    ":stype" => $sender_type,
+    ":msg"   => $message,
+    ":mp"    => $media_path,
+    ":mt"    => $media_type,
+    ":csr"   => $csr_fullname
+]);
 
-// Insert media files
-foreach ($uploaded_files as $file) {
-    $stmt3 = $conn->prepare("
-        INSERT INTO chat (client_id, sender_type, media_path, media_type, created_at)
-        VALUES (:cid, 'client', :mp, :mt, NOW())
-    ");
-    $stmt3->execute([
-        ":cid" => $client_id,
-        ":mp"  => $file["path"],
-        ":mt"  => $file["type"]
-    ]);
-}
-
-echo json_encode(["status" => "ok", "client_id" => $client_id]);
-exit;
-?>
+echo json_encode(["status" => "ok"]);
