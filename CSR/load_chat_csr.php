@@ -1,7 +1,7 @@
 <?php
+session_start();
 include "../db_connect.php";
 header("Content-Type: application/json");
-date_default_timezone_set("Asia/Manila");
 
 $client_id = $_GET["client_id"] ?? 0;
 if (!$client_id) { echo json_encode([]); exit; }
@@ -13,18 +13,12 @@ $stmt = $conn->prepare("
     ORDER BY created_at ASC
 ");
 $stmt->execute([":cid" => $client_id]);
+
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$out = [];
-foreach ($rows as $m) {
-    $out[] = [
-        "message"     => $m["message"],
-        "sender_type" => $m["sender_type"],
-        "created_at"  => date("M d, g:i A", strtotime($m["created_at"])),
-        "media_path"  => $m["media_path"],
-        "media_type"  => $m["media_type"]
-    ];
+foreach ($rows as &$m) {
+    $m["created_at"] = date("M d, g:i A", strtotime($m["created_at"]));
 }
 
-echo json_encode($out);
+echo json_encode($rows);
 ?>
