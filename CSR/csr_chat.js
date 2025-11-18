@@ -131,6 +131,17 @@ $("#sendBtn").click(function(){
         }
     });
 });
+function assignClient(id){
+    $.post("assign_client.php", { client_id:id }, function(){
+        loadClients();
+    });
+}
+
+function unassignClient(id){
+    $.post("unassign_client.php", { client_id:id }, function(){
+        loadClients();
+    });
+}
 
 /* Refresh messages */
 setInterval(loadMessages, 2000);
