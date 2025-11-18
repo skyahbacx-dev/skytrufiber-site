@@ -102,5 +102,15 @@ $("#sendBtn").click(function(){
         }
     });
 });
+// MEDIA MODAL VIEW HANDLER
+$(document).on("click", ".file-img", function(){
+    let src = $(this).attr("src") || $(this).find("source").attr("src");
+    $("#mediaModalContent").attr("src", src);
+    $("#mediaModal").addClass("show");
+});
+
+$(document).on("click", "#closeMediaModal", function(){
+    $("#mediaModal").removeClass("show");
+});
 
 setInterval(loadMessages, 1500);
