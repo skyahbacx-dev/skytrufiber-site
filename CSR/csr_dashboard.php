@@ -108,6 +108,10 @@ const csrFullname = "<?= $csrFullName ?>";
     </aside>
 
 </div>
+<div id="mediaModal" class="media-modal">
+    <span id="closeMediaModal" class="close-modal">✖</span>
+    <img id="mediaModalContent" class="modal-content">
+</div>
 
 </body>
 </html>
