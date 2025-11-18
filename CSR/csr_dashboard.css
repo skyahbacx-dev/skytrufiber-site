@@ -286,3 +286,64 @@ body{
   .layout{flex-direction:column;}
   .client-panel{width:100%;height:220px;}
 }
+/* ===================== ADDED FEATURES ===================== */
+/* preview thumbnails row fix */
+.preview-area{
+  display:flex;
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  gap:10px;
+  padding:12px 14px;
+  border-top:1px solid #dce8e1;
+}
+
+.preview-item{
+  width:85px;
+  height:85px;
+  border-radius:10px;
+  overflow:hidden;
+  border:1px solid #bcd8c8;
+}
+.preview-item img,
+.preview-item video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+/* Click-to-open enlarged media modal */
+.media-modal{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.75);
+  display:none;align-items:center;justify-content:center;
+  z-index:90000;
+}
+.media-modal.show{ display:flex; }
+
+.modal-content{
+  max-width:90%;
+  max-height:90%;
+  border-radius:12px;
+  box-shadow:0 0 18px rgba(255,255,255,.4);
+}
+.close-modal{
+  position:absolute;
+  top:25px;
+  right:35px;
+  font-size:38px;
+  color:#fff;
+  cursor:pointer;
+  font-weight:900;
+}
+
+/* Chat message media styling fix */
+.file-img{
+  max-width:260px;
+  margin-top:8px;
+  border-radius:12px;
+  cursor:pointer;
+  transition:.2s;
+}
+.file-img:hover{
+  opacity:.85;
+}
