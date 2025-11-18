@@ -15,17 +15,10 @@ function toggleClientInfo(){
 
 /******** LOAD CLIENT LIST ********/
 function loadClients() {
-    $.get("client_list.php", data => {
+    $.get("client_list.php", function(data){
         $("#clientList").html(data);
     });
-
-    $(".search").on("keyup", function(){
-        let txt = $(this).val();
-        $.get("client_list.php?search=" + txt, data => {
-            $("#clientList").html(data);
-        });
-    });
-}   // <-- THIS WAS MISSING!!
+}
 
 /******** SELECT CLIENT ********/
 function selectClient(id, name, assigned) {
@@ -37,34 +30,15 @@ function selectClient(id, name, assigned) {
 
     $("#chatName").text(name);
 
-    const isOtherCSR = (assigned && assigned !== csrFullname);
-    $("#messageInput").prop("disabled", isOtherCSR);
-    $("#sendBtn").prop("disabled", isOtherCSR);
+    const locked = (assigned && assigned !== csrFullname);
 
-    if (isOtherCSR) {
-        $(".upload-icon").hide();
-        $("#fileInput").prop("disabled", true);
-    } else {
-        $(".upload-icon").show();
-        $("#fileInput").prop("disabled", false);
-    }
+    $("#messageInput").prop("disabled", locked);
+    $("#sendBtn").prop("disabled", locked);
+    $("#fileInput").prop("disabled", locked);
+    if (locked) $(".upload-icon").hide(); else $(".upload-icon").show();
 
     loadClientInfo();
     loadMessages();
-}
-
-/******** ASSIGN / UNASSIGN ********/
-function assignClient(id){
-    $.post("assign_client.php", { client_id:id }, function(){
-        loadClients();
-    });
-}
-
-function unassignClient(id){
-    if(!confirm("Remove client from your list?")) return;
-    $.post("unassign_client.php", { client_id:id }, function(){
-        loadClients();
-    });
 }
 
 /******** LOAD CLIENT INFO ********/
@@ -80,21 +54,20 @@ function loadClientInfo() {
 /******** LOAD MESSAGES ********/
 function loadMessages(){
     if (!selectedClient) return;
-
-    $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
+    $.getJSON("load_chat_csr.php?client_id=" + selectedClient, msgs => {
         let html = "";
-        messages.forEach(m => {
+        msgs.forEach(m => {
             let side = (m.sender_type === "csr") ? "csr" : "client";
 
             html += `<div class="msg ${side}">
                         <div class="bubble">${m.message || ""}`;
 
-            if (m.media_path) {
+            if (m.media_url) {
                 if (m.media_type === "image") {
-                    html += `<img src="${m.media_path}" class="file-img" onclick="openMedia('${m.media_path}')">`;
+                    html += `<img src="${m.media_url}" class="file-img" onclick="openMedia('${m.media_url}')">`;
                 } else {
-                    html += `<video controls class="file-img" onclick="openMedia('${m.media_path}')">
-                                <source src="${m.media_path}">
+                    html += `<video controls class="file-img" onclick="openMedia('${m.media_url}')">
+                                <source src="${m.media_url}">
                              </video>`;
                 }
             }
@@ -103,6 +76,7 @@ function loadMessages(){
         });
 
         $("#chatMessages").html(html);
+        $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
     });
 }
 
@@ -154,15 +128,13 @@ $("#sendBtn").click(function(){
     });
 });
 
-/******** MEDIA MODAL ********/
+/******** FULLSCREEN MEDIA ********/
 function openMedia(src){
     $("#mediaModal").addClass("show");
     $("#mediaModalContent").attr("src", src);
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-/******** AUTO REFRESH ********/
 setInterval(loadClients, 4000);
 setInterval(loadMessages, 1500);
-
 loadClients();
