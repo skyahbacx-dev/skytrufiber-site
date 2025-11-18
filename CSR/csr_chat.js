@@ -15,6 +15,12 @@ function toggleClientInfo(){
 
 /******** LOAD CLIENT LIST ********/
 function loadClients() {
+    $.get("client_list.php", data => {
+        $("#clientList").html(data);
+    });
+}
+
+/******** SEARCH LIVE FILTER ********/
 $(".search").on("keyup", function(){
     let txt = $(this).val();
     $.get("client_list.php?search=" + txt, data => {
@@ -22,13 +28,11 @@ $(".search").on("keyup", function(){
     });
 });
 
-
 /******** SELECT CLIENT ********/
 function selectClient(id, name, assigned) {
     selectedClient = id;
     assignedTo = assigned;
 
-    // Highlight Selected
     $(".client-item").removeClass("active-client");
     $("#client-" + id).addClass("active-client");
 
