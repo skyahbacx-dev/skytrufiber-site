@@ -308,6 +308,10 @@ body{
   font-size:38px;color:#fff;
   cursor:pointer;font-weight:900;
 }
+.active-client {
+    border:2px solid var(--green);
+    background:#e7fff1 !important;
+}
 
 /* RESPONSIVE */
 @media(max-width:960px){
