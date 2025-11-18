@@ -1,4 +1,7 @@
-/* ========= ROOT & RESET ========= */
+/* =========================================================
+   CSR DASHBOARD CSS — FULL FILE (STRICT: DO NOT MODIFY UI)
+   ========================================================= */
+
 :root{
   --green:#007c3c;
   --green-dark:#015f2e;
@@ -15,14 +18,14 @@ body{
   position:relative;
 }
 
-/* ======= WATERMARK BACKGROUND ======= */
+/******** WATERMARK BG **********/
 .chat-box {
   background:url("../AHBALOGO.png") center center no-repeat;
   background-size:280px;
   opacity:1;
 }
 
-/* ========= SIDEBAR ========= */
+/******** SIDEBAR *********/
 .sidebar{
   width:240px;
   background:var(--green-dark);
@@ -53,6 +56,7 @@ body{
   font-size:26px;padding:6px 10px;
   cursor:pointer;border-radius:8px;
 }
+
 .side-title{
   color:#fff;font-size:18px;font-weight:800;
   padding-left:24px;margin-bottom:8px;
@@ -67,7 +71,7 @@ body{
 .side-item.logout{ margin-top:auto;background:#d04141; }
 .side-item.logout:hover{ background:#ac1c1c; }
 
-/* ========= TOP NAVIGATION ========= */
+/******** NAV BAR ********/
 .topnav{
   height:68px;
   display:flex;
@@ -83,9 +87,7 @@ body{
   background:none;border:none;color:#fff;
   font-size:26px;cursor:pointer;margin-right:8px;
 }
-.nav-logo{
-  height:42px;margin-right:12px;
-}
+.nav-logo{ height:42px;margin-right:12px; }
 .top-title{display:flex;align-items:center;gap:10px;}
 
 .nav-buttons{display:flex;align-items:center;gap:8px;}
@@ -105,13 +107,13 @@ body{
   text-decoration:none;
 }
 
-/* ========= MAIN LAYOUT ========= */
+/******** MAIN LAYOUT ********/
 .layout{
   display:flex;
   height:calc(100vh - 68px);
 }
 
-/* ========= CLIENT LIST PANEL ========= */
+/******** CLIENT PANEL ********/
 .client-panel{
   width:310px;
   background:#fff;
@@ -137,6 +139,11 @@ body{
 }
 .client-item:hover{ background:#ebfff5; }
 
+.active-client{
+  background:#d6ffe8 !important;
+  border:2px solid #26a05a !important;
+}
+
 .client-main{display:flex;align-items:center;gap:10px;}
 .client-avatar{
   width:42px;height:42px;
@@ -146,25 +153,12 @@ body{
 .client-name{font-weight:800;font-size:14.5px;}
 .client-sub{font-size:11.5px;color:var(--muted);}
 
-.client-actions{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
+.pill{border:none;border-radius:50%;padding:6px 9px;cursor:pointer;}
+.pill.green{background:#29c95f;color:#fff;}
+.pill.red{background:#e84545;color:#fff;}
+.pill.gray{background:#8a8a8a;color:#fff;cursor:not-allowed}
 
-/* PILL BUTTONS FOR ASSIGN/UNASSIGN/LOCK */
-.pill{
-  border:none;
-  padding:6px 10px;
-  border-radius:12px;
-  font-size:16px;
-  cursor:pointer;
-}
-.pill.green{ background:#28c76f;color:#fff; }
-.pill.red{ background:#ff4d4d;color:#fff; }
-.pill.gray{ background:#c5c5c5;color:#444;cursor:not-allowed; }
-
-/* ========= CHAT PANEL ========= */
+/******** CHAT PANEL ********/
 .chat-panel{
   flex:1;
   display:flex;
@@ -172,7 +166,6 @@ body{
   position:relative;
 }
 
-/* HEADER */
 .chat-header{
   background:var(--green-dark);
   color:#fff;
@@ -181,32 +174,15 @@ body{
   justify-content:space-between;
   align-items:center;
 }
+
 .user-section{display:flex;align-items:center;gap:10px;}
 .chat-avatar{
   width:50px;height:50px;border-radius:50%;
   border:2px solid rgba(255,255,255,.4);
   object-fit:cover;
 }
-.chat-name{font-size:18px;font-weight:800;}
-.chat-status{font-size:12px;}
-.status-dot{
-  width:10px;height:10px;border-radius:50%;
-  display:inline-block;margin-right:5px;
-}
-.status-dot.online{background:#20ea71;}
-.status-dot.offline{background:#b4b4b4;}
 
-.info-btn{
-  font-size:22px;background:none;border:none;
-  color:#fff;cursor:pointer;
-}
-
-/* CHAT MESSAGES */
-.chat-box{
-  flex:1;overflow-y:auto;
-  padding:18px;
-}
-.placeholder{text-align:center;color:#b0b8b3;margin-top:40px;}
+.chat-box{ flex:1;overflow-y:auto;padding:18px; }
 
 .msg{margin-bottom:14px;max-width:65%;}
 .msg.client{text-align:left;}
@@ -221,36 +197,31 @@ body{
 .msg.csr .bubble{background:#dbe8ff;}
 
 .file-img{
-  max-width:260px;
-  margin-top:8px;
-  border-radius:12px;
-  cursor:pointer;
-  transition:.2s;
+  max-width:260px;margin-top:8px;
+  border-radius:14px;cursor:pointer;
 }
-.file-img:hover{ opacity:.85; }
 
-.meta{margin-top:4px;font-size:11px;opacity:.6}
-
-/* PREVIEW AREA FIXED */
+/******** THUMBNAIL PREVIEW ********/
 .preview-area{
   display:flex;
+  flex-wrap:nowrap;
   overflow-x:auto;
   gap:10px;
   padding:12px 14px;
   border-top:1px solid #dce8e1;
+  background:white;
 }
+
 .preview-thumb{
-  width:90px;height:90px;
-  border-radius:10px;
-  border:1px solid #bcd8c8;
-  overflow:hidden;
+  width:85px;height:85px;
+  border-radius:8px;overflow:hidden;
+  border:1px solid #c7e5d7;
 }
-.preview-thumb img,
-.preview-thumb video{
+.preview-thumb img, .preview-thumb video{
   width:100%;height:100%;object-fit:cover;
 }
 
-/* INPUT BAR */
+/******** INPUT BAR ********/
 .chat-input{
   padding:12px 18px;
   display:flex;align-items:center;gap:12px;
@@ -259,20 +230,10 @@ body{
 .upload-icon{
   font-size:22px;cursor:pointer;
   background:#eaffef;border-radius:50%;
-  padding:8px 10px;border:1px solid #c1e9d3;
-}
-.chat-input input{
-  flex:1;padding:11px 14px;
-  border-radius:22px;border:1px solid #cfded4;
-  font-size:15px;
-}
-.send-btn{
-  background:var(--green);color:#fff;
-  border:none;border-radius:50%;
-  padding:11px 14px;font-size:18px;cursor:pointer;
+  padding:8px 10px;border:1px solid #c7e7d7;
 }
 
-/* CLIENT INFO SLIDER */
+/******** CLIENT INFO SLIDER ********/
 .client-info-panel{
   position:absolute;right:-330px;top:68px;
   width:300px;height:calc(100vh - 68px);
@@ -281,40 +242,23 @@ body{
   box-shadow:-3px 0 8px rgba(0,0,0,.15);
 }
 .client-info-panel.show{ right:0; }
+.close-info{float:right;font-size:22px;background:none;border:none;cursor:pointer;}
 
-.close-info{
-  float:right;font-size:22px;
-  background:none;border:none;cursor:pointer;
-}
-
-/* MEDIA MODAL */
+/******** MODAL VIEWER ********/
 .media-modal{
   position:fixed;inset:0;
   background:rgba(0,0,0,0.75);
   display:none;align-items:center;justify-content:center;
-  z-index:90000;
+  z-index:10000;
 }
 .media-modal.show{ display:flex; }
 
 .modal-content{
-  max-width:90%;
-  max-height:90%;
-  border-radius:12px;
-  box-shadow:0 0 18px rgba(255,255,255,.4);
+  max-width:85%;max-height:85%;
+  border-radius:14px;transition:transform .15s;
 }
 .close-modal{
-  position:absolute;
-  top:25px;right:35px;
-  font-size:38px;color:#fff;
-  cursor:pointer;font-weight:900;
-}
-.active-client {
-    border:2px solid var(--green);
-    background:#e7fff1 !important;
-}
-
-/* RESPONSIVE */
-@media(max-width:960px){
-  .layout{flex-direction:column;}
-  .client-panel{width:100%;height:220px;}
+  position:absolute;top:22px;right:30px;
+  color:white;font-size:34px;font-weight:900;
+  cursor:pointer;
 }
