@@ -1,54 +1,71 @@
 <?php
 session_start();
 include "../db_connect.php";
-include "b2_upload.php";
+require "../vendor/autoload.php"; // REQUIRED for Backblaze SDK
+
+use BackblazeB2\Client;
 
 header("Content-Type: application/json");
 
-$sender_type  = "csr";
+$client_id    = $_POST["client_id"] ?? 0;
 $message      = trim($_POST["message"] ?? "");
-$client_id    = intval($_POST["client_id"] ?? 0);
 $csr_fullname = $_POST["csr_fullname"] ?? "";
+$sender_type  = "csr";
 
 if (!$client_id) {
-    echo json_encode(["status" => "error", "msg" => "Missing client ID"]);
+    echo json_encode(["status" => "error", "msg" => "Missing client"]);
     exit;
 }
 
-$media_path = null;
+// initialize B2 client
+$b2 = new Client(
+    "005a548887f9c4f0000000002",  // Key ID
+    "K005fOYaprINPto/Qdm9wex0w4v/L2k"  // Application Key
+);
+
+$bucketName = "ahba-chat-media";
+
+// upload file if exists
+$media_url = null;
 $media_type = null;
 
-if (!empty($_FILES['files']['name'][0])) {
-    $tmp  = $_FILES['files']['tmp_name'][0];
-    $name = $_FILES['files']['name'][0];
-    $ext  = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+if (!empty($_FILES["files"]["name"][0])) {
+    $filename = time() . "_" . rand(10000, 99999) . "_" . $_FILES["files"]["name"][0];
+    $tmp = $_FILES["files"]["tmp_name"][0];
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 
-    if (in_array($ext, ["jpg","jpeg","png","gif","webp"])) $media_type = "image";
-    if (in_array($ext, ["mp4","mov","avi","mkv","webm"]))  $media_type = "video";
-
-    if ($media_type) {
-        $newName = time() . "_" . rand(1000,9999) . "." . $ext;
-        $uploadedURL = b2_upload($tmp, $newName);
-
-        if ($uploadedURL) {
-            $media_path = $uploadedURL;
-        }
+    if (in_array($ext, ["jpg","jpeg","png","gif","webp"])) {
+        $media_type = "image";
+    } elseif (in_array($ext, ["mp4","mov","avi","mkv","webm"])) {
+        $media_type = "video";
     }
+
+    $fileContent = file_get_contents($tmp);
+
+    $response = $b2->upload([
+        'BucketName' => $bucketName,
+        'FileName'   => $filename,
+        'Body'       => $fileContent,
+        'ContentType' => $_FILES["files"]["type"][0]
+    ]);
+
+    $media_url = $response->getUrl();
 }
 
+// insert chat
 $stmt = $conn->prepare("
-    INSERT INTO chat (client_id, sender_type, message, media_path, media_type, csr_fullname, created_at)
-    VALUES (:cid, :stype, :msg, :mp, :mt, :csr, NOW())
+    INSERT INTO chat (client_id, sender_type, message, media_url, media_type, csr_fullname, created_at)
+    VALUES (:cid, :stype, :msg, :url, :mt, :csr, NOW())
 ");
+
 $stmt->execute([
     ":cid"   => $client_id,
     ":stype" => $sender_type,
     ":msg"   => $message,
-    ":mp"    => $media_path,
+    ":url"   => $media_url,
     ":mt"    => $media_type,
     ":csr"   => $csr_fullname
 ]);
 
 echo json_encode(["status" => "ok"]);
 exit;
-?>
