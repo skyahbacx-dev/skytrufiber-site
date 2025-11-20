@@ -6,21 +6,22 @@ let selectedClient = 0;
 let assignedTo = "";
 let filesToSend = [];
 let lastMessageCount = 0;
+let loadingMessages = false;
 
-// ----------------- SIDEBAR -----------------
-function toggleSidebar(){
+/******** SIDEBAR ********/
+function toggleSidebar() {
     document.querySelector(".sidebar").classList.toggle("open");
     document.querySelector(".sidebar-overlay").classList.toggle("show");
 }
 
-// ----------------- LOAD CLIENT LIST -----------------
+/******** LOAD CLIENT LIST ********/
 function loadClients() {
     $.get("client_list.php", data => {
         $("#clientList").html(data);
     });
 }
 
-// ----------------- SELECT CLIENT -----------------
+/******** SELECT CLIENT ********/
 function selectClient(id, name, assigned) {
     selectedClient = id;
     assignedTo = assigned;
@@ -30,12 +31,12 @@ function selectClient(id, name, assigned) {
 
     $("#chatName").text(name);
 
-    const isLocked = assigned && assigned !== csrFullname;
+    const locked = assigned && assigned !== csrFullname;
 
-    $("#messageInput").prop("disabled", isLocked);
-    $("#sendBtn").prop("disabled", isLocked);
+    $("#messageInput").prop("disabled", locked);
+    $("#sendBtn").prop("disabled", locked);
 
-    if (isLocked) {
+    if (locked) {
         $(".upload-icon").hide();
         $("#fileInput").prop("disabled", true);
     } else {
@@ -47,7 +48,7 @@ function selectClient(id, name, assigned) {
     loadMessages(true);
 }
 
-// ----------------- LOAD CLIENT INFO -----------------
+/******** LOAD CLIENT INFO ********/
 function loadClientInfo() {
     $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name);
@@ -57,60 +58,67 @@ function loadClientInfo() {
     });
 }
 
-// ----------------- LOAD MESSAGES WITH ANIMATION + SEEN -----------------
-function loadMessages(initialLoad = false){
-    if (!selectedClient) return;
+/******** LOAD CHAT MESSAGES (NO FLICKER) ********/
+function loadMessages(initialLoad = false) {
+    if (!selectedClient || loadingMessages) return;
+    loadingMessages = true;
 
     $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
 
-        let html = "";
-        messages.forEach(m => {
+        if (initialLoad) {
+            $("#chatMessages").html(""); // reset clean once
+            lastMessageCount = 0;
+        }
 
-            let isCSR = (m.sender_type === "csr");
-            let side = isCSR ? "csr" : "client";
+        if (messages.length > lastMessageCount) {
+            let newMsgs = messages.slice(lastMessageCount);
 
-            // ---- ATTACHMENT HANDLING ----
-            let attachment = "";
-            if (m.media_url) {
-                if (m.media_type === "image") {
-                    attachment = `<img src="${m.media_url}" class="chat-media-img" onclick="openMedia('${m.media_url}')">`;
-                } else if (m.media_type === "video") {
-                    attachment = `<video class="chat-media-video" controls><source src="${m.media_url}"></video>`;
+            newMsgs.forEach(m => {
+                let isCSR = (m.sender_type === "csr");
+                let side = isCSR ? "csr" : "client";
+
+                let attachment = "";
+                if (m.media_url) {
+                    if (m.media_type === "image") {
+                        attachment = `<img src="${m.media_url}" class="chat-media-img" onclick="openMedia('${m.media_url}')">`;
+                    } else if (m.media_type === "video") {
+                        attachment = `<video class="chat-media-video" controls><source src="${m.media_url}"></video>`;
+                    }
                 }
-            }
 
-            // ---- DELIVERY + SEEN ----
-            let statusLabel = "";
-            if (isCSR) {
-                if (m.seen === "1") statusLabel = `<div class="seen-tag">Seen</div>`;
-                else statusLabel = `<div class="delivered-tag">Delivered</div>`;
-            }
+                let statusText = "";
+                if (isCSR) {
+                    if (m.seen === "1") statusText = `<div class="seen-tag">Seen</div>`;
+                    else statusText = `<div class="delivered-tag">Delivered</div>`;
+                }
 
-            html += `
-            <div class="msg-row ${side} animate-bubble">
-                <img src="upload/default-avatar.png" class="chat-avatar">
-                <div class="msg-bubble-wrap">
-                    <div class="bubble">${m.message || ""} ${attachment}</div>
-                    <div class="meta">${m.created_at}</div>
-                    ${statusLabel}
-                </div>
-            </div>`;
-        });
+                let html = `
+                <div class="msg-row ${side} animate-bubble">
+                    <img src="upload/default-avatar.png" class="chat-avatar">
+                    <div class="msg-bubble-wrap">
+                        <div class="bubble">${m.message || ""} ${attachment}</div>
+                        <div class="meta">${m.created_at}</div>
+                        ${statusText}
+                    </div>
+                </div>`;
 
-        $("#chatMessages").html(html);
+                $("#chatMessages").append(html);
+            });
 
-        if (messages.length > lastMessageCount && !initialLoad) {
             $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
         }
 
         lastMessageCount = messages.length;
+        loadingMessages = false;
     });
 }
 
-// ----------------- ATTACHMENT PREVIEW -----------------
-$(".upload-icon").on("click", () => $("#fileInput").click());
+/******** PREVIEW FILES ********/
+$(".upload-icon").on("click", function () {
+    $("#fileInput").click();
+});
 
-$("#fileInput").on("change", function(e){
+$("#fileInput").on("change", function (e) {
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
@@ -129,9 +137,11 @@ $("#fileInput").on("change", function(e){
     });
 });
 
-// ----------------- SEND MESSAGE + FILES -----------------
-$("#sendBtn").click(function(){
-    let msg = $("#messageInput").val();
+/******** SEND MESSAGE ********/
+$("#sendBtn").click(sendMessage);
+
+function sendMessage() {
+    let msg = $("#messageInput").val().trim();
     if (!msg && filesToSend.length === 0) return;
 
     let fd = new FormData();
@@ -155,22 +165,21 @@ $("#sendBtn").click(function(){
             loadMessages(false);
         }
     });
-});
+}
 
-// ----------------- FULLSCREEN MEDIA -----------------
-function openMedia(src){
+/******** MEDIA MODAL ********/
+function openMedia(src) {
     $("#mediaModal").addClass("show");
     $("#mediaModalContent").attr("src", src);
 }
+
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-// ----------------- LIVE AUTO REFRESH -----------------
-setInterval(loadClients, 4000);
-setInterval(() => loadMessages(false), 1500);
+/******** AUTO REFRESH ********/
+setInterval(loadClients, 5000);
+setInterval(() => loadMessages(false), 1200);
 
-loadClients();
-
-// ----------------- TOGGLE CLIENT INFO PANEL -----------------
+/******** TOGGLE CLIENT INFO PANEL ********/
 function toggleClientInfo() {
     document.getElementById("clientInfoPanel").classList.toggle("show");
 }
