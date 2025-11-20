@@ -30,18 +30,14 @@ function selectClient(id, name, assigned) {
     $("#messageInput").prop("disabled", locked);
     $("#sendBtn").prop("disabled", locked);
     $("#fileInput").prop("disabled", locked);
+
     if (locked) $(".upload-icon").hide(); else $(".upload-icon").show();
 
-    // remove badge visually
+    // Remove unread badge
     $(`#client-${id} .badge`).remove();
 
-    // update read status
-    $.post("mark_read.php", { client_id:id });
-
-    if (window.innerWidth < 900) {
-        document.querySelector(".sidebar").classList.remove("show");
-        document.querySelector(".sidebar-overlay").classList.remove("show");
-    }
+    // Mark read
+    $.post("mark_read.php", { client_id: id });
 
     loadClientInfo();
     loadMessages(true);
@@ -57,42 +53,50 @@ function loadClientInfo() {
     });
 }
 
-/******** LOAD MESSAGES ********/
+/******** LOAD CHAT MESSAGES WITH GROUPING ********/
 function loadMessages(autoScroll){
     if (!selectedClient) return;
 
     $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
+
         let html = "";
+        let lastDate = "";
 
         messages.forEach(m => {
+
+            // Format date grouping
+            let msgDate = new Date(m.created_at).toDateString();
+            if (msgDate !== lastDate) {
+                html += `<div class="date-separator">${msgDate}</div>`;
+                lastDate = msgDate;
+            }
+
             let side = (m.sender_type === "csr") ? "csr" : "client";
 
-            html += `
-                <div class="msg ${side}">
-                    <img src="upload/default-avatar.png" class="avatar-small">
-                    <div>
+            html += `<div class="msg ${side}">
                         <div class="bubble">${m.message || ""}`;
 
+            // Handle attachments
             if (m.media_url) {
                 if (m.media_type === "image") {
-                    html += `<img src="${m.media_url}" class="file-img" onclick="openMedia('${m.media_url}')">`;
+                    html += `
+                        <div class="gallery-grid">
+                            <img src="${m.media_url}" class="file-img" onclick="openMedia('${m.media_url}')">
+                        </div>`;
                 } else {
-                    html += `<video class="file-img" controls onclick="openMedia('${m.media_url}')">
+                    html += `<video class="file-img" controls>
                                 <source src="${m.media_url}">
                              </video>`;
                 }
             }
 
             html += `
-                        </div>
-                        <div class="meta">${m.created_at}</div>
-                    </div>
-                </div>`;
+                    <div class="meta">${m.created_at}</div>
+                </div></div>`;
         });
 
         $("#chatMessages").html(html);
 
-        // scroll logic
         if (autoScroll || messages.length > lastMessageCount) {
             $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
         }
@@ -101,10 +105,26 @@ function loadMessages(autoScroll){
     });
 }
 
-/******** FILE BUTTON ********/
+/******** STATUS UPDATE ********/
+function refreshStatus() {
+    if (!selectedClient) return;
+
+    $.getJSON("typing_status.php?client_id=" + selectedClient, res => {
+        const dot = $("#statusDot");
+
+        if (res.status === "online") {
+            dot.removeClass("offline").addClass("online");
+            $("#chatStatus").text("Online");
+        } else {
+            dot.removeClass("online").addClass("offline");
+            $("#chatStatus").text("Offline");
+        }
+    });
+}
+
+/******** FILE PREVIEW ********/
 $(".upload-icon").on("click", () => $("#fileInput").click());
 
-/******** PREVIEW FILES ********/
 $("#fileInput").on("change", function(e){
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
@@ -115,8 +135,8 @@ $("#fileInput").on("change", function(e){
             $("#previewArea").append(`
                 <div class="preview-thumb">
                     ${file.type.includes("video")
-                        ? `<video src="${ev.target.result}" muted></video>`
-                        : `<img src="${ev.target.result}">`}
+                      ? `<video src="${ev.target.result}" muted></video>`
+                      : `<img src="${ev.target.result}">`}
                 </div>
             `);
         };
@@ -147,7 +167,6 @@ $("#sendBtn").click(function(){
             $("#previewArea").html("");
             $("#fileInput").val("");
             filesToSend = [];
-
             loadMessages(true);
             loadClients();
         }
@@ -161,13 +180,10 @@ function openMedia(src){
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-/******** AUTO REFRESH ********/
+/******** AUTO REFRESH TIMERS ********/
 setInterval(loadClients, 4000);
 setInterval(() => loadMessages(false), 1500);
+setInterval(refreshStatus, 2000);
 
+/******** STARTUP ********/
 loadClients();
-
-/******** SLIDE INFO PANEL ********/
-function toggleClientInfo(){
-    document.getElementById("clientInfoPanel").classList.toggle("show");
-}
