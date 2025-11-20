@@ -28,38 +28,76 @@ button {
 }
 
 button:hover { background:#0077a7; }
+
 label { display:block; text-align:left; margin-top:12px; font-size:15px; }
+
+.hidden { display:none; }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="container" id="step1">
   <img src="../SKYTRUFIBER.png" width="120" style="border-radius:50%; margin-bottom:15px;">
   <h2 style="color:#003d66; margin:0;">Data Privacy Notice</h2>
 
   <p style="font-size:15px; text-align:justify;">
-    SkyTruFiber is committed to protecting your personal information in accordance with the Data Privacy Act of 2012 (RA 10173).
-    We collect and process your information for installation, customer support, notifications, and billing.
-    Your data will never be shared externally without your consent.
+    SkyTruFiber is committed to protecting your personal information under the Data Privacy Act of 2012.
+    We collect, process and store your data for service installation, support, updates and inquiries.
   </p>
 
   <label><input type="radio" name="consent" value="yes"> YES, I agree and allow SkyTruFiber to process my information.</label>
   <label><input type="radio" name="consent" value="no"> NO, I do not agree.</label>
 
-  <button onclick="proceed()">Continue</button>
+  <button onclick="nextStep()">Continue</button>
+
+  <br><br>
+  <a href="skytrufiber.php" style="
+    display:inline-block; text-decoration:none;
+    color:#004466; font-weight:bold;">⬅ Go back to Customer Portal
+  </a>
 </div>
 
+
+
+<div class="container hidden" id="step2">
+  <img src="../SKYTRUFIBER.png" width="120" style="border-radius:50%; margin-bottom:15px;">
+  <h2 style="color:#003d66;">Where did you learn about this site?</h2>
+
+  <label><input type="radio" name="source" value="QR Code"> QR Code</label>
+  <label><input type="radio" name="source" value="Facebook"> Facebook</label>
+  <label><input type="radio" name="source" value="Gmail"> Gmail</label>
+  <label><input type="radio" name="source" value="Referral"> Referral</label>
+  <label><input type="radio" name="source" value="SOA / Flyers / Posters"> SOA / Flyers / Posters</label>
+  <label><input type="radio" name="source" value="Others"> Others</label>
+
+  <button onclick="goRegister()">Submit</button>
+
+  <br><br>
+  <a href="skytrufiber.php" style="
+    display:inline-block; text-decoration:none;
+    color:#004466; font-weight:bold;">⬅ Go back to Customer Portal
+  </a>
+</div>
+
+
 <script>
-function proceed() {
+function nextStep() {
   const choice = document.querySelector('input[name="consent"]:checked');
   if (!choice) { alert("⚠ Please select YES or NO"); return; }
 
   if (choice.value === "yes") {
-    window.location.href = "register.php";
+    document.getElementById("step1").classList.add("hidden");
+    document.getElementById("step2").classList.remove("hidden");
   } else {
-    window.location.href = "skytrufiber.php?msg=success";
+    window.location.href = "no_consent.php";
   }
+}
+
+function goRegister() {
+  const src = document.querySelector('input[name="source"]:checked');
+  if (!src) { alert("⚠ Please choose a source."); return; }
+  window.location.href = "register.php?source=" + encodeURIComponent(src.value);
 }
 </script>
 
