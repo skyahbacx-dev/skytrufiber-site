@@ -2,48 +2,65 @@
 session_start();
 include "../db_connect.php";
 
-$csrUser = $_SESSION["csr_user"] ?? "";
+$csrUser = $_SESSION["csr_user"] ?? null;
+
+if (!$csrUser) {
+    http_response_code(401);
+    exit("Unauthorized");
+}
 
 $search = $_GET["search"] ?? "";
 
+$sql = "
+    SELECT id, name, assigned_csr, last_active
+    FROM clients
+";
+
 if ($search !== "") {
-    $stmt = $conn->prepare("
-        SELECT id, name, assigned_csr, last_active
-        FROM clients
-        WHERE name ILIKE :search
-        ORDER BY last_active DESC
-    ");
+    $sql .= " WHERE LOWER(name) LIKE LOWER(:search)";
+}
+
+$sql .= " ORDER BY last_active DESC";
+
+$stmt = $conn->prepare($sql);
+
+if ($search !== "") {
     $stmt->execute([":search" => "%$search%"]);
 } else {
-    $stmt = $conn->query("
-        SELECT id, name, assigned_csr, last_active
-        FROM clients
-        ORDER BY last_active DESC
-    ");
+    $stmt->execute();
 }
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $id   = $row["id"];
-    $name = htmlspecialchars($row["name"]);
+    $id       = $row["id"];
+    $name     = htmlspecialchars($row["name"]);
     $assigned = $row["assigned_csr"];
+    $isMine   = ($assigned === $csrUser);
 
-    echo "
-    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
-        <div class='client-main'>
-            <img src='upload/default-avatar.png' class='client-avatar'>
-            <div>
-                <div class='client-name'>$name</div>
-                <div class='client-sub'>" .
-                    ($assigned ? "Assigned to $assigned" : "Unassigned")
-                . "</div>
-            </div>
-        </div>
-        <div class='client-actions'>";
-    
+    // Static default avatar
+    $avatar = "upload/default-avatar.png";
+
+    echo "<div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
+            <div class='client-main'>
+                <img src=\"$avatar\" class='client-avatar'>
+                <div>
+                    <div class='client-name'>$name</div>
+                    <div class='client-sub'>";
+
+    if ($assigned === null || $assigned === "") {
+        echo "Unassigned";
+    } elseif ($isMine) {
+        echo "Assigned to YOU";
+    } else {
+        echo "Assigned to $assigned";
+    }
+
+    echo "</div></div></div>
+            <div class='client-actions'>";
+
     if ($assigned === null || $assigned === "") {
         echo "<button class='pill green' onclick='event.stopPropagation(); assignClient($id)'>➕</button>";
     }
-    elseif ($assigned === $csrUser) {
+    elseif ($isMine) {
         echo "<button class='pill red' onclick='event.stopPropagation(); unassignClient($id)'>➖</button>";
     }
     else {
