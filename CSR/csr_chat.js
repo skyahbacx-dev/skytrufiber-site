@@ -1,12 +1,7 @@
-// ==========================================
-// CSR CHAT JAVASCRIPT - FULL FILE
-// ==========================================
-
 let selectedClient = 0;
 let assignedTo = "";
 let filesToSend = [];
 let lastMessageCount = 0;
-let loadingMessages = false;
 
 /******** SIDEBAR ********/
 function toggleSidebar() {
@@ -31,12 +26,11 @@ function selectClient(id, name, assigned) {
 
     $("#chatName").text(name);
 
-    const locked = assigned && assigned !== csrFullname;
+    const isLocked = assigned && assigned !== csrFullname;
+    $("#messageInput").prop("disabled", isLocked);
+    $("#sendBtn").prop("disabled", isLocked);
 
-    $("#messageInput").prop("disabled", locked);
-    $("#sendBtn").prop("disabled", locked);
-
-    if (locked) {
+    if (isLocked) {
         $(".upload-icon").hide();
         $("#fileInput").prop("disabled", true);
     } else {
@@ -48,7 +42,7 @@ function selectClient(id, name, assigned) {
     loadMessages(true);
 }
 
-/******** LOAD CLIENT INFO ********/
+/******** CLIENT INFO ********/
 function loadClientInfo() {
     $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name);
@@ -58,67 +52,51 @@ function loadClientInfo() {
     });
 }
 
-/******** LOAD CHAT MESSAGES (NO FLICKER) ********/
+/******** LOAD CHAT MESSAGES ********/
 function loadMessages(initialLoad = false) {
-    if (!selectedClient || loadingMessages) return;
-    loadingMessages = true;
+    if (!selectedClient) return;
 
     $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
+        let html = "";
+        messages.forEach(m => {
+            let side = (m.sender_type === "csr") ? "csr" : "client";
 
-        if (initialLoad) {
-            $("#chatMessages").html(""); // reset clean once
-            lastMessageCount = 0;
-        }
+            html += `<div class="msg ${side}">
+                        <div class="bubble">${m.message || ""}`;
 
-        if (messages.length > lastMessageCount) {
-            let newMsgs = messages.slice(lastMessageCount);
-
-            newMsgs.forEach(m => {
-                let isCSR = (m.sender_type === "csr");
-                let side = isCSR ? "csr" : "client";
-
-                let attachment = "";
-                if (m.media_url) {
-                    if (m.media_type === "image") {
-                        attachment = `<img src="${m.media_url}" class="chat-media-img" onclick="openMedia('${m.media_url}')">`;
-                    } else if (m.media_type === "video") {
-                        attachment = `<video class="chat-media-video" controls><source src="${m.media_url}"></video>`;
-                    }
+            if (m.media_url) {
+                if (m.media_type === "image") {
+                    html += `<img src="${m.media_url}" class="file-img" onclick="openMedia('${m.media_url}')">`;
+                } else {
+                    html += `<video class="file-img" controls onclick="openMedia('${m.media_url}')">
+                                <source src="${m.media_url}">
+                             </video>`;
                 }
+            }
 
-                let statusText = "";
-                if (isCSR) {
-                    if (m.seen === "1") statusText = `<div class="seen-tag">Seen</div>`;
-                    else statusText = `<div class="delivered-tag">Delivered</div>`;
-                }
+            html += `</div>
+                    <div class="meta">${m.created_at}`;
 
-                let html = `
-                <div class="msg-row ${side} animate-bubble">
-                    <img src="upload/default-avatar.png" class="chat-avatar">
-                    <div class="msg-bubble-wrap">
-                        <div class="bubble">${m.message || ""} ${attachment}</div>
-                        <div class="meta">${m.created_at}</div>
-                        ${statusText}
-                    </div>
-                </div>`;
+            if (side === "csr") html += ` <span class="seen-tag">Seen</span>`;
 
-                $("#chatMessages").append(html);
-            });
+            html += `</div></div>`;
+        });
 
+        $("#chatMessages").html(html);
+
+        if (messages.length !== lastMessageCount && !initialLoad) {
             $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
         }
 
         lastMessageCount = messages.length;
-        loadingMessages = false;
     });
 }
 
-/******** PREVIEW FILES ********/
-$(".upload-icon").on("click", function () {
-    $("#fileInput").click();
-});
+/******** FILE ICON CLICK ********/
+$(".upload-icon").on("click", () => $("#fileInput").click());
 
-$("#fileInput").on("change", function (e) {
+/******** PREVIEW FILES ********/
+$("#fileInput").on("change", function(e) {
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
@@ -138,10 +116,11 @@ $("#fileInput").on("change", function (e) {
 });
 
 /******** SEND MESSAGE ********/
-$("#sendBtn").click(sendMessage);
+$("#sendBtn").click(() => sendMessage());
+$("#messageInput").keypress(e => { if (e.key === "Enter") sendMessage(); });
 
 function sendMessage() {
-    let msg = $("#messageInput").val().trim();
+    let msg = $("#messageInput").val();
     if (!msg && filesToSend.length === 0) return;
 
     let fd = new FormData();
@@ -157,7 +136,7 @@ function sendMessage() {
         data: fd,
         processData: false,
         contentType: false,
-        success: () => {
+        success: function() {
             $("#messageInput").val("");
             $("#previewArea").html("");
             $("#fileInput").val("");
@@ -167,19 +146,20 @@ function sendMessage() {
     });
 }
 
-/******** MEDIA MODAL ********/
+/******** MODAL ********/
 function openMedia(src) {
     $("#mediaModal").addClass("show");
     $("#mediaModalContent").attr("src", src);
 }
-
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
 /******** AUTO REFRESH ********/
-setInterval(loadClients, 5000);
-setInterval(() => loadMessages(false), 1200);
+setInterval(loadClients, 4000);
+setInterval(() => loadMessages(false), 1500);
 
-/******** TOGGLE CLIENT INFO PANEL ********/
+loadClients();
+
+/******** SLIDE OUT INFO ********/
 function toggleClientInfo() {
     document.getElementById("clientInfoPanel").classList.toggle("show");
 }
