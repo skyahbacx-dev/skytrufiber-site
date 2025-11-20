@@ -1,3 +1,8 @@
+/* FORCE-HIDE OLD LEGACY UI */
+body > :not(.topnav):not(.sidebar):not(.layout):not(.sidebar-overlay):not(script):not(style):not(link) {
+    display: none !important;
+}
+
 /* RESET */
 body {
     margin: 0;
