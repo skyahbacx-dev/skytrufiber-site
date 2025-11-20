@@ -90,12 +90,19 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>"; // not 
         <div id="previewArea" class="preview-area"></div>
 
         <!-- INPUT -->
-        <div class="chat-input">
-            <label for="fileInput" class="upload-icon">📎</label>
-            <input type="file" id="fileInput" multiple>
-            <input type="text" id="messageInput" placeholder="Write a message..." disabled>
-            <button id="sendBtn" class="send-btn" disabled>✈</button>
-        </div>
+            <div class="chat-input">
+            <label for="fileInput" class="upload-icon">
+            <i class="fa-regular fa-image"></i>
+            </label>
+                <input type="file" id="fileInput" multiple style="display:none;">
+    
+                <input type="text" id="messageInput" placeholder="Type anything.....">
+    
+            <button id="sendBtn" class="send-btn">
+            <i class="fa-solid fa-paper-plane"></i>
+            </button>
+    </div>
+
     </div>
 
     <!-- SLIDING CLIENT INFO -->
