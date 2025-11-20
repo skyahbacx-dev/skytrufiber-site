@@ -1,4 +1,3 @@
-/* ===== RESET ===== */
 body {
     margin: 0;
     padding: 0;
@@ -7,60 +6,50 @@ body {
     overflow: hidden;
 }
 
-/* ===== TOP NAVBAR ===== */
+/**************** NAVBAR ****************/
 .topnav {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
     height: 60px;
+    width: 100%;
     background: white;
-    z-index: 1000;
     display: flex;
     align-items: center;
-    padding: 0 10px;
     border-bottom: 1px solid #d7e7d7;
+    z-index: 1000;
 }
 
-.hamburger {
-    font-size: 26px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    margin-right: 15px;
-}
-
-/* ===== SIDEBAR ===== */
+/**************** SIDEBAR ****************/
 .sidebar {
     position: fixed;
     top: 60px;
     left: 0;
     width: 260px;
     height: calc(100vh - 60px);
-    background: white;
     border-right: 1px solid #d7e7d7;
-    padding: 10px;
-    transition: width 0.3s ease;
-    z-index: 999;
+    background: white;
+    transition: transform 0.3s ease;
     overflow-y: auto;
+    z-index: 999;
 }
-
-.sidebar.collapsed {
-    width: 70px;
+.sidebar.show {
+    transform: translateX(0);
 }
-
 .sidebar-overlay {
     position: fixed;
     top: 60px;
-    left: 0;
     width: 100%;
     height: calc(100vh - 60px);
-    background: rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.4);
     display: none;
     z-index: 998;
 }
+.sidebar-overlay.show {
+    display: block;
+}
 
-/* ===== MAIN LAYOUT ===== */
+/**************** MAIN LAYOUT ****************/
 .layout {
     margin-top: 60px;
     margin-left: 260px;
@@ -69,75 +58,59 @@ body {
     overflow: hidden;
 }
 
-.sidebar.collapsed + .layout {
-    margin-left: 70px;
-}
-
-/* ===== CLIENT PANEL ===== */
+/**************** CLIENT PANEL ****************/
 .client-panel {
     width: 260px;
-    background: #fff;
     border-right: 1px solid #d7e7d7;
+    padding: 10px;
+    background: white;
     display: flex;
     flex-direction: column;
-    padding: 10px;
 }
 
-.client-list {
-    overflow-y: auto;
-    flex: 1;
-}
-
-/* ===== CHAT PANEL ===== */
+/**************** CHAT PANEL ****************/
 .chat-panel {
     flex: 1;
     display: flex;
     flex-direction: column;
 }
-
-/* ===== CHAT HEADER ===== */
 .chat-header {
-    padding: 15px;
-    background: white;
     display: flex;
     justify-content: space-between;
+    padding: 12px;
     border-bottom: 1px solid #d7e7d7;
+    background: white;
 }
-
-.chat-avatar {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-}
-
 .chat-box {
     flex: 1;
     overflow-y: auto;
     padding: 15px;
 }
 
-/* ===== INPUT BAR ===== */
+/**************** MESSAGES ****************/
+.msg { max-width: 60%; margin-bottom: 10px; }
+.msg.csr { margin-left: auto; text-align: right; }
+.bubble {
+    padding: 12px;
+    border-radius: 15px;
+    background: white;
+    border: 1px solid #cde5cd;
+}
+.msg.csr .bubble {
+    background: #2bb673;
+    color: white;
+}
+
+/**************** INPUT BAR ****************/
 .chat-input {
     display: flex;
-    padding: 12px;
-    background: white;
+    padding: 10px;
     gap: 10px;
+    background: white;
     border-top: 1px solid #d7e7d7;
 }
 
-.send-btn, .upload-icon {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    border: 2px solid #30b169;
-    background: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-}
-
-/* ===== SLIDE INFO PANEL ===== */
+/**************** INFO SLIDE PANEL ****************/
 .client-info-panel {
     position: fixed;
     right: 0;
@@ -147,30 +120,17 @@ body {
     background: white;
     border-left: 1px solid #d7e7d7;
     transform: translateX(100%);
-    transition: transform 0.3s ease;
+    transition: transform .3s;
     z-index: 1001;
-    padding: 20px;
 }
-
 .client-info-panel.show {
     transform: translateX(0);
 }
 
-/* ===== RESPONSIVE ===== */
+/**************** RESPONSIVE ****************/
 @media (max-width: 900px) {
-    .sidebar {
-        transform: translateX(-100%);
-    }
-    .sidebar.show {
-        transform: translateX(0);
-    }
-    .sidebar-overlay {
-        display: block;
-    }
-    .layout {
-        margin-left: 0;
-    }
-    .client-panel {
-        display: none;
-    }
+    .layout { margin-left: 0; }
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.show { transform: translateX(0); }
+    .client-panel { display: none; }
 }
