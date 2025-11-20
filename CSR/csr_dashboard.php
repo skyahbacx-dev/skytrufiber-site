@@ -27,9 +27,10 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 <body>
 
-<!-- SIDEBAR -->
+<!-- ===== SIDEBAR ===== -->
 <div class="sidebar" id="sidebar">
     <button class="toggle-btn" onclick="toggleSidebar()">❐</button>
+
     <div class="side-title">MENU</div>
     <button class="side-item" onclick="window.location='csr_dashboard.php'">💬 Chat Dashboard</button>
     <button class="side-item" onclick="window.location='my_clients.php'">👥 My Clients</button>
@@ -40,7 +41,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 </div>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<!-- TOP NAV -->
+<!-- ===== TOP NAV ===== -->
 <div class="topnav">
     <button class="hamburger" onclick="toggleSidebar()">☰</button>
 
@@ -59,7 +60,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     </div>
 </div>
 
-<!-- MAIN LAYOUT -->
+<!-- ===== MAIN LAYOUT ===== -->
 <div class="layout">
 
     <!-- CLIENT LIST -->
@@ -90,13 +91,13 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
         <div class="chat-input">
             <label for="fileInput" class="upload-icon"><i class="fa-regular fa-image"></i></label>
-            <input type="file" id="fileInput" multiple style="display:none">
+            <input type="file" id="fileInput" multiple style="display:none;">
             <input type="text" id="messageInput" placeholder="Type a message...">
             <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
     </div>
 
-    <!-- SLIDE PANEL -->
+    <!-- Slide Panel -->
     <aside id="clientInfoPanel" class="client-info-panel">
         <button class="close-info" onclick="toggleClientInfo()">✖</button>
         <h3>Client Information</h3>
@@ -108,7 +109,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 </div>
 
-<!-- MEDIA VIEWER -->
+<!-- MEDIA MODAL -->
 <div id="mediaModal" class="media-modal">
     <span id="closeMediaModal" class="close-modal">✖</span>
     <img id="mediaModalContent" class="modal-content">
