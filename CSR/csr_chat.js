@@ -1,7 +1,12 @@
+// ==========================================
+// CSR CHAT JAVASCRIPT - FULL FILE
+// ==========================================
+
 let selectedClient = 0;
 let assignedTo = "";
 let filesToSend = [];
 let lastMessageCount = 0;
+let loadingMessages = false;
 
 /******** SIDEBAR ********/
 function toggleSidebar() {
@@ -26,11 +31,11 @@ function selectClient(id, name, assigned) {
 
     $("#chatName").text(name);
 
-    const isLocked = assigned && assigned !== csrFullname;
-    $("#messageInput").prop("disabled", isLocked);
-    $("#sendBtn").prop("disabled", isLocked);
+    const locked = assigned && assigned !== csrFullname;
+    $("#messageInput").prop("disabled", locked);
+    $("#sendBtn").prop("disabled", locked);
 
-    if (isLocked) {
+    if (locked) {
         $(".upload-icon").hide();
         $("#fileInput").prop("disabled", true);
     } else {
@@ -42,6 +47,7 @@ function selectClient(id, name, assigned) {
     loadMessages(true);
 }
 
+/******** CLIENT INFO ********/
 function loadClientInfo() {
     $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name);
@@ -51,52 +57,63 @@ function loadClientInfo() {
     });
 }
 
-
 /******** LOAD CHAT MESSAGES ********/
 function loadMessages(initialLoad = false) {
-    if (!selectedClient) return;
+    if (!selectedClient || loadingMessages) return;
+    loadingMessages = true;
 
     $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
-        let html = "";
-        messages.forEach(m => {
-            let side = (m.sender_type === "csr") ? "csr" : "client";
 
-            html += `<div class="msg ${side}">
-                        <div class="bubble">${m.message || ""}`;
+        if (initialLoad) {
+            $("#chatMessages").html("");
+            lastMessageCount = 0;
+        }
 
-            if (m.media_url) {
-                if (m.media_type === "image") {
-                    html += `<img src="${m.media_url}" class="file-img" onclick="openMedia('${m.media_url}')">`;
-                } else {
-                    html += `<video class="file-img" controls onclick="openMedia('${m.media_url}')">
-                                <source src="${m.media_url}">
-                             </video>`;
+        if (messages.length > lastMessageCount) {
+            let newMsgs = messages.slice(lastMessageCount);
+
+            newMsgs.forEach(m => {
+                const side = (m.sender_type === "csr") ? "csr" : "client";
+                const avatarImg = "upload/default-avatar.png";
+
+                let attachment = "";
+                if (m.media_url) {
+                    if (m.media_type === "image") {
+                        attachment = `<img src="${m.media_url}" class="file-img" onclick="openMedia('${m.media_url}')">`;
+                    } else if (m.media_type === "video") {
+                        attachment = `<video class="file-img" controls><source src="${m.media_url}"></video>`;
+                    }
                 }
-            }
 
-            html += `</div>
-                    <div class="meta">${m.created_at}`;
+                let statusIcons = "";
+                if (side === "csr") {
+                    statusIcons = `<span class="seen-checks">✓✓</span>`;
+                }
 
-            if (side === "csr") html += ` <span class="seen-tag">Seen</span>`;
+                const html = `
+                <div class="msg-row ${side} animate-msg">
+                    <img src="${avatarImg}" class="msg-avatar">
+                    <div class="bubble-wrapper">
+                        <div class="bubble">${m.message || ""} ${attachment}</div>
+                        <div class="meta">${m.created_at} ${statusIcons}</div>
+                    </div>
+                </div>`;
 
-            html += `</div></div>`;
-        });
+                $("#chatMessages").append(html);
+            });
 
-        $("#chatMessages").html(html);
-
-        if (messages.length !== lastMessageCount && !initialLoad) {
             $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
         }
 
         lastMessageCount = messages.length;
+        loadingMessages = false;
     });
 }
 
-/******** FILE ICON CLICK ********/
+/******** PREVIEW UPLOADS ********/
 $(".upload-icon").on("click", () => $("#fileInput").click());
 
-/******** PREVIEW FILES ********/
-$("#fileInput").on("change", function(e) {
+$("#fileInput").on("change", e => {
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
@@ -116,18 +133,17 @@ $("#fileInput").on("change", function(e) {
 });
 
 /******** SEND MESSAGE ********/
-$("#sendBtn").click(() => sendMessage());
+$("#sendBtn").click(sendMessage);
 $("#messageInput").keypress(e => { if (e.key === "Enter") sendMessage(); });
 
 function sendMessage() {
-    let msg = $("#messageInput").val();
+    let msg = $("#messageInput").val().trim();
     if (!msg && filesToSend.length === 0) return;
 
     let fd = new FormData();
     fd.append("message", msg);
     fd.append("client_id", selectedClient);
     fd.append("csr_fullname", csrFullname);
-
     filesToSend.forEach(f => fd.append("files[]", f));
 
     $.ajax({
@@ -136,7 +152,7 @@ function sendMessage() {
         data: fd,
         processData: false,
         contentType: false,
-        success: function() {
+        success: function () {
             $("#messageInput").val("");
             $("#previewArea").html("");
             $("#fileInput").val("");
@@ -146,20 +162,20 @@ function sendMessage() {
     });
 }
 
-/******** MODAL ********/
+/******** MEDIA VIEWER ********/
 function openMedia(src) {
     $("#mediaModal").addClass("show");
     $("#mediaModalContent").attr("src", src);
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-/******** AUTO REFRESH ********/
+/******** REFRESH INTERVALS ********/
 setInterval(loadClients, 4000);
-setInterval(() => loadMessages(false), 1500);
+setInterval(() => loadMessages(false), 1200);
 
 loadClients();
 
-/******** SLIDE OUT INFO ********/
+/******** CLIENT INFO PANEL ********/
 function toggleClientInfo() {
     document.getElementById("clientInfoPanel").classList.toggle("show");
 }
