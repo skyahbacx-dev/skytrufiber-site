@@ -3,6 +3,11 @@ include '../db_connect.php';
 
 $message = '';
 
+// Redirect message handler
+if (isset($_GET['msg']) && $_GET['msg'] === "success") {
+    $message = "Thank you, we received your feedback.";
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $account_number = trim($_POST['account_number']);
@@ -13,13 +18,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $date_installed = trim($_POST['date_installed']);
     $remarks = trim($_POST['remarks']);
     $privacy_consent = $_POST['privacy_consent'] ?? null;
-    $password = $account_number; // auto password
+    $password = $account_number;
 
-    // Privacy validation
     if ($privacy_consent !== "yes") {
-        $message = '⚠️ You must select YES to the Data Privacy Consent before submitting.';
-    } elseif ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
+        header("Location: skytrufiber.php?msg=success");
+        exit;
+    }
 
+    if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
         try {
             $conn->beginTransaction();
 
@@ -55,20 +61,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $conn->commit();
-            echo "<script>alert('✅ Registration and feedback submitted successfully!'); window.location='skytrufiber.php';</script>";
+            header("Location: skytrufiber.php?msg=success");
             exit;
 
         } catch (PDOException $e) {
             $conn->rollBack();
             $message = '❌ Database error: ' . htmlspecialchars($e->getMessage());
         }
-
     } else {
         $message = '⚠️ Please fill in all required fields.';
     }
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -79,85 +83,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 body {
   font-family: Arial, sans-serif;
   background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: start;
-  min-height: 100vh;
-  margin: 0;
-  padding-top: 30px;
-}
-.logo-container img {
-  width: 140px;
-  border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  display: flex; flex-direction: column; align-items: center;
+  min-height: 100vh; margin: 0; padding-top: 30px;
 }
 form {
-  background: #fff;
-  padding: 25px;
-  border-radius: 15px;
+  background: #fff; padding: 25px; border-radius: 15px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  width: 380px;
-  margin-top: 20px;
+  width: 380px; margin-top: 20px; display:none;
+  opacity:0; transform: translateY(40px);
+  transition: opacity .5s, transform .5s;
 }
-h2 {
-  text-align: center;
-  color: #004466;
-  margin-bottom: 15px;
+.showForm {
+  display:block !important; opacity:1 !important; transform: translateY(0) !important;
 }
-label {
-  font-weight: 600;
-  color: #004466;
-  display: block;
-  margin-top: 10px;
+.success-banner {
+  background:#d4edda; padding:12px; margin-bottom:15px;
+  border-radius:8px; color:#155724; text-align:center;
+  animation: fade 1s ease-in-out;
 }
-input, select, textarea {
-  width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-}
-textarea { resize: none; height: 80px; }
-button {
-  width: 100%;
-  padding: 10px;
-  background: #0099cc;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  margin-top: 15px;
-}
-button:hover { background: #007a99; }
-.message {
-  color: red;
-  text-align: center;
-  margin-top: 10px;
-}
+@keyframes fade { from{opacity:0;} to{opacity:1;} }
 </style>
 </head>
 <body>
 
-<div class="logo-container">
-  <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+<!-- FULL SCREEN PRIVACY CONSENT FIRST -->
+<div id="privacyScreen" style="position:fixed; top:0; left:0; width:100%; height:100vh;
+background:#e8f4ff; padding:40px; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:2000;">
+
+  <h2 style="color:#003d66;">Data Privacy Notice</h2>
+
+  <div style="background:white; width:60%; padding:25px; border-radius:12px; border-left:8px solid #0284c7;">
+    <p style="font-size:15px; text-align:justify;">
+      SkyTruFiber is committed to protecting your personal information in accordance with the Data Privacy Act of 2012 (RA 10173).
+      We collect and process your data for installation, support, billing, and service updates. By agreeing, you authorize us to
+      contact you for service purposes. Your details will not be shared externally without consent.
+    </p>
+  </div>
+
+  <div style="margin-top:25px; width:60%;">
+    <label style="display:flex; gap:10px;"><input type="radio" name="consentChoice" value="yes"> YES, I agree.</label>
+    <label style="display:flex; gap:10px; margin-top:12px;"><input type="radio" name="consentChoice" value="no"> NO, I do not agree.</label>
+  </div>
+
+  <button id="continueBtn" style="margin-top:25px; padding:12px 35px; background:#0284c7; color:white; border:none; border-radius:8px; cursor:pointer;">
+    Continue
+  </button>
 </div>
 
-<form method="POST">
+<!-- REGISTRATION FORM -->
+<form id="mainForm" method="POST">
   <h2>Customer Registration & Feedback</h2>
 
-  <label for="account_number">Account Number:</label>
+  <label>Account Number:</label>
   <input type="text" name="account_number" required>
 
-  <label for="full_name">Full Name:</label>
+  <label>Full Name:</label>
   <input type="text" name="full_name" required>
 
-  <label for="email">Email Address:</label>
+  <label>Email:</label>
   <input type="email" name="email" required>
 
-  <label for="district">District:</label>
+  <label>District:</label>
   <select id="district" name="district" required>
     <option value="">Select District</option>
     <option value="District 1">District 1</option>
@@ -165,91 +151,42 @@ button:hover { background: #007a99; }
     <option value="District 4">District 4</option>
   </select>
 
-  <label for="location">Barangay (Quezon City):</label>
-  <select id="location" name="location" required>
-    <option value="">Select Barangay</option>
-  </select>
+  <label>Barangay:</label>
+  <select id="location" name="location" required><option value="">Select Barangay</option></select>
 
-  <label for="date_installed">📅 Date Installed:</label>
+  <label>Date Installed:</label>
   <input type="date" id="date_installed" name="date_installed" required>
 
-  <label for="remarks">📝 Feedback / Comments:</label>
+  <label>Feedback / Comments:</label>
   <textarea name="remarks" required></textarea>
 
-<!-- PRIVACY NOTICE SECTION -->
-<div style="margin-top:20px; background:#e8f4ff; border-left:6px solid #0077cc; padding:15px; border-radius:8px; position:relative;">
-  <h3 style="margin-top:0; color:#003d66;">Data Privacy Notice *</h3>
-  <p style="font-size:14px; color:#002233; text-align:justify;">
-    SkyTruFiber complies with the Data Privacy Act (RA 10173). Your provided information will be collected and stored securely 
-    and used only for service delivery, billing notifications, updates, and customer support.
-    <br><br>
-    <a href="#" id="openPolicy" style="color:#0055aa; font-weight:bold;">View Full Privacy Policy</a>
-  </p>
-  <img src="../DPO-DPS.png" style="width:120px; position:absolute; top:15px; right:15px;">
-</div>
-
-<div style="margin-top:15px; font-size:14px; color:#002233;">
-  <label><input type="radio" name="privacy_consent" value="yes" required> <strong>YES</strong>, I fully consent.</label>
-</div>
-<div style="margin-top:10px; font-size:14px; color:#002233;">
-  <label><input type="radio" name="privacy_consent" value="no"> <strong>NO</strong>, I do not agree.</label>
-</div>
+  <input type="hidden" name="privacy_consent" value="yes">
 
   <button type="submit">Submit</button>
-  <?php if ($message): ?><p class="message"><?= htmlspecialchars($message) ?></p><?php endif; ?>
-  <p style="text-align:center; margin-top:10px;">Already registered? <a href="skytrufiber.php">Login here</a></p>
 </form>
 
-
-<!-- MODAL PRIVACY POLICY -->
-<div id="policyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:1000;">
-  <div style="background:white; width:600px; max-height:80vh; padding:20px; border-radius:10px; overflow-y:auto;">
-    <h2>SkyTruFiber Data Privacy Policy</h2>
-    <p style="text-align:justify;">
-      SkyTruFiber values and secures your personal information including name, contact details, service address, and billing records.
-      This information will only be used for service operations and support. You may contact our Data Protection Officer at
-      support@skytrufiber.ph for inquiries or data removal.
-    </p>
-    <button id="closePolicy" style="margin-top:10px; padding:8px 15px; background:#006699; color:white; border:none; border-radius:5px; cursor:pointer;">
-      Close
-    </button>
-  </div>
-</div>
-
 <script>
-document.getElementById("openPolicy").addEventListener("click", () => {
-  document.getElementById("policyModal").style.display = "flex";
-});
-document.getElementById("closePolicy").addEventListener("click", () => {
-  document.getElementById("policyModal").style.display = "none";
-});
+document.getElementById("continueBtn").addEventListener("click", () => {
+  const choice = document.querySelector('input[name="consentChoice"]:checked');
 
-// Barangay Loading by District
-const barangays = {
-  "District 1": ["Alicia (Bago Bantay)", "Bagong Pag-asa (North EDSA / Triangle Park)", "Bahay Toro (Project 8)"],
-  "District 3": ["Amihan", "Bagumbayan", "Bagumbuhay"],
-  "District 4": ["Bagong Lipunan ng Crame", "Botocan", "Central"]
-};
+  if (!choice) {
+      alert("⚠ Please select YES or NO to continue.");
+      return;
+  }
 
-document.getElementById('district').addEventListener('change', function() {
-  const selected = this.value;
-  const locationSelect = document.getElementById('location');
-  locationSelect.innerHTML = '<option value="">Select Barangay</option>';
-  if (barangays[selected]) {
-    barangays[selected].forEach(b => {
-      const opt = document.createElement('option');
-      opt.value = b; opt.textContent = b;
-      locationSelect.appendChild(opt);
-    });
+  if (choice.value === "yes") {
+    document.getElementById("privacyScreen").style.display = "none";
+    document.getElementById("mainForm").classList.add("showForm");
+  } else {
+    window.location.href = "skytrufiber.php?msg=success";
   }
 });
 
-// Auto fill today's date
+// Auto-fill today
 document.addEventListener('DOMContentLoaded', () => {
-  const today = new Date();
+  const d = new Date();
   document.getElementById('date_installed').value =
-    today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+    `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 });
 </script>
 
