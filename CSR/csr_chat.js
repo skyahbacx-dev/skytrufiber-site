@@ -1,3 +1,5 @@
+// ===== CSR CHAT.JS (FULL FILE) =====
+
 let selectedClient = 0;
 let assignedTo = "";
 let filesToSend = [];
@@ -14,14 +16,18 @@ function toggleClientInfo(){
 }
 
 /******** LOAD CLIENT LIST ********/
-function loadClients() {
-    $.get("client_list.php", data => {
+function loadClients(search=""){
+    $.get("client_list.php?search=" + search, data => {
         $("#clientList").html(data);
     });
 }
 
+$(".search").on("keyup", function(){
+    loadClients($(this).val());
+});
+
 /******** SELECT CLIENT ********/
-function selectClient(id, name, assigned){
+function selectClient(id, name, assigned) {
     selectedClient = id;
     assignedTo = assigned;
 
@@ -30,12 +36,23 @@ function selectClient(id, name, assigned){
 
     $("#chatName").text(name);
 
-    let lock = (assigned && assigned !== csrFullname);
-    $("#messageInput, #sendBtn, #fileInput").prop("disabled", lock);
-    lock ? $(".upload-icon").hide() : $(".upload-icon").show();
+    const locked = assigned && assigned !== csrFullname;
+    $("#messageInput").prop("disabled", locked);
+    $("#sendBtn").prop("disabled", locked);
+    locked ? $(".upload-icon").hide() : $(".upload-icon").show();
 
     loadClientInfo();
     loadMessages();
+}
+
+/******** ASSIGN / UNASSIGN ********/
+function assignClient(id){
+    $.post("assign_client.php", { client_id:id }, () => loadClients());
+}
+
+function unassignClient(id){
+    if(!confirm("Remove this client from your assignment?")) return;
+    $.post("unassign_client.php", { client_id:id }, () => loadClients());
 }
 
 /******** LOAD CLIENT INFO ********/
@@ -50,17 +67,18 @@ function loadClientInfo(){
 
 /******** LOAD MESSAGES ********/
 function loadMessages(){
-    if (!selectedClient) return;
+    if(!selectedClient) return;
 
-    $.getJSON("load_chat_csr.php?client_id=" + selectedClient, msgs => {
+    $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
         let html = "";
-        msgs.forEach(m => {
+
+        messages.forEach(m => {
             let side = (m.sender_type === "csr") ? "csr" : "client";
 
             html += `<div class="msg ${side}">
                         <div class="bubble">${m.message || ""}`;
 
-            if (m.media_url) {
+            if (m.media_url){
                 if (m.media_type === "image") {
                     html += `<img src="${m.media_url}" class="file-img" onclick="openMedia('${m.media_url}')">`;
                 } else {
@@ -70,7 +88,8 @@ function loadMessages(){
                 }
             }
 
-            html += `<div class="meta">${m.created_at}</div></div></div>`;
+            html += `<div class="meta">${m.created_at}</div>
+                     </div></div>`;
         });
 
         $("#chatMessages").html(html);
@@ -132,7 +151,8 @@ function openMedia(src){
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-setInterval(loadClients, 5000);
-setInterval(loadMessages, 1500);
+/******** AUTO REFRESH ********/
+setInterval(()=>loadClients(),4000);
+setInterval(loadMessages,1500);
 
 loadClients();
