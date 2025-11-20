@@ -1,15 +1,32 @@
 <?php
+session_start();
 include "../db_connect.php";
+header("Content-Type: application/json");
 
-$id = $_GET["id"];
+$client_id = $_GET["id"] ?? 0;
+
+if (!$client_id) {
+    echo json_encode(["error" => "Missing ID"]);
+    exit;
+}
 
 $stmt = $conn->prepare("
-SELECT c.name,c.district,c.barangay, u.email
-FROM clients c
-LEFT JOIN users u ON u.account_number = c.account_number
-WHERE c.id=:id LIMIT 1
+    SELECT name, email, district, barangay
+    FROM clients 
+    WHERE id = :id
 ");
-$stmt->execute([":id"=>$id]);
-$c=$stmt->fetch(PDO::FETCH_ASSOC);
+$stmt->execute([":id" => $client_id]);
 
-echo json_encode($c);
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if ($row) {
+    echo json_encode([
+        "name"     => $row["name"],
+        "email"    => $row["email"],
+        "district" => $row["district"],
+        "barangay" => $row["barangay"]
+    ]);
+} else {
+    echo json_encode(["error" => "Client not found"]);
+}
+?>
