@@ -6,14 +6,16 @@ body {
     background: #F6FFF6;
 }
 
-/* LAYOUT CONTAINER */
+/* ================= ROOT LAYOUT ================ */
 .layout {
     display: flex;
+    flex-direction: row;
+    width: 100%;
     height: calc(100vh - 60px);
     overflow: hidden;
 }
 
-/* ================= TOP NAVBAR ================ */
+/* ================= TOP NAVBAR ================= */
 .topnav {
     height: 60px;
     background: #067A3C;
@@ -46,10 +48,9 @@ body {
     padding: 8px 15px;
     border-radius: 20px;
     cursor: pointer;
-    font-size: 14px;
 }
 
-/* ================= CLIENT SIDEBAR ================ */
+/* ================= SIDEBAR / CLIENT PANEL ================ */
 .client-panel {
     width: 260px;
     min-width: 260px;
@@ -58,10 +59,13 @@ body {
     padding: 10px;
     display: flex;
     flex-direction: column;
+    z-index: 10;
+    position: relative;
 }
 
 .client-panel h3 {
     margin: 5px 10px;
+    font-size: 18px;
     font-weight: bold;
 }
 
@@ -70,6 +74,7 @@ body {
     padding: 10px;
     border-radius: 20px;
     border: 1px solid #aaa;
+    outline: none;
 }
 
 .client-list {
@@ -82,10 +87,10 @@ body {
     display: flex;
     align-items: center;
     padding: 10px;
-    margin-bottom: 6px;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
     transition: background 0.2s;
+    margin-bottom: 6px;
 }
 
 .client-item:hover {
@@ -98,17 +103,19 @@ body {
 }
 
 .client-avatar {
-    width: 48px;
-    height: 48px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    margin-right: 12px;
+    margin-right: 10px;
 }
 
-/* ================= CHAT PANEL ================ */
+/* ================= CHAT PANEL ================= */
 .chat-panel {
     flex: 1;
     display: flex;
     flex-direction: column;
+    position: relative;
+    z-index: 1;
 }
 
 .chat-header {
@@ -126,11 +133,42 @@ body {
     overflow-y: auto;
 }
 
-/* ================= CHAT BUBBLES ================ */
+/* ================= CHAT MESSAGE ROWS ================= */
 .msg-row {
     display: flex;
     margin-bottom: 12px;
-    align-items: flex-start;
+    max-width: 100%;
+    align-items: flex-end;
+}
+
+.msg-row.client {
+    flex-direction: row;
+}
+
+.msg-row.csr {
+    flex-direction: row-reverse;
+}
+
+.chat-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    margin: 0 10px;
+}
+
+.msg-bubble-wrap {
+    display: flex;
+    flex-direction: column;
+    max-width: 60%;
+}
+
+/* BUBBLES */
+.bubble {
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 15px;
+    line-height: 1.4;
+    word-wrap: break-word;
 }
 
 .msg-row.client .bubble {
@@ -139,20 +177,39 @@ body {
     color: black;
 }
 
-.msg-row.csr {
-    justify-content: flex-end;
-}
-
 .msg-row.csr .bubble {
     background: #2bb673;
     color: white;
 }
 
-.bubble {
-    padding: 10px 15px;
-    border-radius: 18px;
-    max-width: 55%;
-    font-size: 15px;
+/* TIME / META */
+.meta {
+    font-size: 11px;
+    margin-top: 2px;
+    color: gray;
+}
+
+/* ================= ATTACHMENTS ================= */
+.chat-media-img, .chat-media-video {
+    width: 220px;
+    border-radius: 12px;
+    margin-top: 6px;
+    cursor: pointer;
+}
+
+/* ================= SEEN / DELIVERED ================= */
+.delivered-tag {
+    font-size: 11px;
+    color: #777;
+    text-align: right;
+}
+
+.seen-tag {
+    font-size: 11px;
+    color: #1ea7ff;
+    font-weight: bold;
+    text-align: right;
+    margin-top: 2px;
 }
 
 /* ================= INPUT BAR ================= */
@@ -172,18 +229,33 @@ body {
     border: 2px solid #ccc;
 }
 
-/* ================= CLIENT INFO PANEL ================ */
+/* ================= SLIDE PANEL ================= */
 .client-info-panel {
-    width: 300px;
+    width: 350px;
     background: white;
     border-left: 1px solid #d7e7d7;
     padding: 20px;
+    z-index: 20;
+    pointer-events: auto;
 }
 
-/* ================= SCROLLBAR ================ */
+/* ================= ANIMATION ================= */
+.animate-bubble {
+    animation: bubbleIn .25s ease forwards;
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+@keyframes bubbleIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ================= SCROLLBAR ================= */
 ::-webkit-scrollbar {
     width: 8px;
 }
+
 ::-webkit-scrollbar-thumb {
     background: #b5dfb5;
     border-radius: 10px;
