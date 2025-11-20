@@ -213,3 +213,30 @@ body > div:not(.topnav):not(.sidebar):not(.layout) {
     .sidebar.show { transform:translateX(0); }
     .client-panel { display:none; }
 }
+/* UNREAD BADGE */
+.badge {
+    background: #ff2c2c;
+    color: white;
+    padding: 2px 8px;
+    font-size: 11px;
+    border-radius: 20px;
+    margin-left: 6px;
+    animation: badgePop .35s ease;
+    font-weight: bold;
+}
+
+/* POP BADGE ANIMATION */
+@keyframes badgePop {
+    from { transform: scale(0.3); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+/* Smooth message appearing */
+.msg {
+    animation: fadeIn .25s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity:0; transform:translateY(6px); }
+    to   { opacity:1; transform:translateY(0); }
+}
