@@ -1,170 +1,190 @@
-/* ========================== */
-/* GLOBAL LAYOUT CLEAN RESET  */
-/* ========================== */
-
-body, html {
+/* ================= GLOBAL ================ */
+body {
     margin: 0;
     padding: 0;
-    font-family: "Arial", sans-serif;
-    background: #f6fff6;
+    font-family: Arial, sans-serif;
+    background: #F6FFF6;
+}
+
+/* LAYOUT CONTAINER */
+.layout {
+    display: flex;
+    height: calc(100vh - 60px);
     overflow: hidden;
 }
 
-#chatMessages {
-    height: calc(100vh - 120px); /* adjust based on UI height */
-    overflow-y: auto;
-    padding: 20px;
-    background: #f6fff6;
-}
-
-/* ========================== */
-/* MESSAGE + AVATAR BUBBLES  */
-/* ========================== */
-
-.msg-row {
+/* ================= TOP NAVBAR ================ */
+.topnav {
+    height: 60px;
+    background: #067A3C;
+    color: white;
     display: flex;
-    align-items: flex-end;
-    margin: 8px 0;
-    max-width: 70%;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
 }
 
-.msg-row.client {
-    flex-direction: row;
+.top-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
-.msg-row.csr {
-    flex-direction: row-reverse;
-    margin-left: auto;
+.nav-logo {
+    width: 60px;
 }
 
-.chat-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    margin: 0 6px;
-    background: #ccc;
+.nav-buttons {
+    display: flex;
+    gap: 10px;
 }
 
-.msg-bubble-wrap {
+.nav-btn, .logout-btn {
+    background: #ffffff30;
+    border: 1px solid white;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* ================= CLIENT SIDEBAR ================ */
+.client-panel {
+    width: 260px;
+    min-width: 260px;
+    background: white;
+    border-right: 1px solid #d7e7d7;
+    padding: 10px;
     display: flex;
     flex-direction: column;
-    max-width: 100%;
 }
 
-.bubble {
-    padding: 10px 14px;
-    border-radius: 16px;
-    background: #e5e5e5;
-    font-size: 15px;
-    display: inline-block;
-    word-wrap: break-word;
+.client-panel h3 {
+    margin: 5px 10px;
+    font-weight: bold;
 }
 
-.msg-row.csr .bubble {
-    background: #2eb3ff;
-    color: #fff;
-}
-
-.meta {
-    font-size: 11px;
-    color: gray;
-    margin-top: 2px;
-}
-
-/* ========================== */
-/* INPUT BAR STYLING          */
-/* ========================== */
-
-#messageInput {
-    width: 95%;
-    padding: 14px;
+.search {
+    width: 100%;
+    padding: 10px;
     border-radius: 20px;
-    border: 1px solid #ddd;
-    outline: none;
-    font-size: 15px;
+    border: 1px solid #aaa;
 }
 
-#sendBtn {
-    background: #2eb3ff;
-    border: none;
-    padding: 12px 18px;
-    border-radius: 50%;
-    cursor: pointer;
-    margin-left: 6px;
+.client-list {
+    margin-top: 10px;
+    overflow-y: auto;
+    flex: 1;
 }
 
-#sendBtn:hover {
-    background: #199ae0;
-}
-
-.send-area {
+.client-item {
     display: flex;
     align-items: center;
     padding: 10px;
-    background: white;
-    border-top: 1px solid #ddd;
-}
-
-/* ========================== */
-/* EMPTY STATE STYLE          */
-/* ========================== */
-
-#chatMessages:empty::before {
-    content: "Select a client to start messaging";
-    color: #999;
-    font-size: 18px;
-    display: block;
-    text-align: center;
-    margin-top: 30vh;
-}
-
-/* ========================== */
-/* HIDE SCROLLBAR             */
-/* ========================== */
-
-#chatMessages::-webkit-scrollbar {
-    width: 6px;
-}
-
-#chatMessages::-webkit-scrollbar-thumb {
-    background: #ccc;
+    margin-bottom: 6px;
     border-radius: 10px;
-}
-
-#chatMessages::-webkit-scrollbar-track {
-    background: transparent;
-}
-/* ATTACHMENT STYLING */
-.chat-media-img, .chat-media-video {
-    width: 220px;
-    border-radius: 12px;
-    margin-top: 6px;
     cursor: pointer;
+    transition: background 0.2s;
 }
 
-/* STATUS LABELS */
-.delivered-tag {
-    font-size: 11px;
-    color: #888;
-    margin-top: 2px;
-    text-align: right;
+.client-item:hover {
+    background: #e7f8ea;
 }
 
-.seen-tag {
-    font-size: 11px;
-    color: #2bb3ff;
-    margin-top: 2px;
-    text-align: right;
+.active-client {
+    background: #c9f5cd !important;
+    border: 2px solid #26b364;
 }
 
-/* BUBBLE ANIMATION */
-.animate-bubble {
-    animation: bubbleIn .3s ease forwards;
-    opacity: 0;
-    transform: translateY(10px);
+.client-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    margin-right: 12px;
 }
 
-@keyframes bubbleIn {
-    from { opacity: 0; transform: translateY(10px) scale(0.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+/* ================= CHAT PANEL ================ */
+.chat-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header {
+    padding: 15px;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #d7e7d7;
+}
+
+.chat-box {
+    flex: 1;
+    padding: 20px;
+    background: #F6FFF6;
+    overflow-y: auto;
+}
+
+/* ================= CHAT BUBBLES ================ */
+.msg-row {
+    display: flex;
+    margin-bottom: 12px;
+    align-items: flex-start;
+}
+
+.msg-row.client .bubble {
+    background: #ffffff;
+    border: 1px solid #cde5cd;
+    color: black;
+}
+
+.msg-row.csr {
+    justify-content: flex-end;
+}
+
+.msg-row.csr .bubble {
+    background: #2bb673;
+    color: white;
+}
+
+.bubble {
+    padding: 10px 15px;
+    border-radius: 18px;
+    max-width: 55%;
+    font-size: 15px;
+}
+
+/* ================= INPUT BAR ================= */
+.chat-input {
+    padding: 12px;
+    background: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-top: 1px solid #d7e7d7;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 12px;
+    border-radius: 25px;
+    border: 2px solid #ccc;
+}
+
+/* ================= CLIENT INFO PANEL ================ */
+.client-info-panel {
+    width: 300px;
+    background: white;
+    border-left: 1px solid #d7e7d7;
+    padding: 20px;
+}
+
+/* ================= SCROLLBAR ================ */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-thumb {
+    background: #b5dfb5;
+    border-radius: 10px;
 }
