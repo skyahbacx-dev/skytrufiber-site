@@ -14,6 +14,7 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 <meta charset="UTF-8">
 <title>CSR Dashboard — <?= htmlspecialchars($csrFullName) ?></title>
 <link rel="stylesheet" href="csr_dashboard.css">
+<link rel="stylesheet" href="chat.css">    
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
