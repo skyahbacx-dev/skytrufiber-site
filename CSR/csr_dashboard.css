@@ -1,9 +1,11 @@
-/* FORCE-HIDE OLD LEGACY UI */
-body > :not(.topnav):not(.sidebar):not(.layout):not(.sidebar-overlay):not(script):not(style):not(link) {
-    display: none !important;
+/* ========================================= */
+/* GLOBAL RESET + BASE LAYOUT CLEANUP        */
+/* ========================================= */
+
+* {
+    box-sizing: border-box;
 }
 
-/* RESET */
 body {
     margin: 0;
     padding: 0;
@@ -12,81 +14,137 @@ body {
     overflow: hidden;
 }
 
-/* HIDE OLD HEADER BAR ABOVE NAV */
+/* HIDE OLD ORIGINAL CSR DASHBOARD LAYOUT */
 body > table,
 body > center,
-body > div:not(.topnav):not(.sidebar):not(.layout) {
+body > form,
+body > div[align],
+body > div:first-child:not(.topnav),
+#menu,
+#csrMenu,
+#header,
+#top,
+#CSR\:DASHBOARD,
+#CSR,
+#logo,
+#nav {
     display: none !important;
 }
 
-/* TOP NAV + SIDEBAR ALREADY EXIST IN PHP */
+/* ========================================= */
+/* TOP NAV BAR                               */
+/* ========================================= */
+
 .topnav {
     position: fixed;
     top: 0;
     left: 0;
-    height: 60px;
     width: 100%;
+    height: 60px;
+    background: white;
     display: flex;
     align-items: center;
     padding: 0 10px;
-    background: white;
     border-bottom: 1px solid #d7e7d7;
-    z-index: 1000;
+    z-index: 999;
 }
 
-/* SIDEBAR */
+.hamburger {
+    font-size: 26px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+/* ========================================= */
+/* SIDEBAR                                   */
+/* ========================================= */
+
 .sidebar {
     position: fixed;
     top: 60px;
     left: 0;
     width: 260px;
     height: calc(100vh - 60px);
-    border-right: 1px solid #d7e7d7;
     background: white;
+    border-right: 1px solid #d7e7d7;
     overflow-y: auto;
+    z-index: 998;
     transition: transform .3s ease;
-    z-index: 999;
 }
 
-.sidebar.show { transform: translateX(0); }
-.sidebar-overlay.show { display: block; }
+.sidebar.show {
+    transform: translateX(0);
+}
+
+.sidebar-overlay {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 60px);
+    background: rgba(0,0,0,0.4);
+    display: none;
+    z-index: 997;
+}
+
+.sidebar-overlay.show {
+    display: block;
+}
+
+/* ========================================= */
+/* MAIN LAYOUT                               */
+/* ========================================= */
 
 .layout {
-    margin-top: 60px;
-    margin-left: 260px;
-    height: calc(100vh - 60px);
     display: flex;
+    flex-direction: row;
+    margin-top: 60px !important;
+    margin-left: 260px !important;
+    height: calc(100vh - 60px);
     overflow: hidden;
 }
 
-/* CLIENT PANEL */
+/* ========================================= */
+/* CLIENT LIST PANEL                         */
+/* ========================================= */
+
 .client-panel {
     width: 260px;
-    border-right: 1px solid #d7e7d7;
     background: white;
-    padding: 10px;
+    border-right: 1px solid #d7e7d7;
     display: flex;
     flex-direction: column;
+    padding: 10px;
+}
+
+.search {
+    width: 100%;
+    padding: 10px;
+    border-radius: 15px;
+    border: 1px solid #aaa;
 }
 
 .client-list {
     overflow-y: auto;
-    flex: 1;
+    margin-top: 10px;
 }
 
-/* CLIENT ITEM */
 .client-item {
     display: flex;
     align-items: center;
-    gap: 12px;
     padding: 10px;
+    gap: 12px;
     border-radius: 10px;
-    transition: .2s;
     cursor: pointer;
+    transition: background .2s;
 }
-.client-item:hover { background:#ebfcef; }
+.client-item:hover {
+    background:#ebfcef;
+}
 .client-item.active-client {
-    background:#c9f5cd;
+    background:#c9f5cd !important;
     border:2px solid #27b669;
 }
 
@@ -98,21 +156,30 @@ body > div:not(.topnav):not(.sidebar):not(.layout) {
 }
 
 .client-content { flex: 1; }
-.client-name { font-size:15px; font-weight:bold; }
-.client-sub { font-size:12px; color:gray; }
+.client-name { font-size: 15px; font-weight: bold; }
+.client-sub { font-size: 12px; color: gray; }
 
-.pill {
-    padding:4px 8px;
-    border-radius:6px;
-    font-size:14px;
-    cursor:pointer;
-    border:none;
+/* BADGE */
+.badge {
+    background: #ff2c2c;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: bold;
+    color: white;
+    border-radius: 10px;
+    margin-left: 6px;
+    animation: badgePop .35s ease;
 }
-.pill.green { background:#27b669; color:white; }
-.pill.red { background:#d9534f; color:white; }
-.pill.gray { background:#ccc; color:#444; }
 
-/* CHAT PANEL */
+@keyframes badgePop {
+    from { transform: scale(0.3); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+/* ========================================= */
+/* CHAT AREA                                 */
+/* ========================================= */
+
 .chat-panel {
     flex: 1;
     display: flex;
@@ -120,128 +187,144 @@ body > div:not(.topnav):not(.sidebar):not(.layout) {
 }
 
 .chat-header {
-    display:flex;
-    justify-content:space-between;
-    padding:12px;
-    background:white;
-    border-bottom:1px solid #d7e7d7;
+    padding: 12px;
+    background: white;
+    border-bottom: 1px solid #d7e7d7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.chat-avatar {
-    width:70px;
-    height:70px;
-    border-radius:50%;
-}
+.chat-name { font-size: 20px; font-weight: bold; }
 
-/* MODERN MESSENGER CHAT STYLE */
 .chat-box {
-    flex:1;
-    padding:15px;
-    overflow-y:auto;
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
 }
+
+/* MESSAGE BUBBLES */
 
 .msg {
-    display:flex;
-    margin-bottom:12px;
-}
-.msg.client { flex-direction:row; }
-.msg.csr { flex-direction:row-reverse; }
-
-.bubble {
-    max-width:65%;
-    padding:12px 16px;
-    border-radius:16px;
-    line-height:1.4;
-}
-.msg.client .bubble {
-    background:white;
-    border:1px solid #cde5cd;
-}
-.msg.csr .bubble {
-    background:#2bb673;
-    color:white;
-}
-
-.meta {
-    font-size:10px;
-    margin-top:3px;
-    text-align:right;
-}
-
-/* CHAT INPUT */
-.chat-input {
-    display:flex;
-    gap:10px;
-    padding:10px;
-    background:white;
-    border-top:1px solid #d7e7d7;
-}
-
-.send-btn, .upload-icon {
-    width:45px;
-    height:45px;
-    border-radius:50%;
-    border:2px solid #30b169;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    cursor:pointer;
-    background:white;
-}
-.chat-input input[type=text] {
-    flex:1;
-    padding:10px;
-    border-radius:25px;
-    border:1px solid #ccc;
-}
-
-/* SLIDE INFO PANEL */
-.client-info-panel {
-    position:fixed;
-    right:0;
-    top:60px;
-    width:350px;
-    height:calc(100vh - 60px);
-    background:white;
-    transform:translateX(100%);
-    border-left:1px solid #d7e7d7;
-    padding:20px;
-    z-index:1001;
-    transition:transform .3s ease;
-}
-.client-info-panel.show { transform:translateX(0); }
-
-/* RESPONSIVE */
-@media (max-width:900px){
-    .layout { margin-left:0; }
-    .sidebar { transform:translateX(-100%); }
-    .sidebar.show { transform:translateX(0); }
-    .client-panel { display:none; }
-}
-/* UNREAD BADGE */
-.badge {
-    background: #ff2c2c;
-    color: white;
-    padding: 2px 8px;
-    font-size: 11px;
-    border-radius: 20px;
-    margin-left: 6px;
-    animation: badgePop .35s ease;
-    font-weight: bold;
-}
-
-/* POP BADGE ANIMATION */
-@keyframes badgePop {
-    from { transform: scale(0.3); opacity: 0; }
-    to   { transform: scale(1); opacity: 1; }
-}
-
-/* Smooth message appearing */
-.msg {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 12px;
     animation: fadeIn .25s ease;
 }
 
 @keyframes fadeIn {
-    from { opacity:0; transform:translateY(6px); }
-    to   { opacity:1; transform:translateY(0); }
+    from { opacity: 0; transform:translateY(6px); }
+    to   { opacity: 1; transform:translateY(0); }
+}
+
+.msg.client { justify-content: flex-start; }
+.msg.csr { justify-content: flex-end; }
+
+.avatar-small {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 50%;
+}
+
+.bubble {
+    max-width: 60%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.msg.client .bubble {
+    background: white;
+    border: 1px solid #cde5cd;
+    margin-left: 6px;
+}
+
+.msg.csr .bubble {
+    background: #2bb673;
+    color: white;
+    margin-right: 6px;
+}
+
+.meta {
+    font-size: 10px;
+    margin-top: 3px;
+    text-align: right;
+}
+
+/* Attachments */
+.file-img, .file-img video {
+    max-width: 220px;
+    border-radius: 10px;
+    margin-top: 6px;
+}
+
+/* ========================================= */
+/* CHAT INPUT                                */
+/* ========================================= */
+
+.chat-input {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+    background: white;
+    border-top: 1px solid #d7e7d7;
+}
+
+.upload-icon, .send-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid #30b169;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    background: white;
+}
+
+.chat-input input[type=text] {
+    flex: 1;
+    padding: 12px;
+    border-radius: 25px;
+    border: 2px solid #ccc;
+}
+
+.chat-input input[type=text]:focus {
+    border-color: #2bb673;
+}
+
+/* ========================================= */
+/* CLIENT INFO SLIDE PANEL                   */
+/* ========================================= */
+
+.client-info-panel {
+    position: fixed;
+    right: 0;
+    top: 60px;
+    width: 350px;
+    height: calc(100vh - 60px);
+    background:white;
+    border-left: 1px solid #d7e7d7;
+    transform: translateX(100%);
+    transition: transform .3s ease;
+    z-index: 1000;
+    padding: 15px;
+}
+
+.client-info-panel.show {
+    transform: translateX(0);
+}
+
+/* ========================================= */
+/* RESPONSIVE                                */
+/* ========================================= */
+
+@media (max-width: 900px) {
+    .layout { margin-left: 0 !important; }
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.show { transform: translateX(0); }
+    .sidebar-overlay.show { display: block; }
+    .client-panel { display: none; }
 }
