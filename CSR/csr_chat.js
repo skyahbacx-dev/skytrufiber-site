@@ -154,3 +154,8 @@ setInterval(loadClients, 4000);
 setInterval(() => loadMessages(false), 1500);
 
 loadClients();
+
+/******** TOGGLE CLIENT INFO PANEL (ADDED ONLY) ********/
+function toggleClientInfo() {
+    document.getElementById("clientInfoPanel").classList.toggle("show");
+}
