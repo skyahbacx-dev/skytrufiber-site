@@ -1,11 +1,11 @@
 let selectedClient = 0;
 let assignedTo = "";
 let filesToSend = [];
-let lastMessageCount = 0;  // For scroll rule
+let lastMessageCount = 0;
 
 /******** SIDEBAR ********/
 function toggleSidebar(){
-    document.querySelector(".sidebar").classList.toggle("open");
+    document.querySelector(".sidebar").classList.toggle("show");
     document.querySelector(".sidebar-overlay").classList.toggle("show");
 }
 
@@ -27,20 +27,15 @@ function selectClient(id, name, assigned) {
     $("#chatName").text(name);
 
     const isLocked = assigned && assigned !== csrFullname;
+    $("#messageInput, #sendBtn, #fileInput").prop("disabled", isLocked);
 
-    $("#messageInput").prop("disabled", isLocked);
-    $("#sendBtn").prop("disabled", isLocked);
-
-    if (isLocked) {
-        $(".upload-icon").hide();
-        $("#fileInput").prop("disabled", true);
-    } else {
-        $(".upload-icon").show();
-        $("#fileInput").prop("disabled", false);
+    if (window.innerWidth < 900) {
+        document.querySelector(".sidebar").classList.remove("show");
+        document.querySelector(".sidebar-overlay").classList.remove("show");
     }
 
     loadClientInfo();
-    loadMessages(true);   // prevent scroll jump
+    loadMessages(false);
 }
 
 /******** LOAD CLIENT INFO ********/
@@ -53,8 +48,8 @@ function loadClientInfo() {
     });
 }
 
-/******** LOAD CHAT MESSAGES ********/
-function loadMessages(initialLoad = false){
+/******** LOAD MESSAGES ********/
+function loadMessages(scrollBottom){
     if (!selectedClient) return;
 
     $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
@@ -63,15 +58,13 @@ function loadMessages(initialLoad = false){
             let side = (m.sender_type === "csr") ? "csr" : "client";
 
             html += `<div class="msg ${side}">
-                        <div class="bubble">${m.message || ""}`;
+                <div class="bubble">${m.message || ""}`;
 
             if (m.media_path) {
                 if (m.media_type === "image") {
                     html += `<img src="${m.media_path}" class="file-img" onclick="openMedia('${m.media_path}')">`;
                 } else {
-                    html += `<video class="file-img" controls onclick="openMedia('${m.media_path}')">
-                                <source src="${m.media_path}">
-                             </video>`;
+                    html += `<video class="file-img" controls><source src="${m.media_path}"></video>`;
                 }
             }
 
@@ -80,39 +73,13 @@ function loadMessages(initialLoad = false){
 
         $("#chatMessages").html(html);
 
-        // SCROLL ONLY IF A NEW MESSAGE ARRIVED
-        if (messages.length > lastMessageCount && !initialLoad) {
+        if (scrollBottom || messages.length > lastMessageCount) {
             $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
         }
 
         lastMessageCount = messages.length;
     });
 }
-
-/******** FILE ICON CLICK ********/
-$(".upload-icon").on("click", function (){
-    $("#fileInput").click();
-});
-
-/******** PREVIEW FILES ********/
-$("#fileInput").on("change", function(e){
-    filesToSend = [...e.target.files];
-    $("#previewArea").html("");
-
-    filesToSend.forEach(file => {
-        let reader = new FileReader();
-        reader.onload = ev => {
-            $("#previewArea").append(`
-                <div class="preview-thumb">
-                    ${file.type.includes("video")
-                        ? `<video src="${ev.target.result}" muted></video>`
-                        : `<img src="${ev.target.result}">`}
-                </div>
-            `);
-        };
-        reader.readAsDataURL(file);
-    });
-});
 
 /******** SEND MESSAGE ********/
 $("#sendBtn").click(function(){
@@ -137,25 +104,46 @@ $("#sendBtn").click(function(){
             $("#previewArea").html("");
             $("#fileInput").val("");
             filesToSend = [];
-            loadMessages(false);   // allow scroll now
+            loadMessages(true);
         }
     });
 });
 
-/******** MODAL VIEW MEDIA ********/
+/******** FILE PREVIEW ********/
+$(".upload-icon").click(() => $("#fileInput").click());
+
+$("#fileInput").on("change", function(e){
+    filesToSend = [...e.target.files];
+    $("#previewArea").html("");
+
+    filesToSend.forEach(file => {
+        let reader = new FileReader();
+        reader.onload = ev => {
+            $("#previewArea").append(`
+                <div class="preview-thumb">
+                    ${file.type.includes("video")
+                        ? `<video src="${ev.target.result}" muted></video>`
+                        : `<img src="${ev.target.result}">`}
+                </div>`);
+        };
+        reader.readAsDataURL(file);
+    });
+});
+
+/******** VIEW MEDIA ********/
 function openMedia(src){
     $("#mediaModal").addClass("show");
     $("#mediaModalContent").attr("src", src);
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-/******** AUTO REFRESH ********/
+/******** REFRESH AUTO ********/
 setInterval(loadClients, 4000);
 setInterval(() => loadMessages(false), 1500);
 
 loadClients();
 
-/******** TOGGLE CLIENT INFO PANEL (ADDED ONLY) ********/
-function toggleClientInfo() {
-    document.getElementById("clientInfoPanel").classList.toggle("show");
+/******** Info Panel Toggle ********/
+function toggleClientInfo(){
+    document.querySelector("#clientInfoPanel").classList.toggle("show");
 }
