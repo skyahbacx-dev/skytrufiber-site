@@ -8,12 +8,11 @@ body {
 
 .layout {
     display: flex;
-    flex-direction: row;
     height: calc(100vh - 60px);
     overflow: hidden;
 }
 
-/* ===== SIDEBAR / CLIENT PANEL ===== */
+/* ===== SIDEBAR ===== */
 .client-panel {
     width: 260px;
     background: white;
@@ -67,18 +66,6 @@ body {
     object-fit: cover;
     margin-right: 10px;
     border: 2px solid #eee;
-}
-
-/* ===== PROFILE PREVIEW AREA (fixed width) ===== */
-.profile-preview {
-    width: 350px;
-    min-width: 350px;
-    max-width: 350px;
-    background: white;
-    border-right: 1px solid #d7e7d7;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
 }
 
 /* ===== CHAT PANEL ===== */
@@ -149,7 +136,7 @@ body {
     cursor: pointer;
 }
 
-/* ===== ATTACHMENT PREVIEW ===== */
+/* ===== PREVIEW AREA ===== */
 .preview-area {
     display: flex;
     gap: 10px;
@@ -174,8 +161,7 @@ body {
     border-top: 1px solid #d7e7d7;
 }
 
-.upload-icon,
-.send-btn {
+.upload-icon, .send-btn {
     background: #ffffff;
     border: 2px solid #30b169;
     width: 45px;
@@ -190,8 +176,7 @@ body {
     color: #2bb673;
 }
 
-.upload-icon:hover,
-.send-btn:hover {
+.upload-icon:hover, .send-btn:hover {
     background: #dfffe8;
 }
 
@@ -208,14 +193,14 @@ body {
     border-color: #2bb673;
 }
 
-/* ===== MEDIA MODAL VIEWER ===== */
+/* ===== MODAL VIEW MEDIA ===== */
 .media-modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0,0,0,0.8);
     display: none;
     align-items: center;
     justify-content: center;
@@ -238,4 +223,91 @@ body {
     font-size: 30px;
     color: white;
     cursor: pointer;
+}
+
+/* ========================================================= */
+/* ===== FIX (ADDED ONLY) WHITE SPACE / SLIDING PANEL ===== */
+/* ========================================================= */
+
+.layout {
+    position: relative;
+}
+
+.chat-panel {
+    flex: 1;
+    min-width: 0;
+}
+
+.client-info-panel {
+    position: absolute;
+    right: 0;
+    top: 60px;
+    width: 320px;
+    height: calc(100vh - 60px);
+    background: white;
+    border-left: 1px solid #d7e7d7;
+    padding: 15px;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    z-index: 10;
+}
+
+.client-info-panel.show {
+    transform: translateX(0);
+}
+
+/* ========================================================= */
+/* ===== RESPONSIVE FIXES (ADDED ONLY, NO CHANGES) ======== */
+/* ========================================================= */
+
+@media (max-width: 1200px) {
+    .client-panel {
+        width: 200px;
+    }
+}
+
+@media (max-width: 992px) {
+    .client-panel {
+        position: absolute;
+        z-index: 20;
+        left: 0;
+        top: 60px;
+        height: calc(100vh - 60px);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    .client-panel.show {
+        transform: translateX(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .chat-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .msg {
+        max-width: 80%;
+    }
+
+    .client-info-panel {
+        width: 280px;
+    }
+}
+
+@media (max-width: 540px) {
+    .client-panel {
+        width: 100%;
+    }
+
+    .upload-icon, .send-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .chat-input input[type="text"] {
+        font-size: 14px;
+    }
 }
