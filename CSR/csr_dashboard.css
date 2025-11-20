@@ -226,7 +226,7 @@ body {
 }
 
 /* ========================================================= */
-/* ===== FIX (ADDED ONLY) WHITE SPACE / SLIDING PANEL ===== */
+/* ======= ADDED FIXES — DO NOT MODIFY ABOVE THIS LINE ===== */
 /* ========================================================= */
 
 .layout {
@@ -238,6 +238,7 @@ body {
     min-width: 0;
 }
 
+/* Slide panel */
 .client-info-panel {
     position: absolute;
     right: 0;
@@ -256,58 +257,18 @@ body {
     transform: translateX(0);
 }
 
-/* ========================================================= */
-/* ===== RESPONSIVE FIXES (ADDED ONLY, NO CHANGES) ======== */
-/* ========================================================= */
-
-@media (max-width: 1200px) {
-    .client-panel {
-        width: 200px;
-    }
+/* ===== FIX CHAT HEADER AVATAR ===== */
+.chat-avatar {
+    width: 120px !important;
+    height: 120px !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+    display: block !important;
 }
 
-@media (max-width: 992px) {
-    .client-panel {
-        position: absolute;
-        z-index: 20;
-        left: 0;
-        top: 60px;
-        height: calc(100vh - 60px);
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-    }
-    .client-panel.show {
-        transform: translateX(0);
-    }
-}
-
-@media (max-width: 768px) {
-    .chat-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
-    }
-
-    .msg {
-        max-width: 80%;
-    }
-
-    .client-info-panel {
-        width: 280px;
-    }
-}
-
-@media (max-width: 540px) {
-    .client-panel {
-        width: 100%;
-    }
-
-    .upload-icon, .send-btn {
-        width: 40px;
-        height: 40px;
-    }
-
-    .chat-input input[type="text"] {
-        font-size: 14px;
-    }
+/* ===== ALIGN NAME & STATUS ===== */
+.user-section {
+    display: flex !important;
+    align-items: center !important;
+    gap: 20px !important;
 }
