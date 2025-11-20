@@ -42,7 +42,6 @@ function selectClient(id, name, assigned) {
     loadMessages(true);
 }
 
-/******** CLIENT INFO ********/
 function loadClientInfo() {
     $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name);
@@ -51,6 +50,7 @@ function loadClientInfo() {
         $("#infoBrgy").text(info.barangay);
     });
 }
+
 
 /******** LOAD CHAT MESSAGES ********/
 function loadMessages(initialLoad = false) {
