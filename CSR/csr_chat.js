@@ -3,20 +3,20 @@ let assignedTo = "";
 let filesToSend = [];
 let lastMessageCount = 0;
 
-/* ========== SIDEBAR TOGGLE ========== */
-function toggleSidebar() {
+/******** SIDEBAR ********/
+function toggleSidebar(){
     document.querySelector(".sidebar").classList.toggle("show");
     document.querySelector(".sidebar-overlay").classList.toggle("show");
 }
 
-/* ========== LOAD CLIENT LIST ========== */
+/******** LOAD CLIENT LIST ********/
 function loadClients() {
     $.get("client_list.php", data => {
         $("#clientList").html(data);
     });
 }
 
-/* ========== SELECT CLIENT ========== */
+/******** SELECT CLIENT ********/
 function selectClient(id, name, assigned) {
     selectedClient = id;
     assignedTo = assigned;
@@ -30,11 +30,14 @@ function selectClient(id, name, assigned) {
     $("#messageInput").prop("disabled", locked);
     $("#sendBtn").prop("disabled", locked);
     $("#fileInput").prop("disabled", locked);
+    if (locked) $(".upload-icon").hide(); else $(".upload-icon").show();
 
-    if (locked) $(".upload-icon").hide();
-    else $(".upload-icon").show();
+    // Remove badge visually
+    $(`#client-${id} .badge`).remove();
 
-    // auto-close sidebar on mobile
+    // Mark unread messages as read
+    $.post("mark_read.php", { client_id:id });
+
     if (window.innerWidth < 900) {
         document.querySelector(".sidebar").classList.remove("show");
         document.querySelector(".sidebar-overlay").classList.remove("show");
@@ -44,7 +47,7 @@ function selectClient(id, name, assigned) {
     loadMessages(true);
 }
 
-/* ========== LOAD CLIENT INFO PANEL ========== */
+/******** LOAD CLIENT INFO ********/
 function loadClientInfo() {
     $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name);
@@ -54,8 +57,8 @@ function loadClientInfo() {
     });
 }
 
-/* ========== LOAD CHAT MESSAGES ========== */
-function loadMessages(autoScroll) {
+/******** LOAD MESSAGES ********/
+function loadMessages(autoScroll){
     if (!selectedClient) return;
 
     $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
@@ -66,7 +69,7 @@ function loadMessages(autoScroll) {
 
             html += `
                 <div class="msg ${side}">
-                    <img src="${side === "csr" ? "upload/default-avatar.png" : "upload/default-avatar.png"}" class="avatar-small">
+                    <img src="upload/default-avatar.png" class="avatar-small">
                     <div>
                         <div class="bubble">${m.message || ""}`;
 
@@ -89,7 +92,6 @@ function loadMessages(autoScroll) {
 
         $("#chatMessages").html(html);
 
-        // Auto scroll logic
         if (autoScroll || messages.length > lastMessageCount) {
             $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
         }
@@ -98,11 +100,11 @@ function loadMessages(autoScroll) {
     });
 }
 
-/* ========== HANDLE FILE CLICK ========== */
+/******** FILE CLICK ********/
 $(".upload-icon").on("click", () => $("#fileInput").click());
 
-/* ========== PREVIEW ATTACHMENTS ========== */
-$("#fileInput").on("change", function (e) {
+/******** PREVIEW FILES ********/
+$("#fileInput").on("change", function(e){
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
@@ -121,8 +123,8 @@ $("#fileInput").on("change", function (e) {
     });
 });
 
-/* ========== SEND MESSAGE ========== */
-$("#sendBtn").click(function () {
+/******** SEND MESSAGE ********/
+$("#sendBtn").click(function(){
     let msg = $("#messageInput").val();
     if (!msg && filesToSend.length === 0) return;
 
@@ -134,36 +136,36 @@ $("#sendBtn").click(function () {
     filesToSend.forEach(f => fd.append("files[]", f));
 
     $.ajax({
-        url: "save_chat_csr.php",
-        method: "POST",
-        data: fd,
-        processData: false,
-        contentType: false,
-        success: function () {
+        url:"save_chat_csr.php",
+        method:"POST",
+        data:fd,
+        processData:false,
+        contentType:false,
+        success:function(){
             $("#messageInput").val("");
             $("#previewArea").html("");
             $("#fileInput").val("");
             filesToSend = [];
-
             loadMessages(true);
+            loadClients(); // update badges
         }
     });
 });
 
-/* ========== MEDIA MODAL VIEWER ========== */
-function openMedia(src) {
+/******** MEDIA VIEWER ********/
+function openMedia(src){
     $("#mediaModal").addClass("show");
     $("#mediaModalContent").attr("src", src);
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-/* ========== AUTO REFRESH ========== */
+/******** AUTO REFRESH ********/
 setInterval(loadClients, 4000);
 setInterval(() => loadMessages(false), 1500);
 
 loadClients();
 
-/* ========== SLIDE INFO PANEL ========== */
-function toggleClientInfo() {
+/******** INFO PANEL ********/
+function toggleClientInfo(){
     document.getElementById("clientInfoPanel").classList.toggle("show");
 }
