@@ -165,3 +165,36 @@ body {
         margin-left:0 !important;
     }
 }
+/* CHAT MESSAGE STYLE SIMPLE */
+.msg {
+    max-width: 60%;
+    margin: 10px 0;
+    padding: 0 10px;
+}
+
+.msg.client {
+    text-align: left;
+}
+
+.msg.csr {
+    margin-left: auto;
+    text-align: right;
+}
+
+.bubble {
+    display: inline-block;
+    padding: 10px 14px;
+    border-radius: 16px;
+    background: #e5e5e5;
+    font-size: 15px;
+}
+.msg.csr .bubble {
+    background: #2eb3ff;
+    color: white;
+}
+
+.meta {
+    font-size: 11px;
+    margin-top: 3px;
+    color: gray;
+}
