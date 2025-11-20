@@ -226,38 +226,28 @@ body {
 }
 
 /* ========================================================= */
-/* ======= ADDED FIXES — DO NOT MODIFY ABOVE THIS LINE ===== */
+/* ===== ADDED FIXES BELOW — DO NOT EDIT EXISTING CODE ===== */
 /* ========================================================= */
 
-.layout {
-    position: relative;
-}
-
-.chat-panel {
-    flex: 1;
-    min-width: 0;
-}
-
-/* Slide panel */
+/* Force hide right info panel so it stops occupying layout space */
 .client-info-panel {
-    position: absolute;
-    right: 0;
-    top: 60px;
-    width: 320px;
-    height: calc(100vh - 60px);
-    background: white;
-    border-left: 1px solid #d7e7d7;
-    padding: 15px;
-    transform: translateX(100%);
-    transition: transform 0.3s ease;
-    z-index: 10;
+    position: absolute !important;
+    right: 0 !important;
+    top: 60px !important;
+    width: 350px !important;
+    height: calc(100vh - 60px) !important;
+    transform: translateX(100%) !important;
+    transition: transform 0.3s ease !important;
+    background: white !important;
+    border-left: 1px solid #d7e7d7 !important;
+    z-index: 999 !important;
 }
 
 .client-info-panel.show {
-    transform: translateX(0);
+    transform: translateX(0) !important;
 }
 
-/* ===== FIX CHAT HEADER AVATAR ===== */
+/* Fix avatar expanding and forcing giant header space */
 .chat-avatar {
     width: 120px !important;
     height: 120px !important;
@@ -266,13 +256,9 @@ body {
     display: block !important;
 }
 
-/* ===== ALIGN NAME & STATUS ===== */
+/* Align inner header content */
 .user-section {
     display: flex !important;
     align-items: center !important;
     gap: 20px !important;
-}
-/* ===== DEBUG TEST ===== */
-body {
-    border: 10px solid red !important;
 }
