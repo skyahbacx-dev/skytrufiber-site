@@ -5,7 +5,7 @@ if (!isset($_SESSION['csr_user'])) {
     exit;
 }
 
-$csrUser     = $_SESSION["csr_user"];                // username, e.g. CSR1
+$csrUser     = $_SESSION["csr_user"];
 $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 ?>
 <!DOCTYPE html>
@@ -13,34 +13,34 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 <head>
 <meta charset="UTF-8">
 <title>CSR Dashboard — <?= htmlspecialchars($csrFullName) ?></title>
+
 <link rel="stylesheet" href="csr_dashboard.css">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
-// Expose to JS
-const csrUser     = "<?= htmlspecialchars($csrUser,     ENT_QUOTES) ?>"; // username, used for assignment check
-const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>"; // not used for lock, just for future
+const csrUser     = "<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>";
+const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 </script>
+
 <script src="csr_chat.js"></script>
 </head>
 
 <body>
 
-<!-- ===== SIDEBAR ===== -->
+<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
     <button class="toggle-btn" onclick="toggleSidebar()">❐</button>
-    
     <div class="side-title">MENU</div>
     <button class="side-item" onclick="window.location='csr_dashboard.php'">💬 Chat Dashboard</button>
     <button class="side-item" onclick="window.location='my_clients.php'">👥 My Clients</button>
     <button class="side-item" onclick="window.location='reminders.php'">⏱ Reminders</button>
     <button class="side-item" onclick="window.location='survey_responses.php'">📄 Survey Responses</button>
     <button class="side-item" onclick="window.location='update_profile.php'">👤 Edit Profile</button>
-
     <button class="side-item logout" onclick="window.location='csr_logout.php'">🚪 Logout</button>
 </div>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<!-- ===== TOP NAV ===== -->
+<!-- TOP NAV -->
 <div class="topnav">
     <button class="hamburger" onclick="toggleSidebar()">☰</button>
 
@@ -59,7 +59,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>"; // not 
     </div>
 </div>
 
-<!-- ===== LAYOUT ===== -->
+<!-- MAIN LAYOUT -->
 <div class="layout">
 
     <!-- CLIENT LIST -->
@@ -86,26 +86,17 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>"; // not 
 
         <div class="chat-box" id="chatMessages"></div>
 
-        <!-- PREVIEW STRIP (FLOATING LIKE MESSENGER) -->
         <div id="previewArea" class="preview-area"></div>
 
-        <!-- INPUT -->
-            <div class="chat-input">
-            <label for="fileInput" class="upload-icon">
-            <i class="fa-regular fa-image"></i>
-            </label>
-                <input type="file" id="fileInput" multiple style="display:none;">
-    
-                <input type="text" id="messageInput" placeholder="Type anything.....">
-    
-            <button id="sendBtn" class="send-btn">
-            <i class="fa-solid fa-paper-plane"></i>
-            </button>
+        <div class="chat-input">
+            <label for="fileInput" class="upload-icon"><i class="fa-regular fa-image"></i></label>
+            <input type="file" id="fileInput" multiple style="display:none">
+            <input type="text" id="messageInput" placeholder="Type a message...">
+            <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
     </div>
 
-    </div>
-
-    <!-- SLIDING CLIENT INFO -->
+    <!-- SLIDE PANEL -->
     <aside id="clientInfoPanel" class="client-info-panel">
         <button class="close-info" onclick="toggleClientInfo()">✖</button>
         <h3>Client Information</h3>
@@ -117,7 +108,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>"; // not 
 
 </div>
 
-<!-- FULLSCREEN MEDIA MODAL -->
+<!-- MEDIA VIEWER -->
 <div id="mediaModal" class="media-modal">
     <span id="closeMediaModal" class="close-modal">✖</span>
     <img id="mediaModalContent" class="modal-content">
