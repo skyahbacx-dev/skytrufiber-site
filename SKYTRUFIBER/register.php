@@ -12,13 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $barangay = trim($_POST['location']);
     $date_installed = trim($_POST['date_installed']);
     $remarks = trim($_POST['remarks']);
-    $privacy_consent = $_POST['privacy_consent'] ?? null;
     $password = $account_number;
-
-    if ($privacy_consent !== "yes") {
-        header("Location: skytrufiber.php?msg=success");
-        exit;
-    }
 
     if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
 
@@ -29,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt = $conn->prepare("
                 INSERT INTO users (account_number, full_name, email, password, district, barangay, date_installed, privacy_consent, created_at)
-                VALUES (:acc, :name, :email, :pw, :district, :brgy, :installed, :consent, NOW())
+                VALUES (:acc, :name, :email, :pw, :district, :brgy, :installed, 'yes', NOW())
             ");
             $stmt->execute([
                 ':acc' => $account_number,
@@ -38,8 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':pw' => $hash,
                 ':district' => $district,
                 ':brgy' => $barangay,
-                ':installed' => $date_installed,
-                ':consent' => $privacy_consent
+                ':installed' => $date_installed
             ]);
 
             if ($remarks) {
@@ -88,62 +81,29 @@ body {
 form {
   background:#fff; padding:25px; border-radius:15px; width:380px;
   box-shadow:0 4px 12px rgba(0,0,0,0.15);
-  display:none; opacity:0; transform:translateY(40px);
 }
 
-.showAnimated {
-  display:block !important;
-  animation: slideFade .6s ease forwards;
+h2 { text-align:center; color:#004466; margin-bottom:15px; }
+label { font-weight:600; color:#004466; display:block; margin-top:10px; }
+input, select, textarea {
+  width:100%; padding:10px; margin-top:5px; border-radius:8px; border:1px solid #ccc;
 }
-
-@keyframes slideFade {
-  from {opacity:0; transform:translateY(40px);}
-  to {opacity:1; transform:translateY(0);}
+button {
+  width:100%; padding:10px; background:#0099cc; color:white; border:none;
+  border-radius:8px; cursor:pointer; margin-top:15px; font-weight:bold;
 }
-
-/* FULL SCREEN PRIVACY */
-#privacyScreen {
-  position:fixed; top:0; left:0; width:100%; height:100vh;
-  background:rgba(0,0,0,0.45); backdrop-filter:blur(10px);
-  display:flex; justify-content:center; align-items:center; z-index:9999;
-}
-
-@keyframes pop {
-  from {transform:scale(0.7); opacity:0;}
-  to   {transform:scale(1); opacity:1;}
-}
+textarea { height:80px; resize:none; }
 </style>
-</head>
 
+</head>
 <body>
 
-<!-- PRIVACY CONSENT FIRST -->
-<div id="privacyScreen">
-  <div style="background:white; padding:25px 35px; border-radius:12px; width:500px;
-              animation:pop .35s ease-out; text-align:center;">
-    <h2 style="color:#003d66; margin-top:0;">Data Privacy Notice</h2>
-    <p style="font-size:15px; text-align:justify;">
-      SkyTruFiber is committed to protecting your personal information in accordance with the Data Privacy Act of 2012 (RA 10173).
-      We collect and process your data for installation, service updates, billing, and support purposes. Your information will not be shared externally without consent.
-    </p>
-
-    <div style="margin-top:25px; text-align:left;">
-      <label><input type="radio" name="consentChoice" value="yes"> YES, I agree</label><br>
-      <label style="margin-top:10px;"><input type="radio" name="consentChoice" value="no"> NO, I do not agree</label>
-    </div>
-
-    <button onclick="continueFlow()" style="margin-top:18px; padding:10px 25px;
-      background:#0099cc; color:white; border:none; border-radius:8px; cursor:pointer;">Continue</button>
-  </div>
-</div>
-
-<!-- MAIN FORM -->
 <div class="logo-container">
-  <img src="../SKYTRUFIBER.png" style="width:140px; border-radius:50%; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+  <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo" style="width:140px; border-radius:50%; margin-bottom:15px;">
 </div>
 
-<form method="POST" id="regForm">
-  <h2 style="text-align:center; color:#004466;">Customer Registration & Feedback</h2>
+<form method="POST">
+  <h2>Customer Registration & Feedback</h2>
 
   <label>Account Number:</label>
   <input type="text" name="account_number" required>
@@ -151,7 +111,7 @@ form {
   <label>Full Name:</label>
   <input type="text" name="full_name" required>
 
-  <label>Email Address:</label>
+  <label>Email:</label>
   <input type="email" name="email" required>
 
   <label>District:</label>
@@ -173,32 +133,20 @@ form {
   <label>Feedback / Comments:</label>
   <textarea name="remarks" required></textarea>
 
-  <input type="hidden" name="privacy_consent" value="yes">
+  <button type="submit">Submit</button>
 
-  <button type="submit" style="margin-top:15px; padding:10px; background:#0099cc; color:white; border:none; border-radius:8px;">Submit</button>
+  <?php if ($message): ?>
+    <p style="color:red; text-align:center;"><?= htmlspecialchars($message) ?></p>
+  <?php endif; ?>
+
+  <p style="text-align:center; margin-top:10px;">Already registered? <a href="skytrufiber.php">Login here</a></p>
 </form>
 
 <script>
-function continueFlow() {
-  const choice = document.querySelector('input[name="consentChoice"]:checked');
-  if (!choice) { alert("⚠ Please select YES or NO"); return; }
-
-  if (choice.value === "yes") {
-    document.getElementById("privacyScreen").style.opacity="0";
-    setTimeout(() => {
-      document.getElementById("privacyScreen").style.display="none";
-      document.getElementById("regForm").classList.add("showAnimated");
-    }, 300);
-  } else {
-    window.location.href = "skytrufiber.php?msg=success";
-  }
-}
-
-// Auto date
 document.addEventListener("DOMContentLoaded", () => {
-  const today = new Date();
+  const d = new Date();
   document.getElementById("date_installed").value =
-    today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
+    d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 });
 </script>
 
