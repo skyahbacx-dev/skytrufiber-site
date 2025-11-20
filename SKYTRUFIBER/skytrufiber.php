@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../db_connect.php';
+include '../db_connect.php'; // Ensure your PDO connection
 
 $message = '';
 
@@ -21,7 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['name'] = $user['full_name'];
                 $_SESSION['email'] = $user['email'];
 
-                // Create client record if not exists
                 $clientStmt = $conn->prepare("SELECT id, assigned_csr FROM clients WHERE name = :name LIMIT 1");
                 $clientStmt->execute([':name' => $user['full_name']]);
                 $client = $clientStmt->fetch(PDO::FETCH_ASSOC);
@@ -34,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $client_id = $client['id'];
                 }
 
-                // Assign CSR randomly
                 $csrStmt = $conn->query("SELECT username, full_name FROM csr_users WHERE is_online = TRUE ORDER BY RANDOM() LIMIT 1");
                 $csr = $csrStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -78,67 +76,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Customer Service Portal - SkyTruFiber</title>
-
+<title>SkyTruFiber - Customer Portal</title>
 <style>
 body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
-  display: flex;
-  flex-direction: column; align-items: center; justify-content: center;
-  min-height: 100vh; margin:0;
+  font-family:"Segoe UI", Arial, sans-serif;
+  background:linear-gradient(to bottom right, #cceeff, #e6f7ff);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:100vh; margin:0;
 }
 
 form {
-  background:#fff; padding:25px; border-radius:15px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.15); width:380px;
+  background:#fff; padding:25px; border-radius:15px; width:380px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
   display:none; opacity:0; transform:translateY(40px);
 }
 
-.showAnimated {
+.showForm {
   display:block !important;
-  animation: slideFade .6s ease forwards;
+  animation:fadeSlide .6s ease forwards;
 }
 
-@keyframes slideFade {
+@keyframes fadeSlide {
   from { opacity:0; transform:translateY(40px); }
   to { opacity:1; transform:translateY(0); }
 }
 
-/* Success popup */
-#popupOverlay {
+/* Popup Overlay */
+.popupOverlay {
   position:fixed; top:0; left:0; width:100%; height:100vh;
-  background:rgba(0,0,0,0.45);
-  backdrop-filter: blur(10px);   /* AN4 Blur effect */
-  display:flex; justify-content:center; align-items:center;
-  z-index:9999; transition:opacity .3s;
+  background:rgba(0,0,0,0.45); backdrop-filter:blur(10px);
+  display:flex; justify-content:center; align-items:center; z-index:9999;
 }
 
-@keyframes pop {
-  from {transform:scale(0.7); opacity:0;}
-  to {transform:scale(1); opacity:1;}
+.popupBox {
+  background:white; padding:25px 35px; border-radius:12px;
+  text-align:center; width:350px; animation:pop .35s ease-out;
 }
+
+@keyframes pop { from {transform:scale(0.7); opacity:0;} to {transform:scale(1); opacity:1;} }
 </style>
 </head>
 
 <body>
 
 <?php if (isset($_GET['msg']) && $_GET['msg']==="success"): ?>
-<div id="popupOverlay">
-  <div style="background:white; padding:25px 35px; border-radius:12px; width:350px;
-              text-align:center; animation:pop .3s ease-out;">
-    <h3 style="margin:0; color:#155724; font-weight:bold;">Thank you!</h3>
-    <p style="margin-top:8px; font-size:15px;">We received your feedback.</p>
-
+<div class="popupOverlay" id="popupOverlay">
+  <div class="popupBox">
+    <h3 style="margin:0; color:#155724;">Thank you!</h3>
+    <p>We received your feedback.</p>
     <button onclick="closePopup()" style="
-      margin-top:15px; padding:10px 25px; background:#0099cc; color:white;
-      border:none; border-radius:8px; cursor:pointer; font-size:15px;">OK</button>
+      padding:10px 30px; background:#0099cc; color:white; border:none; border-radius:8px;
+      cursor:pointer; font-size:15px;">OK</button>
   </div>
 </div>
 <?php endif; ?>
 
-<div class="logo-container" style="text-align:center;">
-  <img src="../SKYTRUFIBER.png" style="width:140px; border-radius:50%; margin-bottom:15px;">
+<div class="logo-container" style="text-align:center; margin-bottom:10px;">
+  <img src="../SKYTRUFIBER.png" style="width:140px; border-radius:50%; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
 </div>
 
 <form id="supportForm" method="POST">
@@ -150,9 +144,9 @@ form {
   <label>Password:</label>
   <input type="password" id="password" name="password" required>
 
-  <div class="show-pass" style="display:flex; justify-content:flex-end; margin-top:5px; font-size:13px;">
-    <label for="showPassword">Show Password</label>
-    <input type="checkbox" id="showPassword">
+  <div style="display:flex; justify-content:flex-end; margin-top:5px; font-size:13px;">
+    <label>Show Password</label>
+    <input type="checkbox" id="showPassword" style="margin-left:5px;">
   </div>
 
   <label>Your Concern / Inquiry:</label>
@@ -161,25 +155,19 @@ form {
   <button type="submit">Submit</button>
 
   <?php if ($message): ?><p style="color:red; text-align:center;"><?= htmlspecialchars($message) ?></p><?php endif; ?>
-  <p style="text-align:center;">No account yet? <a href="register.php">Register here</a></p>
+
+  <p style="text-align:center;">No account yet? <a href="consent.php">Register here</a></p>
 </form>
 
 <script>
 function closePopup() {
-  const overlay = document.getElementById("popupOverlay");
-  overlay.style.opacity = "0";
-
-  setTimeout(() => {
-      overlay.style.display = "none";
-      const form = document.getElementById("supportForm");
-      form.classList.add("showAnimated");
-      window.history.replaceState(null, '', window.location.pathname);
-  }, 300);
+    document.getElementById("popupOverlay").style.display="none";
+    document.getElementById("supportForm").classList.add("showForm");
+    window.history.replaceState(null, '', window.location.pathname);
 }
 
-document.getElementById("showPassword").addEventListener("change", function() {
-  const pw = document.getElementById("password");
-  pw.type = this.checked ? "text" : "password";
+document.getElementById("showPassword").addEventListener("change", function(){
+  document.getElementById("password").type = this.checked ? "text" : "password";
 });
 </script>
 
