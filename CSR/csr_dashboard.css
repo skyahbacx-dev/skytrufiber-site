@@ -1,84 +1,91 @@
-/* ===== GENERAL ===== */
+/* ===== RESET ===== */
 body {
     margin: 0;
     padding: 0;
     background: #F6FFF6;
     font-family: Arial, sans-serif;
-}
-
-.layout {
-    display: flex;
-    flex-direction: row;
-    height: calc(100vh - 60px);
     overflow: hidden;
 }
 
-/* ===== SIDEBAR / CLIENT PANEL ===== */
-.client-panel {
+/* ===== TOP NAVBAR ===== */
+.topnav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: white;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    border-bottom: 1px solid #d7e7d7;
+}
+
+.hamburger {
+    font-size: 26px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    margin-right: 15px;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+    position: fixed;
+    top: 60px;
+    left: 0;
     width: 260px;
+    height: calc(100vh - 60px);
     background: white;
     border-right: 1px solid #d7e7d7;
-    display: flex;
-    flex-direction: column;
     padding: 10px;
-}
-
-.client-panel h3 {
-    margin: 5px 10px;
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.search {
-    width: 100%;
-    padding: 10px;
-    border-radius: 20px;
-    border: 1px solid #aaa;
-    outline: none;
-}
-
-.client-list {
-    margin-top: 10px;
+    transition: width 0.3s ease;
+    z-index: 999;
     overflow-y: auto;
 }
 
-.client-item {
+.sidebar.collapsed {
+    width: 70px;
+}
+
+.sidebar-overlay {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 60px);
+    background: rgba(0,0,0,0.5);
+    display: none;
+    z-index: 998;
+}
+
+/* ===== MAIN LAYOUT ===== */
+.layout {
+    margin-top: 60px;
+    margin-left: 260px;
+    height: calc(100vh - 60px);
     display: flex;
-    align-items: center;
-    padding: 10px;
-    border-radius: 15px;
-    cursor: pointer;
-    transition: background 0.2s;
+    overflow: hidden;
 }
 
-.client-item:hover {
-    background: #e7f8ea;
+.sidebar.collapsed + .layout {
+    margin-left: 70px;
 }
 
-.active-client {
-    background: #c9f5cd !important;
-    border: 2px solid #26b364;
-}
-
-.client-avatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-right: 10px;
-    border: 2px solid #eee;
-}
-
-/* ===== PROFILE PREVIEW AREA (fixed width) ===== */
-.profile-preview {
-    width: 350px;
-    min-width: 350px;
-    max-width: 350px;
-    background: white;
+/* ===== CLIENT PANEL ===== */
+.client-panel {
+    width: 260px;
+    background: #fff;
     border-right: 1px solid #d7e7d7;
-    padding: 15px;
     display: flex;
     flex-direction: column;
+    padding: 10px;
+}
+
+.client-list {
+    overflow-y: auto;
+    flex: 1;
 }
 
 /* ===== CHAT PANEL ===== */
@@ -88,6 +95,7 @@ body {
     flex-direction: column;
 }
 
+/* ===== CHAT HEADER ===== */
 .chat-header {
     padding: 15px;
     background: white;
@@ -96,183 +104,73 @@ body {
     border-bottom: 1px solid #d7e7d7;
 }
 
+.chat-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+}
+
 .chat-box {
     flex: 1;
     overflow-y: auto;
-    padding: 20px;
-    background: #F6FFF6;
+    padding: 15px;
 }
 
-.msg {
-    max-width: 60%;
-    margin-bottom: 12px;
-}
-
-.msg.client {
-    text-align: left;
-}
-
-.msg.csr {
-    margin-left: auto;
-    text-align: right;
-}
-
-.bubble {
-    padding: 12px 17px;
-    border-radius: 18px;
-    font-size: 15px;
-    line-height: 1.4;
-    display: inline-block;
-}
-
-.client .bubble {
-    background: white;
-    border: 1px solid #cde5cd;
-}
-
-.csr .bubble {
-    background: #2bb673;
-    color: white;
-}
-
-.meta {
-    font-size: 11px;
-    margin-top: 3px;
-    color: gray;
-}
-
-/* MEDIA inside chat */
-.file-img {
-    margin-top: 5px;
-    max-width: 220px;
-    border-radius: 10px;
-    cursor: pointer;
-}
-
-/* ===== ATTACHMENT PREVIEW ===== */
-.preview-area {
-    display: flex;
-    gap: 10px;
-    padding: 5px 15px;
-}
-
-.preview-thumb img,
-.preview-thumb video {
-    width: 80px;
-    height: 80px;
-    border-radius: 10px;
-    object-fit: cover;
-}
-
-/* ===== CHAT INPUT BAR ===== */
+/* ===== INPUT BAR ===== */
 .chat-input {
     display: flex;
-    align-items: center;
-    padding: 12px 15px;
+    padding: 12px;
     background: white;
-    gap: 12px;
+    gap: 10px;
     border-top: 1px solid #d7e7d7;
 }
 
-.upload-icon,
-.send-btn {
-    background: #ffffff;
-    border: 2px solid #30b169;
+.send-btn, .upload-icon {
     width: 45px;
     height: 45px;
     border-radius: 50%;
+    border: 2px solid #30b169;
+    background: white;
     display: flex;
-    align-items: center;
     justify-content: center;
-    cursor: pointer;
-    transition: 0.2s;
-    font-size: 22px;
-    color: #2bb673;
-}
-
-.upload-icon:hover,
-.send-btn:hover {
-    background: #dfffe8;
-}
-
-.chat-input input[type="text"] {
-    flex: 1;
-    padding: 15px;
-    border-radius: 25px;
-    border: 2px solid #ccc;
-    outline: none;
-    font-size: 16px;
-}
-
-.chat-input input[type="text"]:focus {
-    border-color: #2bb673;
-}
-
-/* ===== MEDIA MODAL VIEWER ===== */
-.media-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: none;
     align-items: center;
-    justify-content: center;
-}
-
-.media-modal.show {
-    display: flex;
-}
-
-.modal-content {
-    max-width: 90%;
-    max-height: 90%;
-    border-radius: 12px;
-}
-
-.close-modal {
-    position: absolute;
-    top: 20px;
-    right: 25px;
-    font-size: 30px;
-    color: white;
     cursor: pointer;
 }
 
-/* ========================================================= */
-/* ========= ADDED FIXES BELOW — DO NOT MODIFY ABOVE ======== */
-/* ========================================================= */
-
-/* Hide client info panel by default (stops layout space steal) */
+/* ===== SLIDE INFO PANEL ===== */
 .client-info-panel {
-    position: absolute !important;
-    right: 0 !important;
-    top: 60px !important;
-    width: 350px !important;
-    height: calc(100vh - 60px) !important;
-    transform: translateX(100%) !important;
-    background: white !important;
-    border-left: 1px solid #d7e7d7 !important;
-    transition: transform 0.3s ease !important;
-    z-index: 999 !important;
+    position: fixed;
+    right: 0;
+    top: 60px;
+    width: 350px;
+    height: calc(100vh - 60px);
+    background: white;
+    border-left: 1px solid #d7e7d7;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    z-index: 1001;
+    padding: 20px;
 }
 
 .client-info-panel.show {
-    transform: translateX(0) !important;
+    transform: translateX(0);
 }
 
-/* Fix large avatar causing giant whitespace */
-.chat-avatar {
-    width: 120px !important;
-    height: 120px !important;
-    border-radius: 50% !important;
-    object-fit: cover !important;
-}
-
-/* Align elements beside avatar */
-.user-section {
-    display: flex !important;
-    align-items: center !important;
-    gap: 20px !important;
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    .sidebar-overlay {
+        display: block;
+    }
+    .layout {
+        margin-left: 0;
+    }
+    .client-panel {
+        display: none;
+    }
 }
