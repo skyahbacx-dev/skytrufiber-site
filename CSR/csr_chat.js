@@ -32,10 +32,10 @@ function selectClient(id, name, assigned) {
     $("#fileInput").prop("disabled", locked);
     if (locked) $(".upload-icon").hide(); else $(".upload-icon").show();
 
-    // Remove badge visually
+    // remove badge visually
     $(`#client-${id} .badge`).remove();
 
-    // Mark unread messages as read
+    // update read status
     $.post("mark_read.php", { client_id:id });
 
     if (window.innerWidth < 900) {
@@ -73,12 +73,12 @@ function loadMessages(autoScroll){
                     <div>
                         <div class="bubble">${m.message || ""}`;
 
-            if (m.media_path) {
+            if (m.media_url) {
                 if (m.media_type === "image") {
-                    html += `<img src="${m.media_path}" class="file-img" onclick="openMedia('${m.media_path}')">`;
+                    html += `<img src="${m.media_url}" class="file-img" onclick="openMedia('${m.media_url}')">`;
                 } else {
-                    html += `<video class="file-img" controls onclick="openMedia('${m.media_path}')">
-                                <source src="${m.media_path}">
+                    html += `<video class="file-img" controls onclick="openMedia('${m.media_url}')">
+                                <source src="${m.media_url}">
                              </video>`;
                 }
             }
@@ -92,6 +92,7 @@ function loadMessages(autoScroll){
 
         $("#chatMessages").html(html);
 
+        // scroll logic
         if (autoScroll || messages.length > lastMessageCount) {
             $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
         }
@@ -100,7 +101,7 @@ function loadMessages(autoScroll){
     });
 }
 
-/******** FILE CLICK ********/
+/******** FILE BUTTON ********/
 $(".upload-icon").on("click", () => $("#fileInput").click());
 
 /******** PREVIEW FILES ********/
@@ -146,13 +147,14 @@ $("#sendBtn").click(function(){
             $("#previewArea").html("");
             $("#fileInput").val("");
             filesToSend = [];
+
             loadMessages(true);
-            loadClients(); // update badges
+            loadClients();
         }
     });
 });
 
-/******** MEDIA VIEWER ********/
+/******** MEDIA MODAL VIEWER ********/
 function openMedia(src){
     $("#mediaModal").addClass("show");
     $("#mediaModalContent").attr("src", src);
@@ -165,7 +167,7 @@ setInterval(() => loadMessages(false), 1500);
 
 loadClients();
 
-/******** INFO PANEL ********/
+/******** SLIDE INFO PANEL ********/
 function toggleClientInfo(){
     document.getElementById("clientInfoPanel").classList.toggle("show");
 }
