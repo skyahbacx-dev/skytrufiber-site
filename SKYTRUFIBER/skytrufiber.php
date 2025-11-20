@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../db_connect.php'; // make sure your PDO connection is correct
+include '../db_connect.php';
 
 $message = '';
 
@@ -11,18 +11,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($email_or_name && $password) {
         try {
-            // ✅ 1. Validate user login
             $stmt = $conn->prepare("SELECT * FROM users WHERE email = :input OR full_name = :input LIMIT 1");
             $stmt->execute([':input' => $email_or_name]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user && password_verify($password, $user['password'])) {
-                // ✅ 2. Store session
+
                 $_SESSION['user'] = $user['id'];
                 $_SESSION['name'] = $user['full_name'];
                 $_SESSION['email'] = $user['email'];
 
-                // ✅ 3. Check if client exists or create
+                // Create client record if not exists
                 $clientStmt = $conn->prepare("SELECT id, assigned_csr FROM clients WHERE name = :name LIMIT 1");
                 $clientStmt->execute([':name' => $user['full_name']]);
                 $client = $clientStmt->fetch(PDO::FETCH_ASSOC);
@@ -31,56 +30,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $conn->prepare("INSERT INTO clients (name, assigned_csr, created_at) VALUES (:n, 'Unassigned', NOW())")
                          ->execute([':n' => $user['full_name']]);
                     $client_id = $conn->lastInsertId();
-                    $assigned_csr = 'Unassigned';
                 } else {
                     $client_id = $client['id'];
-                    $assigned_csr = $client['assigned_csr'];
                 }
 
-                // ✅ 4. Pick a random available CSR
+                // Assign CSR randomly
                 $csrStmt = $conn->query("SELECT username, full_name FROM csr_users WHERE is_online = TRUE ORDER BY RANDOM() LIMIT 1");
                 $csr = $csrStmt->fetch(PDO::FETCH_ASSOC);
 
-                if ($csr) {
-                    $csr_user = $csr['username'];
-                    $csr_fullname = $csr['full_name'];
-                } else {
-                    $csr_user = 'Unassigned';
-                    $csr_fullname = '';
-                }
+                $csr_user = $csr ? $csr['username'] : 'Unassigned';
+                $csr_fullname = $csr ? $csr['full_name'] : '';
 
-                // ✅ 5. Update assigned CSR in clients table
-                $updateClient = $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :cid");
-                $updateClient->execute([':csr' => $csr_user, ':cid' => $client_id]);
+                $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :cid")
+                     ->execute([':csr' => $csr_user, ':cid' => $client_id]);
 
-                // ✅ 6. Save the customer's concern as the first chat message
                 if (!empty($concern)) {
-                    $stmtChat = $conn->prepare("
-                        INSERT INTO chat (client_id, sender_type, message, created_at)
-                        VALUES (:cid, 'client', :msg, NOW())
-                    ");
-                    $stmtChat->execute([
-                        ':cid' => $client_id,
-                        ':msg' => $concern
-                    ]);
+                    $conn->prepare("INSERT INTO chat (client_id, sender_type, message, created_at)
+                                    VALUES (:cid, 'client', :msg, NOW())")
+                         ->execute([':cid' => $client_id, ':msg' => $concern]);
                 }
 
-                // ✅ 7. Auto-send a CSR greeting
-                if ($csr_user !== 'Unassigned') {
-                    $greeting = "👋 Hi " . $user['full_name'] . "! This is " . $csr_fullname . " from SkyTruFiber. Thank you for reaching out! How can I assist you further?";
-                    $stmtGreeting = $conn->prepare("
-                        INSERT INTO chat (client_id, sender_type, message, assigned_csr, csr_fullname, created_at)
-                        VALUES (:cid, 'csr', :msg, :csr, :csr_full, NOW())
-                    ");
-                    $stmtGreeting->execute([
-                        ':cid' => $client_id,
-                        ':msg' => $greeting,
-                        ':csr' => $csr_user,
-                        ':csr_full' => $csr_fullname
-                    ]);
+                if ($csr && $csr_user !== 'Unassigned') {
+                    $greeting = "👋 Hi " . $user['full_name'] . "! This is " . $csr_fullname . " from SkyTruFiber. Thank you for reaching out! How can I help?";
+                    $conn->prepare("INSERT INTO chat (client_id, sender_type, message, assigned_csr, csr_fullname, created_at)
+                                     VALUES (:cid, 'csr', :msg, :csr, :csr_full, NOW())")
+                         ->execute([':cid' => $client_id, ':msg' => $greeting, ':csr' => $csr_user, ':csr_full' => $csr_fullname]);
                 }
 
-                // ✅ 8. Redirect to chat support page
                 header("Location: chat_support.php?username=" . urlencode($user['full_name']));
                 exit;
 
@@ -103,141 +79,107 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <title>Customer Service Portal - SkyTruFiber</title>
+
 <style>
 body {
   font-family: "Segoe UI", Arial, sans-serif;
   background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  margin: 0;
-}
-
-.logo-container {
-  text-align: center;
-  margin-bottom: 15px;
-}
-.logo-container img {
-  width: 140px;
-  border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  flex-direction: column; align-items: center; justify-content: center;
+  min-height: 100vh; margin:0;
 }
 
 form {
-  background: #fff;
-  padding: 25px;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  width: 380px;
+  background:#fff; padding:25px; border-radius:15px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.15); width:380px;
+  display:none; opacity:0; transform:translateY(40px);
 }
 
-h2 {
-  color: #004466;
-  text-align: center;
-  margin-bottom: 15px;
+.showAnimated {
+  display:block !important;
+  animation: slideFade .6s ease forwards;
 }
 
-label {
-  font-weight: 600;
-  color: #004466;
-  display: block;
-  margin-top: 10px;
+@keyframes slideFade {
+  from { opacity:0; transform:translateY(40px); }
+  to { opacity:1; transform:translateY(0); }
 }
 
-input, textarea {
-  width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
+/* Success popup */
+#popupOverlay {
+  position:fixed; top:0; left:0; width:100%; height:100vh;
+  background:rgba(0,0,0,0.45);
+  backdrop-filter: blur(10px);   /* AN4 Blur effect */
+  display:flex; justify-content:center; align-items:center;
+  z-index:9999; transition:opacity .3s;
 }
 
-textarea {
-  height: 80px;
-  resize: none;
-}
-
-button {
-  width: 100%;
-  padding: 10px;
-  background: #0099cc;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  margin-top: 15px;
-}
-
-button:hover { background: #007a99; }
-
-.show-pass {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  font-size: 13px;
-  color: #004466;
-}
-
-.show-pass input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  vertical-align: middle;
-}
-
-.message { color: red; text-align: center; margin-top: 10px; }
-
-a { color: #007744; text-decoration: none; }
-a:hover { text-decoration: underline; }
-
-@media (max-width:420px){
-  form { width: 92%; padding: 18px; }
-  .logo-container img { width: 120px; }
+@keyframes pop {
+  from {transform:scale(0.7); opacity:0;}
+  to {transform:scale(1); opacity:1;}
 }
 </style>
 </head>
+
 <body>
 
-<div class="logo-container">
-  <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+<?php if (isset($_GET['msg']) && $_GET['msg']==="success"): ?>
+<div id="popupOverlay">
+  <div style="background:white; padding:25px 35px; border-radius:12px; width:350px;
+              text-align:center; animation:pop .3s ease-out;">
+    <h3 style="margin:0; color:#155724; font-weight:bold;">Thank you!</h3>
+    <p style="margin-top:8px; font-size:15px;">We received your feedback.</p>
+
+    <button onclick="closePopup()" style="
+      margin-top:15px; padding:10px 25px; background:#0099cc; color:white;
+      border:none; border-radius:8px; cursor:pointer; font-size:15px;">OK</button>
+  </div>
+</div>
+<?php endif; ?>
+
+<div class="logo-container" style="text-align:center;">
+  <img src="../SKYTRUFIBER.png" style="width:140px; border-radius:50%; margin-bottom:15px;">
 </div>
 
-<form method="POST">
-  <h2>Customer Service Portal</h2>
+<form id="supportForm" method="POST">
+  <h2 style="color:#004466; text-align:center;">Customer Service Portal</h2>
 
-  <label for="full_name">Email or Full Name:</label>
-  <input type="text" id="full_name" name="full_name" placeholder="Enter your email or full name" required>
+  <label>Email or Full Name:</label>
+  <input type="text" name="full_name" required>
 
-  <label for="password">Password:</label>
-  <input type="password" id="password" name="password" placeholder="Enter password" required>
+  <label>Password:</label>
+  <input type="password" id="password" name="password" required>
 
-  <div class="show-pass">
+  <div class="show-pass" style="display:flex; justify-content:flex-end; margin-top:5px; font-size:13px;">
     <label for="showPassword">Show Password</label>
     <input type="checkbox" id="showPassword">
   </div>
 
-  <label for="concern">Your Concern / Inquiry:</label>
-  <textarea id="concern" name="concern" placeholder="Describe your concern or issue here..." required></textarea>
+  <label>Your Concern / Inquiry:</label>
+  <textarea name="concern" required></textarea>
 
   <button type="submit">Submit</button>
 
-  <?php if ($message): ?>
-    <p class="message"><?= htmlspecialchars($message) ?></p>
-  <?php endif; ?>
-
-  <p style="text-align:center; margin-top:10px;">No account yet? <a href="register.php">Register here</a></p>
+  <?php if ($message): ?><p style="color:red; text-align:center;"><?= htmlspecialchars($message) ?></p><?php endif; ?>
+  <p style="text-align:center;">No account yet? <a href="register.php">Register here</a></p>
 </form>
 
 <script>
-document.getElementById('showPassword').addEventListener('change', function() {
-  const pw = document.getElementById('password');
-  pw.type = this.checked ? 'text' : 'password';
+function closePopup() {
+  const overlay = document.getElementById("popupOverlay");
+  overlay.style.opacity = "0";
+
+  setTimeout(() => {
+      overlay.style.display = "none";
+      const form = document.getElementById("supportForm");
+      form.classList.add("showAnimated");
+      window.history.replaceState(null, '', window.location.pathname);
+  }, 300);
+}
+
+document.getElementById("showPassword").addEventListener("change", function() {
+  const pw = document.getElementById("password");
+  pw.type = this.checked ? "text" : "password";
 });
 </script>
 
