@@ -1,5 +1,5 @@
 // ==========================================
-// CSR CHAT JAVASCRIPT - FULL FILE
+// CSR CHAT JAVASCRIPT - FULL FILE (FIXED)
 // ==========================================
 
 let selectedClient = 0;
@@ -7,6 +7,8 @@ let assignedTo = "";
 let filesToSend = [];
 let lastMessageCount = 0;
 let loadingMessages = false;
+
+const defaultAvatar = "upload/default-avatar.png";
 
 /******** SIDEBAR ********/
 function toggleSidebar() {
@@ -49,11 +51,13 @@ function selectClient(id, name, assigned) {
 
 /******** CLIENT INFO ********/
 function loadClientInfo() {
+    if (!selectedClient) return;
+
     $.getJSON("client_info.php?id=" + selectedClient, info => {
-        $("#infoName").text(info.name);
-        $("#infoEmail").text(info.email);
-        $("#infoDistrict").text(info.district);
-        $("#infoBrgy").text(info.barangay);
+        $("#infoName").text(info.name || "Unknown");
+        $("#infoEmail").text(info.email || "No Email");
+        $("#infoDistrict").text(info.district || "N/A");
+        $("#infoBrgy").text(info.barangay || "N/A");
     });
 }
 
@@ -73,8 +77,8 @@ function loadMessages(initialLoad = false) {
             let newMsgs = messages.slice(lastMessageCount);
 
             newMsgs.forEach(m => {
-                const side = (m.sender_type === "csr") ? "csr" : "client";
-                const avatarImg = "upload/default-avatar.png";
+                const isCSR = (m.sender_type === "csr");
+                const bubbleSide = isCSR ? "csr" : "client";
 
                 let attachment = "";
                 if (m.media_url) {
@@ -85,18 +89,14 @@ function loadMessages(initialLoad = false) {
                     }
                 }
 
-                let statusIcons = "";
-                if (side === "csr") {
-                    statusIcons = `<span class="seen-checks">✓✓</span>`;
-                }
-
                 const html = `
-                <div class="msg-row ${side} animate-msg">
-                    <img src="${avatarImg}" class="msg-avatar">
+                <div class="msg-row ${bubbleSide} animate-msg">
+                    ${!isCSR ? `<img src="${defaultAvatar}" class="msg-avatar">` : ""}
                     <div class="bubble-wrapper">
                         <div class="bubble">${m.message || ""} ${attachment}</div>
-                        <div class="meta">${m.created_at} ${statusIcons}</div>
+                        <div class="meta">${m.created_at} ${isCSR ? `<span class="seen-checks">✓✓</span>` : ""}</div>
                     </div>
+                    ${isCSR ? `<img src="${defaultAvatar}" class="msg-avatar">` : ""}
                 </div>`;
 
                 $("#chatMessages").append(html);
