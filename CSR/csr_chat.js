@@ -1,5 +1,5 @@
 // ==========================================
-// CSR CHAT JAVASCRIPT - FULL FINAL VERSION
+// CSR CHAT JAVASCRIPT - FULL FILE
 // ==========================================
 
 let selectedClient = 0;
@@ -7,8 +7,6 @@ let assignedTo = "";
 let filesToSend = [];
 let lastMessageCount = 0;
 let loadingMessages = false;
-
-const defaultAvatar = "upload/default-avatar.png";
 
 /******** SIDEBAR ********/
 function toggleSidebar() {
@@ -32,9 +30,7 @@ function selectClient(id, name, assigned) {
     $("#client-" + id).addClass("active-client");
 
     $("#chatName").text(name);
-
-    $("#placeholderScreen").hide();
-    $("#chatMessages").show();
+    $("#clientInfoPanel").removeClass("show");
 
     const locked = assigned && assigned !== csrFullname;
     $("#messageInput").prop("disabled", locked);
@@ -54,13 +50,11 @@ function selectClient(id, name, assigned) {
 
 /******** CLIENT INFO ********/
 function loadClientInfo() {
-    if (!selectedClient) return;
-
     $.getJSON("client_info.php?id=" + selectedClient, info => {
-        $("#infoName").text(info.name || "Unknown");
-        $("#infoEmail").text(info.email || "No email");
-        $("#infoDistrict").text(info.district || "N/A");
-        $("#infoBrgy").text(info.barangay || "N/A");
+        $("#infoName").text(info.name || "-");
+        $("#infoEmail").text(info.email || "-");
+        $("#infoDistrict").text(info.district || "-");
+        $("#infoBrgy").text(info.barangay || "-");
     });
 }
 
@@ -80,8 +74,8 @@ function loadMessages(initialLoad = false) {
             let newMsgs = messages.slice(lastMessageCount);
 
             newMsgs.forEach(m => {
-                const isCSR = m.sender_type === "csr";
-                const bubbleSide = isCSR ? "csr" : "client";
+                const side = m.sender_type === "csr" ? "csr" : "client";
+                const avatarImg = "upload/default-avatar.png";
 
                 let attachment = "";
                 if (m.media_url) {
@@ -92,12 +86,17 @@ function loadMessages(initialLoad = false) {
                     }
                 }
 
+                let statusIcons = "";
+                if (side === "csr") {
+                    statusIcons = `<span class="seen-checks">✓✓</span>`;
+                }
+
                 const html = `
-                <div class="msg-row ${bubbleSide} animate-msg">
-                    ${!isCSR ? `<img src="${defaultAvatar}" class="msg-avatar">` : ""}
+                <div class="msg-row ${side} animate-msg">
+                    <img src="${avatarImg}" class="msg-avatar">
                     <div class="bubble-wrapper">
                         <div class="bubble">${m.message || ""} ${attachment}</div>
-                        <div class="meta">${m.created_at} ${isCSR ? `<span class="seen-checks">✓✓</span>` : ""}</div>
+                        <div class="meta">${m.created_at} ${statusIcons}</div>
                     </div>
                 </div>`;
 
@@ -154,7 +153,7 @@ function sendMessage() {
         data: fd,
         processData: false,
         contentType: false,
-        success: () => {
+        success: function () {
             $("#messageInput").val("");
             $("#previewArea").html("");
             $("#fileInput").val("");
@@ -171,10 +170,11 @@ function openMedia(src) {
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-/******** AUTO UPDATES ********/
+/******** REFRESH INTERVALS ********/
 setInterval(loadClients, 4000);
-setInterval(() => loadMessages(false), 1500);
+setInterval(() => loadMessages(false), 1200);
 
+// INITIAL LOAD
 loadClients();
 
 /******** CLIENT INFO PANEL ********/
