@@ -16,7 +16,6 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 
 <link rel="stylesheet" href="csr_dashboard.css">
 <link rel="stylesheet" href="chat.css">
-
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -26,8 +25,8 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 </script>
 
 <script src="csr_chat.js"></script>
-</head>
 
+</head>
 <body>
 
 <!-- TOP NAV -->
@@ -49,7 +48,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     </div>
 </div>
 
-<!-- SIDEBAR -->
+<!-- SIDEBAR NAVIGATION -->
 <div class="sidebar" id="sidebar">
     <div class="side-title">MENU</div>
     <button class="side-item" onclick="window.location='csr_dashboard.php'">💬 Chat Dashboard</button>
@@ -62,62 +61,9 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<!-- MAIN LAYOUT -->
-<div class="layout" id="layout">
-
-    <!-- CLIENT LIST -->
-    <div class="client-panel">
-        <input class="search" placeholder="Search clients..." id="searchInput">
-        <div id="clientList" class="client-list"></div>
-    </div>
-
-    <!-- CHAT -->
-    <div class="chat-panel" id="chatPanel">
-
-        <div class="chat-header">
-            <div class="user-section">
-                <img id="chatAvatar" src="upload/default-avatar.png" class="chat-avatar">
-                <div>
-                    <div id="chatName" class="chat-name">Select a client</div>
-                    <div id="chatStatus" class="chat-status">
-                        <span id="statusDot" class="status-dot offline"></span> Offline
-                    </div>
-                </div>
-            </div>
-            <button class="info-btn" onclick="toggleClientInfo()">ⓘ</button>
-        </div>
-
-        <div class="chat-box" id="chatMessages"></div>
-
-        <div id="previewArea" class="preview-area"></div>
-
-        <div class="chat-input">
-            <label for="fileInput" class="upload-icon">
-                <i class="fa-regular fa-image"></i>
-            </label>
-            <input type="file" id="fileInput" multiple style="display:none;">
-            <input type="text" id="messageInput" placeholder="Type anything.....">
-            <button id="sendBtn" class="send-btn">
-                <i class="fa-solid fa-paper-plane"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- SLIDE INFO PANEL -->
-    <aside id="clientInfoPanel" class="client-info-panel">
-        <button class="close-info" onclick="toggleClientInfo()">✖</button>
-        <h3>Client Information</h3>
-        <p><strong id="infoName"></strong></p>
-        <p id="infoEmail"></p>
-        <p><b>District:</b> <span id="infoDistrict"></span></p>
-        <p><b>Barangay:</b> <span id="infoBrgy"></span></p>
-    </aside>
-</div>
-
-<!-- MEDIA VIEW -->
-<div id="mediaModal" class="media-modal">
-    <span id="closeMediaModal" class="close-modal">✖</span>
-    <img id="mediaModalContent" class="modal-content">
+<!-- MAIN CONTENT SHELL -->
+<div class="layout">
+    <?php include "chat.php"; ?>
 </div>
 
 </body>
