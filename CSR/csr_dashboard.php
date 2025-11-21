@@ -14,6 +14,7 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 <meta charset="UTF-8">
 <title>CSR Dashboard — <?= htmlspecialchars($csrFullName) ?></title>
 
+<!-- MAIN SHELL STYLES -->
 <link rel="stylesheet" href="csr_dashboard.css">
 <link rel="stylesheet" href="chat.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -48,7 +49,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     </div>
 </div>
 
-<!-- SIDEBAR NAVIGATION -->
+<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
     <div class="side-title">MENU</div>
     <button class="side-item" onclick="window.location='csr_dashboard.php'">💬 Chat Dashboard</button>
@@ -61,7 +62,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<!-- MAIN CONTENT SHELL -->
+<!-- MAIN CONTENT SHELL (CHAT WILL LOAD HERE) -->
 <div class="layout">
     <?php include "chat.php"; ?>
 </div>
