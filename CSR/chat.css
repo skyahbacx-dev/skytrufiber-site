@@ -222,3 +222,11 @@
     color:white;
     cursor:pointer;
 }
+#typingIndicator {
+    font-size: 13px;
+    margin-left: 65px;
+    margin-top: -5px;
+    color:#1e7f00;
+    font-style: italic;
+    display:none;
+}
