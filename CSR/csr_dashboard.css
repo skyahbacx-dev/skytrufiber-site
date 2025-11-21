@@ -1,4 +1,8 @@
-/* GLOBAL */
+/* ===========================================
+   GLOBAL
+=========================================== */
+* { box-sizing: border-box; }
+
 body {
     margin: 0;
     padding: 0;
@@ -6,9 +10,10 @@ body {
     background: #F4FFF4;
     overflow: hidden;
 }
-* { box-sizing: border-box; }
 
-/* TOP NAVBAR */
+/* ===========================================
+   TOP NAVBAR
+=========================================== */
 .topnav {
     background: #05702e;
     color: white;
@@ -18,6 +23,7 @@ body {
     padding: 8px 15px;
     height: 50px;
 }
+
 .hamburger {
     border: none;
     background: none;
@@ -28,34 +34,49 @@ body {
 
 .nav-logo { height: 35px; }
 
-.nav-buttons {
-    display: flex;
-    gap: 6px;
-}
-.nav-btn {background:#09a64b;border:none;padding:6px 11px;border-radius:12px;color:white;}
-.nav-btn.active { background:white;color:#05702e; }
-.logout-btn {background:white;color:#05702e;padding:6px 12px;border-radius:12px;text-decoration:none;}
+.nav-buttons { display: flex; gap: 6px; }
 
-/* SIDEBAR */
+.nav-btn {
+    background:#09a64b;
+    border:none;
+    padding:6px 11px;
+    border-radius:12px;
+    color:white;
+}
+
+.nav-btn.active { background:white;color:#05702e; }
+
+.logout-btn {
+    background:white;color:#05702e;
+    padding:6px 12px;
+    border-radius:12px;
+    text-decoration:none;
+}
+
+/* ===========================================
+   SIDEBAR
+=========================================== */
 .sidebar {
-    width: 300px;
+    width: 270px;
     background: white;
     height: 100vh;
     position: fixed;
-    left: -300px;
-    top: 0;
+    left: -270px;
+    top: 50px;
     transition: .3s;
-    padding-top: 60px;
     border-right:1px solid #dcdcdc;
     z-index: 20;
+    padding-top:10px;
 }
 .sidebar.open { left: 0; }
 
 .sidebar-overlay {
     display:none;
     position:fixed;
-    width:100%;height:100%;
-    top:0;left:0;
+    width:100%;
+    height:100%;
+    top:0;
+    left:0;
     background:rgba(0,0,0,0.4);
     z-index:15;
 }
@@ -72,26 +93,51 @@ body {
 }
 .side-item:hover { background:#e9ffee; }
 
-/* MAIN LAYOUT */
+/* ===========================================
+   MAIN LAYOUT GRID
+=========================================== */
 .layout {
     display: grid;
-    grid-template-columns: 300px auto 300px;
+    grid-template-columns: 270px auto 300px;
     height: calc(100vh - 50px);
 }
 
-/* CLIENT PANEL */
+/* ===========================================
+   CLIENT LIST PANEL
+=========================================== */
 .client-panel {
     background:white;
     border-right:1px solid #ddd;
     overflow-y:auto;
 }
-.search {width:90%;margin:10px;padding:8px;border-radius:8px;border:1px solid #aaa;}
-.client-item {display:flex;align-items:center;padding:10px;gap:10px;border-radius:10px;cursor:pointer;}
+
+.search {
+    width:90%;
+    margin:10px;
+    padding:8px;
+    border-radius:8px;
+    border:1px solid #aaa;
+}
+
+.client-item {
+    display:flex;
+    align-items:center;
+    padding:10px;
+    gap:10px;
+    cursor:pointer;
+    border-radius:10px;
+    margin:4px 6px;
+}
 .client-item:hover,
 .client-item.active-client { background:#d9ffd9; }
-.client-avatar {width:38px;height:38px;border-radius:50%;}
 
-/* CHAT PANEL */
+.client-avatar {
+    width:40px;height:40px;border-radius:50%;
+}
+
+/* ===========================================
+   CHAT PANEL
+=========================================== */
 .chat-panel {
     display:flex;
     flex-direction:column;
@@ -103,11 +149,93 @@ body {
     display:flex;
     justify-content:space-between;
     align-items:center;
-    padding:10px 20px;
+    padding:12px 18px;
     background:white;
     border-bottom:1px solid #ccc;
 }
 
+/* CHAT MESSAGES AREA */
+.chat-box {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 28px;
+    background: #F3FFF3;
+}
+
+.msg-row {
+    display:flex;
+    align-items:flex-end;
+    margin:8px 0;
+}
+
+.msg-row.client { justify-content:flex-start; }
+.msg-row.csr { justify-content:flex-end; }
+
+/* AVATAR BESIDE BUBBLE */
+.msg-avatar {
+    width:32px;
+    height:32px;
+    border-radius:50%;
+}
+
+/* BUBBLE + META */
+.bubble-wrapper {
+    max-width:450px;
+    display:flex;
+    flex-direction:column;
+    margin:0 6px;
+}
+
+.bubble {
+    padding:10px 16px;
+    border-radius:18px;
+    font-size:15px;
+    display:inline-block;
+    word-break: break-word;
+}
+
+.msg-row.client .bubble {
+    background:#e8e8e8;color:#000;
+    border-bottom-left-radius:4px;
+}
+.msg-row.csr .bubble {
+    background:#45b7ff;color:#fff;
+    border-bottom-right-radius:4px;
+}
+
+/* TIMESTAMP */
+.meta {
+    font-size:11px;
+    color:#555;
+    margin-top:4px;
+    text-align:right;
+}
+
+/* MEDIA PREVIEW */
+.file-img {
+    width:200px;
+    border-radius:10px;
+    margin-top:6px;
+    cursor:pointer;
+}
+
+/* UPLOAD PREVIEW AREA */
+.preview-area {
+    display:flex;
+    gap:8px;
+    padding:6px 15px;
+}
+
+.preview-thumb img,
+.preview-thumb video {
+    width:70px;height:70px;
+    object-fit:cover;
+    border-radius:10px;
+}
+
+/* ===========================================
+   INPUT BAR
+=========================================== */
 .chat-input {
     display:flex;
     align-items:center;
@@ -117,6 +245,39 @@ body {
     background:white;
 }
 
-.upload-icon i {font-size:24px;color:#0b8b43;}
+.upload-icon i {
+    font-size:26px;
+    color:#0b8b43;
+    cursor:pointer;
+}
+
+/* send button */
+.send-btn {
+    background:#0b8b43;
+    border:none;
+    border-radius:50%;
+    width:42px;
+    height:42px;
+    cursor:pointer;
+}
 .send-btn i {font-size:22px;color:white;}
-.send-btn {background:#0b8b43;border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;}
+
+/* ===========================================
+   ANIMATION
+=========================================== */
+@keyframes fadeInUp {
+    from {opacity:0;transform:translateY(10px);}
+    to {opacity:1;transform:translateY(0);}
+}
+.animate-msg { animation:fadeInUp .3s ease forwards; }
+
+/* RIGHT PANEL (Client Info) */
+.client-info-panel {
+    background:white;
+    border-left:1px solid #dcdcdc;
+    padding:20px;
+    overflow-y:auto;
+}
+
+/* MEDIA MODAL FIX */
+.media-modal.show {display:flex;}
