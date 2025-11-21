@@ -23,12 +23,13 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 const csrUser     = "<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>";
 const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 </script>
+
 <script src="csr_chat.js"></script>
 
 </head>
 <body>
 
-<!-- TOP NAVBAR -->
+<!-- TOP NAV -->
 <div class="topnav">
     <button class="hamburger" onclick="toggleSidebar()">☰</button>
 
@@ -47,19 +48,20 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     </div>
 </div>
 
-<!-- SIDEBAR -->
+<!-- SIDEBAR NAVIGATION -->
 <div class="sidebar" id="sidebar">
     <div class="side-title">MENU</div>
     <button class="side-item" onclick="window.location='csr_dashboard.php'">💬 Chat Dashboard</button>
     <button class="side-item" onclick="window.location='my_clients.php'">👥 My Clients</button>
     <button class="side-item" onclick="window.location='reminders.php'">⏱ Reminders</button>
-    <button class="side-item" onclick="window.location='survey_responses.php'">📄 Survey</button>
+    <button class="side-item" onclick="window.location='survey_responses.php'">📄 Survey Responses</button>
     <button class="side-item" onclick="window.location='update_profile.php'">👤 Edit Profile</button>
     <button class="side-item logout" onclick="window.location='csr_logout.php'">🚪 Logout</button>
 </div>
+
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<!-- MAIN LAYOUT SHELL -->
+<!-- MAIN CONTENT FRAME -->
 <div class="layout">
     <?php include "chat.php"; ?>
 </div>
