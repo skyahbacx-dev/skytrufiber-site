@@ -1,259 +1,166 @@
-/* ===============================
-   CHAT PANEL (CENTER COLUMN)
-================================ */
+/* CLIENT LIST COLUMN */
+.client-panel {
+    background:white;
+    border-right: 1px solid #ddd;
+    overflow-y:auto;
+    padding:10px;
+}
+.search {
+    width:100%;
+    padding:9px;
+    margin-bottom:10px;
+    border-radius:10px;
+    border:1px solid #bcbcbc;
+}
+.client-list {
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+.client-item {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:8px;
+    border-radius:10px;
+    cursor:pointer;
+}
+.client-item:hover,
+.client-item.active-client { background:#d9ffd9; }
+
+.client-avatar {
+    width:45px;
+    height:45px;
+    border-radius:50%;
+}
+
+.client-content { width:100%; }
+.client-name { font-weight:600; display:flex; justify-content:space-between; }
+.client-sub { color:#6a6a6a; font-size:12px; }
+.badge {
+    background:red;
+    color:white;
+    padding:3px 6px;
+    border-radius:10px;
+    font-size:11px;
+}
+
+/* CHAT PANEL */
 .chat-panel {
-    display: flex;
-    flex-direction: column;
-    background: #F6FFF6;
-    height: 100%;
-    border-left:1px solid #ddd;
+    display:flex;
+    flex-direction:column;
+    background:#F4FFF4;
     border-right:1px solid #ddd;
 }
 
-/* Chat Header */
 .chat-header {
     display:flex;
-    align-items:center;
     justify-content:space-between;
-    padding:12px 18px;
+    align-items:center;
+    padding:12px 20px;
     background:white;
-    border-bottom:1px solid #dcdcdc;
+    border-bottom:1px solid #ccc;
 }
-
+.user-section { display:flex; gap:12px; align-items:center; }
 .chat-avatar {
-    width:42px;
-    height:42px;
+    width:45px;
+    height:45px;
     border-radius:50%;
-    border:2px solid #3cb371;
-    object-fit:cover;
 }
-
-.chat-name {
-    font-size:16px;
-    font-weight:bold;
-}
+.chat-name { font-size:16px; font-weight:bold; }
+.chat-status { font-size:13px; color:#777; }
 
 .status-dot {
-    display:inline-block;
-    width:10px;
-    height:10px;
-    background:gray;
+    width:8px;height:8px;
     border-radius:50%;
+    display:inline-block;
 }
-.status-dot.online { background:#00d000; }
+.status-dot.online { background:#00c200; }
 .status-dot.offline { background:#888; }
 
-.info-btn {
-    background:none;
-    border:none;
-    font-size:20px;
-    cursor:pointer;
-}
-
-/* ===============================
-   MESSAGE LIST
-================================ */
 .chat-box {
     flex:1;
     overflow-y:auto;
-    padding:18px 25px;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
+    padding:20px 30px;
 }
 
-/* Message Row */
+/* MESSAGES */
 .msg-row {
     display:flex;
+    align-items:flex-end;
+    margin:10px 0;
     gap:8px;
-    max-width:75%;
 }
-.msg-row.client { flex-direction:row; }
-.msg-row.csr {
-    flex-direction:row-reverse;
-    margin-left:auto;
-}
+.msg-row.client { justify-content:flex-start; }
+.msg-row.csr { justify-content:flex-end; }
 
-/* Avatar beside bubble */
 .msg-avatar {
-    width:32px;
-    height:32px;
-    border-radius:50%;
-    object-fit:cover;
+    width:32px;height:32px;border-radius:50%;
 }
 
-/* Bubble */
 .bubble-wrapper {
+    max-width:420px;
     display:flex;
     flex-direction:column;
-    gap:2px;
 }
 .bubble {
-    padding:10px 15px;
+    padding:10px 16px;
     border-radius:18px;
     font-size:15px;
-    line-height:1.3;
-    word-wrap:break-word;
 }
-
-/* Client bubble */
 .msg-row.client .bubble {
-    background:white;
-    border:1px solid #cde5cd;
-    border-bottom-left-radius:5px;
+    background:#eaeaea;
+    color:#000;
+    border-bottom-left-radius:4px;
 }
-
-/* CSR bubble */
 .msg-row.csr .bubble {
-    background:#2bb673;
+    background:#45b7ff;
     color:white;
-    border-bottom-right-radius:5px;
+    border-bottom-right-radius:4px;
 }
 
-/* Timestamp + Seen */
 .meta {
     font-size:11px;
-    color:#6a6a6a;
-}
-.seen-checks {
-    color:#006eff;
-    font-weight:bold;
+    color:#666;
+    margin-top:4px;
+    text-align:right;
 }
 
-/* Attached media */
-.file-img {
-    width:200px;
-    max-height:220px;
-    border-radius:8px;
-    margin-top:5px;
-    cursor:pointer;
-    object-fit:cover;
-}
-
-/* ===============================
-   MESSAGE INPUT BAR
-================================ */
+/* INPUT */
 .chat-input {
     display:flex;
     align-items:center;
-    gap:10px;
-    padding:12px 15px;
-    background:white;
+    padding:10px 15px;
     border-top:1px solid #ddd;
-}
-
-.upload-icon {
-    width:42px;
-    height:42px;
     background:white;
-    border-radius:50%;
-    border:2px solid #2bb673;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    cursor:pointer;
+    gap:10px;
 }
-.upload-icon i {
-    font-size:20px;
-    color:#2bb673;
-}
-
-.chat-input input[type="text"] {
-    flex:1;
-    height:42px;
-    border-radius:22px;
-    border:2px solid #ccc;
-    padding:0 15px;
-    font-size:15px;
-}
-.chat-input input:focus {
-    border-color:#2bb673;
-}
-
+.upload-icon i { font-size:24px;color:#0b8b43;cursor:pointer; }
 .send-btn {
-    width:42px;
-    height:42px;
-    background:#2bb673;
-    border:none;
-    border-radius:50%;
+    background:#0b8b43;
+    width:38px;height:38px;
+    border:none;border-radius:50%;
     cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
 }
-.send-btn i {
-    color:white;
-    font-size:18px;
-}
+.send-btn i { font-size:20px;color:white; }
 
-/* ===============================
-   PREVIEW UPLOAD STRIP
-================================ */
 .preview-area {
     display:flex;
     gap:8px;
     padding:6px 15px;
 }
-.preview-thumb img,
-.preview-thumb video {
-    width:65px;
-    height:65px;
-    border-radius:10px;
-    object-fit:cover;
+.preview-thumb img, .preview-thumb video {
+    width:70px;height:70px;border-radius:10px;object-fit:cover;
 }
 
-/* ===============================
-   SLIDE OUT CLIENT INFO
-================================ */
+/* RIGHT: INFO PANEL */
 .client-info-panel {
     background:white;
-    padding:15px;
-    border-left:1px solid #ccc;
-}
-
-/* ===============================
-   CONFIRM POPUP
-================================ */
-.confirm-overlay {
-    position:fixed;
-    top:0;left:0;
-    width:100vw;
-    height:100vh;
-    background:rgba(0,0,0,0.4);
-    display:none;
-    justify-content:center;
-    align-items:center;
-    z-index:999;
-}
-
-.confirm-box {
-    background:white;
     padding:20px;
-    border-radius:10px;
-    width:280px;
-    text-align:center;
+    overflow-y:auto;
 }
-.confirm-actions {
-    margin-top:15px;
-    display:flex;
-    justify-content:space-between;
+.close-info {
+    border:none;background:none;font-size:20px;cursor:pointer;
 }
-.btn-yes {
-    background:#d40000;
-    color:white;
-    padding:6px 16px;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-}
-.btn-no {
-    background:#ccc;
-    padding:6px 16px;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-}
-
-/* Animations */
-@keyframes fadeInUp {
-    from {opacity:0; transform:translateY(10px);}
-    to {opacity:1; transform:translateY(0);}
-}
-.msg-row { animation:fadeInUp .25s ease-in-out; }
