@@ -188,3 +188,41 @@ loadClients();
 function toggleClientInfo() {
     document.getElementById("clientInfoPanel").classList.toggle("show");
 }
+// =========================
+// ASSIGN / UNASSIGN POPUPS
+// =========================
+let tempClientID = 0;
+
+function showAssignPopup(id) {
+    tempClientID = id;
+    $("#assignPopup").fadeIn(150);
+}
+function closeAssignPopup() {
+    $("#assignPopup").fadeOut(150);
+}
+
+function confirmAssign() {
+    $.post("assign_client.php", { client_id: tempClientID }, function(res) {
+        if (res === "ok") {
+            loadClients();
+            closeAssignPopup();
+        }
+    });
+}
+
+function showUnassignPopup(id) {
+    tempClientID = id;
+    $("#unassignPopup").fadeIn(150);
+}
+function closeUnassignPopup() {
+    $("#unassignPopup").fadeOut(150);
+}
+
+function confirmUnassign() {
+    $.post("unassign_client.php", { client_id: tempClientID }, function(res) {
+        if (res === "ok") {
+            loadClients();
+            closeUnassignPopup();
+        }
+    });
+}
