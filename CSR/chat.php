@@ -48,3 +48,13 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
     <p><b>District:</b> <span id="infoDistrict"></span></p>
     <p><b>Barangay:</b> <span id="infoBrgy"></span></p>
 </aside>
+<div id="assignModal" class="modal-overlay">
+    <div class="modal-box">
+        <h2 id="assignTitle">Assign Client?</h2>
+        <p id="assignText"></p>
+        <div class="modal-actions">
+            <button class="modal-btn modal-confirm" onclick="confirmAssign()">Confirm</button>
+            <button class="modal-btn modal-cancel" onclick="closeAssignModal()">Cancel</button>
+        </div>
+    </div>
+</div>
