@@ -8,11 +8,13 @@ $csrUser = $_SESSION["csr_user"];
 $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 ?>
 
+<!-- LEFT: CLIENT LIST -->
 <div class="client-panel">
     <input class="search" placeholder="Search clients..." id="searchInput">
     <div id="clientList" class="client-list"></div>
 </div>
 
+<!-- MIDDLE: CHAT PANEL -->
 <div class="chat-panel" id="chatPanel">
 
     <div class="chat-header">
@@ -38,8 +40,10 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
         <input type="text" id="messageInput" placeholder="Type anything.....">
         <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
+
 </div>
 
+<!-- RIGHT: CLIENT INFO -->
 <aside id="clientInfoPanel" class="client-info-panel">
     <button class="close-info" onclick="toggleClientInfo()">✖</button>
     <h3>Client Information</h3>
@@ -48,6 +52,8 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
     <p><b>District:</b> <span id="infoDistrict"></span></p>
     <p><b>Barangay:</b> <span id="infoBrgy"></span></p>
 </aside>
+
+<!-- ASSIGN MODAL -->
 <div id="assignModal" class="modal-overlay">
     <div class="modal-box">
         <h2 id="assignTitle">Assign Client?</h2>
@@ -57,4 +63,10 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
             <button class="modal-btn modal-cancel" onclick="closeAssignModal()">Cancel</button>
         </div>
     </div>
+</div>
+
+<!-- MEDIA VIEWER -->
+<div id="mediaModal" class="media-modal">
+    <span id="closeMediaModal" class="close-modal">✖</span>
+    <img id="mediaModalContent" class="modal-content">
 </div>
