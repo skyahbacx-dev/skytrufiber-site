@@ -5,10 +5,7 @@ header("Content-Type: application/json");
 date_default_timezone_set("Asia/Manila");
 
 $client_id = $_GET["client_id"] ?? 0;
-if (!$client_id) {
-    echo json_encode([]);
-    exit;
-}
+if (!$client_id) { echo json_encode([]); exit; }
 
 $stmt = $conn->prepare("
     SELECT message, sender_type, media_url, media_type, created_at
@@ -18,18 +15,14 @@ $stmt = $conn->prepare("
 ");
 $stmt->execute([":cid" => $client_id]);
 
-$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$out = [];
-
-foreach ($rows as $row) {
-    $out[] = [
-        "message"     => $row["message"],
-        "sender_type" => $row["sender_type"],
-        "media_url"   => $row["media_url"],
-        "media_type"  => $row["media_type"],
-        "created_at"  => date("M d, h:i A", strtotime($row["created_at"]))
+$out=[];
+while($row=$stmt->fetch(PDO::FETCH_ASSOC)){
+    $out[]=[
+        "message"=>$row["message"],
+        "sender_type"=>$row["sender_type"],
+        "media_url"=>$row["media_url"],
+        "media_type"=>$row["media_type"],
+        "created_at"=>date("M d, g:i A", strtotime($row["created_at"]))
     ];
 }
-
 echo json_encode($out);
-?>
