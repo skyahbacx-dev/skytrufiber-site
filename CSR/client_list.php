@@ -2,50 +2,70 @@
 session_start();
 include "../db_connect.php";
 
-$csr = $_SESSION["csr_user"] ?? "";
+$csrUser = $_SESSION["csr_user"] ?? null;
+
+if (!$csrUser) {
+    http_response_code(401);
+    exit("Unauthorized");
+}
+
 $search = $_GET["search"] ?? "";
 
 $sql = "
-SELECT c.id, c.name, c.assigned_csr,
-(SELECT COUNT(*) FROM chat m 
- WHERE m.client_id = c.id 
- AND m.sender_type = 'client'
- AND m.created_at > COALESCE((SELECT last_read 
-     FROM chat_read 
-     WHERE client_id=c.id AND csr=:csr), '2000-01-01')
-) AS unread
-FROM clients c
+    SELECT id, name, assigned_csr
+    FROM clients
 ";
 
 if ($search !== "") {
-    $sql .= " WHERE LOWER(c.name) LIKE LOWER(:search)";
+    $sql .= " WHERE LOWER(name) LIKE LOWER(:search)";
 }
 
-$sql .= " ORDER BY c.name ASC";
+$sql .= " ORDER BY name ASC";
 
 $stmt = $conn->prepare($sql);
-$params = [":csr"=>$csr];
-if ($search !== "") $params[":search"] = "%$search%";
-$stmt->execute($params);
 
-while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $id = $row["id"];
-    $name = htmlspecialchars($row["name"]);
+if ($search !== "") {
+    $stmt->execute([":search" => "%$search%"]);
+} else {
+    $stmt->execute();
+}
+
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $id     = $row["id"];
+    $name   = htmlspecialchars($row["name"]);
     $assigned = $row["assigned_csr"];
-    $unread = intval($row["unread"]);
     $avatar = "upload/default-avatar.png";
+
+    $isMine = ($assigned === $csrUser);
 
     echo "
     <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
         <img src='$avatar' class='client-avatar'>
+
         <div class='client-content'>
-            <div class='client-name'>$name
-            ".($unread > 0 ? "<span class='badge'>$unread</span>" : "")."</div>
-            <div class='client-sub'>".(
-                $assigned === null ? "Unassigned" :
-                ($assigned === $csr ? "Assigned to YOU" :
-                "Assigned to $assigned")
-            )."</div>
+            <div class='client-name'>$name</div>
+            <div class='client-sub'>";
+
+    if (!$assigned) echo "Unassigned";
+    elseif ($isMine) echo "Assigned to YOU";
+    else echo "Assigned to $assigned";
+
+    echo "</div>
+        </div>
+
+        <div class='client-actions'>
+    ";
+
+    if (!$assigned) {
+        echo "<button class='pill green' onclick='event.stopPropagation(); showAssignPopup($id)'>➕</button>";
+    } elseif ($isMine) {
+        echo "<button class='pill red' onclick='event.stopPropagation(); showUnassignPopup($id)'>➖</button>";
+    } else {
+        echo "<button class='pill gray' disabled>🔒</button>";
+    }
+
+    echo "
         </div>
     </div>";
 }
+?>
