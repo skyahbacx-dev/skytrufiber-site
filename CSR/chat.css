@@ -1,121 +1,186 @@
-/* ======================================
-   CHAT BUBBLES & MESSAGE AREA
-====================================== */
+/* ===============================
+   CHAT PANEL (CENTER AREA)
+   =============================== */
 
-/* Message container inside chat-panel */
-.chat-box {
-    flex: 1;
-    overflow-y: auto;
-    padding: 18px 28px;
+.chat-panel {
     display: flex;
     flex-direction: column;
     background: #F4FFF4;
+    height: 100%;
+    border-left: 1px solid #dcdcdc;
+    border-right: 1px solid #dcdcdc;
 }
 
-/* Message row alignment */
+/* Chat Header */
+.chat-header {
+    height: 55px;
+    background: white;
+    border-bottom: 1px solid #dcdcdc;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    justify-content: space-between;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Chat Area */
+.chat-box {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 25px;
+    background: #F1FFF1;
+}
+
+/* MESSAGE ROWS */
 .msg-row {
     display: flex;
     align-items: flex-end;
-    margin: 8px 0;
+    margin-bottom: 14px;
 }
+
 .msg-row.client {
     justify-content: flex-start;
 }
+
 .msg-row.csr {
     justify-content: flex-end;
 }
 
-/* Avatar beside message bubble */
+/* AVATAR ICON */
 .msg-avatar {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    margin-right: 6px;
+    margin: 0 6px;
+    object-fit: cover;
 }
 
-/* Bubble wrapper auto width */
+/* BUBBLE WRAPPER */
 .bubble-wrapper {
-    max-width: 80%;
+    max-width: 420px;
     display: flex;
     flex-direction: column;
 }
 
-/* Actual bubble */
+/* CHAT BUBBLE */
 .bubble {
-    padding: 10px 16px;
+    padding: 10px 15px;
     border-radius: 18px;
-    font-size: 15px;
-    width: fit-content;
-    display: inline-block;
+    font-size: 14px;
+    line-height: 18px;
+    word-wrap: break-word;
 }
 
-/* Bubble colors */
 .msg-row.client .bubble {
-    background: #e7e7e7;
+    background: #E9E9E9;
     color: #000;
-    border-bottom-left-radius: 4px;
-}
-.msg-row.csr .bubble {
-    background: #2bb673;
-    color: white;
-    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 5px;
 }
 
-/* Timestamp & status under message */
+.msg-row.csr .bubble {
+    background: #4CC4FF;
+    color: white;
+    border-bottom-right-radius: 5px;
+}
+
+/* TIME + STATUS */
 .meta {
     font-size: 11px;
-    color: #555;
-    margin-top: 4px;
+    color: #595959;
+    margin-top: 3px;
     text-align: right;
 }
 
-/* Double check seen icon */
-.seen-checks {
-    margin-left: 6px;
-    color: #007aff;
-    font-weight: bold;
-}
-
-/* File/image preview in chat bubble */
+/* attachments preview inside bubbles */
 .file-img {
-    width: 220px;
+    width: 260px;
     border-radius: 12px;
     margin-top: 6px;
     cursor: pointer;
-    object-fit: cover;
 }
 
-/* File preview strip before sending */
+/* upload preview before send */
 .preview-area {
     display: flex;
-    gap: 10px;
+    gap: 6px;
     padding: 6px 15px;
 }
+
 .preview-thumb img,
 .preview-thumb video {
     width: 70px;
     height: 70px;
-    border-radius: 10px;
     object-fit: cover;
+    border-radius: 10px;
 }
 
-/* Typing indicator bubble */
-.typing-bubble {
-    display: inline-block;
-    background: #e5e5e5;
-    padding: 6px 14px;
-    border-radius: 16px;
-    font-size: 13px;
-    color: #333;
-    margin-left: 38px;
-    margin-top: 2px;
-}
-
-/* Smooth incoming bubble animation */
+/* ANIMATION */
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
 .animate-msg {
-    animation: fadeInUp .35s ease forwards;
+    animation: fadeInUp .35s ease-out forwards;
+}
+
+/* CHAT INPUT BAR (fixed bottom) */
+.chat-input {
+    height: 60px;
+    background: white;
+    border-top: 1px solid #dcdcdc;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 10px;
+}
+
+.upload-icon {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.upload-icon img {
+    width: 26px;
+    height: 26px;
+}
+
+#messageInput {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 15px;
+    border: 1px solid #bfbfbf;
+    border-radius: 20px;
+    outline: none;
+    background: white;
+}
+
+.send-btn {
+    background: #08A63F;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.send-btn img {
+    width: 22px;
+}
+
+/* PLACEHOLDER SCREEN WHEN NO CLIENT SELECTED */
+#placeholderScreen {
+    flex: 1;
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 500;
+    color: #444;
 }
