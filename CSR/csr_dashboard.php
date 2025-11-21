@@ -14,29 +14,25 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 <meta charset="UTF-8">
 <title>CSR Dashboard — <?= htmlspecialchars($csrFullName) ?></title>
 
-<!-- MAIN DASHBOARD + CHAT CSS -->
 <link rel="stylesheet" href="csr_dashboard.css">
 <link rel="stylesheet" href="chat.css">
-
-<!-- ICONS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
 const csrUser     = "<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>";
 const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 </script>
 
 <script src="csr_chat.js"></script>
-
 </head>
 
 <body>
 
-<!-- ===== TOP NAV ===== -->
+<!-- TOP NAVBAR -->
 <div class="topnav">
     <button class="hamburger" onclick="toggleSidebar()">☰</button>
-
     <div class="top-title">
         <img src="../AHBALOGO.png" class="nav-logo">
         <h2>CSR DASHBOARD — <?= strtoupper($csrUser) ?></h2>
@@ -52,10 +48,9 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     </div>
 </div>
 
-<!-- ===== LEFT SIDEBAR MENU ===== -->
+<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
     <div class="side-title">MENU</div>
-
     <button class="side-item" onclick="window.location='csr_dashboard.php'">💬 Chat Dashboard</button>
     <button class="side-item" onclick="window.location='my_clients.php'">👥 My Clients</button>
     <button class="side-item" onclick="window.location='reminders.php'">⏱ Reminders</button>
@@ -63,10 +58,9 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     <button class="side-item" onclick="window.location='update_profile.php'">👤 Edit Profile</button>
     <button class="side-item logout" onclick="window.location='csr_logout.php'">🚪 Logout</button>
 </div>
-
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<!-- ===== MAIN PANEL LAYOUT ===== -->
+<!-- MAIN LAYOUT -->
 <div class="layout">
 
     <!-- CLIENT LIST -->
@@ -79,8 +73,9 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     <!-- CHAT PANEL -->
     <div class="chat-panel">
 
-        <!-- CHAT HEADER -->
-        <div class="chat-header">
+        <div id="placeholderScreen">Select a client to start chatting</div>
+
+        <div class="chat-header" id="chatHeader" style="display:none;">
             <div class="user-section">
                 <img id="chatAvatar" src="upload/default-avatar.png" class="chat-avatar">
                 <div>
@@ -93,26 +88,19 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
             <button class="info-btn" onclick="toggleClientInfo()">ⓘ</button>
         </div>
 
-        <!-- CHAT MESSAGES -->
         <div class="chat-box" id="chatMessages"></div>
 
-        <!-- PREVIEW AREA -->
         <div id="previewArea" class="preview-area"></div>
 
-        <!-- INPUT BAR -->
         <div class="chat-input">
-            <label for="fileInput" class="upload-icon">
-                <i class="fa-regular fa-image"></i>
-            </label>
+            <label class="upload-icon"><i class="fa-regular fa-image"></i></label>
             <input type="file" id="fileInput" multiple style="display:none;">
             <input type="text" id="messageInput" placeholder="Type anything.....">
-            <button id="sendBtn" class="send-btn">
-                <i class="fa-solid fa-paper-plane"></i>
-            </button>
+            <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
     </div>
 
-    <!-- CLIENT INFO SLIDE-OUT PANEL -->
+    <!-- CLIENT INFO PANEL -->
     <aside id="clientInfoPanel" class="client-info-panel">
         <button class="close-info" onclick="toggleClientInfo()">✖</button>
         <h3>Client Information</h3>
@@ -121,13 +109,6 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
         <p><b>District:</b> <span id="infoDistrict"></span></p>
         <p><b>Barangay:</b> <span id="infoBrgy"></span></p>
     </aside>
-
-</div>
-
-<!-- FULLSCREEN MEDIA VIEWER -->
-<div id="mediaModal" class="media-modal">
-    <span id="closeMediaModal" class="close-modal">✖</span>
-    <img id="mediaModalContent" class="modal-content">
 </div>
 
 </body>
