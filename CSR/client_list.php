@@ -3,7 +3,6 @@ session_start();
 include "../db_connect.php";
 
 $csrUser = $_SESSION["csr_user"] ?? null;
-
 if (!$csrUser) {
     http_response_code(401);
     exit("Unauthorized");
@@ -33,22 +32,24 @@ if ($search !== "") {
 $sql .= " ORDER BY c.name ASC";
 
 $stmt = $conn->prepare($sql);
+
 $params = [":csr" => $csrUser];
 if ($search !== "") $params[":search"] = "%$search%";
 
 $stmt->execute($params);
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
     $id       = $row["id"];
     $name     = htmlspecialchars($row["name"]);
     $assigned = $row["assigned_csr"];
     $unread   = intval($row["unread"]);
     $avatar   = "upload/default-avatar.png";
 
+    $isMine   = ($assigned === $csrUser);
+    $unassigned = ($assigned === null || $assigned === "");
+
     echo "
     <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
-        
         <img src='$avatar' class='client-avatar'>
 
         <div class='client-content'>
@@ -56,24 +57,25 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 $name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
             </div>
             <div class='client-sub'>" .
-                ($assigned === null ? "Unassigned" :
-                ($assigned === $csrUser ? "Assigned to YOU" : "Assigned to $assigned"))
+                ($unassigned ? "Unassigned" :
+                ($isMine ? "Assigned to YOU" : "Assigned to $assigned")) 
             . "</div>
         </div>
 
-        <div class='client-actions'>";
-        
-        // assignment logic
-        if ($assigned === null || $assigned === "") {
-            echo "<button class='pill green' onclick='event.stopPropagation(); assignClient($id)'>➕</button>";
-        }
-        elseif ($assigned === $csrUser) {
-            echo "<button class='pill red' onclick='event.stopPropagation(); unassignClient($id)'>➖</button>";
-        }
-        else {
-            echo "<button class='pill gray' disabled title='Handled by $assigned'>🔒</button>";
-        }
+        <div class='client-actions'>
+    ";
 
-    echo "</div></div>";
+    if ($unassigned) {
+        echo "<button class='pill green' onclick='event.stopPropagation(); assignClient($id)'>➕</button>";
+    } elseif ($isMine) {
+        echo "<button class='pill red' onclick='event.stopPropagation(); unassignClient($id)'>➖</button>";
+    } else {
+        echo "<button class='pill gray' disabled title='Handled by $assigned'>🔒</button>";
+    }
+
+    echo "
+        </div>
+    </div>
+    ";
 }
 ?>
