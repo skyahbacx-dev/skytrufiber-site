@@ -12,13 +12,11 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CSR Dashboard — <?= htmlspecialchars($csrFullName) ?>"></title>
+<title>CSR Dashboard — <?= htmlspecialchars($csrFullName) ?></title>
 
-<!-- MAIN DASHBOARD + CHAT CSS -->
 <link rel="stylesheet" href="csr_dashboard.css">
 <link rel="stylesheet" href="chat.css">
 
-<!-- ICONS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -32,7 +30,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 <body>
 
-<!-- ===== TOP NAV ===== -->
+<!-- TOP NAV -->
 <div class="topnav">
     <button class="hamburger" onclick="toggleSidebar()">☰</button>
 
@@ -51,10 +49,9 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     </div>
 </div>
 
-<!-- ===== SIDEBAR ===== -->
+<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
     <div class="side-title">MENU</div>
-
     <button class="side-item" onclick="window.location='csr_dashboard.php'">💬 Chat Dashboard</button>
     <button class="side-item" onclick="window.location='my_clients.php'">👥 My Clients</button>
     <button class="side-item" onclick="window.location='reminders.php'">⏱ Reminders</button>
@@ -65,20 +62,18 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<!-- ===== MAIN LAYOUT ===== -->
-<div class="layout">
+<!-- MAIN LAYOUT -->
+<div class="layout" id="layout">
 
     <!-- CLIENT LIST -->
     <div class="client-panel">
-        <h3>CLIENTS</h3>
-        <input class="search" id="searchInput" placeholder="Search clients...">
+        <input class="search" placeholder="Search clients..." id="searchInput">
         <div id="clientList" class="client-list"></div>
     </div>
 
-    <!-- CHAT PANEL -->
-    <div class="chat-panel">
+    <!-- CHAT -->
+    <div class="chat-panel" id="chatPanel">
 
-        <!-- CHAT HEADER -->
         <div class="chat-header">
             <div class="user-section">
                 <img id="chatAvatar" src="upload/default-avatar.png" class="chat-avatar">
@@ -92,13 +87,10 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
             <button class="info-btn" onclick="toggleClientInfo()">ⓘ</button>
         </div>
 
-        <!-- CHAT MESSAGES -->
         <div class="chat-box" id="chatMessages"></div>
 
-        <!-- PREVIEW FILES -->
         <div id="previewArea" class="preview-area"></div>
 
-        <!-- INPUT BAR -->
         <div class="chat-input">
             <label for="fileInput" class="upload-icon">
                 <i class="fa-regular fa-image"></i>
@@ -111,7 +103,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
         </div>
     </div>
 
-    <!-- CLIENT INFO PANEL -->
+    <!-- SLIDE INFO PANEL -->
     <aside id="clientInfoPanel" class="client-info-panel">
         <button class="close-info" onclick="toggleClientInfo()">✖</button>
         <h3>Client Information</h3>
@@ -120,10 +112,9 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
         <p><b>District:</b> <span id="infoDistrict"></span></p>
         <p><b>Barangay:</b> <span id="infoBrgy"></span></p>
     </aside>
-
 </div>
 
-<!-- MEDIA VIEWER -->
+<!-- MEDIA VIEW -->
 <div id="mediaModal" class="media-modal">
     <span id="closeMediaModal" class="close-modal">✖</span>
     <img id="mediaModalContent" class="modal-content">
