@@ -1,0 +1,38 @@
+.msg-row {
+    display:flex;
+    align-items:flex-end;
+    margin:10px 0;
+}
+
+.msg-row.client { justify-content:flex-start; }
+.msg-row.csr { justify-content:flex-end; }
+
+.msg-avatar {
+    width:34px;height:34px;border-radius:50%;margin-right:7px;
+}
+
+.bubble-wrapper { max-width:480px;display:flex;flex-direction:column; }
+
+.bubble {
+    padding:11px 16px;
+    border-radius:16px;
+    font-size:15px;
+    line-height:19px;
+}
+.msg-row.client .bubble { background:#e8e8e8;color:#000;border-bottom-left-radius:5px; }
+.msg-row.csr .bubble { background:#45b7ff;color:white;border-bottom-right-radius:5px; }
+
+.meta { color:#444;font-size:11px;margin-top:4px; }
+
+.file-img {
+    width:220px;border-radius:10px;margin-top:6px;cursor:pointer;
+}
+
+.preview-area{display:flex;gap:8px;padding:6px 15px;}
+.preview-thumb img,.preview-thumb video{width:70px;height:70px;object-fit:cover;border-radius:10px;}
+
+@keyframes fadeInUp {
+    from { opacity:0;transform:translateY(10px); }
+    to   { opacity:1;transform:translateY(0); }
+}
+.animate-msg{animation:fadeInUp .35s ease forwards;}
