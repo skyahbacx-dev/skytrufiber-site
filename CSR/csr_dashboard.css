@@ -1,4 +1,4 @@
-/* ================= GLOBAL STYLES ================= */
+/* ===================== GLOBAL RESET ===================== */
 * {
     margin: 0;
     padding: 0;
@@ -7,28 +7,28 @@
 
 body {
     font-family: Arial, sans-serif;
-    background: #f4fff4;
+    background: #F3FFF3;
     overflow: hidden;
 }
 
-/* ================= TOP NAV ================= */
+/* ===================== TOP NAV ===================== */
 .topnav {
     width: 100%;
-    height: 60px;
-    background: #067333;
+    height: 50px;
+    background: #0A662E;
     color: white;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 0 15px;
+    justify-content: space-between;
+    padding: 0 12px;
 }
 
 .hamburger {
     background: none;
     border: none;
-    font-size: 26px;
-    cursor: pointer;
     color: white;
+    font-size: 22px;
+    cursor: pointer;
 }
 
 .top-title {
@@ -38,48 +38,57 @@ body {
 }
 
 .nav-logo {
-    height: 36px;
+    height: 32px;
+}
+
+.top-title h2 {
+    font-size: 18px;
+    font-weight: bold;
 }
 
 .nav-buttons {
     display: flex;
-    gap: 8px;
+    align-items: center;
+    gap: 6px;
 }
 
 .nav-btn {
-    padding: 6px 12px;
-    border-radius: 18px;
-    background: transparent;
     border: 1px solid white;
+    background: transparent;
     color: white;
+    border-radius: 12px;
+    padding: 5px 10px;
+    font-size: 12px;
     cursor: pointer;
 }
 
 .nav-btn.active {
     background: white;
-    color: #067333;
+    color: #0A662E;
 }
 
 .logout-btn {
-    padding: 6px 12px;
     background: white;
-    color: #067333;
-    border-radius: 18px;
+    color: #0A662E;
+    padding: 5px 10px;
+    border-radius: 12px;
     text-decoration: none;
+    font-size: 12px;
 }
 
-/* ================= SIDEBAR ================= */
+/* ===================== SIDEBAR MENU ===================== */
 .sidebar {
-    width: 250px;
-    background: white;
-    border-right: 1px solid #ccc;
     position: fixed;
-    top: 60px;
-    height: calc(100vh - 60px);
-    left: -250px;
-    transition: 0.3s ease;
-    z-index: 50;
-    padding: 10px;
+    top: 50px;
+    left: -260px;
+    width: 260px;
+    height: calc(100vh - 50px);
+    background: white;
+    border-right: 1px solid #ddd;
+    padding: 15px;
+    transition: left 0.25s ease;
+    z-index: 20;
+    overflow-y: auto;
 }
 
 .sidebar.open {
@@ -93,102 +102,83 @@ body {
 .sidebar-overlay.show {
     display: block;
     position: fixed;
-    top: 60px;
+    top: 50px;
     left: 0;
     width: 100%;
-    height: calc(100vh - 60px);
-    background: rgba(0,0,0,0.35);
-    z-index: 10;
+    height: calc(100vh - 50px);
+    background: rgba(0,0,0,0.4);
+    z-index: 15;
 }
 
 .side-title {
+    font-size: 14px;
     font-weight: bold;
     margin-bottom: 10px;
 }
 
 .side-item {
-    display: block;
-    background: #f4f4f4;
+    width: 100%;
+    background: #E6FBEA;
+    border: none;
     padding: 10px;
-    border-radius: 8px;
     margin-bottom: 6px;
+    border-radius: 10px;
     cursor: pointer;
+    text-align: left;
 }
 
 .side-item.logout {
-    background: #ffdddd;
+    background: #ffdcdc;
 }
 
-/* ================= MAIN LAYOUT ================= */
+/* ===================== MAIN LAYOUT GRID ===================== */
 .layout {
-    display: flex;
-    height: calc(100vh - 60px);
-    width: 100%;
+    display: grid;
+    grid-template-columns: 260px 1fr 280px;
+    height: calc(100vh - 50px);
     overflow: hidden;
+}
+
+/* Override third column initially */
+.client-info-panel {
+    grid-column: 3;
 }
 
 /* ================= CLIENT PANEL ================= */
 .client-panel {
-    width: 260px;
     background: white;
     border-right: 1px solid #ccc;
-    display: flex;
-    flex-direction: column;
-}
-
-.search {
-    width: 90%;
-    margin: 10px auto;
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid #bbb;
-}
-
-.client-list {
-    flex: 1;
+    padding: 10px;
     overflow-y: auto;
 }
 
-.client-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
+.search {
+    width: 93%;
+    padding: 8px;
+    border: 1px solid #aaa;
+    border-radius: 8px;
 }
 
-.client-item:hover,
-.client-item.active-client {
-    background: #cdf0d3;
+.client-list {
+    margin-top: 10px;
+    overflow-y: auto;
 }
 
-.client-avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-}
-
-.client-name {
-    font-weight: bold;
-}
-
-/* ================= CHAT PANEL ================= */
+/* ================= CHAT PANEL (CONTENT MIDDLE) ================= */
 .chat-panel {
-    flex: 1;
     display: flex;
     flex-direction: column;
+    background: #F3FFF3;
 }
 
-/* Header */
 .chat-header {
-    height: 65px;
-    background: white;
-    border-bottom: 1px solid #ccc;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 14px;
+    height: 60px;
+    padding: 10px 15px;
+    background: white;
+    border-bottom: 1px solid #ccc;
 }
 
 .user-section {
@@ -198,148 +188,78 @@ body {
 }
 
 .chat-avatar {
-    width: 45px;
-    height: 45px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
 }
 
-/* ================= CHAT BOX ================= */
-.chat-box {
-    flex: 1;
-    overflow-y: auto;
-    padding: 15px;
-}
-
-/* MESSAGE ROW */
-.msg-row {
-    display: flex;
-    align-items: flex-end;
-    margin-bottom: 12px;
-}
-
-.msg-row.client {
-    justify-content: flex-start;
-}
-
-.msg-row.csr {
-    justify-content: flex-end;
-}
-
-.msg-avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    margin: 0 8px;
-}
-
-.bubble-wrapper {
-    max-width: 65%;
-    display: flex;
-    flex-direction: column;
-}
-
-/* BUBBLES */
-.bubble {
-    padding: 10px 14px;
-    border-radius: 18px;
-    font-size: 15px;
-    line-height: 1.4;
-    animation: pop-in 0.25s ease;
-}
-
-.msg-row.client .bubble {
-    background: #e6e6e6;
-    color: black;
-}
-
-.msg-row.csr .bubble {
-    background: #2b84ff;
-    color: white;
-}
-
-/* META TIMESTAMP + SEEN */
-.meta {
-    font-size: 11px;
-    margin-top: 3px;
-    color: #666;
-}
-
-.seen-checks {
-    margin-left: 4px;
-    font-size: 11px;
+.chat-name {
+    font-size: 18px;
     font-weight: bold;
-    color: #2b84ff; /* Seen ✓✓ style */
 }
 
-/* MEDIA INSIDE CHAT */
-.file-img {
-    width: 220px;
-    max-height: 250px;
-    border-radius: 10px;
-    margin-top: 5px;
+.chat-status {
+    font-size: 12px;
+    color: gray;
 }
 
-/* ================= INPUT BAR ================= */
-.chat-input {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    gap: 10px;
-    border-top: 1px solid #ccc;
-    background: white;
-}
-
-.upload-icon {
-    font-size: 22px;
-    color: #067333;
-    cursor: pointer;
-}
-
-#messageInput {
-    flex: 1;
-    padding: 12px 15px;
-    border-radius: 25px;
-    border: 1px solid #aaa;
-    font-size: 15px;
-}
-
-.send-btn {
-    background: #067333;
-    color: white;
+.info-btn {
+    background: none;
     border: none;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
     cursor: pointer;
     font-size: 20px;
 }
 
-/* ================= PREVIEW AREA ================= */
+/* ===================== INPUT ===================== */
 .preview-area {
     display: flex;
     gap: 10px;
-    padding: 5px 10px;
+    padding: 5px 15px;
 }
 
-.preview-thumb img,
-.preview-thumb video {
-    width: 70px;
-    height: 70px;
-    border-radius: 10px;
-    object-fit: cover;
+.chat-input {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 15px;
+    background: white;
+    border-top: 1px solid #ddd;
 }
 
-/* ================= CLIENT INFO SLIDE PANEL ================= */
+.chat-input input[type="text"] {
+    flex: 1;
+    border-radius: 30px;
+    padding: 12px;
+    border: 1px solid #ccc;
+}
+
+.upload-icon,
+.send-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid #0A662E;
+    font-size: 22px;
+    color: #0A662E;
+    background: white;
+    cursor: pointer;
+}
+
+/* ===================== CLIENT INFO SLIDE PANEL ===================== */
 .client-info-panel {
-    width: 280px;
     position: fixed;
+    top: 50px;
     right: -300px;
-    top: 60px;
-    height: calc(100vh - 60px);
+    width: 300px;
+    height: calc(100vh - 50px);
     background: white;
     border-left: 1px solid #ccc;
     padding: 15px;
-    transition: .3s;
+    transition: right .3s ease;
+    z-index: 25;
 }
 
 .client-info-panel.show {
@@ -347,33 +267,9 @@ body {
 }
 
 .close-info {
-    font-size: 22px;
     background: none;
     border: none;
+    font-size: 24px;
     cursor: pointer;
-}
-
-/* ================= MEDIA VIEWER ================= */
-.media-modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.85);
-    display: none;
-    align-items: center;
-    justify-content: center;
-}
-
-.media-modal.show {
-    display: flex;
-}
-
-.modal-content {
-    max-width: 90%;
-    max-height: 90%;
-}
-
-/* ================= ANIMATION ================= */
-@keyframes pop-in {
-    from { opacity: 0; transform: scale(.95); }
-    to { opacity: 1; transform: scale(1); }
+    float: right;
 }
