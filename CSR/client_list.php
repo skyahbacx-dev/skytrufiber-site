@@ -39,14 +39,16 @@ if ($search !== "") $params[":search"] = "%$search%";
 $stmt->execute($params);
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $id     = $row["id"];
-    $name   = htmlspecialchars($row["name"]);
+
+    $id       = $row["id"];
+    $name     = htmlspecialchars($row["name"]);
     $assigned = $row["assigned_csr"];
-    $unread = intval($row["unread"]);
-    $avatar = "upload/default-avatar.png";
+    $unread   = intval($row["unread"]);
+    $avatar   = "upload/default-avatar.png";
 
     echo "
     <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
+        
         <img src='$avatar' class='client-avatar'>
 
         <div class='client-content'>
@@ -58,6 +60,20 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 ($assigned === $csrUser ? "Assigned to YOU" : "Assigned to $assigned"))
             . "</div>
         </div>
-    </div>";
+
+        <div class='client-actions'>";
+        
+        // assignment logic
+        if ($assigned === null || $assigned === "") {
+            echo "<button class='pill green' onclick='event.stopPropagation(); assignClient($id)'>➕</button>";
+        }
+        elseif ($assigned === $csrUser) {
+            echo "<button class='pill red' onclick='event.stopPropagation(); unassignClient($id)'>➖</button>";
+        }
+        else {
+            echo "<button class='pill gray' disabled title='Handled by $assigned'>🔒</button>";
+        }
+
+    echo "</div></div>";
 }
 ?>
