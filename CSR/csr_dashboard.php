@@ -65,6 +65,27 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 <div class="layout">
     <?php include "chat.php"; ?>
 </div>
+<!-- ASSIGN CONFIRM POPUP -->
+<div id="assignPopup" class="popupBox">
+    <div class="popupContent">
+        <h3>Assign This Client To You?</h3>
+        <div class="popup-buttons">
+            <button onclick="confirmAssign()">YES</button>
+            <button onclick="closeAssignPopup()">NO</button>
+        </div>
+    </div>
+</div>
+
+<!-- UNASSIGN CONFIRM POPUP -->
+<div id="unassignPopup" class="popupBox">
+    <div class="popupContent">
+        <h3>Remove This Client?</h3>
+        <div class="popup-buttons">
+            <button onclick="confirmUnassign()">YES</button>
+            <button onclick="closeUnassignPopup()">NO</button>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
