@@ -1,5 +1,5 @@
 // ==========================================
-// CSR CHAT JAVASCRIPT - FULL FILE (FIXED)
+// CSR CHAT JAVASCRIPT - FULL FINAL VERSION
 // ==========================================
 
 let selectedClient = 0;
@@ -33,6 +33,9 @@ function selectClient(id, name, assigned) {
 
     $("#chatName").text(name);
 
+    $("#placeholderScreen").hide();
+    $("#chatMessages").show();
+
     const locked = assigned && assigned !== csrFullname;
     $("#messageInput").prop("disabled", locked);
     $("#sendBtn").prop("disabled", locked);
@@ -55,7 +58,7 @@ function loadClientInfo() {
 
     $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name || "Unknown");
-        $("#infoEmail").text(info.email || "No Email");
+        $("#infoEmail").text(info.email || "No email");
         $("#infoDistrict").text(info.district || "N/A");
         $("#infoBrgy").text(info.barangay || "N/A");
     });
@@ -77,7 +80,7 @@ function loadMessages(initialLoad = false) {
             let newMsgs = messages.slice(lastMessageCount);
 
             newMsgs.forEach(m => {
-                const isCSR = (m.sender_type === "csr");
+                const isCSR = m.sender_type === "csr";
                 const bubbleSide = isCSR ? "csr" : "client";
 
                 let attachment = "";
@@ -96,7 +99,6 @@ function loadMessages(initialLoad = false) {
                         <div class="bubble">${m.message || ""} ${attachment}</div>
                         <div class="meta">${m.created_at} ${isCSR ? `<span class="seen-checks">✓✓</span>` : ""}</div>
                     </div>
-                    ${isCSR ? `<img src="${defaultAvatar}" class="msg-avatar">` : ""}
                 </div>`;
 
                 $("#chatMessages").append(html);
@@ -152,7 +154,7 @@ function sendMessage() {
         data: fd,
         processData: false,
         contentType: false,
-        success: function () {
+        success: () => {
             $("#messageInput").val("");
             $("#previewArea").html("");
             $("#fileInput").val("");
@@ -169,9 +171,9 @@ function openMedia(src) {
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-/******** REFRESH INTERVALS ********/
+/******** AUTO UPDATES ********/
 setInterval(loadClients, 4000);
-setInterval(() => loadMessages(false), 1200);
+setInterval(() => loadMessages(false), 1500);
 
 loadClients();
 
