@@ -1,235 +1,178 @@
-/*************************************************
- * CSR CHAT JAVASCRIPT (FINAL BUILD - A3 + Anim)
- *************************************************/
-
+// ==================== GLOBAL ====================
 let selectedClient = null;
 let assignedCSR = null;
-let messagesLoaded = [];
-let autoScrollEnabled = true;
-let typingTimeout = null;
-let polling = null;
+let chatInterval = null;
+let unreadInterval = null;
+let canSend = false;
 
-// CONSTANTS
-const POLL_INTERVAL = 1500;
-
-/*************************************************
- * SIDEBAR TOGGLE (Mobile support)
- *************************************************/
-function toggleSidebar() {
-    document.querySelector(".sidebar").classList.toggle("open");
-    document.querySelector(".sidebar-overlay").classList.toggle("show");
-}
-
-/*************************************************
- * LOAD CLIENT LIST + UNREAD BADGES
- *************************************************/
-function loadClients() {
-    $.get("load_clients.php", function(data) {
+// ==================== LOAD CLIENT LIST ====================
+function loadClients(query = "") {
+    $.get("client_list.php?search=" + query, data => {
         $("#clientList").html(data);
     });
 }
-loadClients();
-setInterval(loadClients, 4000);
 
-/*************************************************
- * SELECT CLIENT
- *************************************************/
-function selectClient(id, name, assignedTo) {
+$("#searchInput").on("keyup", function () {
+    loadClients($(this).val());
+});
+
+// ==================== SELECT CLIENT ====================
+function selectClient(id, name, assigned) {
     selectedClient = id;
-    assignedCSR = assignedTo;
-
-    $(".client-item").removeClass("active-client");
-    $("#client-" + id).addClass("active-client");
+    assignedCSR = assigned;
 
     $("#chatName").text(name);
     $("#chatMessages").html("");
-    messagesLoaded = [];
+    $("#messageInput").val("");
 
     updateAssignButtons();
-    loadClientInfo();
-    loadMessages(true);
+    loadChat();
+    startChatPolling();
 
-    if (polling) clearInterval(polling);
-    polling = setInterval(loadMessages, POLL_INTERVAL);
+    $("#chatPanel").show();
 }
 
-/*************************************************
- * UPDATE RIGHT SLIDE CLIENT INFO
- *************************************************/
-function loadClientInfo() {
-    if (!selectedClient) return;
-    $.getJSON("client_info.php?id=" + selectedClient, info => {
-        $("#infoName").text(info.name || "");
-        $("#infoEmail").text(info.email || "");
-        $("#infoDistrict").text(info.district || "");
-        $("#infoBrgy").text(info.barangay || "");
-    });
-}
-
-/*************************************************
- * UPDATE ASSIGN / UNASSIGN / LOCK BUTTON
- *************************************************/
+// ==================== ASSIGN / UNASSIGN ====================
 function updateAssignButtons() {
-    const isMine = assignedCSR === csrUser;
-    const unassigned = !assignedCSR;
+    const btnHolder = $("#assignControls");
+    btnHolder.empty();
 
-    $("#assignBtn, #unassignBtn, #lockedBtn").hide();
-
-    if (unassigned)
-        $("#assignBtn").show();
-    else if (isMine)
-        $("#unassignBtn").show();
-    else
-        $("#lockedBtn").show();
-
-    $("#messageInput, #sendBtn, .upload-icon").prop("disabled", !isMine);
-}
-
-/*************************************************
- * ASSIGN CONTROLS
- *************************************************/
-$("#assignBtn").on("click", function () {
-    $.post("assign_client.php", { client_id: selectedClient }, () => {
-        assignedCSR = csrUser;
-        updateAssignButtons();
-        loadClients();
-    });
-});
-
-$("#unassignBtn").on("click", function () {
-    $.post("unassign_client.php", { client_id: selectedClient }, () => {
-        assignedCSR = "";
-        updateAssignButtons();
-        loadClients();
-    });
-});
-
-/*************************************************
- * MESSAGE POLLING + ANIMATION INSERT
- *************************************************/
-function loadMessages(forceScroll = false) {
     if (!selectedClient) return;
 
-    $.getJSON("update_read.php?client_id=" + selectedClient, msgs => {
-        if (!msgs) return;
+    if (!assignedCSR) {
+        btnHolder.html(`<button class="assign-btn" onclick="assignClient()">+</button>`);
+        canSend = false;
+    } else if (assignedCSR === csrUser) {
+        btnHolder.html(`<button class="unassign-btn" onclick="unassignClient()">−</button>`);
+        canSend = true;
+    } else {
+        btnHolder.html(`<button class="lock-btn" disabled>🔒</button>`);
+        canSend = false;
+    }
+}
 
-        if (msgs.length === messagesLoaded.length) return;
+function assignClient() {
+    $.post("assign_client.php", { client_id: selectedClient }, res => {
+        loadClients();
+        updateAssignButtons();
+        alert("Client assigned successfully.");
+    });
+}
 
-        let newMessages = msgs.slice(messagesLoaded.length);
+function unassignClient() {
+    $.post("unassign_client.php", { client_id: selectedClient }, res => {
+        loadClients();
+        updateAssignButtons();
+        alert("Client unassigned.");
+    });
+}
 
-        newMessages.forEach(m => {
-            const side = (m.sender_type === "csr") ? "csr" : "client";
-            const avatar = `upload/default-avatar.png`;
+// ==================== LOAD CHAT ====================
+function loadChat() {
+    if (!selectedClient) return;
 
-            let attachment = "";
-            if (m.media_url) {
-                if (m.media_type === "image") {
-                    attachment = `<img src="${m.media_url}" class="file-img" onclick="openMedia('${m.media_url}')">`;
-                } else if (m.media_type === "video") {
-                    attachment = `
-                        <video class="file-img" controls>
-                            <source src="${m.media_url}">
-                        </video>`;
-                }
+    $.getJSON("update_read.php?client_id=" + selectedClient, messages => {
+        $("#chatMessages").empty();
+
+        messages.forEach(msg => {
+            let bubbleClass = msg.sender_type === "csr" ? "csr-bubble" : "client-bubble";
+            let seenMark = msg.sender_type === "csr" && msg.seen === 1
+                ? `<span class='seen-check'>✔✔</span>` : "";
+
+            // Media
+            let media = "";
+            if (msg.media_type === "image") {
+                media = `<img src="${msg.media_url}" class="chat-img" onclick="openMedia('${msg.media_url}')">`;
             }
 
             $("#chatMessages").append(`
-                <div class="msg-row ${side} animate-msg">
-                    <img src="${avatar}" class="msg-avatar">
-                    <div class="bubble-wrapper">
-                        <div class="bubble">${m.message || ""}${attachment}</div>
-                        <div class="meta">${m.created_at}</div>
-                    </div>
+                <div class="chat-row ${bubbleClass}">
+                    <div class="bubble-text">${msg.message || ""}</div>
+                    ${media}
+                    <div class="timestamp">${msg.created_at} ${seenMark}</div>
                 </div>
             `);
         });
 
-        messagesLoaded = msgs;
-
-        if (autoScrollEnabled || forceScroll) {
-            let box = $("#chatMessages")[0];
-            box.scrollTop = box.scrollHeight;
-        }
+        $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
     });
 }
 
-/*************************************************
- * SCROLL CONTROL — Disable auto scroll if user scrolls up
- *************************************************/
-$("#chatMessages").on("scroll", function () {
-    let box = $("#chatMessages")[0];
-    autoScrollEnabled = (box.scrollTop + box.clientHeight + 60 >= box.scrollHeight);
+// ==================== SEND MESSAGE ====================
+$("#sendBtn").on("click", sendMessage);
+$("#messageInput").on("keypress", e => {
+    if (e.key === "Enter") sendMessage();
 });
-
-/*************************************************
- * MESSAGE SENDING + FILE UPLOAD PREVIEW
- *************************************************/
-let filesToSend = [];
-
-$(".upload-icon").on("click", () => $("#fileInput").click());
-
-$("#fileInput").on("change", function(e){
-    filesToSend = [...e.target.files];
-    $("#previewArea").html("");
-
-    filesToSend.forEach(file => {
-        let reader = new FileReader();
-        reader.onload = ev => {
-            $("#previewArea").append(`
-                <div class="preview-thumb">
-                    ${file.type.includes("video") ?
-                        `<video src="${ev.target.result}" muted></video>` :
-                        `<img src="${ev.target.result}">`}
-                </div>
-            `);
-        };
-        reader.readAsDataURL(file);
-    });
-});
-
-$("#sendBtn").click(sendMessage);
-$("#messageInput").keypress(e => { if (e.key === "Enter") sendMessage(); });
 
 function sendMessage() {
-    if (!selectedClient) return;
-    const msg = $("#messageInput").val().trim();
-    if (!msg && filesToSend.length === 0) return;
+    if (!canSend || !selectedClient) {
+        alert("You cannot send messages unless the client is assigned to you.");
+        return;
+    }
 
-    let fd = new FormData();
-    fd.append("message", msg);
-    fd.append("client_id", selectedClient);
-    fd.append("csr_fullname", csrFullname);
+    let text = $("#messageInput").val().trim();
+    let files = $("#fileInput")[0].files;
 
-    filesToSend.forEach(f => fd.append("files[]", f));
+    if (!text && files.length === 0) return;
+
+    let formData = new FormData();
+    formData.append("client_id", selectedClient);
+    formData.append("message", text);
+    formData.append("csr_fullname", csrFullname);
+
+    if (files.length > 0) {
+        for (let i = 0; i < files.length; i++)
+            formData.append("files[]", files[i]);
+    }
 
     $.ajax({
         url: "save_chat_csr.php",
-        type: "POST",
-        data: fd,
+        method: "POST",
+        data: formData,
         processData: false,
         contentType: false,
         success: () => {
-            $("#messageInput").val("");
+            $("#previewArea").empty();
             $("#fileInput").val("");
-            $("#previewArea").html("");
-            filesToSend = [];
-            loadMessages(true);
+            $("#messageInput").val("");
+            loadChat();
         }
     });
 }
 
-/*************************************************
- * MEDIA VIEWER MODAL
- *************************************************/
-function openMedia(src) {
-    $("#mediaModal").addClass("show");
-    $("#mediaModalContent").attr("src", src);
-}
-$("#closeMediaModal").on("click", () => $("#mediaModal").removeClass("show"));
+// ==================== IMAGE PREVIEW ====================
+$("#fileInput").on("change", function () {
+    $("#previewArea").empty();
+    [...this.files].forEach(file => {
+        $("#previewArea").append(
+            `<img src="${URL.createObjectURL(file)}" class="preview-img">`
+        );
+    });
+});
 
-/*************************************************
- * CLIENT INFO SLIDE PANEL
- *************************************************/
+// ==================== MEDIA MODAL ====================
+function openMedia(src) {
+    $("#mediaModalContent").attr("src", src);
+    $("#mediaModal").fadeIn(200);
+}
+$("#closeMediaModal").on("click", () => $("#mediaModal").fadeOut(200));
+
+// ==================== CLIENT INFO SLIDE ====================
 function toggleClientInfo() {
     $("#clientInfoPanel").toggleClass("open");
 }
+
+// ==================== POLLING ====================
+function startChatPolling() {
+    clearInterval(chatInterval);
+    chatInterval = setInterval(loadChat, 2500);
+}
+
+setInterval(() => {
+    loadClients();
+}, 6000);
+
+// ==================== INIT ====================
+$(document).ready(() => {
+    loadClients();
+});
