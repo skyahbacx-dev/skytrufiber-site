@@ -9,10 +9,7 @@ if (!$client_id) { echo json_encode([]); exit; }
 
 $csrUser = $_SESSION["csr_user"] ?? "";
 
-/*
-   Fetch messages, including seen tracking
-   If sender is CSR, we check if client has seen it
-*/
+/* Fetch messages including seen status */
 $stmt = $conn->prepare("
     SELECT id, message, sender_type, media_url, media_type, created_at,
     seen
@@ -26,7 +23,6 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $out = [];
 
 foreach ($rows as $row) {
-
     $out[] = [
         "id"          => $row["id"],
         "message"     => $row["message"],
