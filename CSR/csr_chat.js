@@ -7,7 +7,6 @@ let assignedTo = "";
 let filesToSend = [];
 let lastMessageCount = 0;
 let loadingMessages = false;
-const defaultAvatar = "upload/default-avatar.png";
 
 /******** SIDEBAR ********/
 function toggleSidebar() {
@@ -20,7 +19,15 @@ function loadClients() {
     $.get("client_list.php", data => {
         $("#clientList").html(data);
     });
+
+    let searchTxt = $("#searchInput").val().toLowerCase();
+    $(".client-item").each(function () {
+        const name = $(this).text().toLowerCase();
+        $(this).toggle(name.includes(searchTxt));
+    });
 }
+
+$("#searchInput").on("input", loadClients);
 
 /******** SELECT CLIENT ********/
 function selectClient(id, name, assigned) {
@@ -32,7 +39,7 @@ function selectClient(id, name, assigned) {
 
     $("#chatName").text(name);
 
-    const locked = (assigned && assigned !== csrFullname);
+    const locked = assigned && assigned !== csrFullname;
     $("#messageInput").prop("disabled", locked);
     $("#sendBtn").prop("disabled", locked);
 
@@ -44,11 +51,12 @@ function selectClient(id, name, assigned) {
         $("#fileInput").prop("disabled", false);
     }
 
+    $("#chatMessages").show();
     loadClientInfo();
     loadMessages(true);
 }
 
-/******** CLIENT INFO ********/
+/******** CLIENT INFO PANEL ********/
 function loadClientInfo() {
     $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name);
@@ -56,6 +64,10 @@ function loadClientInfo() {
         $("#infoDistrict").text(info.district);
         $("#infoBrgy").text(info.barangay);
     });
+}
+
+function toggleClientInfo() {
+    document.getElementById("clientInfoPanel").classList.toggle("show");
 }
 
 /******** LOAD CHAT MESSAGES ********/
@@ -75,7 +87,7 @@ function loadMessages(initialLoad = false) {
 
             newMsgs.forEach(m => {
                 const side = (m.sender_type === "csr") ? "csr" : "client";
-                const avatarImg = defaultAvatar;
+                const avatarImg = "upload/default-avatar.png";
 
                 let attachment = "";
                 if (m.media_url) {
@@ -86,12 +98,17 @@ function loadMessages(initialLoad = false) {
                     }
                 }
 
+                let statusIcons = "";
+                if (side === "csr") {
+                    statusIcons = `<span class="seen-checks">✓✓</span>`;
+                }
+
                 const html = `
                 <div class="msg-row ${side} animate-msg">
-                    <img src="${avatarImg}" class="msg-avatar">
+                    ${side === "client" ? `<img src="${avatarImg}" class="msg-avatar">` : ""}
                     <div class="bubble-wrapper">
                         <div class="bubble">${m.message || ""} ${attachment}</div>
-                        <div class="meta">${m.created_at}</div>
+                        <div class="meta">${m.created_at} ${statusIcons}</div>
                     </div>
                 </div>`;
 
@@ -165,14 +182,8 @@ function openMedia(src) {
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-/******** AUTO REFRESH ********/
+/******** REFRESH INTERVALS ********/
 setInterval(loadClients, 4000);
-setInterval(() => loadMessages(false), 1000);
+setInterval(() => loadMessages(false), 1200);
 
-/******** SLIDE PANEL ********/
-function toggleClientInfo() {
-    document.getElementById("clientInfoPanel").classList.toggle("show");
-}
-
-// init
 loadClients();
