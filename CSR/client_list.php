@@ -3,7 +3,6 @@ session_start();
 include "../db_connect.php";
 
 $csrUser = $_SESSION["csr_user"] ?? null;
-
 if (!$csrUser) {
     http_response_code(401);
     exit("Unauthorized");
@@ -23,49 +22,37 @@ if ($search !== "") {
 $sql .= " ORDER BY name ASC";
 
 $stmt = $conn->prepare($sql);
-
-if ($search !== "") {
-    $stmt->execute([":search" => "%$search%"]);
-} else {
-    $stmt->execute();
-}
+$params = [];
+if ($search !== "") $params[":search"] = "%$search%";
+$stmt->execute($params);
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $id     = $row["id"];
-    $name   = htmlspecialchars($row["name"]);
+    $id       = $row["id"];
+    $name     = htmlspecialchars($row["name"]);
     $assigned = $row["assigned_csr"];
-    $avatar = "upload/default-avatar.png";
+    $avatar   = "upload/default-avatar.png";
 
-    $isMine = ($assigned === $csrUser);
-
-    echo "
-    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
-        <img src='$avatar' class='client-avatar'>
-
-        <div class='client-content'>
-            <div class='client-name'>$name</div>
-            <div class='client-sub'>";
-
-    if (!$assigned) echo "Unassigned";
-    elseif ($isMine) echo "Assigned to YOU";
-    else echo "Assigned to $assigned";
-
-    echo "</div>
-        </div>
-
-        <div class='client-actions'>
-    ";
-
-    if (!$assigned) {
-        echo "<button class='pill green' onclick='event.stopPropagation(); showAssignPopup($id)'>➕</button>";
-    } elseif ($isMine) {
-        echo "<button class='pill red' onclick='event.stopPropagation(); showUnassignPopup($id)'>➖</button>";
+    // Determine UI button
+    if ($assigned === null) {
+        $button = "<button class='assign-btn' onclick='assignClient($id)'>＋</button>";
+        $status = "Unassigned";
+    } elseif ($assigned === $csrUser) {
+        $button = "<button class='unassign-btn' onclick='unassignClient($id)'>－</button>";
+        $status = "Assigned to YOU";
     } else {
-        echo "<button class='pill gray' disabled>🔒</button>";
+        $button = "<button class='lock-btn' disabled>🔒</button>";
+        $status = "Assigned to $assigned";
     }
 
     echo "
+    <div class='client-item' id='client-$id'>
+        <img src='$avatar' class='client-avatar'>
+        <div class='client-content' onclick='selectClient($id, \"$name\", \"$assigned\")'>
+            <div class='client-name'>$name</div>
+            <div class='client-sub'>$status</div>
         </div>
-    </div>";
+        <div class='client-actions'>$button</div>
+    </div>
+    ";
 }
 ?>
