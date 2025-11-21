@@ -4,14 +4,23 @@ let filesToSend = [];
 let lastMessageCount = 0;
 let loadingMessages = false;
 
-/*********** LOAD CLIENT LIST ************/
+let modalClientID = 0;
+let modalClientName = "";
+
+/******** SIDEBAR ********/
+function toggleSidebar() {
+    document.querySelector(".sidebar").classList.toggle("open");
+    document.querySelector(".sidebar-overlay").classList.toggle("show");
+}
+
+/******** CLIENT LIST ********/
 function loadClients() {
     $.get("client_list.php", data => {
         $("#clientList").html(data);
     });
 }
 
-/*********** SELECT CLIENT ************/
+/******** SELECT CLIENT ********/
 function selectClient(id, name, assigned) {
     selectedClient = id;
     assignedTo = assigned;
@@ -29,7 +38,7 @@ function selectClient(id, name, assigned) {
     loadMessages(true);
 }
 
-/*********** LOAD CLIENT INFO ************/
+/******** LOAD CLIENT INFO ********/
 function loadClientInfo() {
     $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name);
@@ -39,12 +48,13 @@ function loadClientInfo() {
     });
 }
 
-/*********** LOAD CHAT MESSAGES ***********/
+/******** LOAD CHAT MESSAGES ********/
 function loadMessages(initial = false) {
     if (!selectedClient || loadingMessages) return;
     loadingMessages = true;
 
     $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
+
         if (initial) {
             $("#chatMessages").html("");
             lastMessageCount = 0;
@@ -84,7 +94,7 @@ function loadMessages(initial = false) {
     });
 }
 
-/*********** SEND MESSAGE ************/
+/******** SEND MESSAGE ********/
 $("#sendBtn").click(sendMessage);
 $("#messageInput").keypress(e => { if (e.key === "Enter") sendMessage(); });
 
@@ -115,7 +125,7 @@ function sendMessage() {
     });
 }
 
-/*********** PREVIEW UPLOAD ************/
+/******** UPLOAD PREVIEW ********/
 $(".upload-icon").click(() => $("#fileInput").click());
 
 $("#fileInput").on("change", e => {
@@ -137,12 +147,46 @@ $("#fileInput").on("change", e => {
     });
 });
 
-/*********** Slide Panel ************/
-function toggleClientInfo() {
-    $("#clientInfoPanel").toggleClass("show");
+/******** ASSIGN MODAL ********/
+function openAssignModal(id, name) {
+    modalClientID = id;
+    modalClientName = name;
+    $("#assignTitle").text("Assign Client?");
+    $("#assignText").text("Assign " + name + " to you?");
+    $("#assignModal").fadeIn(200);
 }
 
-/*********** Auto refresh ************/
+function openUnassignModal(id, name) {
+    modalClientID = id;
+    modalClientName = name;
+    $("#assignTitle").text("Unassign Client?");
+    $("#assignText").text("Remove " + name + " from your assignment?");
+    $("#assignModal").fadeIn(200);
+}
+
+function closeAssignModal() {
+    $("#assignModal").fadeOut(200);
+}
+
+function confirmAssign() {
+    let url = $("#assignTitle").text().includes("Unassign")
+        ? "unassign_client.php"
+        : "assign_client.php";
+
+    $.post(url, { client_id: modalClientID }, () => {
+        loadClients();
+        closeAssignModal();
+    });
+}
+
+/******** MEDIA VIEWER ********/
+function openMedia(src) {
+    $("#mediaModal").addClass("show");
+    $("#mediaModalContent").attr("src", src);
+}
+$("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
+
+/******** AUTO REFRESH ********/
 setInterval(loadClients, 3000);
 setInterval(() => loadMessages(false), 1200);
 
