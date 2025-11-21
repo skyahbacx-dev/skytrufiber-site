@@ -61,3 +61,21 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
     <p><b>District:</b> <span id="infoDistrict"></span></p>
     <p><b>Barangay:</b> <span id="infoBrgy"></span></p>
 </aside>
+
+<!-- CONFIRM UNASSIGN POPUP -->
+<div id="confirmOverlay" class="confirm-overlay">
+    <div class="confirm-box">
+        <h3>Unassign Client?</h3>
+        <p>This will allow a different CSR to take the client.</p>
+        <div class="confirm-actions">
+            <button id="confirmYes" class="btn-yes">Yes</button>
+            <button id="confirmNo" class="btn-no">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- MEDIA VIEWER -->
+<div id="mediaModal" class="media-modal">
+    <span id="closeMediaModal" class="close-modal">✖</span>
+    <img id="mediaModalContent" class="modal-content">
+</div>
