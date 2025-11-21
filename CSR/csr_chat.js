@@ -7,6 +7,7 @@ let assignedTo = "";
 let filesToSend = [];
 let lastMessageCount = 0;
 let loadingMessages = false;
+let pendingUnassignClientId = null;
 
 /******** SIDEBAR ********/
 function toggleSidebar() {
@@ -19,15 +20,7 @@ function loadClients() {
     $.get("client_list.php", data => {
         $("#clientList").html(data);
     });
-
-    let searchTxt = $("#searchInput").val().toLowerCase();
-    $(".client-item").each(function () {
-        const name = $(this).text().toLowerCase();
-        $(this).toggle(name.includes(searchTxt));
-    });
 }
-
-$("#searchInput").on("input", loadClients);
 
 /******** SELECT CLIENT ********/
 function selectClient(id, name, assigned) {
@@ -51,12 +44,11 @@ function selectClient(id, name, assigned) {
         $("#fileInput").prop("disabled", false);
     }
 
-    $("#chatMessages").show();
     loadClientInfo();
     loadMessages(true);
 }
 
-/******** CLIENT INFO PANEL ********/
+/******** CLIENT INFO ********/
 function loadClientInfo() {
     $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name);
@@ -64,10 +56,6 @@ function loadClientInfo() {
         $("#infoDistrict").text(info.district);
         $("#infoBrgy").text(info.barangay);
     });
-}
-
-function toggleClientInfo() {
-    document.getElementById("clientInfoPanel").classList.toggle("show");
 }
 
 /******** LOAD CHAT MESSAGES ********/
@@ -98,16 +86,13 @@ function loadMessages(initialLoad = false) {
                     }
                 }
 
-                let statusIcons = "";
-                if (side === "csr") {
-                    statusIcons = `<span class="seen-checks">✓✓</span>`;
-                }
+                let statusIcons = (side === "csr") ? `<span class="seen-checks">✓✓</span>` : ``;
 
                 const html = `
-                <div class="msg-row ${side} animate-msg">
-                    ${side === "client" ? `<img src="${avatarImg}" class="msg-avatar">` : ""}
+                <div class="msg-row ${side}">
+                    <img src="${avatarImg}" class="msg-avatar">
                     <div class="bubble-wrapper">
-                        <div class="bubble">${m.message || ""} ${attachment}</div>
+                        <div class="bubble">${m.message || ""}${attachment}</div>
                         <div class="meta">${m.created_at} ${statusIcons}</div>
                     </div>
                 </div>`;
@@ -175,6 +160,35 @@ function sendMessage() {
     });
 }
 
+/******** ASSIGNMENT ********/
+function assignClient(id) {
+    $.post("assign_client.php", { client_id:id }, () => {
+        loadClients();
+    });
+}
+
+function unassignClient(id) {
+    pendingUnassignClientId = id;
+    $("#confirmOverlay").css("display","flex");
+}
+
+/******** POPUP HANDLERS ********/
+$("#confirmNo").click(() => {
+    $("#confirmOverlay").hide();
+    pendingUnassignClientId = null;
+});
+
+$("#confirmYes").click(() => {
+    $.post("unassign_client.php", { client_id: pendingUnassignClientId }, () => {
+        $("#confirmOverlay").hide();
+        pendingUnassignClientId = null;
+        loadClients();
+        $("#messageInput").prop("disabled", true);
+        $("#sendBtn").prop("disabled", true);
+        $(".upload-icon").hide();
+    });
+});
+
 /******** MEDIA VIEWER ********/
 function openMedia(src) {
     $("#mediaModal").addClass("show");
@@ -182,8 +196,13 @@ function openMedia(src) {
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-/******** REFRESH INTERVALS ********/
+/******** AUTO REFRESH ********/
 setInterval(loadClients, 4000);
 setInterval(() => loadMessages(false), 1200);
 
 loadClients();
+
+/******** SLIDE INFO ********/
+function toggleClientInfo() {
+    document.getElementById("clientInfoPanel").classList.toggle("show");
+}
