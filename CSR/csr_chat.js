@@ -1,5 +1,5 @@
 // ==========================================
-// CSR CHAT SCRIPT - FULL FINAL VERSION
+// CSR CHAT JAVASCRIPT - FULL WORKING VERSION
 // ==========================================
 
 let selectedClient = 0;
@@ -8,7 +8,7 @@ let filesToSend = [];
 let lastMessageCount = 0;
 let loadingMessages = false;
 
-/******** SIDEBAR TOGGLE ********/
+/******** SIDEBAR ********/
 function toggleSidebar() {
     document.querySelector(".sidebar").classList.toggle("open");
     document.querySelector(".sidebar-overlay").classList.toggle("show");
@@ -16,7 +16,7 @@ function toggleSidebar() {
 
 /******** LOAD CLIENT LIST ********/
 function loadClients() {
-    $.get("client_list.php", function (data) {
+    $.get("client_list.php", data => {
         $("#clientList").html(data);
     });
 }
@@ -30,12 +30,8 @@ function selectClient(id, name, assigned) {
     $("#client-" + id).addClass("active-client");
 
     $("#chatName").text(name);
-    $("#statusDot").removeClass("online offline").addClass("offline");
-    $("#chatMessages").html("");
-    $("#clientInfoPanel").removeClass("show");
 
     const locked = assigned && assigned !== csrFullname;
-    
     $("#messageInput").prop("disabled", locked);
     $("#sendBtn").prop("disabled", locked);
 
@@ -47,13 +43,15 @@ function selectClient(id, name, assigned) {
         $("#fileInput").prop("disabled", false);
     }
 
+    document.getElementById("clientInfoPanel").classList.remove("show"); // always hide first
     loadClientInfo();
     loadMessages(true);
 }
 
-/******** LOAD CLIENT INFO ********/
+/******** CLIENT INFO ********/
 function loadClientInfo() {
-    $.getJSON("client_info.php?id=" + selectedClient, function(info) {
+    if (!selectedClient) return;
+    $.getJSON("client_info.php?id=" + selectedClient, info => {
         $("#infoName").text(info.name);
         $("#infoEmail").text(info.email);
         $("#infoDistrict").text(info.district);
@@ -66,7 +64,7 @@ function loadMessages(initialLoad = false) {
     if (!selectedClient || loadingMessages) return;
     loadingMessages = true;
 
-    $.getJSON("load_chat_csr.php?client_id=" + selectedClient, function(messages) {
+    $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
 
         if (initialLoad) {
             $("#chatMessages").html("");
@@ -74,7 +72,6 @@ function loadMessages(initialLoad = false) {
         }
 
         if (messages.length > lastMessageCount) {
-
             let newMsgs = messages.slice(lastMessageCount);
 
             newMsgs.forEach(m => {
@@ -90,7 +87,8 @@ function loadMessages(initialLoad = false) {
                     }
                 }
 
-                let statusIcons = (side === "csr") ? `<span class="seen-checks">✓✓</span>` : "";
+                let statusIcons = "";
+                if (side === "csr") statusIcons = `<span class="seen-checks">✓✓</span>`;
 
                 const html = `
                 <div class="msg-row ${side} animate-msg">
@@ -104,7 +102,9 @@ function loadMessages(initialLoad = false) {
                 $("#chatMessages").append(html);
             });
 
-            $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
+            setTimeout(() => {
+                $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
+            }, 100);
         }
 
         lastMessageCount = messages.length;
@@ -136,19 +136,19 @@ $("#fileInput").on("change", e => {
 
 /******** SEND MESSAGE ********/
 $("#sendBtn").click(sendMessage);
-$("#messageInput").keypress(e => {
+$("#messageInput").keypress(e => { 
     if (e.key === "Enter") sendMessage();
 });
 
 function sendMessage() {
     let msg = $("#messageInput").val().trim();
     if (!msg && filesToSend.length === 0) return;
+    if (!selectedClient) return;
 
     let fd = new FormData();
     fd.append("message", msg);
     fd.append("client_id", selectedClient);
     fd.append("csr_fullname", csrFullname);
-
     filesToSend.forEach(f => fd.append("files[]", f));
 
     $.ajax({
@@ -157,7 +157,7 @@ function sendMessage() {
         data: fd,
         processData: false,
         contentType: false,
-        success: function () {
+        success: () => {
             $("#messageInput").val("");
             $("#previewArea").html("");
             $("#fileInput").val("");
@@ -175,10 +175,12 @@ function openMedia(src) {
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
 /******** AUTO REFRESH ********/
-setInterval(loadClients, 3000);
+setInterval(loadClients, 4000);
 setInterval(() => loadMessages(false), 1000);
 
-/******** CLIENT INFO PANEL ********/
+loadClients();
+
+/******** CLIENT INFO PANEL TOGGLE ********/
 function toggleClientInfo() {
     document.getElementById("clientInfoPanel").classList.toggle("show");
 }
