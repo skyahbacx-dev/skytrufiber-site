@@ -2,22 +2,11 @@
 session_start();
 include "../db_connect.php";
 
-$csr = $_SESSION["csr_user"] ?? "";
 $client_id = $_POST["client_id"] ?? 0;
+if (!$client_id) exit("error");
 
-if (!$csr || !$client_id) {
-    echo "error";
-    exit;
-}
-
-$stmt = $conn->prepare("
-    UPDATE clients
-    SET assigned_csr = NULL
-    WHERE id = :id
-");
-$stmt->execute([
-    ":id" => $client_id
-]);
+$stmt = $conn->prepare("UPDATE clients SET assigned_csr = NULL WHERE id = :id");
+$stmt->execute([":id" => $client_id]);
 
 echo "ok";
 ?>
