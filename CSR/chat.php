@@ -24,29 +24,39 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
             <img id="chatAvatar" src="upload/default-avatar.png" class="chat-avatar">
             <div>
                 <div id="chatName" class="chat-name">Select a client</div>
-                <div id="typingIndicator" class="typing-status"></div>
+                <div id="chatStatus" class="chat-status">
+                    <span id="statusDot" class="status-dot offline"></span> Offline
+                </div>
             </div>
         </div>
+
+        <div class="assign-actions">
+            <button id="assignBtn" class="assign-btn"><i class="fa-solid fa-plus"></i></button>
+            <button id="unassignBtn" class="unassign-btn" style="display:none;"><i class="fa-solid fa-minus"></i></button>
+            <button id="lockedBtn" class="locked-btn" style="display:none;" disabled><i class="fa-solid fa-lock"></i></button>
+        </div>
+
         <button class="info-btn" onclick="toggleClientInfo()">ⓘ</button>
     </div>
 
     <!-- CHAT MESSAGES -->
     <div class="chat-box" id="chatMessages"></div>
 
-    <!-- PREVIEW AREA -->
+    <!-- UPLOAD PREVIEW -->
     <div id="previewArea" class="preview-area"></div>
 
-    <!-- INPUT BAR -->
+    <!-- INPUT -->
     <div class="chat-input">
         <label for="fileInput" class="upload-icon">
             <i class="fa-regular fa-image"></i>
         </label>
         <input type="file" id="fileInput" multiple style="display:none;">
-        <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off">
+        <input type="text" id="messageInput" placeholder="Type anything.....">
         <button id="sendBtn" class="send-btn">
             <i class="fa-solid fa-paper-plane"></i>
         </button>
     </div>
+
 </div>
 
 <!-- RIGHT PANEL -->
@@ -58,6 +68,3 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
     <p><b>District:</b> <span id="infoDistrict"></span></p>
     <p><b>Barangay:</b> <span id="infoBrgy"></span></p>
 </aside>
-
-<!-- AUDIO FOR NOTIFICATION -->
-<audio id="notifySound" src="notify.mp3" preload="auto"></audio>
