@@ -1,5 +1,5 @@
 // ==========================================
-// CSR CHAT JAVASCRIPT - FULL FILE
+// CSR CHAT JAVASCRIPT - FULL FINAL VERSION
 // ==========================================
 
 let selectedClient = 0;
@@ -44,17 +44,20 @@ function selectClient(id, name, assigned) {
         $("#fileInput").prop("disabled", false);
     }
 
+    lastMessageCount = 0;
     loadClientInfo();
     loadMessages(true);
 }
 
 /******** CLIENT INFO ********/
 function loadClientInfo() {
+    if (!selectedClient) return;
+
     $.getJSON("client_info.php?id=" + selectedClient, info => {
-        $("#infoName").text(info.name);
-        $("#infoEmail").text(info.email);
-        $("#infoDistrict").text(info.district);
-        $("#infoBrgy").text(info.barangay);
+        $("#infoName").text(info.name ?? "");
+        $("#infoEmail").text(info.email ?? "");
+        $("#infoDistrict").text(info.district ?? "");
+        $("#infoBrgy").text(info.barangay ?? "");
     });
 }
 
@@ -155,6 +158,7 @@ function sendMessage() {
             $("#previewArea").html("");
             $("#fileInput").val("");
             filesToSend = [];
+
             loadMessages(false);
         }
     });
@@ -183,9 +187,6 @@ $("#confirmYes").click(() => {
         $("#confirmOverlay").hide();
         pendingUnassignClientId = null;
         loadClients();
-        $("#messageInput").prop("disabled", true);
-        $("#sendBtn").prop("disabled", true);
-        $(".upload-icon").hide();
     });
 });
 
@@ -198,11 +199,11 @@ $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
 /******** AUTO REFRESH ********/
 setInterval(loadClients, 4000);
-setInterval(() => loadMessages(false), 1200);
+setInterval(() => loadMessages(false), 1500);
 
 loadClients();
 
-/******** SLIDE INFO ********/
+/******** SLIDE INFO PANEL ********/
 function toggleClientInfo() {
     document.getElementById("clientInfoPanel").classList.toggle("show");
 }
