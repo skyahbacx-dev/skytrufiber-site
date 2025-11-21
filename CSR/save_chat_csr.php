@@ -14,6 +14,7 @@ if (!$client_id) {
     exit;
 }
 
+// ---- S3 CONFIG ----
 $bucket     = getenv("B2_BUCKET");
 $endpoint   = getenv("B2_ENDPOINT");
 $keyId      = getenv("B2_KEY_ID");
@@ -33,7 +34,9 @@ $s3 = new S3Client([
 $media_url  = null;
 $media_type = null;
 
+// ---- FILE UPLOAD ----
 if (!empty($_FILES["files"]["name"][0])) {
+
     $fileName = $_FILES["files"]["name"][0];
     $tmpName  = $_FILES["files"]["tmp_name"][0];
     $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
@@ -51,16 +54,19 @@ if (!empty($_FILES["files"]["name"][0])) {
             "ACL"    => "public-read",
             "ContentType" => mime_content_type($tmpName)
         ]);
+
         $media_url = $result["ObjectURL"];
+
     } catch (Exception $e) {
         echo json_encode(["status"=>"error","msg"=>$e->getMessage()]);
         exit;
     }
 }
 
+// ---- INSERT CHAT MESSAGE ----
 $stmt = $conn->prepare("
-    INSERT INTO chat (client_id, sender_type, message, media_url, media_type, csr_fullname, created_at)
-    VALUES (:cid, 'csr', :msg, :url, :mt, :csr, NOW())
+    INSERT INTO chat (client_id, sender_type, message, media_url, media_type, csr_fullname, created_at, seen)
+    VALUES (:cid, 'csr', :msg, :url, :mt, :csr, NOW(), 0)
 ");
 $stmt->execute([
     ":cid" => $client_id,
@@ -68,6 +74,16 @@ $stmt->execute([
     ":url" => $media_url,
     ":mt"  => $media_type,
     ":csr" => $csr_fullname
+]);
+
+// ---- UPDATE READ TABLE (CSR has just read everything) ----
+$conn->prepare("
+    INSERT INTO chat_read (client_id, csr, last_read)
+    VALUES (:cid, :csr, NOW())
+    ON DUPLICATE KEY UPDATE last_read = NOW()
+")->execute([
+    ":cid"  => $client_id,
+    ":csr"  => $csr_fullname
 ]);
 
 echo json_encode(["status"=>"ok"]);
