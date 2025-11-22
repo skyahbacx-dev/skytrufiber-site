@@ -57,7 +57,7 @@ function selectClient(id, name, assignedTo) {
 function loadClientInfo() {
     if (!selectedClient) return;
 
-    $.getJSON("client_info.php?id=" + selectedClient, (data) => {
+    $.getJSON("client_info.php?id=" + selectedClient, data => {
         $("#infoName").text(data.name || "");
         $("#infoEmail").text(data.email || "");
         $("#infoDistrict").text(data.district || "");
@@ -72,17 +72,16 @@ function loadMessages(initial = false) {
     if (!selectedClient || loadingMessages) return;
     loadingMessages = true;
 
-    $.getJSON("load_chat_csr.php?client_id=" + selectedClient, (messages) => {
-
+    $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
         if (initial) {
             $("#chatMessages").html("");
             lastMessageCount = 0;
         }
 
         if (messages.length > lastMessageCount) {
-            let newMsgs = messages.slice(lastMessageCount);
+            const newMsgs = messages.slice(lastMessageCount);
 
-            newMsgs.forEach((m) => {
+            newMsgs.forEach(m => {
                 const side = (m.sender_type === "csr") ? "csr" : "client";
 
                 let attachment = "";
@@ -103,7 +102,6 @@ function loadMessages(initial = false) {
                     </div>
                 </div>
                 `;
-
                 $("#chatMessages").append(html);
             });
 
@@ -119,10 +117,7 @@ function loadMessages(initial = false) {
 // SEND MESSAGE
 // =============================
 $("#sendBtn").click(sendMessage);
-
-$("#messageInput").keypress(e => {
-    if (e.key === "Enter") sendMessage();
-});
+$("#messageInput").keypress(e => { if (e.key === "Enter") sendMessage(); });
 
 function sendMessage() {
     let msg = $("#messageInput").val().trim();
@@ -132,6 +127,7 @@ function sendMessage() {
     fd.append("message", msg);
     fd.append("client_id", selectedClient);
     fd.append("csr_fullname", csrFullname);
+
     filesToSend.forEach(f => fd.append("files[]", f));
 
     $.ajax({
@@ -140,12 +136,11 @@ function sendMessage() {
         contentType: false,
         processData: false,
         data: fd,
-        success: function () {
+        success: () => {
             $("#messageInput").val("");
             $("#previewArea").html("");
             $("#fileInput").val("");
             filesToSend = [];
-
             loadMessages(false);
             loadClients();
         }
@@ -153,11 +148,11 @@ function sendMessage() {
 }
 
 // =============================
-// FILE PREVIEW
+// FILE PREVIEW SYSTEM
 // =============================
 $(".upload-icon").on("click", () => $("#fileInput").click());
 
-$("#fileInput").on("change", function (e) {
+$("#fileInput").on("change", e => {
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
@@ -165,10 +160,9 @@ $("#fileInput").on("change", function (e) {
         let reader = new FileReader();
         reader.onload = ev => {
             $("#previewArea").append(`
-                <div class="preview-thumb">
-                    <img src="${ev.target.result}">
-                </div>
-            `);
+            <div class="preview-thumb">
+                <img src="${ev.target.result}">
+            </div>`);
         };
         reader.readAsDataURL(file);
     });
@@ -185,7 +179,7 @@ function closeAssignPopup() {
     $("#assignPopup").fadeOut(150);
 }
 function confirmAssign() {
-    $.post("assign_client.php", { client_id: currentAssignClient }, function () {
+    $.post("assign_client.php", { client_id: currentAssignClient }, () => {
         closeAssignPopup();
         loadClients();
         loadMessages(true);
@@ -203,7 +197,7 @@ function closeUnassignPopup() {
     $("#unassignPopup").fadeOut(150);
 }
 function confirmUnassign() {
-    $.post("unassign_client.php", { client_id: currentUnassignClient }, function () {
+    $.post("unassign_client.php", { client_id: currentUnassignClient }, () => {
         closeUnassignPopup();
         loadClients();
         $("#chatMessages").html(`<p class="placeholder">👈 Select a client to chat</p>`);
@@ -212,7 +206,7 @@ function confirmUnassign() {
 }
 
 // =============================
-// SLIDE CLIENT INFO PANEL
+// SLIDE INFO PANEL
 // =============================
 function toggleClientInfo() {
     document.getElementById("clientInfoPanel").classList.toggle("show");
@@ -233,5 +227,5 @@ $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 setInterval(() => loadClients($("#searchInput").val()), 2500);
 setInterval(() => loadMessages(false), 1200);
 
-// INITIAL LOAD
+// FIRST LOAD
 loadClients();
