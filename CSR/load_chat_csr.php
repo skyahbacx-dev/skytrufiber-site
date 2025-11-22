@@ -1,4 +1,4 @@
-<?php 
+<?php
 session_start();
 include "../db_connect.php";
 header("Content-Type: application/json");
@@ -8,26 +8,26 @@ $client_id = $_GET["client_id"] ?? 0;
 if (!$client_id) { echo json_encode([]); exit; }
 
 $stmt = $conn->prepare("
-    SELECT id, message, sender_type, media_url, media_type, seen, created_at
-    FROM chat
-    WHERE client_id = :cid
-    ORDER BY created_at ASC
+    SELECT c.id, c.message, c.sender_type, c.csr_fullname,
+           m.media_path AS media_url, m.media_type AS media_type,
+           c.created_at
+    FROM chat c
+    LEFT JOIN chat_media m ON c.id = m.chat_id
+    WHERE c.client_id = :cid
+    ORDER BY c.created_at ASC
 ");
 $stmt->execute([":cid" => $client_id]);
-
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$out = [];
 
-// Format array return
-foreach ($rows as $row) {
+$out = [];
+foreach ($rows as $r) {
     $out[] = [
-        "id"          => $row["id"],
-        "message"     => $row["message"],
-        "sender_type" => $row["sender_type"],
-        "media_url"   => $row["media_url"],
-        "media_type"  => $row["media_type"],
-        "seen"        => intval($row["seen"]),
-        "created_at"  => date("M d, g:i A", strtotime($row["created_at"]))
+        "id"          => $r["id"],
+        "message"     => $r["message"],
+        "sender_type" => $r["sender_type"],
+        "media_url"   => $r["media_url"],
+        "media_type"  => $r["media_type"],
+        "created_at"  => date("M d, g:i A", strtotime($r["created_at"]))
     ];
 }
 
