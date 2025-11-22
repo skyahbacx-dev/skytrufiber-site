@@ -35,12 +35,34 @@ nav a:hover { color:#003300; }
 
 .hero-content {
   position:relative;
-  z-index:2; /* FIX FOR CLICKABLE BUTTON */
+  z-index:2;
   background:#fff; max-width:520px; padding:22px;
   border-radius:14px; box-shadow:0 4px 14px rgba(0,0,0,.2);
 }
 .hero-content h1 { font-size:28px; font-weight:800; }
 .btn { padding:10px 20px; background:#00cc00; color:#fff; border-radius:8px; font-weight:700; text-decoration:none; }
+
+/* STATS SECTION */
+.stats-row {
+  background:#ffffff;
+  padding:25px 10px;
+  display:flex;
+  justify-content:center;
+  gap:25px;
+}
+.stat-card {
+  background:#eaffe6;
+  border:2px solid #00cc00;
+  padding:18px 28px;
+  border-radius:14px;
+  text-align:center;
+  width:210px;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+  transition:.3s;
+}
+.stat-card:hover { transform:translateY(-6px); }
+.stat-card h3 { font-size:28px; font-weight:800; color:#006600; }
+.stat-card p { font-size:15px; font-weight:600; }
 
 /* EXPERIENCE */
 .experience-section { background:#fff; padding:40px 30px; }
@@ -51,24 +73,34 @@ nav a:hover { color:#003300; }
 .exp-title { display:flex; align-items:center; gap:12px; margin-bottom:15px; }
 .exp-title h2 { font-size:30px; font-weight:800 }
 
-/* SERVICES / ABOUT / MANAGEMENT / CONTACT kept same */
+/* ABOUT */
+#about { background:#f7fff7; padding:40px; }
+.about-container { max-width:850px; }
+
+/* SERVICES */
 #services { background:#0b2f2f; color:#fff; display:flex; gap:35px; padding:55px; }
 .services-img img { width:250px; border-radius:12px; }
 
+/* MANAGEMENT */
 .team-section { flex-direction:column; background:linear-gradient(135deg,#062a2a,#004040);
   color:#fff; padding:55px 30px; }
 .team-title { font-size:30px; margin-bottom:30px; font-weight:800; }
 .team-card { display:flex; gap:18px; max-width:850px; margin-bottom:20px; }
 .team-photo { width:92px; height:92px; border-radius:50%; border:4px solid #00cc00; }
 
-.contact-section { background:#fff; color:#062a2a; padding:55px 30px; }
+/* CONTACT */
+.contact-section {
+  background:#fff; color:#062a2a; padding:55px 30px;
+}
 .contact-box {
   max-width:900px; background:#f4fffa; padding:28px 32px;
   border-radius:18px; border:2px solid #00cc00; margin-bottom:25px;
 }
 .contact-info { display:grid; grid-template-columns:1fr 1fr; gap:18px 30px; }
-.icon-circle { width:42px; height:42px; background:#00cc00; color:#fff; border-radius:50%;
-  display:flex; justify-content:center; align-items:center; font-weight:800; }
+.icon-circle {
+  width:42px; height:42px; background:#00cc00; color:#fff; border-radius:50%;
+  display:flex; justify-content:center; align-items:center; font-weight:800;
+}
 
 /* MAP */
 .map-container { width:100%; max-width:750px; margin:20px auto 0;
