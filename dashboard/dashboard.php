@@ -29,7 +29,6 @@
   </nav>
 </header>
 
-<!-- ===== HERO ===== -->
 <section id="home" class="section">
   <div class="hero-content">
     <p>Welcome to</p>
@@ -39,7 +38,6 @@
   </div>
 </section>
 
-<!-- ===== EXPERIENCE SECTION ===== -->
 <section id="experience" class="section reveal experience-section">
   <div class="exp-box">
     <div class="exp-title">
@@ -57,18 +55,19 @@
   </div>
 </section>
 
-<!-- ===== ABOUT ===== -->
 <section id="about" class="section reveal">
   <div class="about-container">
     <h2>About Us</h2>
-    <p>Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. ...</p>
-    <p>In 2015, the company became a licensed and compliant service provider ...</p>
-    <p>Business Aid operates with a simple yet highly efficient administration ...</p>
-    <p>Today, Business Aid continues to deliver cost-effective services ...</p>
+    <p>
+      Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. is a company that provides
+      reliable and professional manpower support...
+    </p>
+    <p>In 2015, the company became a licensed and compliant service provider...</p>
+    <p>Business Aid operates with a simple yet highly efficient administration...</p>
+    <p>Today, Business Aid continues to deliver cost-effective and value-added services...</p>
   </div>
 </section>
 
-<!-- ===== SERVICES ===== -->
 <section id="services" class="section reveal">
   <div class="services-text">
     <h2>Our Services</h2>
@@ -88,7 +87,6 @@
   </div>
 </section>
 
-<!-- ===== MANAGEMENT ===== -->
 <section id="management" class="section reveal team-section">
   <h2 class="team-title">Our Leadership Team</h2>
 
@@ -96,7 +94,7 @@
     <img src="alex.jpg" class="team-photo">
     <div>
       <h3>Alex G. Halili, CEO</h3>
-      <p>Our president has over 3 decades of experience ...</p>
+      <p>Our president has over 3 decades of experience...</p>
     </div>
   </div>
 
@@ -104,7 +102,7 @@
     <img src="amy.jpg" class="team-photo">
     <div>
       <h3>Amy A. Halili, CFO</h3>
-      <p>A B.S. Accountancy graduate with more than 25 years ...</p>
+      <p>A B.S. Accountancy graduate with more than 25 years...</p>
     </div>
   </div>
 
@@ -112,12 +110,11 @@
     <img src="allec.jpg" class="team-photo">
     <div>
       <h3>Allec Zandre A. Halili, COO</h3>
-      <p>A B.S. Entrepreneurship graduate ...</p>
+      <p>A B.S. Entrepreneurship graduate...</p>
     </div>
   </div>
 </section>
 
-<!-- ===== CONTACT ===== -->
 <section id="contact" class="section reveal contact-section">
   <div class="contact-box">
     <div class="contact-title">
@@ -127,26 +124,17 @@
     <div class="contact-info">
       <div class="contact-item">
         <div class="icon-circle">📍</div>
-        <div>
-          <h4>Head Office</h4>
-          <p>2607 Cityland 10 Tower 1 HV Dela Costa Ave.<br>Bel Air, Makati City</p>
-        </div>
+        <div><h4>Head Office</h4>2607 Cityland 10 Tower 1 HV Dela Costa Ave.<br>Bel Air, Makati City</div>
       </div>
 
       <div class="contact-item">
         <div class="icon-circle">✉️</div>
-        <div>
-          <h4>Email</h4>
-          <p><a href="mailto:admin@ahba.ph">admin@ahba.ph</a></p>
-        </div>
+        <div><h4>Email</h4><a href="mailto:admin@ahba.ph">admin@ahba.ph</a></div>
       </div>
 
       <div class="contact-item">
         <div class="icon-circle">📞</div>
-        <div>
-          <h4>Phone</h4>
-          <p><a href="tel:+639989615050">+63 998 961 5050</a></p>
-        </div>
+        <div><h4>Phone</h4><a href="tel:+639989615050">+63 998 961 5050</a></div>
       </div>
     </div>
   </div>
