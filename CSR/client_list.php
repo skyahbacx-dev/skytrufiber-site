@@ -1,67 +1,79 @@
 <?php
 session_start();
 include "../db_connect.php";
+header("Content-Type: text/html; charset=UTF-8");
 
 $search = $_GET["search"] ?? "";
-$csr = $_SESSION["csr_user"] ?? "";
+$csrUser = $_SESSION["csr_user"] ?? "";
 
-$query = "
-    SELECT c.id, c.name, c.assigned_csr,
-        (SELECT COUNT(*) FROM chat WHERE client_id = c.id AND sender_type = 'client' AND seen = 0) AS unread
-    FROM clients c
-    WHERE c.name ILIKE :s
-    ORDER BY c.assigned_csr = :csr DESC, unread DESC, c.name ASC
+// MAIN QUERY — fetch clients and assignment
+$sql = "
+SELECT 
+    c.id, 
+    c.name,
+    c.assigned_csr,
+    c.last_active,
+    COALESCE(
+        (SELECT message FROM chat 
+         WHERE client_id = c.id 
+         ORDER BY created_at DESC LIMIT 1
+        ), ''
+    ) AS last_msg,
+    COALESCE(
+        (SELECT created_at FROM chat 
+         WHERE client_id = c.id 
+         ORDER BY created_at DESC LIMIT 1
+        ), ''
+    ) AS last_msg_time
+FROM clients c
+WHERE c.name ILIKE :search
+ORDER BY c.last_active DESC NULLS LAST
 ";
 
-$stmt = $conn->prepare($query);
-$stmt->execute([
-    ":s" => "%$search%",
-    ":csr" => $csr
-]);
-
+$stmt = $conn->prepare($sql);
+$stmt->execute([":search" => "%$search%"]);
 $clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-foreach ($clients as $row):
-    $id = $row["id"];
-    $name = $row["name"];
-    $assigned = $row["assigned_csr"];
-    $unread = $row["unread"];
+if (!$clients) {
+    echo "<p class='no-clients'>No clients found...</p>";
+    exit;
+}
 
-    // Determine badge colors
-    $isYours = ($assigned === $csr);
-    $lockedByOther = ($assigned && !$isYours);
+foreach ($clients as $c) {
+
+    $active = (strtotime($c["last_active"]) > strtotime("-2 minutes")) ? "online" : "offline";
+    $assignedToYou = ($c["assigned_csr"] === $csrUser);
+    $assignedToOther = ($c["assigned_csr"] && $c["assigned_csr"] !== $csrUser);
+
+    echo "<div class='client-item' id='client-{$c["id"]}' onclick=\"selectClient({$c["id"]}, '{$c["name"]}', '{$c["assigned_csr"]}')\">";
+
+    echo "<img src='upload/default-avatar.png' class='client-avatar'>";
+
+    echo "<div class='client-meta'>
+            <div class='client-name'>{$c["name"]}</div>
+            <div class='client-status $active'>" . ucfirst($active) . "</div>";
+
+    if ($assignedToYou) {
+        echo "<div class='assign-label you'>Assigned to YOU</div>";
+    } elseif ($assignedToOther) {
+        echo "<div class='assign-label other'>Assigned to {$c['assigned_csr']}</div>";
+    } else {
+        echo "<div class='assign-label none'>Not assigned</div>";
+    }
+
+    echo "</div>";
+
+    // ASSIGN / UNASSIGN / LOCK BUTTON LOGIC
+    echo "<div class='assign-actions'>";
+    if ($assignedToYou) {
+        echo "<button class='assign-btn unassign' onclick=\"event.stopPropagation(); showUnassignPopup({$c["id"]})\">−</button>";
+    } elseif ($assignedToOther) {
+        echo "<button class='assign-btn lock' disabled>🔒</button>";
+    } else {
+        echo "<button class='assign-btn assign' onclick=\"event.stopPropagation(); showAssignPopup({$c["id"]})\">+</button>";
+    }
+    echo "</div>";
+
+    echo "</div>";
+}
 ?>
-    <div class="client-item" id="client-<?= $id ?>"
-         onclick="selectClient(<?= $id ?>, '<?= htmlspecialchars($name) ?>', '<?= $assigned ?>')">
-
-        <div class="client-avatar"></div>
-
-        <div class="client-info">
-            <div class="client-name"><?= htmlspecialchars($name) ?></div>
-
-            <?php if ($isYours): ?>
-                <span class="assign-status yours">Assigned to YOU</span>
-            <?php elseif ($lockedByOther): ?>
-                <span class="assign-status other">Assigned to <?= $assigned ?></span>
-            <?php else: ?>
-                <span class="assign-status none">Not Assigned</span>
-            <?php endif; ?>
-        </div>
-
-        <div class="client-controls">
-            <?php if ($isYours): ?>
-                <button class="ctrl-btn unassign" onclick="event.stopPropagation(); showUnassignPopup(<?= $id ?>)">−</button>
-            <?php elseif ($lockedByOther): ?>
-                <button class="ctrl-btn lock" onclick="event.stopPropagation();" disabled>
-                    <i class="fa-solid fa-lock"></i>
-                </button>
-            <?php else: ?>
-                <button class="ctrl-btn assign" onclick="event.stopPropagation(); showAssignPopup(<?= $id ?>)">+</button>
-            <?php endif; ?>
-
-            <?php if ($unread > 0): ?>
-                <span class="unread-badge"><?= $unread ?></span>
-            <?php endif; ?>
-        </div>
-    </div>
-<?php endforeach; ?>
