@@ -4,269 +4,155 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AHBA Development</title>
+
   <style>
-    /* ===== General Page Style ===== */
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      font-family: "Segoe UI", Arial, sans-serif;
-      color: #222;
-      overflow: hidden;
-    }
+    * { margin:0; padding:0; box-sizing:border-box; scroll-behavior:smooth; }
+    body { font-family:"Segoe UI", Arial, sans-serif; color:#222; }
 
-    body {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      background: linear-gradient(to bottom right, #c8f8c8, #e7ffe7);
-      position: relative;
+    /* ===== HEADER & FOOTER SHELL ===== */
+    header, footer {
+      position:fixed; left:0; width:100%;
+      background:#00cc00; color:#fff;
+      display:flex; justify-content:space-between; align-items:center;
+      padding:12px 80px; z-index:999;
     }
-
-    /* ===== Transparent Logo Background ===== */
-    body::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: url('../AHBALOGO.png') no-repeat center center;
-      background-size: 700px auto;
-      opacity: 0.08;
-      z-index: 0;
-    }
-
-    /* ===== Header ===== */
-    header {
-      background-color: #00cc00;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 80px;
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-      position: relative;
-      z-index: 1;
-    }
-
-    /* ===== Logo Group ===== */
-    .logo-group {
-      display: flex;
-      align-items: center;
-      gap: 40px;
-      position: relative;
-    }
-
-    .logo-group a img {
-      height: 80px;
-      transition: transform 0.2s ease, opacity 0.2s ease;
-      display: block;
-    }
-
-    .logo-group a img:hover {
-      transform: scale(1.05);
-      opacity: 0.9;
-    }
-
-    /* ===== SkyTruFiber Dropdown ===== */
-    .stf-dropdown {
-      position: relative;
-      display: inline-block;
-    }
-
-    .stf-trigger {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-    }
-
-    .stf-caret {
-      font-size: 12px;
-      color: #fff;
-      background: rgba(0, 0, 0, 0.15);
-      padding: 2px 6px;
-      border-radius: 10px;
-      line-height: 1;
-      margin-left: 6px;
-      user-select: none;
-    }
-
-    .stf-menu {
-      position: absolute;
-      top: 90px;
-      left: 0;
-      min-width: 210px;
-      background: #ffffff;
-      border-radius: 10px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-      padding: 8px;
-      display: none;
-      z-index: 9999;
-    }
-
-    .stf-menu::before {
-      content: "";
-      position: absolute;
-      top: -8px;
-      left: 20px;
-      width: 0;
-      height: 0;
-      border-left: 8px solid transparent;
-      border-right: 8px solid transparent;
-      border-bottom: 8px solid #ffffff;
-      filter: drop-shadow(0 -1px 1px rgba(0,0,0,0.08));
-    }
-
-    .stf-item {
-      display: block;
-      padding: 10px 12px;
-      border-radius: 8px;
-      color: #006600;
-      text-decoration: none;
-      font-weight: 600;
-      letter-spacing: .2px;
-      transition: background .2s ease, transform .05s ease;
-      white-space: nowrap;
-    }
-
-    .stf-item:hover {
-      background: #e6ffe6;
-      transform: translateX(2px);
-    }
-
-    /* Show on hover or focus */
-    .stf-dropdown:hover .stf-menu,
-    .stf-dropdown:focus-within .stf-menu {
-      display: block;
-    }
-
-    /* ===== Navigation ===== */
-    nav {
-      display: flex;
-      gap: 20px;
-    }
+    header { top:0; }
+    footer { bottom:0; text-align:center; padding:10px; font-size:14px; }
 
     nav a {
-      color: #fff;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 14px;
-      letter-spacing: 0.4px;
-      transition: color 0.3s ease;
+      margin-left:20px; color:#fff; text-decoration:none;
+      font-weight:600; letter-spacing:.3px;
+      transition:color .3s;
+    }
+    nav a:hover { color:#003300; }
+
+    .section {
+      min-height:100vh;
+      padding-top:120px;
+      padding-bottom:80px;
+      display:flex; justify-content:center; align-items:center;
     }
 
-    nav a:hover {
-      color: #003300;
+    /* ===== HERO ===== */
+    #home {
+      background:url('https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&w=1600&q=80')
+                center/cover no-repeat;
+      position:relative;
+    }
+    #home::after {
+      content:\"\"; position:absolute; inset:0; background:rgba(0,0,0,.35);
+    }
+    .hero-content {
+      position:relative; text-align:left; max-width:700px;
+      background:#fff; padding:40px; border-radius:14px;
+      animation:fadeIn 1.5s ease-in-out;
+      box-shadow:0 5px 20px rgba(0,0,0,.25);
+    }
+    .hero-content h1 { font-size:34px; font-weight:800; margin-bottom:8px; }
+    .hero-content p { font-size:18px; margin-bottom:14px; }
+
+    .btn {
+      display:inline-block; padding:12px 26px;
+      background:#00cc00; color:#fff; font-weight:700;
+      text-decoration:none; border-radius:8px;
+      transition:.25s;
+    }
+    .btn:hover { background:#009900; transform:translateY(-3px); }
+
+    @keyframes fadeIn { from{ opacity:0; transform:translateY(20px); } to{ opacity:1; transform:translateY(0); } }
+
+    /* ===== ABOUT ===== */
+    #about {
+      background:#f7fff7; padding:90px 40px;
+      justify-content:center; align-items:flex-start;
+    }
+    .about-container {
+      max-width:900px; animation:fadeInUp .7s ease;
+    }
+    .about-container h2 {
+      font-size:36px; font-weight:800; margin-bottom:20px; color:#006600;
+    }
+    .about-container p { margin-bottom:15px; line-height:1.75; font-size:17px; }
+
+    /* ===== SERVICES ===== */
+    #services {
+      background:#0b2f2f; color:white;
+      padding:80px 40px;
+      display:flex; gap:60px; align-items:center;
+    }
+    .services-text h2 { font-size:36px; margin-bottom:20px; }
+    .services-text ul { margin-left:20px; line-height:1.9; font-size:18px; }
+    .services-img img { width:350px; border-radius:12px; }
+
+    @keyframes fadeInUp {
+      0% { opacity:0; transform:translateY(40px); }
+      100% { opacity:1; transform:translateY(0); }
     }
 
-    /* ===== Hero Section ===== */
-    .hero {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 0 20px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .hero h1 {
-      font-size: 46px;
-      font-weight: 800;
-      color: #006600;
-      margin-bottom: 15px;
-      text-shadow: 1px 1px 3px rgba(255,255,255,0.8);
-    }
-
-    .hero p {
-      font-size: 18px;
-      color: #333;
-      max-width: 800px;
-      line-height: 1.7;
-    }
-
-    /* ===== Footer ===== */
-    footer {
-      background-color: #009900;
-      color: #fff;
-      text-align: center;
-      padding: 12px;
-      font-size: 14px;
-      position: relative;
-      z-index: 1;
-    }
-
-    footer p {
-      margin: 4px 0;
-    }
-
-    /* ===== Responsive Design ===== */
-    @media (max-width: 768px) {
-      header {
-        flex-direction: column;
-        padding: 15px 30px;
-      }
-
-      .logo-group {
-        flex-direction: column;
-        gap: 15px;
-      }
-
-      nav {
-        margin-top: 10px;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-
-      .hero h1 {
-        font-size: 32px;
-      }
-
-      .hero p {
-        font-size: 15px;
-        padding: 0 10px;
-      }
-
-      .stf-menu {
-        top: 70px;
-      }
-    }
   </style>
 </head>
+
 <body>
-  <header>
-    <div class="logo-group">
-      <a href="dashboard.php" class="stf-trigger">
-        <img src="../AHBALOGO.png" alt="AHBA Development Logo">
-      </a>
 
-       <div class="logo-group">
-      <a href="../SKYTRUFIBER/skytrufiber.php" target="_blank" class="stf-trigger" aria-haspopup="true" aria-expanded="false">
-      <img src="../SKYTRUFIBER.png" alt="Sky TruFiber Logo">
-      </a>
-    <div>
-  
+<header>
+  <div class="logo-group">
+    <a href="#home"><img src="../AHBALOGO.png" height="70"></a>
+    <a href="../SKYTRUFIBER/skytrufiber.php" target="_blank">
+      <img src="../SKYTRUFIBER.png" height="60">
+    </a>
+  </div>
 
-    <nav>
-      <a href="#">HOME</a>
-      <a href="#">ABOUT</a>
-      <a href="#">SERVICES</a>
-      <a href="#">GALLERY</a>
-      <a href="#">CONTACT</a>
-    </nav>
-  </header>
+  <nav>
+    <a href="#home">HOME</a>
+    <a href="#about">ABOUT</a>
+    <a href="#services">SERVICES</a>
+    <a href="#gallery">GALLERY</a>
+    <a href="#contact">CONTACT</a>
+  </nav>
+</header>
 
-  <section class="hero">
-    <h1>Welcome to AHBA Development</h1>
-    <p>
-      Providing trusted manpower and business solutions across the Philippines — committed to 
-      excellence, integrity, and service. Proudly serving clients nationwide with professionalism and care.
-    </p>
-  </section>
+<!-- ===== HERO SECTION ===== -->
+<section id="home" class="section">
+  <div class="hero-content">
+    <p>Welcome to</p>
+    <h1>A.Halili Business Aid Professional Services Inc.</h1>
+    <p>All-in-one business solutions</p>
+    <a href="#about" class="btn">Ask Us How</a>
+  </div>
+</section>
 
-  <footer>
-    <p>📍 1454 Newton Street, Barangay San Isidro, Makati City</p>
-    <p>✉️ ahbadevelopment@ahba.ph</p>
-  </footer>
+<!-- ===== ABOUT SECTION ===== -->
+<section id="about" class="section">
+  <div class="about-container">
+    <h2>About Us</h2>
+    <p>Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. is a vast company that provides manpower support ...</p>
+    <p>In 2015, the company became a Licensed and compliant service provider and/or contractor ...</p>
+    <p>Nowadays, Business Aid provides cost-effective and value-added services ...</p>
+  </div>
+</section>
+
+<!-- ===== SERVICES SECTION ===== -->
+<section id="services" class="section">
+  <div class="services-text">
+    <h2>Our Services</h2>
+    <ul>
+      <li>Full outsourcing solutions</li>
+      <li>Intellectual & psychological examinations</li>
+      <li>Payroll processing</li>
+      <li>Recruitment & prescreening of applicants</li>
+      <li>Initial interview screening</li>
+      <li>Training & development programs</li>
+      <li>Contractor in construction & manufacturing</li>
+    </ul>
+  </div>
+  <div class="services-img">
+    <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=80" alt="Service person">
+  </div>
+</section>
+
+<footer>
+  📍 1454 Newton Street, Barangay San Isidro, Makati City &nbsp; | &nbsp; ✉️ ahbadevelopment@ahba.ph
+</footer>
+
 </body>
 </html>
