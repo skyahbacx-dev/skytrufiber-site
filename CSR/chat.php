@@ -1,5 +1,5 @@
 <?php
-
+session_start();
 if (!isset($_SESSION['csr_user'])) {
     http_response_code(401);
     exit("Unauthorized");
@@ -9,14 +9,13 @@ $csrUser = $_SESSION["csr_user"];
 $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 ?>
 
-<!-- LEFT: CLIENT LIST -->
+<!-- LEFT SECTION — CLIENT LIST -->
 <div class="client-panel">
-    <h3>CLIENTS</h3>
-    <input class="search" placeholder="Search clients..." id="searchInput" onkeyup="loadClients(this.value)">
+    <input class="search" placeholder="Search clients..." id="searchInput">
     <div id="clientList" class="client-list"></div>
 </div>
 
-<!-- CHAT PANEL -->
+<!-- MIDDLE SECTION — CHAT PANEL -->
 <div class="chat-panel" id="chatPanel">
 
     <!-- CHAT HEADER -->
@@ -30,60 +29,41 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
                 </div>
             </div>
         </div>
-        <button class="info-btn" onclick="toggleClientInfo()">ⓘ</button>
+
+        <button class="info-btn">ⓘ</button>
     </div>
 
-    <!-- CHAT MESSAGES -->
-    <div class="chat-box" id="chatMessages">
-        <div class="placeholder">
-            👈 Select a client to start chatting
-        </div>
+    <!-- PLACEHOLDER BEFORE SELECTING A CLIENT -->
+    <div id="chatMessages" class="chat-box">
+        <p class="placeholder">👈 Select a client to start chatting</p>
     </div>
 
-    <!-- FILE PREVIEW -->
+    <!-- FILE PREVIEW STRIP -->
     <div id="previewArea" class="preview-area"></div>
 
-    <!-- CHAT INPUT -->
+    <!-- INPUT BAR -->
     <div class="chat-input">
         <label for="fileInput" class="upload-icon">
             <i class="fa-regular fa-image"></i>
         </label>
         <input type="file" id="fileInput" multiple style="display:none;">
-        <input type="text" id="messageInput" placeholder="Type a message...">
+
+        <input type="text" id="messageInput" placeholder="Type anything.....">
+
         <button id="sendBtn" class="send-btn">
             <i class="fa-solid fa-paper-plane"></i>
         </button>
     </div>
+
 </div>
 
-<!-- RIGHT PANEL: SLIDE CLIENT INFO -->
+<!-- RIGHT SECTION — SLIDE CLIENT INFO -->
 <aside id="clientInfoPanel" class="client-info-panel">
     <button class="close-info" onclick="toggleClientInfo()">✖</button>
+
     <h3>Client Information</h3>
     <p><strong id="infoName"></strong></p>
     <p id="infoEmail"></p>
     <p><b>District:</b> <span id="infoDistrict"></span></p>
     <p><b>Barangay:</b> <span id="infoBrgy"></span></p>
 </aside>
-
-<!-- POPUP: ASSIGN CLIENT -->
-<div id="assignPopup" class="popupBox">
-    <div class="popupContent">
-        <p>Assign this client to you?</p>
-        <div class="popup-buttons">
-            <button onclick="confirmAssign()">Yes</button>
-            <button onclick="closeAssignPopup()">No</button>
-        </div>
-    </div>
-</div>
-
-<!-- POPUP: UNASSIGN CLIENT -->
-<div id="unassignPopup" class="popupBox">
-    <div class="popupContent">
-        <p>Remove this client from you?</p>
-        <div class="popup-buttons">
-            <button onclick="confirmUnassign()">Yes</button>
-            <button onclick="closeUnassignPopup()">No</button>
-        </div>
-    </div>
-</div>
