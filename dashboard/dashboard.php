@@ -14,22 +14,22 @@
       position:fixed; left:0; width:100%;
       background:#00cc00; color:#fff;
       display:flex; justify-content:space-between; align-items:center;
-      padding:12px 80px; z-index:999;
+      padding:10px 55px; z-index:999;
     }
     header { top:0; }
-    footer { bottom:0; text-align:center; padding:10px; font-size:14px; }
+    footer { bottom:0; text-align:center; padding:8px; font-size:14px; }
 
     nav a {
-      margin-left:20px; color:#fff; text-decoration:none;
-      font-weight:600; letter-spacing:.3px;
-      transition:color .3s;
+      margin-left:16px; color:#fff; text-decoration:none;
+      font-weight:600; letter-spacing:.3px; transition:.3s;
     }
     nav a:hover { color:#003300; }
 
+    /* ===== PAGE SECTIONS ===== */
     .section {
-      min-height:100vh;
-      padding-top:120px;
-      padding-bottom:80px;
+      min-height:90vh;
+      padding-top:110px;
+      padding-bottom:70px;
       display:flex; justify-content:center; align-items:center;
     }
 
@@ -39,56 +39,48 @@
                 center/cover no-repeat;
       position:relative;
     }
-    #home::after {
-      content:\"\"; position:absolute; inset:0; background:rgba(0,0,0,.35);
-    }
+    #home::after { content:""; position:absolute; inset:0; background:rgba(0,0,0,.35); }
+
     .hero-content {
-      position:relative; text-align:left; max-width:700px;
-      background:#fff; padding:40px; border-radius:14px;
+      position:relative; text-align:left; max-width:650px;
+      background:#fff; padding:32px 36px; border-radius:14px;
       animation:fadeIn 1.5s ease-in-out;
-      box-shadow:0 5px 20px rgba(0,0,0,.25);
+      box-shadow:0 4px 14px rgba(0,0,0,.2);
     }
-    .hero-content h1 { font-size:34px; font-weight:800; margin-bottom:8px; }
-    .hero-content p { font-size:18px; margin-bottom:14px; }
+    .hero-content h1 { font-size:30px; font-weight:800; margin-bottom:6px; }
+    .hero-content p { font-size:17px; margin-bottom:12px; }
 
     .btn {
-      display:inline-block; padding:12px 26px;
-      background:#00cc00; color:#fff; font-weight:700;
-      text-decoration:none; border-radius:8px;
-      transition:.25s;
+      padding:10px 20px; display:inline-block;
+      background:#00cc00; color:#fff; border-radius:8px;
+      font-weight:700; text-decoration:none; transition:.25s;
     }
     .btn:hover { background:#009900; transform:translateY(-3px); }
 
-    @keyframes fadeIn { from{ opacity:0; transform:translateY(20px); } to{ opacity:1; transform:translateY(0); } }
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeIn { from{opacity:0; transform:translateY(25px);} to{opacity:1; transform:translateY(0);} }
+    @keyframes fadeUp { from{opacity:0; transform:translateY(45px);} to{opacity:1; transform:translateY(0);} }
+
+    .reveal { opacity:0; transform:translateY(40px); transition:1s ease; }
+    .reveal.active { opacity:1; transform:translateY(0); }
 
     /* ===== ABOUT ===== */
-    #about {
-      background:#f7fff7; padding:90px 40px;
-      justify-content:center; align-items:flex-start;
-    }
-    .about-container {
-      max-width:900px; animation:fadeInUp .7s ease;
-    }
+    #about { background:#f7fff7; padding:60px 40px; }
+    .about-container { max-width:850px; }
     .about-container h2 {
-      font-size:36px; font-weight:800; margin-bottom:20px; color:#006600;
+      font-size:34px; margin-bottom:18px; font-weight:800; color:#006600;
     }
-    .about-container p { margin-bottom:15px; line-height:1.75; font-size:17px; }
+    .about-container p { margin-bottom:14px; line-height:1.75; font-size:17px; }
 
     /* ===== SERVICES ===== */
     #services {
       background:#0b2f2f; color:white;
-      padding:80px 40px;
-      display:flex; gap:60px; align-items:center;
+      padding:70px 40px;
+      display:flex; gap:45px; align-items:center;
     }
-    .services-text h2 { font-size:36px; margin-bottom:20px; }
-    .services-text ul { margin-left:20px; line-height:1.9; font-size:18px; }
-    .services-img img { width:350px; border-radius:12px; }
-
-    @keyframes fadeInUp {
-      0% { opacity:0; transform:translateY(40px); }
-      100% { opacity:1; transform:translateY(0); }
-    }
-
+    .services-text h2 { font-size:34px; margin-bottom:18px; font-weight:800; }
+    .services-text ul { margin-left:15px; line-height:1.9; font-size:17px; }
+    .services-img img { width:310px; border-radius:12px; }
   </style>
 </head>
 
@@ -117,22 +109,47 @@
     <p>Welcome to</p>
     <h1>A.Halili Business Aid Professional Services Inc.</h1>
     <p>All-in-one business solutions</p>
-    <a href="#about" class="btn">Ask Us How</a>
+    <a href="#about" class="btn">Learn More</a>
   </div>
 </section>
 
 <!-- ===== ABOUT SECTION ===== -->
-<section id="about" class="section">
+<section id="about" class="section reveal">
   <div class="about-container">
     <h2>About Us</h2>
-    <p>Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. is a vast company that provides manpower support ...</p>
-    <p>In 2015, the company became a Licensed and compliant service provider and/or contractor ...</p>
-    <p>Nowadays, Business Aid provides cost-effective and value-added services ...</p>
+
+    <p>
+      Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. is a company that provides
+      reliable and professional manpower support to meet the needs of its clients. It was subsequently
+      incorporated in February 2009. Business Aid believes that beyond thorough screening and hiring
+      qualified individuals for job vacancies, there must be proper training, motivation, and evaluation
+      to ensure that clients receive the best value and performance from their personnel.
+    </p>
+
+    <p>
+      In 2015, the company became a licensed and compliant service provider and/or contractor under the
+      DOLE Department Order 18-A. By 2017, the company was also fully compliant under DOLE Department
+      Order No. 174. The company caters to projects requiring Contractor or Sub-Contractor support across
+      industries such as Construction, Manufacturing, and other service-oriented sectors.
+    </p>
+
+    <p>
+      Business Aid operates with a simple yet highly efficient administration system. Client companies
+      are immediately and respectfully attended to by our customer relations department, with a deep
+      understanding of client needs and requirements. Customized service is our basic approach in dealing
+      with our valued clients — providing access to a wide range of multidisciplinary services.
+    </p>
+
+    <p>
+      Today, Business Aid continues to deliver cost-effective and value-added services, ensuring that
+      clients receive the best possible solutions at competitive rates.
+    </p>
+
   </div>
 </section>
 
 <!-- ===== SERVICES SECTION ===== -->
-<section id="services" class="section">
+<section id="services" class="section reveal">
   <div class="services-text">
     <h2>Our Services</h2>
     <ul>
@@ -150,9 +167,19 @@
   </div>
 </section>
 
+<!-- ===== FOOTER ===== -->
 <footer>
   📍 1454 Newton Street, Barangay San Isidro, Makati City &nbsp; | &nbsp; ✉️ ahbadevelopment@ahba.ph
 </footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    document.querySelectorAll('.reveal').forEach(el => {
+      const top = el.getBoundingClientRect().top;
+      if (top < window.innerHeight - 80) el.classList.add('active');
+    });
+  });
+</script>
 
 </body>
 </html>
