@@ -37,36 +37,37 @@
   </div>
 </section>
 
+<!-- ===== EXPERIENCE / CREDENTIALS SECTION ===== -->
+<section id="experience" class="section reveal experience-section">
+  <div class="exp-box">
+    <div class="exp-title">
+      <span class="arrow">→</span>
+      <h2>Providing experienced<br>business solutions</h2>
+    </div>
+    <p>
+      With over 20 years of experience in the industry, <b>A.Halili Business Aid Professional Services Inc.</b>
+      with the registered trademark of <b>AHBA Development</b>, is professionally committed in providing
+      high-quality value-added services in a variety of businesses and institutions all over the Philippines.
+      The Company is a duly-licensed Service Provider / Contractor registered under the
+      <b>Philippine Securities and Exchange Commission</b> with Registration Number
+      <b>CS200902226</b> and under the regulation of the
+      <b>Philippine Department of Labor and Employment</b> with Registration Number
+      <b>NCR-MPFO-72600-5-15-12-016-LR</b> and with <b>TIN No. 007-246-379-000</b>.
+    </p>
+  </div>
+</section>
+
 <!-- ===== ABOUT ===== -->
 <section id="about" class="section reveal">
   <div class="about-container">
     <h2>About Us</h2>
     <p>
       Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. is a company that provides
-      reliable and professional manpower support to meet the needs of its clients. It was subsequently
-      incorporated in February 2009. Business Aid believes that beyond thorough screening and hiring
-      qualified individuals for job vacancies, there must be proper training, motivation, and evaluation
-      to ensure that clients receive the best value and performance from their personnel.
+      reliable and professional manpower support to meet the needs of its clients...
     </p>
-
-    <p>
-      In 2015, the company became a licensed and compliant service provider and/or contractor under the
-      DOLE Department Order 18-A. By 2017, the company was also fully compliant under DOLE Department
-      Order No. 174. The company caters to projects requiring Contractor or Sub-Contractor support across
-      industries such as Construction, Manufacturing, and other service-oriented sectors.
-    </p>
-
-    <p>
-      Business Aid operates with a simple yet highly efficient administration system. Client companies
-      are immediately and respectfully attended to by our customer relations department, with a deep
-      understanding of client needs and requirements. Customized service is our basic approach in dealing
-      with our valued clients — providing access to a wide range of multidisciplinary services.
-    </p>
-
-    <p>
-      Today, Business Aid continues to deliver cost-effective and value-added services, ensuring that
-      clients receive the best possible solutions at competitive rates.
-    </p>
+    <p>In 2015, the company became a licensed and compliant service provider...</p>
+    <p>Business Aid operates with a simple yet highly efficient administration...</p>
+    <p>Today, Business Aid continues to deliver cost-effective and value-added services...</p>
   </div>
 </section>
 
@@ -84,7 +85,6 @@
       <li>Contractor in construction & manufacturing</li>
     </ul>
   </div>
-
   <div class="services-img">
     <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=80">
   </div>
@@ -123,8 +123,7 @@
 <section id="contact" class="section reveal contact-section">
   <div class="contact-box">
     <div class="contact-title">
-      <span class="arrow">→</span>
-      <h2>Get in Touch</h2>
+      <span class="arrow">→</span><h2>Get in Touch</h2>
     </div>
 
     <div class="contact-info">
@@ -135,7 +134,6 @@
           <p>2607 Cityland 10 Tower 1 HV Dela Costa Ave.<br>Bel Air, Makati City</p>
         </div>
       </div>
-
       <div class="contact-item">
         <div class="icon-circle">✉️</div>
         <div>
@@ -143,7 +141,6 @@
           <p><a href="mailto:admin@ahba.ph">admin@ahba.ph</a></p>
         </div>
       </div>
-
       <div class="contact-item">
         <div class="icon-circle">📞</div>
         <div>
