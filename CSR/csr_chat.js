@@ -1,5 +1,5 @@
 // =======================================================
-// CSR CHAT — FULL JAVASCRIPT (FINAL STABLE BUILD)
+// CSR CHAT — FULL JAVASCRIPT (FINAL BUILD w/ MEDIA VIEWER)
 // =======================================================
 
 let selectedClient = 0;
@@ -9,6 +9,8 @@ let currentAssignClient = null;
 let currentUnassignClient = null;
 let lastMessageCount = 0;
 let loadingMessages = false;
+let mediaMessages = [];
+let currentMediaIndex = 0;
 
 // =============================
 // SIDEBAR
@@ -27,13 +29,8 @@ function loadClients(search = "") {
     });
 }
 
-// Search event
-$("#searchInput").on("keyup", function () {
-    loadClients($(this).val());
-});
-
 // =============================
-// SELECT A CLIENT
+// SELECT CLIENT
 // =============================
 function selectClient(id, name, assignedTo) {
     selectedClient = id;
@@ -51,17 +48,17 @@ function selectClient(id, name, assignedTo) {
 
     $("#chatMessages").html("");
     lastMessageCount = 0;
+    mediaMessages = [];
 
     loadMessages(true);
     loadClientInfo();
 }
 
 // =============================
-// LOAD CLIENT INFO PANEL DATA
+// LOAD CLIENT INFO PANEL
 // =============================
 function loadClientInfo() {
     if (!selectedClient) return;
-
     $.getJSON("client_info.php?id=" + selectedClient, (data) => {
         $("#infoName").text(data.name || "");
         $("#infoEmail").text(data.email || "");
@@ -82,6 +79,7 @@ function loadMessages(initial = false) {
         if (initial) {
             $("#chatMessages").html("");
             lastMessageCount = 0;
+            mediaMessages = [];
         }
 
         if (messages.length > lastMessageCount) {
@@ -92,10 +90,15 @@ function loadMessages(initial = false) {
 
                 let attachment = "";
                 if (m.media_url) {
+                    mediaMessages.push({
+                        url: m.media_url,
+                        type: m.media_type
+                    });
+
                     if (m.media_type === "image") {
                         attachment = `<img src="${m.media_url}" class="file-img" onclick="openMedia('${m.media_url}')">`;
                     } else if (m.media_type === "video") {
-                        attachment = `<video class="file-img" controls><source src="${m.media_url}"></video>`;
+                        attachment = `<video class="file-img" controls onclick="openMedia('${m.media_url}')"><source src="${m.media_url}"></video>`;
                     }
                 }
 
@@ -106,8 +109,7 @@ function loadMessages(initial = false) {
                         <div class="bubble">${m.message || ""}${attachment}</div>
                         <div class="meta">${m.created_at}</div>
                     </div>
-                </div>
-                `;
+                </div>`;
 
                 $("#chatMessages").append(html);
             });
@@ -124,7 +126,6 @@ function loadMessages(initial = false) {
 // SEND MESSAGE
 // =============================
 $("#sendBtn").click(sendMessage);
-
 $("#messageInput").keypress(e => {
     if (e.key === "Enter") sendMessage();
 });
@@ -137,6 +138,7 @@ function sendMessage() {
     fd.append("message", msg);
     fd.append("client_id", selectedClient);
     fd.append("csr_fullname", csrFullname);
+
     filesToSend.forEach(f => fd.append("files[]", f));
 
     $.ajax({
@@ -150,6 +152,7 @@ function sendMessage() {
             $("#previewArea").html("");
             $("#fileInput").val("");
             filesToSend = [];
+
             loadMessages(false);
             loadClients();
         }
@@ -179,15 +182,41 @@ $("#fileInput").on("change", function (e) {
 });
 
 // =============================
-// ASSIGN POPUPS
+// MEDIA VIEWER
+// =============================
+function openMedia(src) {
+    currentMediaIndex = mediaMessages.findIndex(m => m.url === src);
+
+    $("#mediaModal").addClass("show");
+    $("#mediaDisplay").attr("src", src);
+}
+
+function closeMedia() {
+    $("#mediaModal").removeClass("show");
+}
+
+function prevMedia() {
+    if (currentMediaIndex > 0) currentMediaIndex--;
+    $("#mediaDisplay").attr("src", mediaMessages[currentMediaIndex].url);
+}
+
+function nextMedia() {
+    if (currentMediaIndex < mediaMessages.length - 1) currentMediaIndex++;
+    $("#mediaDisplay").attr("src", mediaMessages[currentMediaIndex].url);
+}
+
+// =============================
+// ASSIGN CONTROLS
 // =============================
 function showAssignPopup(id) {
     currentAssignClient = id;
     $("#assignPopup").fadeIn(150);
 }
+
 function closeAssignPopup() {
     $("#assignPopup").fadeOut(150);
 }
+
 function confirmAssign() {
     $.post("assign_client.php", { client_id: currentAssignClient }, function () {
         closeAssignPopup();
@@ -196,13 +225,18 @@ function confirmAssign() {
     });
 }
 
+// =============================
+// UNASSIGN CONTROLS
+// =============================
 function showUnassignPopup(id) {
     currentUnassignClient = id;
     $("#unassignPopup").fadeIn(150);
 }
+
 function closeUnassignPopup() {
     $("#unassignPopup").fadeOut(150);
 }
+
 function confirmUnassign() {
     $.post("unassign_client.php", { client_id: currentUnassignClient }, function () {
         closeUnassignPopup();
@@ -213,21 +247,11 @@ function confirmUnassign() {
 }
 
 // =============================
-// CLIENT INFO PANEL SLIDE
+// CLIENT INFO PANEL
 // =============================
 function toggleClientInfo() {
-    document.getElementById("clientInfoPanel").classList.toggle("show");
+    $("#clientInfoPanel").toggleClass("show");
 }
-
-// =============================
-// MEDIA VIEWER
-// =============================
-function openMedia(src) {
-    $("#mediaModal").addClass("show");
-    $("#mediaModalContent").attr("src", src);
-}
-
-$("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
 // =============================
 // AUTO REFRESH
@@ -235,7 +259,4 @@ $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 setInterval(() => loadClients($("#searchInput").val()), 2500);
 setInterval(() => loadMessages(false), 1200);
 
-// =============================
-// INITIAL LOAD
-// =============================
 loadClients();
