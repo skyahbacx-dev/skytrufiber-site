@@ -11,9 +11,9 @@
 
 <header>
   <div class="logo-group">
-    <a href="#home"><img src="../AHBALOGO.png" height="60"></a>
+    <a href="#home"><img src="../AHBALOGO.png" height="72"></a>
     <a href="../SKYTRUFIBER/skytrufiber.php" target="_blank">
-      <img src="../SKYTRUFIBER.png" height="50">
+      <img src="../SKYTRUFIBER.png" height="60">
     </a>
   </div>
 
@@ -27,7 +27,6 @@
   </nav>
 </header>
 
-<!-- ===== HERO ===== -->
 <section id="home" class="section">
   <div class="hero-content">
     <p>Welcome to</p>
@@ -37,7 +36,6 @@
   </div>
 </section>
 
-<!-- ===== EXPERIENCE / CREDENTIALS SECTION ===== -->
 <section id="experience" class="section reveal experience-section">
   <div class="exp-box">
     <div class="exp-title">
@@ -46,18 +44,12 @@
     </div>
     <p>
       With over 20 years of experience in the industry, <b>A.Halili Business Aid Professional Services Inc.</b>
-      with the registered trademark of <b>AHBA Development</b>, is professionally committed in providing
-      high-quality value-added services in a variety of businesses and institutions all over the Philippines.
-      The Company is a duly-licensed Service Provider / Contractor registered under the
-      <b>Philippine Securities and Exchange Commission</b> with Registration Number
-      <b>CS200902226</b> and under the regulation of the
-      <b>Philippine Department of Labor and Employment</b> with Registration Number
-      <b>NCR-MPFO-72600-5-15-12-016-LR</b> and with <b>TIN No. 007-246-379-000</b>.
+      with the registered trademark of <b>AHBA Development</b> ...
+      SEC Reg. <b>CS200902226</b> | DOLE Reg. <b>NCR-MPFO-72600-5-15-12-016-LR</b> | TIN <b>007-246-379-000</b>
     </p>
   </div>
 </section>
 
-<!-- ===== ABOUT ===== -->
 <section id="about" class="section reveal">
   <div class="about-container">
     <h2>About Us</h2>
@@ -71,7 +63,6 @@
   </div>
 </section>
 
-<!-- ===== SERVICES ===== -->
 <section id="services" class="section reveal">
   <div class="services-text">
     <h2>Our Services</h2>
@@ -79,10 +70,10 @@
       <li>Full outsourcing solutions</li>
       <li>Intellectual & psychological examinations</li>
       <li>Payroll processing</li>
-      <li>Recruitment & prescreening of applicants</li>
+      <li>Recruitment & prescreening</li>
       <li>Initial interview screening</li>
-      <li>Training & development programs</li>
-      <li>Contractor in construction & manufacturing</li>
+      <li>Training & development</li>
+      <li>Construction & manufacturing contracting</li>
     </ul>
   </div>
   <div class="services-img">
@@ -90,7 +81,6 @@
   </div>
 </section>
 
-<!-- ===== MANAGEMENT ===== -->
 <section id="management" class="section reveal team-section">
   <h2 class="team-title">Our Leadership Team</h2>
 
@@ -119,7 +109,6 @@
   </div>
 </section>
 
-<!-- ===== CONTACT ===== -->
 <section id="contact" class="section reveal contact-section">
   <div class="contact-box">
     <div class="contact-title">
@@ -134,6 +123,7 @@
           <p>2607 Cityland 10 Tower 1 HV Dela Costa Ave.<br>Bel Air, Makati City</p>
         </div>
       </div>
+
       <div class="contact-item">
         <div class="icon-circle">✉️</div>
         <div>
@@ -141,6 +131,7 @@
           <p><a href="mailto:admin@ahba.ph">admin@ahba.ph</a></p>
         </div>
       </div>
+
       <div class="contact-item">
         <div class="icon-circle">📞</div>
         <div>
@@ -164,7 +155,7 @@
 </section>
 
 <footer>
-  📍 1454 Newton Street, Barangay San Isidro, Makati City | ✉️ ahbadevelopment@ahba.ph
+  📍 1454 Newton Street, Barangay San Isidro, Makati City &nbsp; | &nbsp; ✉️ ahbadevelopment@ahba.ph
 </footer>
 
 <script>
