@@ -12,10 +12,10 @@
 <header>
   <div class="logo-group">
     <a href="/#home" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">
-      <img src="../AHBALOGO.png" height="72">
+      <img src="AHBALOGO.png" height="72">
     </a>
     <a href="/SKYTRUFIBER/skytrufiber.php" target="_blank">
-      <img src="../SKYTRUFIBER.png" height="60">
+      <img src="SKYTRUFIBER.png" height="60">
     </a>
   </div>
 
@@ -40,7 +40,7 @@
 
 <section id="experience" class="section reveal experience-section">
 
-  <div class="exp-box">
+  <div class="exp-box reveal">
     <div class="exp-title"><span class="arrow">→</span>
       <h2>Providing experienced<br>business solutions</h2>
     </div>
@@ -86,11 +86,6 @@
     <p>
       In 2015, the company became a Licensed and compliant service provider and/or contractor under the DOLE Department Order 18-A.
       And in 2017, the company also a compliant under the DOLE Department Order No.174.
-      The company also caters projects that require Contractor or Sub-Contractor in various industries.
-    </p>
-    <p>
-      Having been with this line of business for more than a decade, Business Aid is continuously growing in improving
-      to accommodate widening requirements and needs of the market.
     </p>
     <p>
       Customized service is our basic approach — making operations simpler yet efficient.
@@ -99,7 +94,7 @@
 </section>
 
 <section id="services" class="section reveal">
-  <div class="services-text">
+  <div class="services-text reveal">
     <h2>Our Services</h2>
     <ul>
       <li>Full outsourcing solutions</li>
@@ -108,9 +103,10 @@
       <li>Recruitment & prescreening</li>
       <li>Interview processing</li>
       <li>Training & development programs</li>
-      <li>Contractor in industry & construction</li>
+      <li>Industrial & construction contracting</li>
     </ul>
   </div>
+
   <div class="services-img reveal">
     <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=80">
   </div>
@@ -124,7 +120,7 @@
 </section>
 
 <section id="contact" class="section reveal contact-section">
-  <div class="contact-box">
+  <div class="contact-box reveal">
     <div class="contact-title"><span class="arrow">→</span><h2>Get in Touch</h2></div>
 
     <div class="contact-info">
@@ -133,17 +129,16 @@
       <div class="contact-item"><div class="icon-circle">📞</div><div><h4>Phone</h4><a href="tel:+639989615050">+63 998 961 5050</a></div></div>
     </div>
   </div>
-</section>
 
-<div class="map-container reveal">
-  <iframe width="100%" height="220" style="border:0;" loading="lazy" allowfullscreen
-    src="https://maps.google.com/maps?q=Cityland%2010%20Tower%201%20HV%20Dela%20Costa%20Ave%20Bel%20Air%20Makati%20City&t=m&z=17&output=embed&iwloc=near"></iframe>
-</div>
+  <div class="map-container reveal">
+    <iframe width="100%" height="350" style="border:0;" loading="lazy" allowfullscreen
+      src="https://maps.google.com/maps?q=Cityland%2010%20Tower%201%20HV%20Dela%20Costa%20Ave%20Bel%20Air%20Makati%20City&t=m&z=17&output=embed&iwloc=near"></iframe>
+  </div>
+</section>
 
 <footer>
   📍 1454 Newton Street, Barangay San Isidro, Makati City | ✉️ ahbadevelopment@ahba.ph
 </footer>
-
 
 <script>
 // Smooth scroll for Learn More
@@ -155,11 +150,13 @@ function smoothScroll(target) {
   });
 }
 
-// Fade + Slide Reveal
+// One-time Reveal Animation
 window.addEventListener("scroll", () => {
   document.querySelectorAll(".reveal").forEach(el => {
     const top = el.getBoundingClientRect().top;
-    if (top < window.innerHeight - 90) el.classList.add("active");
+    if (top < window.innerHeight - 10 && !el.classList.contains("active")) {
+      el.classList.add("active");
+    }
   });
 });
 
