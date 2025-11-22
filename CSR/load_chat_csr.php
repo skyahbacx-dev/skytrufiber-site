@@ -1,27 +1,21 @@
-<?php
+<?php 
 session_start();
 include "../db_connect.php";
 header("Content-Type: application/json");
 date_default_timezone_set("Asia/Manila");
 
 $client_id = $_GET["client_id"] ?? 0;
-if (!$client_id) {
-    echo json_encode([]);
-    exit;
-}
+if (!$client_id) { echo json_encode([]); exit; }
 
-$csrUser = $_SESSION["csr_user"] ?? "";
-
-// Mark all client messages as seen by CSR
-$updateSeen = $conn->prepare("
-    UPDATE chat SET seen = 1
-    WHERE client_id = :cid AND sender_type = 'client' AND seen = 0
-");
-$updateSeen->execute([":cid" => $client_id]);
-
-// Fetch full chat list
 $stmt = $conn->prepare("
-    SELECT id, message, sender_type, media_url, media_type, seen, created_at
+    SELECT 
+        id,
+        message,
+        sender_type,
+        media_url,
+        media_type,
+        created_at,
+        seen
     FROM chat
     WHERE client_id = :cid
     ORDER BY created_at ASC
@@ -29,10 +23,10 @@ $stmt = $conn->prepare("
 $stmt->execute([":cid" => $client_id]);
 
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$output = [];
+$out = [];
 
 foreach ($rows as $row) {
-    $output[] = [
+    $out[] = [
         "id"          => $row["id"],
         "message"     => $row["message"],
         "sender_type" => $row["sender_type"],
@@ -43,5 +37,5 @@ foreach ($rows as $row) {
     ];
 }
 
-echo json_encode($output);
+echo json_encode($out);
 ?>
