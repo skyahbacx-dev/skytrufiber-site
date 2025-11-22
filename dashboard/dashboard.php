@@ -100,45 +100,44 @@
 
 <!-- ===== CONTACT SECTION ===== -->
 <section id="contact" class="section reveal contact-section">
-  <div class="contact-container">
-    
-    <div class="contact-left">
+  <div class="contact-box">
+
+    <div class="contact-title">
       <span class="arrow">→</span>
       <h2>Get in Touch</h2>
     </div>
 
-    <div class="contact-right">
-      <div class="contact-row">
-        <h4>HQ</h4>
-        <p>2607 Cityland 10 Tower 1 HV Dela Costa Ave. Bel Air, Makati City</p>
+    <div class="contact-info">
+
+      <div class="contact-item">
+        <div class="icon-circle">📍</div>
+        <div>
+          <h4>Head Office</h4>
+          <p>2607 Cityland 10 Tower 1 HV Dela Costa Ave.<br>Bel Air, Makati City</p>
+        </div>
       </div>
 
-      <div class="contact-row">
-        <h4>Email</h4>
-        <p><a href="mailto:admin@ahba.ph">admin@ahba.ph</a></p>
+      <div class="contact-item">
+        <div class="icon-circle">✉️</div>
+        <div>
+          <h4>Email</h4>
+          <p><a href="mailto:admin@ahba.ph">admin@ahba.ph</a></p>
+        </div>
       </div>
 
-      <div class="contact-row">
-        <h4>Phone</h4>
-        <p><a href="tel:+639989615050">+63 998 961 5050</a></p>
+      <div class="contact-item">
+        <div class="icon-circle">📞</div>
+        <div>
+          <h4>Phone</h4>
+          <p><a href="tel:+639989615050">+63 998 961 5050</a></p>
+        </div>
       </div>
 
-      <div class="contact-row">
-        <h4>WhatsApp</h4>
-        <p><a href="https://wa.me/639989615050" target="_blank" class="whatsapp-btn">Message Us</a></p>
-      </div>
-
-      <form class="contact-form" action="#" method="POST">
-        <input type="text" placeholder="Full Name" required>
-        <input type="email" placeholder="Email" required>
-        <textarea placeholder="Your Message" rows="5" required></textarea>
-        <button type="submit" class="btn">Send Message</button>
-      </form>
     </div>
   </div>
 
   <div class="map-container">
-    <iframe width="100%" height="300" style="border:0;" loading="lazy" allowfullscreen
+    <iframe width="100%" height="320" style="border:0;" loading="lazy" allowfullscreen
       src="https://www.google.com/maps/embed/v1/place?key=AIzaSyC-QJrSbQX&zoom=15&q=Cityland+10+Tower+1+Makati+Philippines">
     </iframe>
   </div>
@@ -159,3 +158,4 @@
 
 </body>
 </html>
+s
