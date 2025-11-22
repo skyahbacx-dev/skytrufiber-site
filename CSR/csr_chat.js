@@ -27,6 +27,11 @@ function loadClients(search = "") {
     });
 }
 
+// Search event
+$("#searchInput").on("keyup", function () {
+    loadClients($(this).val());
+});
+
 // =============================
 // SELECT A CLIENT
 // =============================
@@ -52,7 +57,7 @@ function selectClient(id, name, assignedTo) {
 }
 
 // =============================
-// LOAD CLIENT INFO PANEL
+// LOAD CLIENT INFO PANEL DATA
 // =============================
 function loadClientInfo() {
     if (!selectedClient) return;
@@ -83,10 +88,7 @@ function loadMessages(initial = false) {
             let newMsgs = messages.slice(lastMessageCount);
 
             newMsgs.forEach((m) => {
-                const sideClass = (m.sender_type === "csr") ? "csr" : "client";
-                const avatar = (m.sender_type === "client")
-                    ? `<img src="upload/default-avatar.png" class="msg-avatar">`
-                    : ``;
+                const side = (m.sender_type === "csr") ? "csr" : "client";
 
                 let attachment = "";
                 if (m.media_url) {
@@ -97,9 +99,9 @@ function loadMessages(initial = false) {
                     }
                 }
 
-                const bubble = `
-                <div class="msg-row ${sideClass} animate-msg">
-                    ${avatar}
+                const html = `
+                <div class="msg-row ${side} animate-msg">
+                    <img src="upload/default-avatar.png" class="msg-avatar">
                     <div class="bubble-wrapper">
                         <div class="bubble">${m.message || ""}${attachment}</div>
                         <div class="meta">${m.created_at}</div>
@@ -107,7 +109,7 @@ function loadMessages(initial = false) {
                 </div>
                 `;
 
-                $("#chatMessages").append(bubble);
+                $("#chatMessages").append(html);
             });
 
             $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
@@ -155,7 +157,7 @@ function sendMessage() {
 }
 
 // =============================
-// IMAGE / VIDEO PREVIEW
+// FILE PREVIEW
 // =============================
 $(".upload-icon").on("click", () => $("#fileInput").click());
 
@@ -177,13 +179,15 @@ $("#fileInput").on("change", function (e) {
 });
 
 // =============================
-// ASSIGN & UNASSIGN
+// ASSIGN POPUPS
 // =============================
 function showAssignPopup(id) {
     currentAssignClient = id;
     $("#assignPopup").fadeIn(150);
 }
-function closeAssignPopup() { $("#assignPopup").fadeOut(150); }
+function closeAssignPopup() {
+    $("#assignPopup").fadeOut(150);
+}
 function confirmAssign() {
     $.post("assign_client.php", { client_id: currentAssignClient }, function () {
         closeAssignPopup();
@@ -196,7 +200,9 @@ function showUnassignPopup(id) {
     currentUnassignClient = id;
     $("#unassignPopup").fadeIn(150);
 }
-function closeUnassignPopup() { $("#unassignPopup").fadeOut(150); }
+function closeUnassignPopup() {
+    $("#unassignPopup").fadeOut(150);
+}
 function confirmUnassign() {
     $.post("unassign_client.php", { client_id: currentUnassignClient }, function () {
         closeUnassignPopup();
@@ -220,6 +226,7 @@ function openMedia(src) {
     $("#mediaModal").addClass("show");
     $("#mediaModalContent").attr("src", src);
 }
+
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
 // =============================
@@ -228,5 +235,7 @@ $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 setInterval(() => loadClients($("#searchInput").val()), 2500);
 setInterval(() => loadMessages(false), 1200);
 
-// INITIAL
+// =============================
+// INITIAL LOAD
+// =============================
 loadClients();
