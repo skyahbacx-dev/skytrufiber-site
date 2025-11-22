@@ -1,78 +1,79 @@
 <?php
-require "../dbconnect.php";
+session_start();
+include "../db_connect.php";
+header("Content-Type: text/html; charset=utf-8");
+
+$csrUser = $_SESSION["csr_user"] ?? null;
+if (!$csrUser) {
+    http_response_code(401);
+    exit("Unauthorized");
+}
 
 $search = $_GET["search"] ?? "";
-$csrUser = $_SESSION["csr_user"];
 
-// BASE QUERY
+/*
+   FIXED unread message counter for PostgreSQL:
+   Use boolean "false" and MAX(last_read)
+*/
 $sql = "
-SELECT 
-    c.id,
-    c.fullname,
-    c.assigned_to,
-    c.avatar,
-    (
-        SELECT COUNT(*) 
-        FROM chat m 
-        WHERE m.client_id = c.id 
-        AND m.sender_type = 'client'
-        AND m.seen = false
-    ) AS unread
-FROM clients c
-WHERE c.is_deleted = false
+    SELECT
+        c.id,
+        c.name,
+        c.assigned_csr,
+
+        (
+            SELECT COUNT(*) FROM chat m
+            WHERE m.client_id = c.id
+            AND m.sender_type = 'client'
+            AND m.seen = false
+            AND m.created_at > COALESCE(
+                (SELECT MAX(last_read)
+                 FROM chat_read r
+                 WHERE r.client_id = c.id
+                 AND r.csr = :csr),
+                '2000-01-01'
+            )
+        ) AS unread
+
+    FROM clients c
 ";
 
-// SEARCH FILTER
 if ($search !== "") {
-    $sql .= " AND (c.fullname ILIKE :search)";
+    $sql .= " WHERE LOWER(c.name) LIKE LOWER(:search)";
 }
 
-$sql .= " ORDER BY unread DESC, c.fullname ASC";
+$sql .= " ORDER BY unread DESC, c.name ASC";
 
-$stmt = $pdo->prepare($sql);
+$stmt = $conn->prepare($sql);
 
-if ($search !== "") {
-    $stmt->bindValue(":search", "%$search%");
+$params = [":csr" => $csrUser];
+if ($search !== "") $params[":search"] = "%$search%";
+
+$stmt->execute($params);
+
+$avatar = "upload/default-avatar.png";
+
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $id   = $row["id"];
+    $name = htmlspecialchars($row["name"]);
+    $assigned = $row["assigned_csr"];
+    $unread = intval($row["unread"]);
+
+    echo "
+    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
+        <img src='$avatar' class='client-avatar'>
+
+        <div class='client-content'>
+            <div class='client-name'>
+                $name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
+            </div>
+
+            <div class='client-sub'>
+                " . ($assigned === null ? "Unassigned"
+                    : ($assigned === $csrUser ? "Assigned to YOU"
+                    : "Assigned to $assigned")) . "
+            </div>
+        </div>
+    </div>";
 }
-
-$stmt->execute();
-$clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
-<?php foreach ($clients as $c): 
-    $unread = (int)$c["unread"];
-    $assigned = $c["assigned_to"];
-    $activeClass = "";
-?>
-
-<div class="client-item" id="client-<?= $c['id'] ?>" 
-     onclick="selectClient(<?= $c['id'] ?>, '<?= htmlspecialchars($c['fullname']) ?>', '<?= $assigned ?>')">
-
-    <img src="<?= $c['avatar'] ?: 'upload/default-avatar.png' ?>" class="client-avatar">
-
-    <div class="client-info">
-        <div class="client-name"><?= htmlspecialchars($c['fullname']) ?></div>
-        <small class="assigned-text">
-            <?= $assigned ? "Assigned to " . htmlspecialchars($assigned) : "Unassigned" ?>
-        </small>
-    </div>
-
-    <!-- unread bubble -->
-    <?php if ($unread > 0): ?>
-        <span class="badge-unread"><?= $unread ?></span>
-    <?php endif; ?>
-
-    <!-- assign icons -->
-    <div class="assign-btn">
-        <?php if (!$assigned): ?>
-            <button onclick="event.stopPropagation(); showAssignPopup(<?= $c['id'] ?>)">➕</button>
-        <?php elseif ($assigned === $csrUser): ?>
-            <button onclick="event.stopPropagation(); showUnassignPopup(<?= $c['id'] ?>)">➖</button>
-        <?php else: ?>
-            <button class="lock" disabled>🔒</button>
-        <?php endif; ?>
-    </div>
-
-</div>
-
-<?php endforeach; ?>
