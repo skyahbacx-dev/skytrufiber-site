@@ -9,13 +9,13 @@ $csrUser = $_SESSION["csr_user"];
 $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 ?>
 
-<!-- LEFT SECTION — CLIENT LIST -->
+<!-- LEFT: CLIENT LIST -->
 <div class="client-panel">
     <input class="search" placeholder="Search clients..." id="searchInput">
     <div id="clientList" class="client-list"></div>
 </div>
 
-<!-- MIDDLE SECTION — CHAT PANEL -->
+<!-- CENTER: CHAT PANEL -->
 <div class="chat-panel" id="chatPanel">
 
     <!-- CHAT HEADER -->
@@ -30,37 +30,33 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
             </div>
         </div>
 
-        <button class="info-btn">ⓘ</button>
+        <button class="info-btn" onclick="toggleClientInfo()">ⓘ</button>
     </div>
 
-    <!-- PLACEHOLDER BEFORE SELECTING A CLIENT -->
-    <div id="chatMessages" class="chat-box">
+    <!-- CHAT MESSAGES -->
+    <div class="chat-box" id="chatMessages">
         <p class="placeholder">👈 Select a client to start chatting</p>
     </div>
 
-    <!-- FILE PREVIEW STRIP -->
+    <!-- FILE PREVIEW -->
     <div id="previewArea" class="preview-area"></div>
 
-    <!-- INPUT BAR -->
+    <!-- INPUT BOX -->
     <div class="chat-input">
         <label for="fileInput" class="upload-icon">
             <i class="fa-regular fa-image"></i>
         </label>
         <input type="file" id="fileInput" multiple style="display:none;">
-
-        <input type="text" id="messageInput" placeholder="Type anything.....">
-
+        <input type="text" id="messageInput" placeholder="Type a message...">
         <button id="sendBtn" class="send-btn">
             <i class="fa-solid fa-paper-plane"></i>
         </button>
     </div>
-
 </div>
 
-<!-- RIGHT SECTION — SLIDE CLIENT INFO -->
+<!-- RIGHT: CLIENT INFO PANEL -->
 <aside id="clientInfoPanel" class="client-info-panel">
     <button class="close-info" onclick="toggleClientInfo()">✖</button>
-
     <h3>Client Information</h3>
     <p><strong id="infoName"></strong></p>
     <p id="infoEmail"></p>
