@@ -80,3 +80,38 @@ nav a:hover { color:#003300; }
 .reveal { opacity:0; transform:translateY(40px); transition:1s; }
 .reveal.active { opacity:1; transform:translateY(0); }
 @keyframes fadeIn { from {opacity:0; transform:translateY(25px);} to {opacity:1; transform:translateY(0);} }
+/* EXPERIENCE SECTION */
+.experience-section {
+  background:#fff;
+  color:#062a2a;
+  padding:50px 30px;
+}
+
+.exp-box {
+  max-width:950px;
+  width:100%;
+  background:#f4fffa;
+  padding:28px 32px;
+  border-radius:18px;
+  box-shadow:0 6px 25px rgba(0,0,0,.15);
+  border:2px solid #00cc00;
+}
+
+.exp-title {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:18px;
+}
+
+.exp-title h2 {
+  font-size:30px;
+  font-weight:800;
+  line-height:1.3;
+}
+
+.exp-box p {
+  font-size:16px;
+  line-height:1.55;
+}
+
