@@ -4,84 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AHBA Development</title>
-
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; scroll-behavior:smooth; }
-    body { font-family:"Segoe UI", Arial, sans-serif; color:#222; }
-
-    /* ===== HEADER & FOOTER SHELL ===== */
-    header, footer {
-      position:fixed; left:0; width:100%;
-      background:#00cc00; color:#fff;
-      display:flex; justify-content:space-between; align-items:center;
-      padding:10px 55px; z-index:999;
-    }
-    header { top:0; }
-    footer { bottom:0; text-align:center; padding:8px; font-size:14px; }
-
-    nav a {
-      margin-left:16px; color:#fff; text-decoration:none;
-      font-weight:600; letter-spacing:.3px; transition:.3s;
-    }
-    nav a:hover { color:#003300; }
-
-    /* ===== PAGE SECTIONS ===== */
-    .section {
-      min-height:90vh;
-      padding-top:110px;
-      padding-bottom:70px;
-      display:flex; justify-content:center; align-items:center;
-    }
-
-    /* ===== HERO ===== */
-    #home {
-      background:url('https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&w=1600&q=80')
-                center/cover no-repeat;
-      position:relative;
-    }
-    #home::after { content:""; position:absolute; inset:0; background:rgba(0,0,0,.35); }
-
-    .hero-content {
-      position:relative; text-align:left; max-width:650px;
-      background:#fff; padding:32px 36px; border-radius:14px;
-      animation:fadeIn 1.5s ease-in-out;
-      box-shadow:0 4px 14px rgba(0,0,0,.2);
-    }
-    .hero-content h1 { font-size:30px; font-weight:800; margin-bottom:6px; }
-    .hero-content p { font-size:17px; margin-bottom:12px; }
-
-    .btn {
-      padding:10px 20px; display:inline-block;
-      background:#00cc00; color:#fff; border-radius:8px;
-      font-weight:700; text-decoration:none; transition:.25s;
-    }
-    .btn:hover { background:#009900; transform:translateY(-3px); }
-
-    /* ===== ANIMATIONS ===== */
-    @keyframes fadeIn { from{opacity:0; transform:translateY(25px);} to{opacity:1; transform:translateY(0);} }
-    @keyframes fadeUp { from{opacity:0; transform:translateY(45px);} to{opacity:1; transform:translateY(0);} }
-
-    .reveal { opacity:0; transform:translateY(40px); transition:1s ease; }
-    .reveal.active { opacity:1; transform:translateY(0); }
-
-    /* ===== ABOUT ===== */
-    #about { background:#f7fff7; padding:60px 40px; }
-    .about-container { max-width:850px; }
-    .about-container h2 {
-      font-size:34px; margin-bottom:18px; font-weight:800; color:#006600;
-    }
-    .about-container p { margin-bottom:14px; line-height:1.75; font-size:17px; }
-
-    /* ===== SERVICES ===== */
-    #services {
-      background:#0b2f2f; color:white;
-      padding:70px 40px;
-      display:flex; gap:45px; align-items:center;
-    }
-    .services-text h2 { font-size:34px; margin-bottom:18px; font-weight:800; }
-    .services-text ul { margin-left:15px; line-height:1.9; font-size:17px; }
-    .services-img img { width:310px; border-radius:12px; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -98,12 +21,13 @@
     <a href="#home">HOME</a>
     <a href="#about">ABOUT</a>
     <a href="#services">SERVICES</a>
+    <a href="#management">MANAGEMENT</a>
     <a href="#gallery">GALLERY</a>
     <a href="#contact">CONTACT</a>
   </nav>
 </header>
 
-<!-- ===== HERO SECTION ===== -->
+<!-- ===== HERO ===== -->
 <section id="home" class="section">
   <div class="hero-content">
     <p>Welcome to</p>
@@ -113,7 +37,7 @@
   </div>
 </section>
 
-<!-- ===== ABOUT SECTION ===== -->
+<!-- ===== ABOUT ===== -->
 <section id="about" class="section reveal">
   <div class="about-container">
     <h2>About Us</h2>
@@ -144,11 +68,10 @@
       Today, Business Aid continues to deliver cost-effective and value-added services, ensuring that
       clients receive the best possible solutions at competitive rates.
     </p>
-
   </div>
 </section>
 
-<!-- ===== SERVICES SECTION ===== -->
+<!-- ===== SERVICES ===== -->
 <section id="services" class="section reveal">
   <div class="services-text">
     <h2>Our Services</h2>
@@ -162,14 +85,43 @@
       <li>Contractor in construction & manufacturing</li>
     </ul>
   </div>
+
   <div class="services-img">
-    <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=80" alt="Service person">
+    <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=80">
   </div>
 </section>
 
-<!-- ===== FOOTER ===== -->
+<!-- ===== MANAGEMENT ===== -->
+<section id="management" class="section reveal team-section">
+  <h2 class="team-title">Our Leadership Team</h2>
+
+  <div class="team-card">
+    <img src="alex.jpg" class="team-photo">
+    <div>
+      <h3>Alex G. Halili, CEO</h3>
+      <p>Our president has over 3 decades of experience ...</p>
+    </div>
+  </div>
+
+  <div class="team-card">
+    <img src="amy.jpg" class="team-photo">
+    <div>
+      <h3>Amy A. Halili, CFO</h3>
+      <p>A B.S. Accountancy graduate with more than 25 years ...</p>
+    </div>
+  </div>
+
+  <div class="team-card">
+    <img src="allec.jpg" class="team-photo">
+    <div>
+      <h3>Allec Zandre A. Halili, COO</h3>
+      <p>A B.S. Entrepreneurship graduate ...</p>
+    </div>
+  </div>
+</section>
+
 <footer>
-  📍 1454 Newton Street, Barangay San Isidro, Makati City &nbsp; | &nbsp; ✉️ ahbadevelopment@ahba.ph
+  📍 1454 Newton Street, Barangay San Isidro, Makati City | ✉️ ahbadevelopment@ahba.ph
 </footer>
 
 <script>
