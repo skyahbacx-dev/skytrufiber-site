@@ -11,9 +11,9 @@
 
 <header>
   <div class="logo-group">
-    <a href="#home"><img src="../AHBALOGO.png" height="70"></a>
+    <a href="#home"><img src="../AHBALOGO.png" height="60"></a>
     <a href="../SKYTRUFIBER/skytrufiber.php" target="_blank">
-      <img src="../SKYTRUFIBER.png" height="60">
+      <img src="../SKYTRUFIBER.png" height="50">
     </a>
   </div>
 
@@ -41,11 +41,32 @@
 <section id="about" class="section reveal">
   <div class="about-container">
     <h2>About Us</h2>
-    <p>Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. is a company that provides
-      reliable and professional manpower support ...</p>
-    <p>In 2015, the company became a licensed and compliant service provider ...</p>
-    <p>Business Aid operates with a simple yet highly efficient administration ...</p>
-    <p>Today, Business Aid continues to deliver cost-effective and value-added services ...</p>
+    <p>
+      Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. is a company that provides
+      reliable and professional manpower support to meet the needs of its clients. It was subsequently
+      incorporated in February 2009. Business Aid believes that beyond thorough screening and hiring
+      qualified individuals for job vacancies, there must be proper training, motivation, and evaluation
+      to ensure that clients receive the best value and performance from their personnel.
+    </p>
+
+    <p>
+      In 2015, the company became a licensed and compliant service provider and/or contractor under the
+      DOLE Department Order 18-A. By 2017, the company was also fully compliant under DOLE Department
+      Order No. 174. The company caters to projects requiring Contractor or Sub-Contractor support across
+      industries such as Construction, Manufacturing, and other service-oriented sectors.
+    </p>
+
+    <p>
+      Business Aid operates with a simple yet highly efficient administration system. Client companies
+      are immediately and respectfully attended to by our customer relations department, with a deep
+      understanding of client needs and requirements. Customized service is our basic approach in dealing
+      with our valued clients — providing access to a wide range of multidisciplinary services.
+    </p>
+
+    <p>
+      Today, Business Aid continues to deliver cost-effective and value-added services, ensuring that
+      clients receive the best possible solutions at competitive rates.
+    </p>
   </div>
 </section>
 
@@ -98,17 +119,15 @@
   </div>
 </section>
 
-<!-- ===== CONTACT SECTION ===== -->
+<!-- ===== CONTACT ===== -->
 <section id="contact" class="section reveal contact-section">
   <div class="contact-box">
-
     <div class="contact-title">
       <span class="arrow">→</span>
       <h2>Get in Touch</h2>
     </div>
 
     <div class="contact-info">
-
       <div class="contact-item">
         <div class="icon-circle">📍</div>
         <div>
@@ -132,20 +151,18 @@
           <p><a href="tel:+639989615050">+63 998 961 5050</a></p>
         </div>
       </div>
-
     </div>
   </div>
 
   <div class="map-container">
-<iframe
-  width="100%"
-  height="350"
-  style="border:0;"
-  loading="lazy"
-  allowfullscreen
-  src="https://maps.google.com/maps?q=Cityland%2010%20Tower%201%20HV%20Dela%20Costa%20Ave%20Bel%20Air%20Makati%20City&t=m&z=17&output=embed&iwloc=near">
-</iframe>
-
+    <iframe
+      width="100%"
+      height="220"
+      style="border:0;"
+      loading="lazy"
+      allowfullscreen
+      src="https://maps.google.com/maps?q=Cityland%2010%20Tower%201%20HV%20Dela%20Costa%20Ave%20Bel%20Air%20Makati%20City&t=m&z=17&output=embed&iwloc=near">
+    </iframe>
   </div>
 </section>
 
@@ -154,14 +171,13 @@
 </footer>
 
 <script>
-  window.addEventListener('scroll', () => {
-    document.querySelectorAll('.reveal').forEach(el => {
-      const top = el.getBoundingClientRect().top;
-      if (top < window.innerHeight - 80) el.classList.add('active');
-    });
+window.addEventListener("scroll", () => {
+  document.querySelectorAll(".reveal").forEach(el => {
+    const top = el.getBoundingClientRect().top;
+    if (top < window.innerHeight - 80) el.classList.add("active");
   });
+});
 </script>
 
 </body>
 </html>
-
