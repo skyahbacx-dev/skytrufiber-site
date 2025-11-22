@@ -11,7 +11,7 @@
 
 <header>
   <div class="logo-group">
-    <a href="/#home" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">
+    <a href="javascript:void(0)" onclick="smoothScroll('#home')">
       <img src="../AHBALOGO.png" height="72">
     </a>
     <a href="/SKYTRUFIBER/skytrufiber.php" target="_blank">
@@ -20,12 +20,12 @@
   </div>
 
   <nav>
-    <a href="/#home">HOME</a>
-    <a href="/#about">ABOUT</a>
-    <a href="/#services">SERVICES</a>
-    <a href="/#management">MANAGEMENT</a>
-    <a href="/#gallery">GALLERY</a>
-    <a href="/#contact">CONTACT</a>
+    <a href="javascript:void(0)" onclick="smoothScroll('#home')">HOME</a>
+    <a href="javascript:void(0)" onclick="smoothScroll('#about')">ABOUT</a>
+    <a href="javascript:void(0)" onclick="smoothScroll('#services')">SERVICES</a>
+    <a href="javascript:void(0)" onclick="smoothScroll('#management')">MANAGEMENT</a>
+    <a href="javascript:void(0)" onclick="smoothScroll('#gallery')">GALLERY</a>
+    <a href="javascript:void(0)" onclick="smoothScroll('#contact')">CONTACT</a>
   </nav>
 </header>
 
@@ -48,7 +48,7 @@
       With over 20 years of experience in the industry,
       <b>A.Halili Business Aid Professional Services Inc.</b> with the registered trademark of
       <b>AHBA Development</b>, is committed to delivering high-quality value-added services nationwide.
-      SEC Reg. <b>CS200902226</b> | DOLE Reg.<b> NCR-MPFO-72600-5-15-12-016-LR</b> | TIN <b>007-246-379-000</b>
+      SEC Reg. <b>CS200902226</b> | DOLE Reg.<b>NCR-MPFO-72600-5-15-12-016-LR</b> | TIN <b>007-246-379-000</b>
     </p>
   </div>
 
@@ -79,13 +79,13 @@
     <h2>About Us</h2>
     <p>
       Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. is a vast company that provides
-      manpower support in need of their client. It was subsequently incorporated on February 2009. Business Aid
-      believes that besides thorough screening and hiring qualified individual for job vacancies, there must be proper
-      training, motivation and evaluation just to assure that the client would get the best value and performance out of their personnel.
+      manpower support in need of their client. It was subsequently incorporated in February 2009. Business Aid
+      believes that besides thorough screening and hiring qualified individuals for job vacancies, there must be
+      proper training, motivation and evaluation.
     </p>
     <p>
-      In 2015, the company became a Licensed and compliant service provider and/or contractor under the DOLE Department Order 18-A.
-      And in 2017, the company also a compliant under the DOLE Department Order No.174.
+      In 2015, the company became a licensed and compliant service provider and contractor under the DOLE
+      Department Order 18-A. And in 2017, compliant under DOLE Department Order No.174.
     </p>
     <p>
       Customized service is our basic approach — making operations simpler yet efficient.
@@ -106,7 +106,6 @@
       <li>Industrial & construction contracting</li>
     </ul>
   </div>
-
   <div class="services-img reveal">
     <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=80">
   </div>
@@ -114,9 +113,9 @@
 
 <section id="management" class="section reveal team-section">
   <h2 class="team-title">Our Leadership Team</h2>
-  <div class="team-card reveal"><img src="alex.jpg" class="team-photo"><div><h3>Alex G. Halili, CEO</h3><p>...</p></div></div>
-  <div class="team-card reveal"><img src="amy.jpg" class="team-photo"><div><h3>Amy A. Halili, CFO</h3><p>...</p></div></div>
-  <div class="team-card reveal"><img src="allec.jpg" class="team-photo"><div><h3>Allec Zandre A. Halili, COO</h3><p>...</p></div></div>
+  <div class="team-card reveal"><img src="alex.jpg" class="team-photo"><div><h3>Alex G. Halili, CEO</h3></div></div>
+  <div class="team-card reveal"><img src="amy.jpg" class="team-photo"><div><h3>Amy A. Halili, CFO</h3></div></div>
+  <div class="team-card reveal"><img src="allec.jpg" class="team-photo"><div><h3>Allec Zandre A. Halili, COO</h3></div></div>
 </section>
 
 <section id="contact" class="section reveal contact-section">
@@ -141,20 +140,17 @@
 </footer>
 
 <script>
-// Smooth scroll for Learn More
+// Smooth scroll
 function smoothScroll(target) {
   const el = document.querySelector(target);
-  window.scrollTo({
-    top: el.offsetTop - 150,
-    behavior: 'smooth'
-  });
+  const y = el.getBoundingClientRect().top + window.pageYOffset - 150;
+  window.scrollTo({ top: y, behavior: 'smooth' });
 }
 
-// One-time Reveal Animation
+// Reveal animation (one time only)
 window.addEventListener("scroll", () => {
   document.querySelectorAll(".reveal").forEach(el => {
-    const top = el.getBoundingClientRect().top;
-    if (top < window.innerHeight - 10 && !el.classList.contains("active")) {
+    if (el.getBoundingClientRect().top < window.innerHeight - 10 && !el.classList.contains("active")) {
       el.classList.add("active");
     }
   });
@@ -163,7 +159,6 @@ window.addEventListener("scroll", () => {
 // Counter Animation
 const counters = document.querySelectorAll('.counter');
 const speed = 250;
-
 const runCounter = () => {
   counters.forEach(counter => {
     const update = () => {
@@ -184,9 +179,7 @@ const runCounter = () => {
 
 window.addEventListener('scroll', () => {
   const statsPosition = document.querySelector('.stats-row').getBoundingClientRect().top;
-  if (statsPosition < window.innerHeight - 80) {
-    runCounter();
-  }
+  if (statsPosition < window.innerHeight - 80) runCounter();
 });
 </script>
 
