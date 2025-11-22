@@ -3,6 +3,7 @@ session_start();
 include "../db_connect.php";
 
 $csrUser = $_SESSION["csr_user"] ?? null;
+
 if (!$csrUser) {
     http_response_code(401);
     exit("Unauthorized");
@@ -10,18 +11,17 @@ if (!$csrUser) {
 
 $search = $_GET["search"] ?? "";
 
+/*
+   Retrieve clients + unread message count
+   Unread = client messages sent AFTER CSR last read time
+*/
 $sql = "
     SELECT c.id, c.name, c.assigned_csr,
     (
-        SELECT COUNT(*) 
-        FROM chat m
+        SELECT COUNT(*) FROM chat m
         WHERE m.client_id = c.id
         AND m.sender_type = 'client'
-        AND m.created_at > (
-            SELECT COALESCE(MAX(created_at), '2000-01-01')
-            FROM chat
-            WHERE client_id = c.id AND sender_type = 'csr'
-        )
+        AND m.seen = 0
     ) AS unread
     FROM clients c
 ";
@@ -34,50 +34,69 @@ $sql .= " ORDER BY c.name ASC";
 
 $stmt = $conn->prepare($sql);
 $params = [];
+
 if ($search !== "") $params[":search"] = "%$search%";
+
 $stmt->execute($params);
 
+/*
+   Render UI
+*/
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-    $id = $row["id"];
-    $name = htmlspecialchars($row["name"]);
+    $id       = $row["id"];
+    $name     = htmlspecialchars($row["name"]);
     $assigned = $row["assigned_csr"];
-    $unread = intval($row["unread"]);
+    $unread   = intval($row["unread"]);
+
     $avatar = "upload/default-avatar.png";
+?>
+    <div class="client-item" id="client-<?php echo $id; ?>" onclick="selectClient(<?php echo $id; ?>, '<?php echo $name; ?>', '<?php echo $assigned; ?>')">
 
-    $isMine = ($assigned === $csrUser);
-    $isUnassigned = ($assigned === null || $assigned === "");
+        <img src="<?php echo $avatar; ?>" class="client-avatar">
 
-    // Button UI rules
-    if ($isUnassigned) {
-        $actionButton = "<button class='assign-btn add' onclick='event.stopPropagation(); showAssignPopup($id)'>➕</button>";
-    }
-    elseif ($isMine) {
-        $actionButton = "<button class='assign-btn remove' onclick='event.stopPropagation(); showUnassignPopup($id)'>➖</button>";
-    }
-    else {
-        $actionButton = "<button class='assign-btn lock' disabled title='Assigned to $assigned'>🔒</button>";
-    }
+        <div class="client-content">
+            <div class="client-name">
+                <?php echo $name; ?>
+                <?php if ($unread > 0) { ?>
+                    <span class="badge"><?php echo $unread; ?></span>
+                <?php } ?>
+            </div>
 
-    $badge = ($unread > 0) ? "<span class='badge'>$unread</span>" : "";
-
-    echo "
-    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
-        <img src='$avatar' class='client-avatar'>
-
-        <div class='client-content'>
-            <div class='client-name'>$name $badge</div>
-            <div class='client-sub'>" .
-                ($isUnassigned
-                    ? "Unassigned"
-                    : ($isMine ? "Assigned to YOU" : "Assigned to $assigned"))
-            . "</div>
+            <div class="client-sub">
+                <?php
+                    if ($assigned === null || $assigned === "") {
+                        echo "Unassigned";
+                    } elseif ($assigned === $csrUser) {
+                        echo "Assigned to YOU";
+                    } else {
+                        echo "Assigned to $assigned";
+                    }
+                ?>
+            </div>
         </div>
 
-        <div class='client-action'>
-            $actionButton
+        <div class="client-actions">
+            <?php if ($assigned === null || $assigned === "") { ?>
+
+                <button class="pill green" onclick="event.stopPropagation(); showAssignPopup(<?php echo $id; ?>)">
+                    ➕
+                </button>
+
+            <?php } elseif ($assigned === $csrUser) { ?>
+
+                <button class="pill red" onclick="event.stopPropagation(); showUnassignPopup(<?php echo $id; ?>)">
+                    ➖
+                </button>
+
+            <?php } else { ?>
+
+                <button class="pill gray" disabled title="Handled by <?php echo $assigned; ?>">
+                    🔒
+                </button>
+
+            <?php } ?>
         </div>
     </div>
-    ";
+<?php
 }
 ?>
