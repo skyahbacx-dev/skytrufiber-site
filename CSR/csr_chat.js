@@ -84,7 +84,7 @@ function loadMessages(initial = false) {
 
                 let attachment = "";
                 if (m.media_url) {
-                    attachment = `<img src="${m.media_url}" class="file-img">`;
+                    attachment = `<img src="${m.media_url}" class="file-img" onclick="openMedia('${m.media_url}')">`;
                 }
 
                 const html = `
@@ -131,9 +131,14 @@ function sendMessage() {
         data: fd,
         success: function () {
             $("#messageInput").val("");
-            $("#previewArea").html("");
+
+            $("#previewArea").fadeOut(150, function () {
+                $("#previewArea").html("").show();
+            });
+
             $("#fileInput").val("");
             filesToSend = [];
+
             loadMessages(false);
             loadClients();
         }
@@ -160,6 +165,8 @@ $("#fileInput").on("change", function (e) {
         };
         reader.readAsDataURL(file);
     });
+
+    $("#previewArea").show();
 });
 
 // =========================
@@ -194,6 +201,15 @@ function confirmUnassign() {
         selectedClient = 0;
     });
 }
+
+// =========================
+// MEDIA VIEWER
+// =========================
+function openMedia(src) {
+    $("#mediaModal").addClass("show");
+    $("#mediaModalContent").attr("src", src);
+}
+$("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
 // =========================
 // INFO PANEL TOGGLE
