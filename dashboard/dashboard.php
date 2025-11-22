@@ -41,33 +41,11 @@
 <section id="about" class="section reveal">
   <div class="about-container">
     <h2>About Us</h2>
-
-    <p>
-      Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. is a company that provides
-      reliable and professional manpower support to meet the needs of its clients. It was subsequently
-      incorporated in February 2009. Business Aid believes that beyond thorough screening and hiring
-      qualified individuals for job vacancies, there must be proper training, motivation, and evaluation
-      to ensure that clients receive the best value and performance from their personnel.
-    </p>
-
-    <p>
-      In 2015, the company became a licensed and compliant service provider and/or contractor under the
-      DOLE Department Order 18-A. By 2017, the company was also fully compliant under DOLE Department
-      Order No. 174. The company caters to projects requiring Contractor or Sub-Contractor support across
-      industries such as Construction, Manufacturing, and other service-oriented sectors.
-    </p>
-
-    <p>
-      Business Aid operates with a simple yet highly efficient administration system. Client companies
-      are immediately and respectfully attended to by our customer relations department, with a deep
-      understanding of client needs and requirements. Customized service is our basic approach in dealing
-      with our valued clients — providing access to a wide range of multidisciplinary services.
-    </p>
-
-    <p>
-      Today, Business Aid continues to deliver cost-effective and value-added services, ensuring that
-      clients receive the best possible solutions at competitive rates.
-    </p>
+    <p>Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. is a company that provides
+      reliable and professional manpower support ...</p>
+    <p>In 2015, the company became a licensed and compliant service provider ...</p>
+    <p>Business Aid operates with a simple yet highly efficient administration ...</p>
+    <p>Today, Business Aid continues to deliver cost-effective and value-added services ...</p>
   </div>
 </section>
 
@@ -117,6 +95,52 @@
       <h3>Allec Zandre A. Halili, COO</h3>
       <p>A B.S. Entrepreneurship graduate ...</p>
     </div>
+  </div>
+</section>
+
+<!-- ===== CONTACT SECTION ===== -->
+<section id="contact" class="section reveal contact-section">
+  <div class="contact-container">
+    
+    <div class="contact-left">
+      <span class="arrow">→</span>
+      <h2>Get in Touch</h2>
+    </div>
+
+    <div class="contact-right">
+      <div class="contact-row">
+        <h4>HQ</h4>
+        <p>2607 Cityland 10 Tower 1 HV Dela Costa Ave. Bel Air, Makati City</p>
+      </div>
+
+      <div class="contact-row">
+        <h4>Email</h4>
+        <p><a href="mailto:admin@ahba.ph">admin@ahba.ph</a></p>
+      </div>
+
+      <div class="contact-row">
+        <h4>Phone</h4>
+        <p><a href="tel:+639989615050">+63 998 961 5050</a></p>
+      </div>
+
+      <div class="contact-row">
+        <h4>WhatsApp</h4>
+        <p><a href="https://wa.me/639989615050" target="_blank" class="whatsapp-btn">Message Us</a></p>
+      </div>
+
+      <form class="contact-form" action="#" method="POST">
+        <input type="text" placeholder="Full Name" required>
+        <input type="email" placeholder="Email" required>
+        <textarea placeholder="Your Message" rows="5" required></textarea>
+        <button type="submit" class="btn">Send Message</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="map-container">
+    <iframe width="100%" height="300" style="border:0;" loading="lazy" allowfullscreen
+      src="https://www.google.com/maps/embed/v1/place?key=AIzaSyC-QJrSbQX&zoom=15&q=Cityland+10+Tower+1+Makati+Philippines">
+    </iframe>
   </div>
 </section>
 
