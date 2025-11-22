@@ -38,6 +38,22 @@
   </div>
 </section>
 
+<!-- ===== STATS CARDS ===== -->
+<section id="stats" class="stats-row reveal">
+  <div class="stat-card">
+    <h3>20+ Years</h3>
+    <p>Industry Experience</p>
+  </div>
+  <div class="stat-card">
+    <h3>10,000+</h3>
+    <p>Workers Deployed</p>
+  </div>
+  <div class="stat-card">
+    <h3>300+</h3>
+    <p>Business Partners</p>
+  </div>
+</section>
+
 <section id="experience" class="section reveal experience-section">
   <div class="exp-box">
     <div class="exp-title">
@@ -48,9 +64,7 @@
       With over 20 years of experience in the industry,
       <b>A.Halili Business Aid Professional Services Inc.</b> with the registered trademark of
       <b>AHBA Development</b>, is committed to delivering high-quality value-added services nationwide.
-      SEC Reg. <b>CS200902226</b> |
-      DOLE Reg. <b>NCR-MPFO-72600-5-15-12-016-LR</b> |
-      TIN <b>007-246-379-000</b>
+      SEC Reg. <b>CS200902226</b> | DOLE Reg. <b>NCR-MPFO-72600-5-15-12-016-LR</b> | TIN <b>007-246-379-000</b>
     </p>
   </div>
 </section>
@@ -58,13 +72,39 @@
 <section id="about" class="section reveal">
   <div class="about-container">
     <h2>About Us</h2>
+
     <p>
-      Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. is a company that provides
-      reliable and professional manpower support...
+      Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. is a vast company that provides
+      manpower support in need of their client. It was subsequently incorporated on February 2009. Business Aid
+      believes that besides thorough screening and hiring qualified individual for job vacancies, there must be
+      proper training, motivation and evaluation just to assure that the client would get the best value and
+      performance out of their personnel.
     </p>
-    <p>In 2015, the company became a licensed and compliant service provider...</p>
-    <p>Business Aid operates with a simple yet highly efficient administration...</p>
-    <p>Today, Business Aid continues to deliver cost-effective and value-added services...</p>
+
+    <p>
+      In 2015, the company became a Licensed and compliant service provider and/or contractor under the DOLE
+      Department Order 18-A. And in 2017, the company also a compliant under the DOLE Department Order No.174.
+      The company also caters projects that require Contractor or Sub-Contractor in various industries, such as
+      Construction, Manufacturing, and other Service Oriented businesses.
+    </p>
+
+    <p>
+      Having been with this line of business for more than a decade, Business Aid is continuously growing in improving
+      to accommodate the ever-developing and widening requirements and needs of the market. We have provided our
+      guaranteed assistance and reliability to various companies and business establishments all over the Philippines.
+    </p>
+
+    <p>
+      Business Aid manages to operate with simpler yet efficient administration. Client companies shall be immediately
+      and respectfully attended by our customer relation department with adept understanding to the needs and specific
+      requirements of the client. Customized service is our basic approach in dealing with our valued clients. These
+      make the access to vast and multi-discipline of services offered by the company for an easier access for the client.
+    </p>
+
+    <p>
+      Nowadays, Business Aid provides cost-effective and value-added services just to assure that our client will get
+      the best solutions and yet competitive prices.
+    </p>
   </div>
 </section>
 
@@ -92,26 +132,17 @@
 
   <div class="team-card">
     <img src="alex.jpg" class="team-photo">
-    <div>
-      <h3>Alex G. Halili, CEO</h3>
-      <p>Our president has over 3 decades of experience...</p>
-    </div>
+    <div><h3>Alex G. Halili, CEO</h3><p>Our president has over 3 decades of experience ...</p></div>
   </div>
 
   <div class="team-card">
     <img src="amy.jpg" class="team-photo">
-    <div>
-      <h3>Amy A. Halili, CFO</h3>
-      <p>A B.S. Accountancy graduate with more than 25 years...</p>
-    </div>
+    <div><h3>Amy A. Halili, CFO</h3><p>A B.S. Accountancy graduate with more than 25 years ...</p></div>
   </div>
 
   <div class="team-card">
     <img src="allec.jpg" class="team-photo">
-    <div>
-      <h3>Allec Zandre A. Halili, COO</h3>
-      <p>A B.S. Entrepreneurship graduate...</p>
-    </div>
+    <div><h3>Allec Zandre A. Halili, COO</h3><p>A B.S. Entrepreneurship graduate ...</p></div>
   </div>
 </section>
 
@@ -140,12 +171,7 @@
   </div>
 
   <div class="map-container">
-    <iframe
-      width="100%"
-      height="220"
-      style="border:0;"
-      loading="lazy"
-      allowfullscreen
+    <iframe width="100%" height="220" style="border:0;" loading="lazy" allowfullscreen
       src="https://maps.google.com/maps?q=Cityland%2010%20Tower%201%20HV%20Dela%20Costa%20Ave%20Bel%20Air%20Makati%20City&t=m&z=17&output=embed&iwloc=near">
     </iframe>
   </div>
