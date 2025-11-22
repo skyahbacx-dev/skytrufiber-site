@@ -11,21 +11,21 @@
 
 <header>
   <div class="logo-group">
-    <a href="#home" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">
-      <img src="../AHBALOGO.png" height="72">
+    <a href="/#home" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">
+      <img src="AHBALOGO.png" height="72">
     </a>
-    <a href="../SKYTRUFIBER/skytrufiber.php" target="_blank">
-      <img src="../SKYTRUFIBER.png" height="60">
+    <a href="/SKYTRUFIBER/skytrufiber.php" target="_blank">
+      <img src="SKYTRUFIBER.png" height="60">
     </a>
   </div>
 
   <nav>
-    <a href="#home" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">HOME</a>
-    <a href="#about">ABOUT</a>
-    <a href="#services">SERVICES</a>
-    <a href="#management">MANAGEMENT</a>
-    <a href="#gallery">GALLERY</a>
-    <a href="#contact">CONTACT</a>
+    <a href="/#home" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">HOME</a>
+    <a href="/#about">ABOUT</a>
+    <a href="/#services">SERVICES</a>
+    <a href="/#management">MANAGEMENT</a>
+    <a href="/#gallery">GALLERY</a>
+    <a href="/#contact">CONTACT</a>
   </nav>
 </header>
 
@@ -34,32 +34,19 @@
     <p>Welcome to</p>
     <h1>A.Halili Business Aid Professional Services Inc.</h1>
     <p>All-in-one business solutions</p>
-    <a href="#about" class="btn">Learn More</a>
+    <a href="/#about" class="btn">Learn More</a>
   </div>
 </section>
 
-<!-- ===== STATS CARDS ===== -->
 <section id="stats" class="stats-row reveal">
-  <div class="stat-card">
-    <h3>20+ Years</h3>
-    <p>Industry Experience</p>
-  </div>
-  <div class="stat-card">
-    <h3>10,000+</h3>
-    <p>Workers Deployed</p>
-  </div>
-  <div class="stat-card">
-    <h3>300+</h3>
-    <p>Business Partners</p>
-  </div>
+  <div class="stat-card"><h3>20+ Years</h3><p>Industry Experience</p></div>
+  <div class="stat-card"><h3>10,000+</h3><p>Workers Deployed</p></div>
+  <div class="stat-card"><h3>300+</h3><p>Business Partners</p></div>
 </section>
 
 <section id="experience" class="section reveal experience-section">
   <div class="exp-box">
-    <div class="exp-title">
-      <span class="arrow">→</span>
-      <h2>Providing experienced<br>business solutions</h2>
-    </div>
+    <div class="exp-title"><span class="arrow">→</span><h2>Providing experienced<br>business solutions</h2></div>
     <p>
       With over 20 years of experience in the industry,
       <b>A.Halili Business Aid Professional Services Inc.</b> with the registered trademark of
@@ -84,13 +71,13 @@
     <p>
       In 2015, the company became a Licensed and compliant service provider and/or contractor under the DOLE
       Department Order 18-A. And in 2017, the company also a compliant under the DOLE Department Order No.174.
-      The company also caters projects that require Contractor or Sub-Contractor in various industries, such as
+      The company also caters projects that require Contractor or Sub-Contractor in various Industries, such as
       Construction, Manufacturing, and other Service Oriented businesses.
     </p>
 
     <p>
       Having been with this line of business for more than a decade, Business Aid is continuously growing in improving
-      to accommodate the ever-developing and widening requirements and needs of the market. We have provided our
+      to accommodate the ever developing and widening requirements and the needs of the market. We have provided our
       guaranteed assistance and reliability to various companies and business establishments all over the Philippines.
     </p>
 
@@ -98,7 +85,7 @@
       Business Aid manages to operate with simpler yet efficient administration. Client companies shall be immediately
       and respectfully attended by our customer relation department with adept understanding to the needs and specific
       requirements of the client. Customized service is our basic approach in dealing with our valued clients. These
-      make the access to vast and multi-discipline of services offered by the company for an easier access for the client.
+      make the access to vast and multi- discipline of services offered by the company for an easier access for the client.
     </p>
 
     <p>
@@ -130,55 +117,30 @@
 <section id="management" class="section reveal team-section">
   <h2 class="team-title">Our Leadership Team</h2>
 
-  <div class="team-card">
-    <img src="alex.jpg" class="team-photo">
-    <div><h3>Alex G. Halili, CEO</h3><p>Our president has over 3 decades of experience ...</p></div>
-  </div>
-
-  <div class="team-card">
-    <img src="amy.jpg" class="team-photo">
-    <div><h3>Amy A. Halili, CFO</h3><p>A B.S. Accountancy graduate with more than 25 years ...</p></div>
-  </div>
-
-  <div class="team-card">
-    <img src="allec.jpg" class="team-photo">
-    <div><h3>Allec Zandre A. Halili, COO</h3><p>A B.S. Entrepreneurship graduate ...</p></div>
-  </div>
+  <div class="team-card"><img src="alex.jpg" class="team-photo"><div><h3>Alex G. Halili, CEO</h3><p>...</p></div></div>
+  <div class="team-card"><img src="amy.jpg" class="team-photo"><div><h3>Amy A. Halili, CFO</h3><p>...</p></div></div>
+  <div class="team-card"><img src="allec.jpg" class="team-photo"><div><h3>Allec Zandre A. Halili, COO</h3><p>...</p></div></div>
 </section>
 
 <section id="contact" class="section reveal contact-section">
   <div class="contact-box">
-    <div class="contact-title">
-      <span class="arrow">→</span><h2>Get in Touch</h2>
-    </div>
+    <div class="contact-title"><span class="arrow">→</span><h2>Get in Touch</h2></div>
 
     <div class="contact-info">
-      <div class="contact-item">
-        <div class="icon-circle">📍</div>
-        <div><h4>Head Office</h4>2607 Cityland 10 Tower 1 HV Dela Costa Ave.<br>Bel Air, Makati City</div>
-      </div>
-
-      <div class="contact-item">
-        <div class="icon-circle">✉️</div>
-        <div><h4>Email</h4><a href="mailto:admin@ahba.ph">admin@ahba.ph</a></div>
-      </div>
-
-      <div class="contact-item">
-        <div class="icon-circle">📞</div>
-        <div><h4>Phone</h4><a href="tel:+639989615050">+63 998 961 5050</a></div>
-      </div>
+      <div class="contact-item"><div class="icon-circle">📍</div><div><h4>Head Office</h4>2607 Cityland 10 Tower 1 HV Dela Costa Ave., Bel Air, Makati City</div></div>
+      <div class="contact-item"><div class="icon-circle">✉️</div><div><h4>Email</h4><a href="mailto:admin@ahba.ph">admin@ahba.ph</a></div></div>
+      <div class="contact-item"><div class="icon-circle">📞</div><div><h4>Phone</h4><a href="tel:+639989615050">+63 998 961 5050</a></div></div>
     </div>
   </div>
 
   <div class="map-container">
     <iframe width="100%" height="220" style="border:0;" loading="lazy" allowfullscreen
-      src="https://maps.google.com/maps?q=Cityland%2010%20Tower%201%20HV%20Dela%20Costa%20Ave%20Bel%20Air%20Makati%20City&t=m&z=17&output=embed&iwloc=near">
-    </iframe>
+      src="https://maps.google.com/maps?q=Cityland%2010%20Tower%201%20HV%20Dela%20Costa%20Ave%20Bel%20Air%20Makati%20City&t=m&z=17&output=embed&iwloc=near"></iframe>
   </div>
 </section>
 
 <footer>
-  📍 1454 Newton Street, Barangay San Isidro, Makati City &nbsp; | &nbsp; ✉️ ahbadevelopment@ahba.ph
+  📍 1454 Newton Street, Barangay San Isidro, Makati City | ✉️ ahbadevelopment@ahba.ph
 </footer>
 
 <script>
