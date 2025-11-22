@@ -1,253 +1,351 @@
-/* ================================================
-   CSR DASHBOARD LAYOUT & NAV (SHELL)
-   FINAL VERSION
-   ================================================ */
+/* =======================================================
+   CSR DASHBOARD — FULL CSS (FINAL STABLE BUILD)
+   ======================================================= */
 
+/* GLOBAL */
 * { box-sizing: border-box; }
-
 body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background: #F4FFF4;
+    background:#F4FFF4;
     overflow: hidden;
 }
 
-/* ==========================
-   TOP NAVBAR
-   ========================== */
+/* TOP NAVIGATION BAR */
 .topnav {
+    height: 55px;
     background: #05702e;
     color: white;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 16px;
-    height: 55px;
+    padding: 6px 15px;
 }
-
-.nav-logo {
-    height: 36px;
-    margin-right: 10px;
-}
-
-.top-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
 .hamburger {
-    background: none;
-    border: none;
     font-size: 24px;
-    color: white;
-    cursor: pointer;
+    background:none;
+    border:none;
+    color:white;
+    cursor:pointer;
 }
+.top-title {
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+.nav-logo { height: 36px; }
 
 .nav-buttons {
     display: flex;
-    gap: 6px;
+    gap:6px;
 }
-
 .nav-btn {
-    background: #09a64b;
-    border: none;
-    padding: 6px 13px;
-    border-radius: 12px;
-    color: white;
-    cursor: pointer;
+    background:#09a64b;
+    border:none;
+    padding:6px 12px;
+    border-radius:12px;
+    color:white;
+    cursor:pointer;
 }
 .nav-btn.active {
-    background: white;
-    color: #05702e;
+    background:white;
+    color:#05702e;
+    font-weight:bold;
 }
 .logout-btn {
-    background: white;
-    color: #05702e;
-    padding: 6px 13px;
-    border-radius: 12px;
-    text-decoration: none;
-    font-weight: bold;
+    background:white;
+    color:#05702e;
+    padding:5px 12px;
+    border-radius:12px;
+    text-decoration:none;
 }
 
-/* ==========================
-   SIDEBAR
-   ========================== */
+/* SIDEBAR */
 .sidebar {
-    width: 260px;
-    background: white;
-    height: 100vh;
-    position: fixed;
-    left: -260px;
-    top: 0;
-    border-right: 1px solid #dcdcdc;
-    transition: 0.25s ease;
-    padding-top: 65px;
-    z-index: 25;
+    width:270px;
+    height:100vh;
+    background:white;
+    position:fixed;
+    top:0;
+    left:-270px;
+    transition:.30s;
+    padding-top:60px;
+    border-right:1px solid #dcdcdc;
+    z-index:20;
 }
-
-.sidebar.open {
-    left: 0;
-}
-
+.sidebar.open { left:0; }
 .sidebar-overlay {
-    display: none;
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    top: 0; left: 0;
-    background: rgba(0, 0, 0, 0.45);
-    z-index: 20;
+    display:none;
+    position:fixed;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.45);
+    z-index:15;
 }
+.sidebar-overlay.show{ display:block; }
 
-.sidebar-overlay.show {
-    display: block;
+.side-title {
+    text-align:center;
+    font-size:18px;
+    font-weight:bold;
+    margin-bottom:8px;
 }
-
 .side-item {
-    display: block;
-    width: 100%;
-    padding: 12px 18px;
-    background: none;
-    border: none;
-    text-align: left;
-    font-size: 15px;
-    cursor: pointer;
+    width:100%;
+    padding:12px 15px;
+    border:none;
+    background:none;
+    cursor:pointer;
+    font-size:15px;
+    text-align:left;
 }
 .side-item:hover {
-    background: #e9ffee;
-}
-.side-item.logout {
-    color: red;
+    background:#e6ffe6;
 }
 
-/* ==========================
-   MAIN GRID LAYOUT
-   ========================== */
+/* LAYOUT GRID */
 .layout {
-    display: grid;
-    grid-template-columns: 300px auto 0px;
+    display:grid;
+    grid-template-columns: 290px auto 290px;
     height: calc(100vh - 55px);
-    position: relative;
 }
 
-/* ==========================
-   CLIENT LIST PANEL
-   ========================== */
+/* CLIENT LIST PANEL */
 .client-panel {
-    background: white;
-    border-right: 1px solid #ddd;
-    overflow-y: auto;
+    background:white;
+    border-right:1px solid #cccccc;
+    overflow-y:auto;
 }
-
 .search {
-    width: 90%;
-    margin: 10px auto;
-    display: block;
-    padding: 10px;
-    border-radius: 10px;
-    border: 1px solid #aaa;
+    width:88%;
+    margin:10px;
+    padding:8px 10px;
+    border-radius:10px;
+    border:1px solid #aaaaaa;
 }
+.client-list { padding-bottom:20px; }
 
-.client-list {
-    padding-bottom: 20px;
-}
-
-/* CLIENT ITEM */
 .client-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px;
-    cursor: pointer;
-    border-bottom: 1px solid #f1f1f1;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 14px;
+    cursor:pointer;
+    border-radius:12px;
 }
 .client-item:hover,
 .client-item.active-client {
-    background: #dbffe0;
+    background:#d7ffd7;
 }
-
 .client-avatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    object-fit:cover;
 }
-
-.client-content {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.client-name {
-    font-size: 15px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.client-sub {
-    font-size: 13px;
-    opacity: 0.8;
-}
-
-/* UNREAD BADGE */
+.client-content { flex:1; }
+.client-name { font-size:15px; font-weight:bold; display:flex; align-items:center; gap:6px; }
 .badge {
-    background: #ff3b3b;
-    color: white;
-    padding: 2px 6px;
-    font-size: 11px;
-    border-radius: 50px;
+    background:#ff4747;
+    color:white;
+    padding:2px 7px;
+    border-radius:10px;
+    font-size:11px;
 }
+.client-sub { font-size:12px; color:#606060; }
 
-/* ==========================
-   POPUP BOXES
-   ========================== */
-.popupBox {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width:100%; height:100%;
-    background: rgba(0,0,0,0.45);
-    z-index: 100;
-    justify-content: center;
-    align-items: center;
-}
-
-.popupContent {
-    background:white;
-    padding: 25px 30px;
-    border-radius: 14px;
-    text-align:center;
-    width: 340px;
-}
-
-.popup-buttons {
-    margin-top: 15px;
+/* CHAT PANEL */
+.chat-panel {
+    background:#F4FFF4;
     display:flex;
-    justify-content:center;
-    gap:15px;
+    flex-direction:column;
+    border-right:1px solid #ccc;
 }
 
-.popup-buttons button {
-    padding: 8px 18px;
-    border-radius: 10px;
-    font-size: 16px;
+/* CHAT HEADER */
+.chat-header {
+    height:60px;
+    background:white;
+    border-bottom:1px solid #ccc;
+    padding:10px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+.user-section {
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+.chat-avatar {
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    border:2px solid #0b8b43;
+    object-fit:cover;
+}
+.chat-name { font-size:18px;font-weight:bold; }
+.chat-status { font-size:13px;color:#555; }
+.status-dot {
+    width:8px;height:8px;
+    border-radius:50%;
+    display:inline-block;
+    margin-right:4px;
+}
+.status-dot.offline { background:#777; }
+.status-dot.online { background:#1ec21e; }
+
+.info-btn {
+    border:none;
+    background:#e6ffe6;
+    padding:5px 9px;
+    border-radius:50%;
+    font-size:18px;
     cursor:pointer;
+}
+
+/* CHAT CONTENT */
+.chat-box {
+    flex:1;
+    overflow-y:auto;
+    padding:20px 30px;
+}
+
+/* MESSAGE ROW */
+.msg-row {
+    display:flex;
+    gap:10px;
+    margin:10px 0;
+    align-items:flex-end;
+}
+.msg-avatar {
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    flex-shrink:0;
+}
+.msg-row.csr { justify-content:flex-end; }
+.msg-row.csr .msg-avatar {
+    display:none;
+}
+
+/* BUBBLES */
+.bubble-wrapper {
+    max-width:450px;
+    display:flex;
+    flex-direction:column;
+}
+.bubble {
+    padding:10px 16px;
+    border-radius:18px;
+    font-size:15px;
+}
+.msg-row.client .bubble {background:#eaeaea;color:#000;border-bottom-left-radius:4px;}
+.msg-row.csr .bubble {background:#41b3ff;color:#fff;border-bottom-right-radius:4px;}
+
+.meta { font-size:11px;color:#555;margin-top:3px; }
+
+/* IMAGE & VIDEO PREVIEW */
+.file-img {
+    width:220px;
+    border-radius:10px;
+    margin-top:6px;
+    cursor:pointer;
+}
+
+/* PREVIEW BEFORE SEND */
+.preview-area {
+    display:flex;
+    gap:8px;
+    padding:8px 12px;
+    background:white;
+    border-top:1px solid #ccc;
+}
+.preview-thumb img {
+    width:70px;
+    height:70px;
+    border-radius:10px;
+    object-fit:cover;
+}
+
+/* INPUT BAR */
+.chat-input {
+    display:flex;
+    gap:10px;
+    padding:10px 15px;
+    background:white;
+    border-top:1px solid #ccc;
+}
+.upload-icon i {font-size:25px;color:#0b8b43;}
+#messageInput {
+    flex:1;
+    padding:9px;
+    border-radius:25px;
+    border:1px solid #aaa;
+    font-size:15px;
+}
+.send-btn {
+    width:45px;height:45px;
+    border:none;
+    background:#09a64b;
+    border-radius:50%;
+    cursor:pointer;
+}
+.send-btn i { color:white;font-size:20px; }
+
+/* CLIENT INFO SLIDE PANEL */
+.client-info-panel {
+    background:white;
+    border-left:1px solid #ccc;
+    padding:20px;
+    transform: translateX(100%);
+    transition:.3s ease-in-out;
+    overflow-y:auto;
+}
+.client-info-panel.show {
+    transform:translateX(0);
+}
+.close-info {
+    display:block;
+    margin-left:auto;
+    font-size:22px;
+    background:none;
     border:none;
 }
 
-.popup-buttons button:first-child { background:#00b545; color:white; }
-.popup-buttons button:last-child { background:#ccc; }
+/* ANIMATION */
+.animate-msg {
+    animation:fadeInUp .33s ease forwards;
+}
+@keyframes fadeInUp {
+    from { opacity:0;transform:translateY(10px);}
+    to { opacity:1;transform:translateY(0);}
+}
 
-/* ==========================
- RESPONSIVE
- ========================== */
-@media (max-width: 1000px) {
-    .layout {
-        grid-template-columns: 100%;
-    }
-    .client-panel { display: none; }
+/* POPUP BOX */
+.popupBox {
+    width:100%;
+    height:100%;
+    position:fixed;
+    top:0;left:0;
+    background:rgba(0,0,0,0.4);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+}
+.popupContent {
+    background:white;
+    padding:25px;
+    border-radius:16px;
+    width:300px;
+    text-align:center;
+}
+.popup-buttons button {
+    padding:7px 12px;
+    margin:5px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
 }
