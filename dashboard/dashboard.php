@@ -12,10 +12,10 @@
 <header>
   <div class="logo-group">
     <a href="/#home" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">
-      <img src="AHBALOGO.png" height="72">
+      <img src="../AHBALOGO.png" height="72">
     </a>
     <a href="/SKYTRUFIBER/skytrufiber.php" target="_blank">
-      <img src="SKYTRUFIBER.png" height="60">
+      <img src="../SKYTRUFIBER.png" height="60">
     </a>
   </div>
 
