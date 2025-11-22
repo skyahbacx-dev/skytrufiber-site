@@ -12,10 +12,10 @@
 <header>
   <div class="logo-group">
     <a href="javascript:void(0)" onclick="smoothScroll('#home')">
-      <img src="../AHBALOGO.png" height="72">
+      <img src="AHBALOGO.png" height="72">
     </a>
     <a href="/SKYTRUFIBER/skytrufiber.php" target="_blank">
-      <img src="../SKYTRUFIBER.png" height="60">
+      <img src="SKYTRUFIBER.png" height="60">
     </a>
   </div>
 
@@ -48,7 +48,7 @@
       With over 20 years of experience in the industry,
       <b>A.Halili Business Aid Professional Services Inc.</b> with the registered trademark of
       <b>AHBA Development</b>, is committed to delivering high-quality value-added services nationwide.
-      SEC Reg. <b>CS200902226</b> | DOLE Reg.<b>NCR-MPFO-72600-5-15-12-016-LR</b> | TIN <b>007-246-379-000</b>
+      SEC Reg. <b>CS200902226</b> | DOLE Reg.<b> NCR-MPFO-72600-5-15-12-016-LR</b> | TIN <b>007-246-379-000</b>
     </p>
   </div>
 
@@ -77,19 +77,9 @@
 <section id="about" class="section reveal">
   <div class="about-container">
     <h2>About Us</h2>
-    <p>
-      Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. is a vast company that provides
-      manpower support in need of their client. It was subsequently incorporated in February 2009. Business Aid
-      believes that besides thorough screening and hiring qualified individuals for job vacancies, there must be
-      proper training, motivation and evaluation.
-    </p>
-    <p>
-      In 2015, the company became a licensed and compliant service provider and contractor under the DOLE
-      Department Order 18-A. And in 2017, compliant under DOLE Department Order No.174.
-    </p>
-    <p>
-      Customized service is our basic approach — making operations simpler yet efficient.
-    </p>
+    <p>Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. ...</p>
+    <p>In 2015, the company became a licensed compliant service provider...</p>
+    <p>Customized service is our basic approach — making operations efficient.</p>
   </div>
 </section>
 
@@ -106,6 +96,7 @@
       <li>Industrial & construction contracting</li>
     </ul>
   </div>
+
   <div class="services-img reveal">
     <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=80">
   </div>
@@ -117,6 +108,50 @@
   <div class="team-card reveal"><img src="amy.jpg" class="team-photo"><div><h3>Amy A. Halili, CFO</h3></div></div>
   <div class="team-card reveal"><img src="allec.jpg" class="team-photo"><div><h3>Allec Zandre A. Halili, COO</h3></div></div>
 </section>
+
+
+<!-- GALLERY START -->
+<section id="gallery" class="section reveal gallery-section">
+  <h2 class="gallery-title">Gallery</h2>
+
+  <!-- SLIDESHOW -->
+  <div class="slider">
+    <div class="slides">
+      <img src="gallery/1.jpg" class="slide active" onclick="openModal(this)">
+      <img src="gallery/2.jpg" class="slide" onclick="openModal(this)">
+      <img src="gallery/3.jpg" class="slide" onclick="openModal(this)">
+      <img src="gallery/4.jpg" class="slide" onclick="openModal(this)">
+    </div>
+
+    <button class="prev" onclick="changeSlide(-1)">❮</button>
+    <button class="next" onclick="changeSlide(1)">❯</button>
+  </div>
+  <div class="dots">
+    <span class="dot active" onclick="goToSlide(0)"></span>
+    <span class="dot" onclick="goToSlide(1)"></span>
+    <span class="dot" onclick="goToSlide(2)"></span>
+    <span class="dot" onclick="goToSlide(3)"></span>
+  </div>
+
+  <!-- MASONRY GRID -->
+  <div class="masonry reveal">
+    <img src="gallery/5.jpg" onclick="openModal(this)">
+    <img src="gallery/6.jpg" onclick="openModal(this)">
+    <img src="gallery/7.jpg" onclick="openModal(this)">
+    <img src="gallery/8.jpg" onclick="openModal(this)">
+    <img src="gallery/9.jpg" onclick="openModal(this)">
+    <img src="gallery/10.jpg" onclick="openModal(this)">
+    <img src="gallery/11.jpg" onclick="openModal(this)">
+    <img src="gallery/12.jpg" onclick="openModal(this)">
+  </div>
+
+  <!-- VIDEO EXAMPLE -->
+  <video class="gallery-video" controls>
+    <source src="gallery/video.mp4" type="video/mp4">
+  </video>
+</section>
+<!-- GALLERY END -->
+
 
 <section id="contact" class="section reveal contact-section">
   <div class="contact-box reveal">
@@ -139,49 +174,8 @@
   📍 1454 Newton Street, Barangay San Isidro, Makati City | ✉️ ahbadevelopment@ahba.ph
 </footer>
 
-<script>
-// Smooth scroll
-function smoothScroll(target) {
-  const el = document.querySelector(target);
-  const y = el.getBoundingClientRect().top + window.pageYOffset - 150;
-  window.scrollTo({ top: y, behavior: 'smooth' });
-}
 
-// Reveal animation (one time only)
-window.addEventListener("scroll", () => {
-  document.querySelectorAll(".reveal").forEach(el => {
-    if (el.getBoundingClientRect().top < window.innerHeight - 10 && !el.classList.contains("active")) {
-      el.classList.add("active");
-    }
-  });
-});
-
-// Counter Animation
-const counters = document.querySelectorAll('.counter');
-const speed = 250;
-const runCounter = () => {
-  counters.forEach(counter => {
-    const update = () => {
-      const target = +counter.getAttribute('data-target');
-      const count = +counter.innerText;
-      const increment = target / speed;
-
-      if (count < target) {
-        counter.innerText = Math.ceil(count + increment);
-        setTimeout(update, 20);
-      } else {
-        counter.innerText = target.toLocaleString();
-      }
-    };
-    update();
-  });
-};
-
-window.addEventListener('scroll', () => {
-  const statsPosition = document.querySelector('.stats-row').getBoundingClientRect().top;
-  if (statsPosition < window.innerHeight - 80) runCounter();
-});
-</script>
+<script src="script.js"></script>
 
 </body>
 </html>
