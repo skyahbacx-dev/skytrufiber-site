@@ -6,7 +6,7 @@ $client_id = $_POST["client_id"] ?? 0;
 $csr = $_SESSION["csr_user"] ?? "";
 
 if (!$client_id || !$csr) {
-    echo json_encode(["status" => "error"]);
+    echo "error";
     exit;
 }
 
@@ -15,5 +15,5 @@ $stmt->execute([
     ":id" => $client_id
 ]);
 
-echo json_encode(["status" => "ok"]);
+echo "ok";
 ?>
