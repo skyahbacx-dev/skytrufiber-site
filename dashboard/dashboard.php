@@ -11,14 +11,16 @@
 
 <header>
   <div class="logo-group">
-    <a href="#home"><img src="../AHBALOGO.png" height="72"></a>
+    <a href="#home" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">
+      <img src="../AHBALOGO.png" height="72">
+    </a>
     <a href="../SKYTRUFIBER/skytrufiber.php" target="_blank">
       <img src="../SKYTRUFIBER.png" height="60">
     </a>
   </div>
 
   <nav>
-    <a href="#home">HOME</a>
+    <a href="#home" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">HOME</a>
     <a href="#about">ABOUT</a>
     <a href="#services">SERVICES</a>
     <a href="#management">MANAGEMENT</a>
@@ -27,6 +29,7 @@
   </nav>
 </header>
 
+<!-- ===== HERO ===== -->
 <section id="home" class="section">
   <div class="hero-content">
     <p>Welcome to</p>
@@ -36,6 +39,7 @@
   </div>
 </section>
 
+<!-- ===== EXPERIENCE SECTION ===== -->
 <section id="experience" class="section reveal experience-section">
   <div class="exp-box">
     <div class="exp-title">
@@ -43,26 +47,28 @@
       <h2>Providing experienced<br>business solutions</h2>
     </div>
     <p>
-      With over 20 years of experience in the industry, <b>A.Halili Business Aid Professional Services Inc.</b>
-      with the registered trademark of <b>AHBA Development</b> ...
-      SEC Reg. <b>CS200902226</b> | DOLE Reg. <b>NCR-MPFO-72600-5-15-12-016-LR</b> | TIN <b>007-246-379-000</b>
+      With over 20 years of experience in the industry,
+      <b>A.Halili Business Aid Professional Services Inc.</b> with the registered trademark of
+      <b>AHBA Development</b>, is committed to delivering high-quality value-added services nationwide.
+      SEC Reg. <b>CS200902226</b> |
+      DOLE Reg. <b>NCR-MPFO-72600-5-15-12-016-LR</b> |
+      TIN <b>007-246-379-000</b>
     </p>
   </div>
 </section>
 
+<!-- ===== ABOUT ===== -->
 <section id="about" class="section reveal">
   <div class="about-container">
     <h2>About Us</h2>
-    <p>
-      Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. is a company that provides
-      reliable and professional manpower support to meet the needs of its clients...
-    </p>
-    <p>In 2015, the company became a licensed and compliant service provider...</p>
-    <p>Business Aid operates with a simple yet highly efficient administration...</p>
-    <p>Today, Business Aid continues to deliver cost-effective and value-added services...</p>
+    <p>Established in 2003, A. HALILI BUSINESS AID PROFESSIONAL SERVICES INC. ...</p>
+    <p>In 2015, the company became a licensed and compliant service provider ...</p>
+    <p>Business Aid operates with a simple yet highly efficient administration ...</p>
+    <p>Today, Business Aid continues to deliver cost-effective services ...</p>
   </div>
 </section>
 
+<!-- ===== SERVICES ===== -->
 <section id="services" class="section reveal">
   <div class="services-text">
     <h2>Our Services</h2>
@@ -70,17 +76,19 @@
       <li>Full outsourcing solutions</li>
       <li>Intellectual & psychological examinations</li>
       <li>Payroll processing</li>
-      <li>Recruitment & prescreening</li>
+      <li>Recruitment & prescreening of applicants</li>
       <li>Initial interview screening</li>
-      <li>Training & development</li>
-      <li>Construction & manufacturing contracting</li>
+      <li>Training & development programs</li>
+      <li>Contractor in construction & manufacturing</li>
     </ul>
   </div>
+
   <div class="services-img">
     <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=80">
   </div>
 </section>
 
+<!-- ===== MANAGEMENT ===== -->
 <section id="management" class="section reveal team-section">
   <h2 class="team-title">Our Leadership Team</h2>
 
@@ -109,6 +117,7 @@
   </div>
 </section>
 
+<!-- ===== CONTACT ===== -->
 <section id="contact" class="section reveal contact-section">
   <div class="contact-box">
     <div class="contact-title">
