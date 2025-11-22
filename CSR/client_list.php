@@ -2,54 +2,76 @@
 session_start();
 include "../db_connect.php";
 
-$csr = $_SESSION["csr_user"] ?? "";
+header("Content-Type: text/html");
+
+$csrUser = $_SESSION["csr_user"] ?? null;
+if (!$csrUser) {
+    http_response_code(401);
+    exit("Unauthorized");
+}
+
 $search = $_GET["search"] ?? "";
 
 $sql = "
     SELECT c.id, c.name, c.assigned_csr,
-    (
-        SELECT COUNT(*)
-        FROM chat
-        WHERE client_id = c.id
-        AND sender_type = 'client'
-        AND id NOT IN (
-            SELECT message_id FROM chat_read WHERE csr = :csrUser
-        )
-    ) AS unread
+        (
+            SELECT COUNT(*) FROM chat m
+            WHERE m.client_id = c.id
+              AND m.sender_type = 'client'
+              AND m.id > COALESCE((
+                    SELECT r.chat_id FROM chat_read r
+                    WHERE r.client_id = c.id AND r.csr = :csr
+                    ORDER BY r.chat_id DESC LIMIT 1
+              ), 0)
+        ) AS unread
     FROM clients c
-    WHERE c.name ILIKE :search
-    ORDER BY c.name ASC
 ";
 
+if ($search !== "") {
+    $sql .= " WHERE LOWER(c.name) LIKE LOWER(:search)";
+}
+
+$sql .= " ORDER BY c.name ASC";
+
 $stmt = $conn->prepare($sql);
-$stmt->execute([
-    ':search' => "%$search%",
-    ':csrUser' => $csr
-]);
-$clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$params = [":csr" => $csrUser];
+if ($search !== "") $params[":search"] = "%$search%";
+
+$stmt->execute($params);
+
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $id       = $row["id"];
+    $name     = htmlspecialchars($row["name"]);
+    $assigned = $row["assigned_csr"];
+    $unread   = intval($row["unread"]);
+    $avatar   = "upload/default-avatar.png";
+
+    $badge = $unread > 0 ? "<span class='badge'>$unread</span>" : "";
+
+    $assignText = ($assigned === null)
+        ? "Unassigned"
+        : ($assigned === $csrUser ? "Assigned to YOU" : "Assigned to $assigned");
+
+    $lock = ($assigned && $assigned !== $csrUser);
+    $btn = "";
+
+    if ($assigned === null) {
+        $btn = "<button class='assign-btn' onclick='showAssignPopup($id)'>+</button>";
+    } elseif ($assigned === $csrUser) {
+        $btn = "<button class='unassign-btn' onclick='showUnassignPopup($id)'>−</button>";
+    } else {
+        $btn = "<button class='lock-btn' disabled>🔒</button>";
+    }
+
+    echo "
+    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
+        <img src='$avatar' class='client-avatar'>
+        <div class='client-content'>
+            <div class='client-name'>$name $badge</div>
+            <div class='client-sub'>$assignText</div>
+        </div>
+        <div class='client-action'>$btn</div>
+    </div>";
+}
 ?>
-
-<?php foreach($clients as $c): ?>
-<div class="client-item" id="client-<?= $c['id']; ?>"
-     onclick="selectClient(<?= $c['id']; ?>, '<?= htmlspecialchars($c['name'], ENT_QUOTES); ?>', '<?= $c['assigned_csr']; ?>')">
-
-    <img src="upload/default-avatar.png" class="client-avatar">
-
-    <div class="client-info">
-        <strong><?= htmlspecialchars($c["name"]); ?></strong>
-        <small>
-            <?php if ($c["assigned_csr"] == $csr): ?>
-                Assigned to YOU
-            <?php elseif ($c["assigned_csr"]): ?>
-                Assigned to <?= $c["assigned_csr"]; ?>
-            <?php else: ?>
-                Unassigned
-            <?php endif; ?>
-        </small>
-    </div>
-
-    <?php if ($c["unread"] > 0): ?>
-        <span class="badge"><?= $c["unread"]; ?></span>
-    <?php endif; ?>
-</div>
-<?php endforeach; ?>
