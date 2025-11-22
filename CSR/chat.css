@@ -1,240 +1,177 @@
-/* ===========================================
-   CHAT UI - FULL STABLE DESIGN
-   =========================================== */
+/* ============================================
+   CHAT UI — FINAL STABLE BUILD
+   ============================================ */
 
-/* MAIN GRID LAYOUT */
-.layout {
-    display: grid;
-    grid-template-columns: 280px auto;
-    height: calc(100vh - 65px);
-    overflow: hidden;
-    background: #f4fff4;
-}
-
-/* ===========================================
-   CLIENT PANEL (LEFT)
-   =========================================== */
-.client-panel {
-    background: #ffffff;
-    border-right: 1px solid #d6ead6;
+/* MESSAGES AREA */
+.chat-box {
+    flex: 1;
     overflow-y: auto;
-}
-
-.search {
-    width: 92%;
-    margin: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    border: 1px solid #9bd49b;
-    font-size: 15px;
-}
-
-.client-item {
-    display: flex;
-    padding: 10px;
-    gap: 10px;
-    align-items: center;
-    cursor: pointer;
-    border-bottom: 1px solid #ebf9eb;
-}
-.client-item:hover,
-.client-item.active-client {
-    background: #e7ffe7;
-}
-
-.client-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-/* ===========================================
-   CHAT PANEL (CENTER)
-   =========================================== */
-.chat-panel {
+    padding: 22px 25px;
+    background: #F4FFF4;
     display: flex;
     flex-direction: column;
     height: 100%;
 }
 
-/* HEADER */
-.chat-header {
-    padding: 10px 15px;
-    background: white;
-    border-bottom: 1px solid #d6ead6;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.chat-avatar {
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.user-section {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.chat-name {
-    font-weight: bold;
-    font-size: 17px;
-}
-.chat-status {
-    font-size: 13px;
-    color: gray;
-}
-
-.info-btn {
-    background: none;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-/* ===========================================
-   MESSAGES AREA
-   =========================================== */
-.chat-box {
-    flex: 1;
-    overflow-y: auto;
-    padding: 18px 20px;
-    background: #f8fff8;
-    scroll-behavior: smooth;
-}
-
+/* MESSAGE ROW */
 .msg-row {
     display: flex;
-    margin-bottom: 12px;
     align-items: flex-end;
+    margin: 6px 0;
+    gap: 10px;
 }
 
+/* LEFT CLIENT SIDE */
 .msg-row.client {
-    flex-direction: row;
-}
-.msg-row.csr {
-    flex-direction: row-reverse;
+    justify-content: flex-start;
 }
 
+/* RIGHT CSR SIDE */
+.msg-row.csr {
+    justify-content: flex-end;
+}
+
+/* AVATAR (CLIENT ONLY) */
 .msg-avatar {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    object-fit: cover;
-    margin: 0 6px;
 }
 
+/* MESSAGE BUBBLE GROUP */
+.bubble-wrapper {
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* BUBBLE STYLES */
 .bubble {
-    background: #e0ffe0;
-    padding: 10px 15px;
+    padding: 12px 18px;
     border-radius: 18px;
     font-size: 15px;
-    max-width: 370px;
-    line-height: 1.35;
-}
-.msg-row.csr .bubble {
-    background: #29b567;
-    color: white;
+    line-height: 1.4em;
+    white-space: pre-wrap;
 }
 
+/* Client side bubble */
+.msg-row.client .bubble {
+    background: #e9e9e9;
+    color: #000;
+    border-bottom-left-radius: 4px;
+}
+
+/* CSR side bubble */
+.msg-row.csr .bubble {
+    background: #0b8b43;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+/* TIMESTAMP */
 .meta {
     font-size: 11px;
+    color: #6b6b6b;
     margin-top: 4px;
-    color: #606060;
-    text-align: right;
 }
 
+/* IMAGE / VIDEO INSIDE CHAT */
 .file-img {
-    width: 200px;
+    width: 220px;
+    max-height: 400px;
+    object-fit: cover;
+    border-radius: 12px;
     margin-top: 6px;
-    border-radius: 10px;
     cursor: pointer;
 }
 
-/* ===========================================
-   INPUT BAR
-   =========================================== */
-.chat-input {
+/* PREVIEW IMAGE AREA BEFORE SEND */
+.preview-area {
     display: flex;
-    align-items: center;
-    padding: 12px 15px;
+    gap: 8px;
+    padding: 8px 15px;
     background: white;
-    border-top: 1px solid #d6ead6;
-    gap: 10px;
+    border-top: 1px solid #ccc;
 }
 
-.upload-icon {
+.preview-thumb img,
+.preview-thumb video {
+    width: 75px;
+    height: 75px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid #ccc;
+}
+
+/* ANIMATION */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-msg {
+    animation: fadeInUp .35s ease forwards;
+}
+
+/* PLACEHOLDER WHEN NO CHAT */
+.placeholder {
+    text-align: center;
+    margin-top: 40%;
+    font-size: 20px;
+    opacity: 0.6;
+}
+
+/* SLIDE CLIENT INFO PANEL */
+.client-info-panel {
+    width: 300px;
+    background: white;
+    border-left: 1px solid #ccc;
+    height: 100%;
+    position: absolute;
+    right: -300px;
+    top: 0;
+    transition: 0.3s ease;
+    padding: 25px;
+    overflow-y: auto;
+    z-index: 10;
+}
+
+.client-info-panel.show {
+    right: 0;
+}
+
+.close-info {
+    background: none;
+    border: none;
+    font-size: 22px;
+    float: right;
     cursor: pointer;
 }
-.upload-icon i {
-    font-size: 22px;
-    color: #27a95d;
-}
 
-#messageInput {
-    flex: 1;
-    padding: 12px 16px;
-    border-radius: 25px;
-    border: 1px solid #b4d8b4;
-    font-size: 15px;
-}
-#messageInput:disabled {
-    background: #eeeeee;
+/* UPLOAD & SEND BUTTONS */
+.upload-icon i {
+    font-size: 26px;
+    color: #0b8b43;
+    cursor: pointer;
 }
 
 .send-btn {
-    width: 46px;
-    height: 46px;
+    background: #0b8b43;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: #29b567;
     border: none;
     cursor: pointer;
 }
 .send-btn i {
-    font-size: 20px;
     color: white;
+    font-size: 20px;
 }
 
-/* ===========================================
-   PREVIEW STRIP (IMAGES BEFORE SEND)
-   =========================================== */
-.preview-area {
-    display: flex;
-    gap: 8px;
-    padding: 6px 12px;
-    background: white;
-    border-top: 1px solid #e0e0e0;
+/* SCROLLBAR CLEANUP */
+.chat-box::-webkit-scrollbar {
+    width: 6px;
 }
-
-.preview-thumb img {
-    width: 62px;
-    height: 62px;
-    object-fit: cover;
+.chat-box::-webkit-scrollbar-thumb {
+    background: #ccc;
     border-radius: 10px;
-}
-
-/* ===========================================
-   CLIENT INFO PANEL (RIGHT SLIDE)
-   =========================================== */
-.client-info-panel {
-    width: 320px;
-    position: fixed;
-    top: 65px;
-    bottom: 0;
-    right: -340px;
-    background: white;
-    padding: 20px;
-    transition: right 0.25s ease;
-    border-left: 3px solid #29b567;
-}
-.client-info-panel.show {
-    right: 0;
-}
-.close-info {
-    float: right;
-    font-size: 18px;
-    cursor: pointer;
 }
