@@ -1,52 +1,77 @@
 <?php
 session_start();
 include "../db_connect.php";
-date_default_timezone_set("Asia/Manila");
+require __DIR__ . "/../vendor/autoload.php";
 
-$client_id = $_POST["client_id"] ?? 0;
-$message = $_POST["message"] ?? "";
+use Aws\S3\S3Client;
+
+$message      = trim($_POST["message"] ?? "");
+$client_id    = intval($_POST["client_id"] ?? 0);
 $csr_fullname = $_POST["csr_fullname"] ?? "";
 
-if (!$client_id) exit("error");
+if (!$client_id) {
+    echo json_encode(["status" => "error", "msg" => "Missing client"]);
+    exit;
+}
 
-// Insert message first
+$bucket     = getenv("B2_BUCKET");
+$endpoint   = getenv("B2_ENDPOINT");
+$keyId      = getenv("B2_KEY_ID");
+$appKey     = getenv("B2_APP_KEY");
+
+$s3 = new S3Client([
+    "version" => "latest",
+    "region" => "us-east-005",
+    "endpoint" => $endpoint,
+    "use_path_style_endpoint" => true,
+    "credentials" => [
+        "key"    => $keyId,
+        "secret" => $appKey
+    ]
+]);
+
+$media_url  = null;
+$media_type = null;
+
+if (!empty($_FILES["files"]["name"][0])) {
+
+    $fileName = $_FILES["files"]["name"][0];
+    $tmpName  = $_FILES["files"]["tmp_name"][0];
+    $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+    if (in_array($ext, ["jpg","jpeg","png","gif","webp"])) $media_type = "image";
+    if (in_array($ext, ["mp4","mov","avi","mkv","webm"]))  $media_type = "video";
+
+    $key = "chat_media/" . time() . "_" . rand(1000,9999) . "." . $ext;
+
+    try {
+        $result = $s3->putObject([
+            "Bucket" => $bucket,
+            "Key"    => $key,
+            "Body"   => fopen($tmpName, "rb"),
+            "ACL"    => "public-read",
+            "ContentType" => mime_content_type($tmpName)
+        ]);
+
+        $media_url = $result["ObjectURL"];
+
+    } catch (Exception $e) {
+        echo json_encode(["status" => "error", "msg" => $e->getMessage()]);
+        exit;
+    }
+}
+
 $stmt = $conn->prepare("
-    INSERT INTO chat (client_id, message, sender_type, csr_fullname, created_at)
-    VALUES (:cid, :msg, 'csr', :csr, NOW())
+    INSERT INTO chat (client_id, sender_type, message, media_url, media_type, csr_fullname, seen, created_at)
+    VALUES (:cid, 'csr', :msg, :url, :mt, :csr, 0, NOW())
 ");
 $stmt->execute([
     ":cid" => $client_id,
     ":msg" => $message,
+    ":url" => $media_url,
+    ":mt"  => $media_type,
     ":csr" => $csr_fullname
 ]);
 
-$chat_id = $conn->lastInsertId();
-
-// Upload media if has
-if (!empty($_FILES["files"]["name"][0])) {
-
-    foreach ($_FILES["files"]["tmp_name"] as $key => $tmp) {
-
-        $name = uniqid() . "_" . $_FILES["files"]["name"][$key];
-        $path = "upload/" . $name;
-
-        move_uploaded_file($tmp, $path);
-
-        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-        $type = (in_array($ext, ["jpg","jpeg","png","gif","webp"])) ? "image" : "video";
-
-        // insert media record
-        $stmt2 = $conn->prepare("
-            INSERT INTO chat_media (chat_id, media_path, media_type, created_at)
-            VALUES (:cid, :path, :typ, NOW())
-        ");
-        $stmt2->execute([
-            ":cid"  => $chat_id,
-            ":path" => $path,
-            ":typ"  => $type
-        ]);
-    }
-}
-
-echo "ok";
+echo json_encode(["status" => "ok"]);
 ?>
