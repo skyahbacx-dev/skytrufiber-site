@@ -7,19 +7,26 @@ $search = $_GET["search"] ?? "";
 
 if (!$csr) exit("Unauthorized");
 
+/*
+ We compute unread messages by comparing chat.created_at
+ vs chat_read.last_read for csr+client combination
+*/
 $sql = "
 SELECT
     c.id,
     c.name,
     c.assigned_csr,
-    COALESCE((
+    (
         SELECT COUNT(*)
         FROM chat m
-        LEFT JOIN chat_read r ON r.chat_id = m.id AND r.csr = :csr
         WHERE m.client_id = c.id
         AND m.sender_type = 'client'
-        AND (r.last_read IS NULL OR m.created_at > r.last_read)
-    ), 0) AS unread
+        AND m.created_at > COALESCE(
+            (SELECT r.last_read FROM chat_read r
+             WHERE r.client_id = c.id AND r.csr = :csr),
+            '2000-01-01'
+        )
+    ) AS unread
 FROM clients c
 WHERE c.name ILIKE :search
 ORDER BY unread DESC, c.name ASC
@@ -39,7 +46,6 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $unread   = intval($row["unread"]);
     $avatar   = "upload/default-avatar.png";
 
-    // Assign button logic
     if (!$assigned) {
         $button = "<button class='assign-btn plus' onclick='showAssignPopup($id);event.stopPropagation();'>+</button>";
     } elseif ($assigned === $csr) {
@@ -62,9 +68,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             </div>
         </div>
 
-        <div class='client-actions'>
-            $button
-        </div>
+        <div class='client-actions'>$button</div>
     </div>";
 }
 ?>
