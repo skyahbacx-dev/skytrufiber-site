@@ -1,7 +1,3 @@
-/* ============================================
-   CHAT INTERFACE STYLES — FULL FILE
-   ============================================ */
-
 :root {
     --green-main: #0A8A27;
     --green-light: #eaffe5;
@@ -10,92 +6,55 @@
     --border: #d1e8d4;
 }
 
-/* MAIN LAYOUT */
 .layout {
     display: flex;
     height: calc(100vh - 65px);
     overflow: hidden;
 }
 
-/* ---------------------------------------------
-   LEFT COLUMN — CLIENT LIST
-   --------------------------------------------- */
+/* CLIENT LIST */
 .client-panel {
     width: 270px;
-    background: #ffffff;
-    border-right: 1px solid #c6e6c6;
+    background: white;
+    border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     overflow-y: auto;
 }
 
 .search {
-    padding: 9px;
     margin: 12px;
-    width: calc(100% - 24px);
+    padding: 9px;
     border: 1px solid var(--border);
     border-radius: 8px;
-    font-size: 14px;
-}
-
-.client-list {
-    overflow-y: auto;
-    padding-bottom: 50px;
 }
 
 .client-item {
     display: flex;
-    padding: 10px;
-    border-bottom: 1px solid #e8f6e8;
-    cursor: pointer;
-    transition: 0.15s;
     align-items: center;
-}
-.client-item:hover {
-    background: var(--green-light);
+    padding: 10px;
+    cursor: pointer;
+    transition: .2s;
 }
 
-.active-client {
-    background: var(--green-mid) !important;
-}
+.client-item:hover { background: var(--green-light); }
+.active-client { background: var(--green-mid); }
 
 .client-avatar {
     width: 45px;
     height: 45px;
     border-radius: 50%;
-    background: #ddd;
     margin-right: 10px;
+    background: #ddd;
 }
 
 .client-content {
     flex: 1;
-    display: flex;
-    flex-direction: column;
 }
+.client-name { font-weight: 600; font-size: 14px; }
+.client-sub { font-size: 11px; color: #6a6a6a; }
 
-.client-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-dark);
-}
-
-.client-sub {
-    font-size: 11px;
-    color: #666;
-}
-
-.badge {
-    background: red;
-    color: white;
-    border-radius: 12px;
-    padding: 2px 7px;
-    font-size: 11px;
-    margin-left: 6px;
-}
-
-/* ---------------------------------------------
-   CENTER CHAT PANEL
-   --------------------------------------------- */
+/* CHAT PANEL */
 .chat-panel {
     flex: 1;
     display: flex;
@@ -105,54 +64,20 @@
 
 .chat-header {
     height: 60px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
     padding: 0 18px;
-    justify-content: space-between;
-}
-
-.user-section {
     display: flex;
+    justify-content: space-between;
     align-items: center;
+    border-bottom: 1px solid var(--border);
 }
-
-.chat-avatar {
-    width: 43px;
-    height: 43px;
-    border-radius: 50%;
-    background: #ddd;
-    margin-right: 10px;
-}
-
-.chat-name {
-    font-size: 17px;
-    font-weight: 600;
-}
-
-.chat-status {
-    font-size: 12px;
-    color: #666;
-}
-
-.status-dot {
-    height: 9px;
-    width: 9px;
-    background: gray;
-    display: inline-block;
-    border-radius: 50%;
-    margin-right: 6px;
-}
-.status-dot.online { background: #00c50a; }
-.status-dot.offline { background: gray; }
 
 .chat-box {
     flex: 1;
     overflow-y: auto;
-    padding: 20px 25px 10px;
+    padding: 20px 25px;
 }
 
-/* MESSAGE BUBBLES */
+/* BUBBLES */
 .msg-row {
     display: flex;
     margin-bottom: 13px;
@@ -165,50 +90,45 @@
 }
 
 .bubble {
+    background: white;
+    border: 1px solid var(--border);
     padding: 11px 16px;
     border-radius: 14px;
     font-size: 15px;
-    line-height: 1.35rem;
-    background: #ffffff;
-    border: 1px solid var(--border);
-    word-wrap: break-word;
 }
-
 .msg-row.csr .bubble {
-    background: #0aa52c;
+    background: var(--green-main);
     color: white;
-    border-color: #0aa52c;
+    border-color: var(--green-main);
 }
 
 .meta {
     font-size: 11px;
-    color: #888;
     margin-top: 3px;
+    color: #666;
 }
 
-/* FILE ATTACHMENTS */
 .file-img {
-    width: 230px;
     margin-top: 8px;
+    width: 240px;
     border-radius: 10px;
-    cursor: pointer;
     display: block;
 }
 
-/* CHAT INPUT */
+/* INPUT BAR */
 .chat-input {
-    display: flex;
-    padding: 10px;
-    border-top: 1px solid var(--border);
     background: white;
+    display: flex;
     align-items: center;
+    border-top: 1px solid var(--border);
+    padding: 10px;
 }
 
 .upload-icon {
     font-size: 20px;
-    margin-right: 10px;
-    cursor: pointer;
     color: var(--green-main);
+    cursor: pointer;
+    margin-right: 10px;
 }
 
 #messageInput {
@@ -220,28 +140,23 @@
 }
 
 .send-btn {
-    background: var(--green-main);
-    border: none;
-    margin-left: 10px;
     width: 50px;
     height: 42px;
     border-radius: 10px;
+    background: var(--green-main);
+    border: none;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 .send-btn i {
     color: white;
-    font-size: 18px;
+    font-size: 17px;
 }
 
-/* PREVIEW UPLOAD AREA */
+/* PREVIEW */
 .preview-area {
     display: flex;
     padding: 7px;
     overflow-x: auto;
-    background: #fbfffb;
     border-top: 1px solid var(--border);
 }
 .preview-thumb img {
@@ -250,7 +165,7 @@
     border-radius: 10px;
 }
 
-/* RIGHT SLIDE CLIENT INFO */
+/* INFO PANEL */
 .client-info-panel {
     width: 320px;
     background: white;
@@ -259,19 +174,18 @@
     top: 65px;
     bottom: 0;
     padding: 18px;
-    transition: right .28s ease;
+    transition: right .28s;
     border-left: 1px solid var(--border);
+    z-index: 99;
 }
-.client-info-panel.show {
-    right: 0;
-}
+.client-info-panel.show { right: 0; }
 
 .close-info {
     float: right;
     cursor: pointer;
 }
 
-/* POPUP BOXES */
+/* POPUP */
 .popupBox {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -279,29 +193,21 @@
     display: none;
     align-items: center;
     justify-content: center;
-    z-index: 99;
+    z-index: 999;
 }
-
 .popupContent {
     background: white;
     padding: 25px;
     border-radius: 15px;
-    text-align: center;
     width: 330px;
+    text-align: center;
 }
-
 .popup-buttons button {
     padding: 10px 20px;
     margin: 10px;
+    background: var(--green-main);
     border-radius: 10px;
     border: none;
-    background: var(--green-main);
     color: white;
     cursor: pointer;
-}
-
-.placeholder {
-    padding: 20px;
-    text-align: center;
-    color: #777;
 }
