@@ -33,28 +33,37 @@ $stmt->execute([
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
+    $id       = $row["id"];
+    $name     = htmlspecialchars($row["name"]);
     $assigned = $row["assigned_csr"];
-    $unread = intval($row["unread"]);
+    $unread   = intval($row["unread"]);
+    $avatar   = "upload/default-avatar.png";
 
-    $assignBtn = "";
+    // Assign button logic
     if (!$assigned) {
-        $assignBtn = "<button class='assign-btn' onclick='showAssignPopup({$row['id']})'>+</button>";
+        $button = "<button class='assign-btn plus' onclick='showAssignPopup($id);event.stopPropagation();'>+</button>";
     } elseif ($assigned === $csr) {
-        $assignBtn = "<button class='assign-btn mine' onclick='showUnassignPopup({$row['id']})'>−</button>";
+        $button = "<button class='assign-btn minus' onclick='showUnassignPopup($id);event.stopPropagation();'>−</button>";
     } else {
-        $assignBtn = "<button class='assign-btn lock' disabled><i class='fa fa-lock'></i></button>";
+        $button = "<button class='assign-btn lock' disabled><i class='fa fa-lock'></i></button>";
     }
 
     echo "
-    <div class='client-item' id='client-{$row['id']}' onclick=\"selectClient({$row['id']}, '{$row['name']}', '{$assigned}')\">
-        <img src='upload/default-avatar.png' class='client-avatar'>
+    <div class='client-item' id='client-$id' onclick=\"selectClient($id, '$name', '$assigned')\">
+        <img src='$avatar' class='client-avatar'>
+
         <div class='client-info'>
-            <div class='client-name'>{$row['name']}</div>
-            <div class='client-assigned'>Assigned to: {$assigned}</div>
+            <div class='client-name'>
+                $name
+                " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
+            </div>
+            <div class='client-sub'>
+                " . ($assigned ? "Assigned to: $assigned" : "Unassigned") . "
+            </div>
         </div>
+
         <div class='client-actions'>
-            $assignBtn
-            " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
+            $button
         </div>
     </div>";
 }
