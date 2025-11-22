@@ -12,15 +12,15 @@
 <header>
   <div class="logo-group">
     <a href="/#home" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">
-      <img src="../AHBALOGO.png" height="72">
+      <img src="AHBALOGO.png" height="72">
     </a>
     <a href="/SKYTRUFIBER/skytrufiber.php" target="_blank">
-      <img src="../SKYTRUFIBER.png" height="60">
+      <img src="SKYTRUFIBER.png" height="60">
     </a>
   </div>
 
   <nav>
-    <a href="/#home" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">HOME</a>
+    <a href="/#home">HOME</a>
     <a href="/#about">ABOUT</a>
     <a href="/#services">SERVICES</a>
     <a href="/#management">MANAGEMENT</a>
@@ -30,18 +30,18 @@
 </header>
 
 <section id="home" class="section">
-  <div class="hero-content">
+  <div class="hero-content reveal">
     <p>Welcome to</p>
     <h1>A.Halili Business Aid Professional Services Inc.</h1>
     <p>All-in-one business solutions</p>
-    <a href="/#about" class="btn">Learn More</a>
+    <a href="javascript:void(0)" onclick="smoothScroll('#experience')" class="btn">Learn More</a>
   </div>
 </section>
 
 <section id="stats" class="stats-row reveal">
-  <div class="stat-card"><h3>20+ Years</h3><p>Industry Experience</p></div>
-  <div class="stat-card"><h3>10,000+</h3><p>Workers Deployed</p></div>
-  <div class="stat-card"><h3>300+</h3><p>Business Partners</p></div>
+  <div class="stat-card reveal"><h3>20+ Years</h3><p>Industry Experience</p></div>
+  <div class="stat-card reveal"><h3>10,000+</h3><p>Workers Deployed</p></div>
+  <div class="stat-card reveal"><h3>300+</h3><p>Business Partners</p></div>
 </section>
 
 <section id="experience" class="section reveal experience-section">
@@ -105,11 +105,11 @@
       <li>Recruitment & prescreening of applicants</li>
       <li>Initial interview screening</li>
       <li>Training & development programs</li>
-      <li>Contractor in construction & manufacturing</li>
+      <li>Contractor in construction & manufacturing industries</li>
     </ul>
   </div>
 
-  <div class="services-img">
+  <div class="services-img reveal">
     <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=80">
   </div>
 </section>
@@ -117,9 +117,9 @@
 <section id="management" class="section reveal team-section">
   <h2 class="team-title">Our Leadership Team</h2>
 
-  <div class="team-card"><img src="alex.jpg" class="team-photo"><div><h3>Alex G. Halili, CEO</h3><p>...</p></div></div>
-  <div class="team-card"><img src="amy.jpg" class="team-photo"><div><h3>Amy A. Halili, CFO</h3><p>...</p></div></div>
-  <div class="team-card"><img src="allec.jpg" class="team-photo"><div><h3>Allec Zandre A. Halili, COO</h3><p>...</p></div></div>
+  <div class="team-card reveal"><img src="alex.jpg" class="team-photo"><div><h3>Alex G. Halili, CEO</h3><p>...</p></div></div>
+  <div class="team-card reveal"><img src="amy.jpg" class="team-photo"><div><h3>Amy A. Halili, CFO</h3><p>...</p></div></div>
+  <div class="team-card reveal"><img src="allec.jpg" class="team-photo"><div><h3>Allec Zandre A. Halili, COO</h3><p>...</p></div></div>
 </section>
 
 <section id="contact" class="section reveal contact-section">
@@ -144,10 +144,18 @@
 </footer>
 
 <script>
+function smoothScroll(target) {
+  const el = document.querySelector(target);
+  window.scrollTo({
+    top: el.offsetTop - 150,
+    behavior: 'smooth'
+  });
+}
+
 window.addEventListener("scroll", () => {
   document.querySelectorAll(".reveal").forEach(el => {
     const top = el.getBoundingClientRect().top;
-    if (top < window.innerHeight - 80) el.classList.add("active");
+    if (top < window.innerHeight - 90) el.classList.add("active");
   });
 });
 </script>
