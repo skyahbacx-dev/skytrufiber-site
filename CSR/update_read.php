@@ -9,10 +9,11 @@ if (!$client_id) { echo json_encode([]); exit; }
 
 $csrUser = $_SESSION["csr_user"] ?? "";
 
-/* Fetch messages including seen status */
+/*
+   Fetch messages including read status
+*/
 $stmt = $conn->prepare("
-    SELECT id, message, sender_type, media_url, media_type, created_at,
-    seen
+    SELECT id, message, sender_type, media_url, media_type, created_at, seen
     FROM chat
     WHERE client_id = :cid
     ORDER BY created_at ASC
@@ -23,6 +24,13 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $out = [];
 
 foreach ($rows as $row) {
+
+    // Mark client messages as seen when CSR loads them
+    if ($row["sender_type"] == "client" && !$row["seen"]) {
+        $updateSeen = $conn->prepare("UPDATE chat SET seen = TRUE WHERE id = :id");
+        $updateSeen->execute([":id" => $row["id"]]);
+    }
+
     $out[] = [
         "id"          => $row["id"],
         "message"     => $row["message"],
