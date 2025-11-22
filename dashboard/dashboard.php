@@ -137,9 +137,15 @@
   </div>
 
   <div class="map-container">
-    <iframe width="100%" height="320" style="border:0;" loading="lazy" allowfullscreen
-      src="https://www.google.com/maps/embed/v1/place?key=AIzaSyC-QJrSbQX&zoom=15&q=Cityland+10+Tower+1+Makati+Philippines">
-    </iframe>
+<iframe
+  width="100%"
+  height="350"
+  style="border:0;"
+  loading="lazy"
+  allowfullscreen
+  src="https://maps.google.com/maps?q=Cityland%2010%20Tower%201%20HV%20Dela%20Costa%20Ave%20Bel%20Air%20Makati%20City&t=m&z=17&output=embed&iwloc=near">
+</iframe>
+
   </div>
 </section>
 
