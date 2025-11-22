@@ -1,5 +1,5 @@
 // ===============================================
-// CSR CHAT — FULL JAVASCRIPT (NO PARTIALS)
+// CSR CHAT — FULL JAVASCRIPT
 // ===============================================
 
 let selectedClient = 0;
@@ -43,7 +43,7 @@ function selectClient(id, name, assignedTo) {
     $("#sendBtn").prop("disabled", locked);
     $(".upload-icon").toggle(!locked);
 
-    $("#chatMessages").html(""); // clear old chat
+    $("#chatMessages").html("");
 
     loadMessages(true);
     loadClientInfo();
@@ -54,7 +54,8 @@ function selectClient(id, name, assignedTo) {
 // =========================
 function loadClientInfo() {
     if (!selectedClient) return;
-    $.getJSON("client_info.php?id=" + selectedClient, (data) => {
+
+    $.getJSON("client_info.php?id=" + selectedClient, data => {
         $("#infoName").text(data.name || "");
         $("#infoEmail").text(data.email || "");
         $("#infoDistrict").text(data.district || "");
@@ -68,7 +69,7 @@ function loadClientInfo() {
 function loadMessages(initial = false) {
     if (!selectedClient) return;
 
-    $.getJSON("load_chat_csr.php?client_id=" + selectedClient, (messages) => {
+    $.getJSON("load_chat_csr.php?client_id=" + selectedClient, messages => {
 
         if (initial) {
             $("#chatMessages").html("");
@@ -79,7 +80,7 @@ function loadMessages(initial = false) {
             const newMsgs = messages.slice(lastMessageCount);
 
             newMsgs.forEach(m => {
-                const side = (m.sender_type === "csr") ? "csr" : "client";
+                const side = m.sender_type === "csr" ? "csr" : "client";
 
                 let attachment = "";
                 if (m.media_url) {
@@ -88,12 +89,12 @@ function loadMessages(initial = false) {
 
                 const html = `
                 <div class="msg-row ${side}">
-                    <img src="upload/default-avatar.png" class="msg-avatar">
                     <div class="bubble-wrapper">
                         <div class="bubble">${m.message || ""}${attachment}</div>
                         <div class="meta">${m.created_at}</div>
                     </div>
-                </div>`;
+                </div>
+                `;
 
                 $("#chatMessages").append(html);
             });
@@ -109,9 +110,7 @@ function loadMessages(initial = false) {
 // SEND MESSAGE
 // =========================
 $("#sendBtn").click(sendMessage);
-$("#messageInput").keypress(e => {
-    if (e.key === "Enter") sendMessage();
-});
+$("#messageInput").keypress(e => { if (e.key === "Enter") sendMessage(); });
 
 function sendMessage() {
     let msg = $("#messageInput").val().trim();
@@ -136,7 +135,7 @@ function sendMessage() {
             $("#fileInput").val("");
             filesToSend = [];
             loadMessages(false);
-            loadClients(); // update unread badges
+            loadClients();
         }
     });
 }
@@ -152,7 +151,7 @@ $("#fileInput").on("change", function (e) {
 
     filesToSend.forEach(file => {
         let reader = new FileReader();
-        reader.onload = (ev) => {
+        reader.onload = ev => {
             $("#previewArea").append(`
                 <div class="preview-thumb">
                     <img src="${ev.target.result}">
@@ -164,15 +163,13 @@ $("#fileInput").on("change", function (e) {
 });
 
 // =========================
-// ASSIGN POPUPS
+// POPUP — ASSIGN / UNASSIGN
 // =========================
 function showAssignPopup(id) {
     currentAssignClient = id;
     $("#assignPopup").fadeIn(150);
 }
-function closeAssignPopup() {
-    $("#assignPopup").fadeOut(150);
-}
+function closeAssignPopup() { $("#assignPopup").fadeOut(150); }
 
 function confirmAssign() {
     $.post("assign_client.php", { client_id: currentAssignClient }, () => {
@@ -186,9 +183,7 @@ function showUnassignPopup(id) {
     currentUnassignClient = id;
     $("#unassignPopup").fadeIn(150);
 }
-function closeUnassignPopup() {
-    $("#unassignPopup").fadeOut(150);
-}
+function closeUnassignPopup() { $("#unassignPopup").fadeOut(150); }
 
 function confirmUnassign() {
     $.post("unassign_client.php", { client_id: currentUnassignClient }, () => {
@@ -201,11 +196,11 @@ function confirmUnassign() {
 }
 
 // =========================
-// CLIENT INFO SLIDE PANEL
+// INFO PANEL TOGGLE
 // =========================
-function toggleClientInfo() {
+$(document).on("click", ".info-btn", function () {
     $("#clientInfoPanel").toggleClass("show");
-}
+});
 
 // =========================
 // AUTO REFRESH
@@ -213,5 +208,7 @@ function toggleClientInfo() {
 setInterval(() => loadClients($("#searchInput").val()), 3000);
 setInterval(() => loadMessages(false), 1200);
 
-// FIRST LOAD
+// =========================
+// INITIAL LOAD
+// =========================
 loadClients();
