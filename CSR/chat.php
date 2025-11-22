@@ -1,24 +1,21 @@
 <?php
-
+session_start();
 if (!isset($_SESSION['csr_user'])) {
     http_response_code(401);
     exit("Unauthorized");
 }
-
-$csrUser = $_SESSION["csr_user"];
-$csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 ?>
 
 <!-- ================================
-     LEFT CLIENT LIST PANEL
+     LEFT CLIENT LIST
 ================================ -->
 <div class="client-panel">
-    <input class="search" placeholder="Search clients..." id="searchInput">
+    <input class="search" placeholder="Search clients..." id="searchInput" onkeyup="loadClients(this.value)">
     <div id="clientList" class="client-list"></div>
 </div>
 
 <!-- ================================
-     CHAT PANEL (CENTER)
+     CHAT PANEL — CENTER
 ================================ -->
 <div class="chat-panel" id="chatPanel">
 
@@ -33,62 +30,58 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
                 </div>
             </div>
         </div>
-        <button class="info-btn" onclick="toggleClientInfo()">ⓘ</button>
+        <button class="info-btn" onclick="toggleClientInfo()"><i class="fa fa-info-circle"></i></button>
     </div>
 
-    <!-- CHAT MESSAGES -->
-    <div class="chat-box" id="chatMessages"></div>
+    <!-- MESSAGES -->
+    <div class="chat-box" id="chatMessages">
+        <p class="placeholder-message">👈 Select a client to start chat</p>
+    </div>
 
-    <!-- PREVIEW BEFORE SENDING -->
+    <!-- PREVIEW BEFORE SEND -->
     <div id="previewArea" class="preview-area"></div>
 
-    <!-- INPUT BAR -->
+    <!-- CHAT INPUT -->
     <div class="chat-input">
         <label for="fileInput" class="upload-icon">
             <i class="fa-regular fa-image"></i>
         </label>
-        <input type="file" id="fileInput" multiple style="display:none;">
-        <input type="text" id="messageInput" placeholder="Type anything.....">
-        <button id="sendBtn" class="send-btn">
-            <i class="fa-solid fa-paper-plane"></i>
-        </button>
+        <input type="file" id="fileInput" multiple accept="image/*,video/*" hidden>
+        <input type="text" id="messageInput" placeholder="Type a message...">
+        <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
 
 </div>
 
 <!-- ================================
-     CLIENT INFO SLIDE PANEL (RIGHT)
+     RIGHT CLIENT INFO PANEL
 ================================ -->
 <aside id="clientInfoPanel" class="client-info-panel">
-    <button class="close-info" onclick="toggleClientInfo()">✖</button>
-    <h3>Client Information</h3>
-    <p><strong id="infoName"></strong></p>
-    <p id="infoEmail"></p>
-    <p><b>District:</b> <span id="infoDistrict"></span></p>
-    <p><b>Barangay:</b> <span id="infoBrgy"></span></p>
+    <div class="client-info-header">
+        <h3>Client Info</h3>
+        <button class="close-info" onclick="toggleClientInfo()">✖</button>
+    </div>
+
+    <p><strong>Name:</strong> <span id="infoName"></span></p>
+    <p><strong>Email:</strong> <span id="infoEmail"></span></p>
+    <p><strong>District:</strong> <span id="infoDistrict"></span></p>
+    <p><strong>Barangay:</strong> <span id="infoBrgy"></span></p>
 </aside>
 
 <!-- ================================
-     MEDIA MODAL (GALLERY VIEWER)
+     MEDIA VIEW MODAL — WITH GALLERY
 ================================ -->
 <div id="mediaModal" class="media-modal">
-    <span class="media-nav" id="mediaPrev">❮</span>
-    <img id="mediaDisplay" class="modal-content">
-    <span class="media-nav" id="mediaNext">❯</span>
+    <span id="closeMediaModal" class="close-modal">✖</span>
 
-    <div style="position:absolute; bottom:40px;">
-        <a id="downloadMedia" class="download-btn" download style="
-            background:white;color:black;
-            padding:6px 14px;border-radius:8px;
-            text-decoration:none;
-        ">Download</a>
+    <div class="media-display-container">
+        <img id="mediaDisplay" class="media-display">
     </div>
 
-    <span id="closeMediaModal" class="close-modal" style="
-        position:absolute;
-        top:20px; right:30px;
-        font-size:28px;
-        color:white;
-        cursor:pointer;
-    ">✖</span>
+    <div id="mediaThumbnails" class="media-thumbnails"></div>
+
+    <a id="downloadMedia" download class="download-btn">⬇ Download</a>
+
+    <button id="mediaPrev" class="media-nav prev">❮</button>
+    <button id="mediaNext" class="media-nav next">❯</button>
 </div>
