@@ -11,9 +11,6 @@ if (!$csrUser) {
 
 $search = $_GET["search"] ?? "";
 
-/*
-   Client list, unread count, typing indicator
-*/
 $sql = "
     SELECT
         c.id,
@@ -25,22 +22,13 @@ $sql = "
             WHERE m.client_id = c.id
             AND m.sender_type = 'client'
             AND m.seen = false
-            AND m.created_at > COALESCE(
-                (SELECT MAX(last_read)
-                 FROM chat_read r
-                 WHERE r.client_id = c.id
-                 AND r.csr = :csr),
-                '2000-01-01'
-            )
         ) AS unread,
 
         (
-            SELECT client_typing
-            FROM typing_status t
+            SELECT client_typing FROM typing_status t
             WHERE t.client_id = c.id
             LIMIT 1
         ) AS typing
-
     FROM clients c
 ";
 
@@ -51,12 +39,10 @@ if ($search !== "") {
 $sql .= " ORDER BY unread DESC, c.name ASC";
 
 $stmt = $conn->prepare($sql);
-
-$params = [":csr" => $csrUser];
+$params = [];
 if ($search !== "") {
     $params[":search"] = "%$search%";
 }
-
 $stmt->execute($params);
 
 $avatar = "upload/default-avatar.png";
@@ -68,7 +54,10 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $unread = intval($row["unread"]);
     $typing = $row["typing"];
 
-    // Action button
+    $subtitle = $assigned
+        ? ($assigned === $csrUser ? "Assigned to YOU" : "Assigned to $assigned")
+        : "Unassigned";
+
     if ($assigned === null) {
         $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'><i class=\"fa-solid fa-plus\"></i></button>";
     } elseif ($assigned === $csrUser) {
@@ -77,32 +66,22 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $btn = "<button class='lock-btn' disabled><i class=\"fa-solid fa-lock\"></i></button>";
     }
 
-    // Subtitle
-    $subtitle =
-        ($assigned === null
-            ? "Unassigned"
-            : ($assigned === $csrUser
-                ? "Assigned to YOU"
-                : "Assigned to $assigned"));
-
     echo "
-    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
+    <div class='client-item' id='client-$id' data-assigned='$assigned'
+         onclick='selectClient($id, \"$name\", \"$assigned\")'>
+
         <img src='$avatar' class='client-avatar'>
 
         <div class='client-content'>
             <div class='client-name'>
                 $name
-
                 " . ($typing ? "<span class='typing-badge'>Typing...</span>" : "") . "
-
                 " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
             </div>
-
             <div class='client-sub'>$subtitle</div>
         </div>
 
         <div class='client-actions'>$btn</div>
-    </div>
-    ";
+    </div>";
 }
 ?>
