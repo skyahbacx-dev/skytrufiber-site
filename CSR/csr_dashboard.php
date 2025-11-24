@@ -25,16 +25,19 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 </script>
 
 <script src="csr_chat.js"></script>
-
 </head>
+
 <body>
 
+<!-- TOP NAV -->
 <div class="topnav">
     <button class="hamburger" onclick="toggleSidebar()">☰</button>
+
     <div class="top-title">
         <img src="../AHBALOGO.png" class="nav-logo">
         <h2>CSR DASHBOARD — <?= strtoupper($csrUser) ?></h2>
     </div>
+
     <div class="nav-buttons">
         <button class="nav-btn active">💬 CHAT DASHBOARD</button>
         <button class="nav-btn" onclick="window.location='my_clients.php'">👥 MY CLIENTS</button>
@@ -45,6 +48,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     </div>
 </div>
 
+<!-- SIDE MENU -->
 <div class="sidebar" id="sidebar">
     <div class="side-title">MENU</div>
     <button class="side-item" onclick="window.location='csr_dashboard.php'">💬 Chat Dashboard</button>
@@ -57,10 +61,17 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<div class="layout">
+<!-- MAIN CHAT LAYOUT -->
+<div class="page-wrapper">
+    <div class="client-panel">
+        <input class="search" placeholder="Search clients..." id="searchInput">
+        <div id="clientList" class="client-list"></div>
+    </div>
+
     <?php include "chat.php"; ?>
 </div>
 
+<!-- ASSIGN POPUP -->
 <div id="assignPopup" class="popupBox">
     <div class="popupContent">
         <h3>Assign This Client To You?</h3>
@@ -71,6 +82,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     </div>
 </div>
 
+<!-- UNASSIGN POPUP -->
 <div id="unassignPopup" class="popupBox">
     <div class="popupContent">
         <h3>Remove This Client?</h3>
