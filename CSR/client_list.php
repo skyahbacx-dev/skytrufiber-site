@@ -12,8 +12,9 @@ if (!$csrUser) {
 $search = $_GET["search"] ?? "";
 
 /*
-   FIXED unread message counter for PostgreSQL:
-   Use boolean "false" and MAX(last_read)
+  FIXED unread counter (PostgreSQL)
+  boolean => use false instead of 0
+  MAX(last_read) avoids cardinality violation
 */
 $sql = "
     SELECT
@@ -45,19 +46,38 @@ if ($search !== "") {
 $sql .= " ORDER BY unread DESC, c.name ASC";
 
 $stmt = $conn->prepare($sql);
-
 $params = [":csr" => $csrUser];
 if ($search !== "") $params[":search"] = "%$search%";
-
 $stmt->execute($params);
 
 $avatar = "upload/default-avatar.png";
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $id   = $row["id"];
-    $name = htmlspecialchars($row["name"]);
+
+    $id       = $row["id"];
+    $name     = htmlspecialchars($row["name"]);
     $assigned = $row["assigned_csr"];
-    $unread = intval($row["unread"]);
+    $unread   = intval($row["unread"]);
+
+    // Determine icon state
+    $btn = "";
+
+    if ($assigned === null) {
+        // not assigned at all → plus (assign)
+        $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'>
+                    <i class=\"fa-solid fa-plus\"></i>
+                </button>";
+    } elseif ($assigned === $csrUser) {
+        // assigned to you → minus (unassign)
+        $btn = "<button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($id)'>
+                    <i class=\"fa-solid fa-minus\"></i>
+                </button>";
+    } else {
+        // assigned to someone else → locked
+        $btn = "<button class='locked-btn' disabled>
+                    <i class=\"fa-solid fa-lock\"></i>
+                </button>";
+    }
 
     echo "
     <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
@@ -74,6 +94,11 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     : "Assigned to $assigned")) . "
             </div>
         </div>
+
+        <div class='client-action'>
+            $btn
+        </div>
+
     </div>";
 }
 ?>
