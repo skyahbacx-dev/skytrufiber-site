@@ -13,7 +13,7 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 
     <!-- HEADER -->
     <div class="chat-header">
-        <div class="user-section" style="display:flex; align-items:center;">
+        <div class="user-section">
             <img id="chatAvatar" src="upload/default-avatar.png" class="chat-avatar">
             <div>
                 <div id="chatName" class="chat-name">Select a client</div>
