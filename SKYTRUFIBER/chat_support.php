@@ -3,7 +3,6 @@ include '../db_connect.php';
 header('Content-Type: text/html; charset=UTF-8');
 
 $username = $_GET['client'] ?? $_GET['username'] ?? 'Guest';
-
 date_default_timezone_set("Asia/Manila");
 
 function e($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
@@ -64,6 +63,13 @@ body{
 .media-img{max-width:200px;border-radius:12px;margin-top:6px}
 .media-video{max-width:240px;border-radius:12px;margin-top:6px}
 
+.seen-ic{color:#0f62fe;font-weight:600}
+.delivered-ic{opacity:.65}
+
+.typing-banner{
+  font-size:12px;color:#007bff;margin:2px 0;text-align:left;padding-left:10px;
+}
+
 .input-bar{
   display:flex;gap:6px;padding:10px;border-top:var(--border);
 }
@@ -92,7 +98,7 @@ button:hover{background:#0073db}
     <img src="../SKYTRUFIBER.png">
     <div>
       <div class="head-title">SkyTruFiber Support</div>
-      <div class="head-sub">Support Team Active</div>
+      <div class="head-sub" id="typingIndicator">Support Team Active</div>
     </div>
   </div>
 
@@ -124,7 +130,9 @@ const fileEl   = document.getElementById('fileUpload');
 
 let selectedFile = null;
 
-/* RENDER MESSAGE */
+// -------------------------------------
+// RENDER MESSAGE
+// -------------------------------------
 function renderRow(m){
   const row=document.createElement('div');
   const isCSR=(m.sender_type === 'csr');
@@ -139,24 +147,33 @@ function renderRow(m){
 
   if(m.message) bubble.appendChild(document.createTextNode(m.message));
 
-  if(m.media_path){
-    if(m.media_type==='image'){
-      const img=document.createElement('img');
-      img.src="../"+m.media_path;
-      img.className='media-img';
-      bubble.appendChild(img);
-    } else {
-      const vid=document.createElement('video');
-      vid.src="../"+m.media_path;
-      vid.controls=true;
-      vid.className='media-video';
-      bubble.appendChild(vid);
-    }
+  if(m.media && Array.isArray(m.media)){
+    m.media.forEach(file=>{
+      if(file.media_type==="image"){
+        const img=document.createElement('img');
+        img.src=file.media_path;
+        img.className='media-img';
+        bubble.appendChild(img);
+      } else {
+        const vid=document.createElement('video');
+        vid.src=file.media_path;
+        vid.controls=true;
+        vid.className='media-video';
+        bubble.appendChild(vid);
+      }
+    });
   }
 
   const t=document.createElement('div');
   t.className='time';
-  t.textContent=m.created_at;
+  let statusText = "";
+
+  if(!isCSR){
+    if(m.seen == true)  statusText=" <span class='seen-ic'>Seen ✓✓</span>";
+    else                statusText=" <span class='delivered-ic'>Delivered ✓</span>";
+  }
+
+  t.innerHTML = m.created_at + statusText;
   bubble.appendChild(t);
 
   row.appendChild(av);
@@ -164,20 +181,20 @@ function renderRow(m){
   chatBox.appendChild(row);
 }
 
-/* LOAD CHAT – now uses load_chat_client.php */
+// LOAD CHAT
 function loadChat(){
   fetch('load_chat_client.php?client='+encodeURIComponent(USERNAME))
     .then(r=>r.json())
     .then(list=>{
       chatBox.innerHTML='';
       list.forEach(renderRow);
-      chatBox.scrollTop = chatBox.scrollHeight;
+      chatBox.scrollTop=chatBox.scrollHeight;
     });
 }
 
-/* SEND MESSAGE – now uses save_chat_client.php */
+// SEND MESSAGE
 function sendMessage(){
-  const msg=(inputEl.value || '').trim();
+  const msg=(inputEl.value||'').trim();
   if(!msg && !selectedFile) return;
 
   const form=new FormData();
@@ -196,12 +213,12 @@ function sendMessage(){
     });
 }
 
-/* File Preview */
+// FILE PREVIEW
 fileEl.addEventListener('change', ()=>{
   if(!fileEl.files.length) return;
   selectedFile=fileEl.files[0];
-
   const ext=selectedFile.name.split('.').pop().toLowerCase();
+
   const preview=document.getElementById('previewContent');
   preview.innerHTML='';
 
@@ -232,7 +249,22 @@ function confirmSendMedia(ok){
   sendMessage();
 }
 
-/* ENTER to send */
+// TYPING
+inputEl.addEventListener('input', ()=>{
+  fetch('typing_update.php',{
+    method:'POST',
+    body:new URLSearchParams({client_id:USERNAME,client_typing:1})
+  });
+
+  setTimeout(()=>{
+    fetch('typing_update.php',{
+      method:'POST',
+      body:new URLSearchParams({client_id:USERNAME,client_typing:0})
+    });
+  },1200);
+});
+
+// ENTER TO SEND
 inputEl.addEventListener('keydown', e=>{
   if(e.key==='Enter' && !e.shiftKey){
     e.preventDefault();
@@ -240,7 +272,8 @@ inputEl.addEventListener('keydown', e=>{
   }
 });
 
-setInterval(loadChat, 1500);
+// REFRESH
+setInterval(loadChat,1000);
 loadChat();
 </script>
 
