@@ -1,55 +1,63 @@
 <?php
 session_start();
 include "../db_connect.php";
-header("Content-Type: application/json");
-date_default_timezone_set("Asia/Manila");
+header("Content-Type: application/json; charset=utf-8");
 
-$client_id = $_GET["client_id"] ?? 0;
-if (!$client_id) {
+$csrUser = $_SESSION["csr_user"] ?? null;
+$client_id = intval($_GET["client_id"] ?? 0);
+
+if (!$csrUser || !$client_id) {
     echo json_encode([]);
     exit;
 }
 
-/*
-   Pull messages + media in one structured array:
-   Each chat row can have 0..n media rows from chat_media table.
-*/
-
-$stmt = $conn->prepare("
+// MAIN CHAT MESSAGES
+$sql = "
     SELECT
-        c.id AS chat_id,
+        c.id,
         c.message,
         c.sender_type,
         c.created_at,
-        c.csr_fullname,
-        COALESCE(json_agg(
-            json_build_object(
-                'media_path', cm.media_path,
-                'media_type', cm.media_type
-            )
-        ) FILTER (WHERE cm.id IS NOT NULL), '[]') AS media_files
+        c.seen
     FROM chat c
-    LEFT JOIN chat_media cm ON cm.chat_id = c.id
     WHERE c.client_id = :cid
-    GROUP BY c.id
-    ORDER BY c.created_at ASC
-");
+    ORDER BY c.id ASC
+";
 
+$stmt = $conn->prepare($sql);
 $stmt->execute([":cid" => $client_id]);
-$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$out = [];
-foreach ($rows as $row) {
+// GET MEDIA FOR MESSAGES
+$sql2 = "
+    SELECT
+        cm.chat_id,
+        cm.media_path,
+        cm.media_type
+    FROM chat_media cm
+    JOIN chat c ON cm.chat_id = c.id
+    WHERE c.client_id = :cid
+    ORDER BY cm.id ASC
+";
 
-    $out[] = [
-        "chat_id"     => $row["chat_id"],
-        "message"     => $row["message"],
-        "sender_type" => $row["sender_type"],
-        "created_at"  => date("M d, g:i A", strtotime($row["created_at"])),
-        "csr_fullname"=> $row["csr_fullname"],
-        "media_files" => json_decode($row["media_files"], true)
-    ];
+$stmt2 = $conn->prepare($sql2);
+$stmt2->execute([":cid" => $client_id]);
+$media = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
+// MERGE MEDIA INTO MESSAGE ARRAY
+foreach ($messages as &$msg) {
+    $msg["media"] = [];
+
+    foreach ($media as $m) {
+        if ($m["chat_id"] == $msg["id"]) {
+            $msg["media"][] = [
+                "media_path" => $m["media_path"],
+                "media_type" => $m["media_type"]
+            ];
+        }
+    }
 }
 
-echo json_encode($out);
+echo json_encode($messages);
+exit;
 ?>
