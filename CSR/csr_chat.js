@@ -1,5 +1,5 @@
 // ======================================================================
-// CSR CHAT — FULL STABLE JAVASCRIPT (FINAL BUILD)
+// CSR CHAT — FULL STABLE JAVASCRIPT (FINAL MESSENGER BUILD)
 // ======================================================================
 
 let selectedClient = 0;
@@ -7,14 +7,6 @@ let selectedClientAssigned = "";
 let filesToSend = [];
 let lastMessageCount = 0;
 let loadingMessages = false;
-
-// =======================================
-// SIDEBAR TOGGLE
-// =======================================
-function toggleSidebar() {
-    document.querySelector(".sidebar").classList.toggle("open");
-    document.querySelector(".sidebar-overlay").classList.toggle("show");
-}
 
 // =======================================
 // LOAD CLIENT LIST
@@ -93,7 +85,7 @@ function loadMessages(initial = false) {
                 }
 
                 const html = `
-                    <div class="msg-row ${side}">
+                    <div class="msg-row ${side} animate-msg">
                         <div class="bubble-wrapper">
                             <div class="bubble">${m.message || ""}${attachment}</div>
                             <div class="meta">${m.created_at}</div>
@@ -116,7 +108,10 @@ function loadMessages(initial = false) {
 // =======================================
 $("#sendBtn").click(sendMessage);
 $("#messageInput").keypress((e) => {
-    if (e.key === "Enter") sendMessage();
+    if (e.key === "Enter") {
+        e.preventDefault();
+        sendMessage();
+    }
 });
 
 function sendMessage() {
@@ -172,14 +167,7 @@ $("#fileInput").on("change", function (e) {
 });
 
 // =======================================
-// INFO PANEL SLIDE
-// =======================================
-function toggleClientInfo() {
-    document.getElementById("clientInfoPanel").classList.toggle("show");
-}
-
-// =======================================
-// MEDIA VIEWER MODAL
+// MEDIA VIEWER
 // =======================================
 function openMedia(src) {
     $("#mediaModal").addClass("show");
@@ -188,10 +176,19 @@ function openMedia(src) {
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
 // =======================================
-// AUTO REFRESH CHAT + CLIENT LIST
+// INFO PANEL TOGGLE
+// =======================================
+$("#infoToggle").click(toggleClientInfo);
+
+function toggleClientInfo() {
+    $("#clientInfoPanel").toggleClass("show");
+}
+
+// =======================================
+// AUTO REFRESH
 // =======================================
 setInterval(() => loadClients($("#searchInput").val()), 2500);
-setInterval(() => loadMessages(false), 1200);
+setInterval(() => loadMessages(false), 1000);
 
-// INITIAL LOAD
+// INITIAL PAGE LOAD
 loadClients();
