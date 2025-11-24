@@ -11,10 +11,7 @@ if (!$csrUser) {
 
 $search = $_GET["search"] ?? "";
 
-/*
-   PostgreSQL FIXED unread counter using boolean type
-   and MAX(last_read) single-row subquery
-*/
+// MAIN QUERY FOR CLIENT SIDEBAR
 $sql = "
     SELECT
         c.id,
@@ -26,15 +23,13 @@ $sql = "
             WHERE m.client_id = c.id
             AND m.sender_type = 'client'
             AND m.seen = false
-            AND m.created_at > COALESCE(
-                (SELECT MAX(last_read)
-                 FROM chat_read r
-                 WHERE r.client_id = c.id
-                 AND r.csr = :csr),
-                '2000-01-01'
-            )
-        ) AS unread
+        ) AS unread,
 
+        (
+            SELECT ts.csr_typing
+            FROM typing_status ts
+            WHERE ts.client_id = c.id
+        ) AS typing
     FROM clients c
 ";
 
@@ -45,10 +40,8 @@ if ($search !== "") {
 $sql .= " ORDER BY unread DESC, c.name ASC";
 
 $stmt = $conn->prepare($sql);
-
-$params = [":csr" => $csrUser];
+$params = [];
 if ($search !== "") $params[":search"] = "%$search%";
-
 $stmt->execute($params);
 
 $avatar = "upload/default-avatar.png";
@@ -58,35 +51,26 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $name = htmlspecialchars($row["name"]);
     $assigned = $row["assigned_csr"];
     $unread = intval($row["unread"]);
+    $typing = intval($row["typing"]);
 
-    // Determine icon
-    $btn = "";
-    if ($assigned === null) {
-        $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'><i class=\"fa-solid fa-plus\"></i></button>";
-    } elseif ($assigned === $csrUser) {
-        $btn = "<button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($id)'><i class=\"fa-solid fa-minus\"></i></button>";
-    } else {
-        $btn = "<button class='lock-btn' disabled><i class=\"fa-solid fa-lock\"></i></button>";
-    }
+    $badge = ($unread > 0) ? "<span class='badge'>$unread</span>" : "";
+    $typingLabel = ($typing == 1) ? "<span class='typing-dots'>typing...</span>" : "";
 
     echo "
-    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
+    <div class='client-item'
+         id='client-$id'
+         data-id='$id'
+         data-name='$name'
+         data-assigned='$assigned'
+         onclick='selectClient($id, \"$name\", \"$assigned\")'>
+
         <img src='$avatar' class='client-avatar'>
 
         <div class='client-content'>
-            <div class='client-name'>
-                $name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
-            </div>
-
+            <div class='client-name'>$name $badge</div>
             <div class='client-sub'>
-                " . ($assigned === null ? "Unassigned"
-                    : ($assigned === $csrUser ? "Assigned to YOU"
-                    : "Assigned to $assigned")) . "
+                $typingLabel
             </div>
-        </div>
-
-        <div class='client-actions'>
-            $btn
         </div>
     </div>";
 }
