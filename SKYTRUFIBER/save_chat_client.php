@@ -1,45 +1,48 @@
 <?php
 session_start();
 include '../db_connect.php';
-include '../b2_upload.php';
 header('Content-Type: application/json');
 
 date_default_timezone_set("Asia/Manila");
 
-$username = $_POST["username"] ?? '';
-$message  = trim($_POST["message"] ?? '');
-$sender_type = "client";
+$sender_type  = $_POST["sender_type"] ?? "client";
+$message      = trim($_POST["message"] ?? '');
+$username     = $_POST["username"] ?? '';
 
 if (!$username) {
-    echo json_encode(["status"=>"error","msg"=>"missing username"]);
+    echo json_encode(["status" => "error", "msg" => "missing username"]);
     exit;
 }
 
-$stmt = $conn->prepare("SELECT id FROM clients WHERE name = :n LIMIT 1");
-$stmt->execute([":n"=>$username]);
+// Find client_id
+$stmt = $conn->prepare("SELECT id FROM clients WHERE name = :u LIMIT 1");
+$stmt->execute([":u" => $username]);
 $client_id = $stmt->fetchColumn();
 
 if (!$client_id) {
-    echo json_encode(["status"=>"error","msg"=>"client not found"]);
+    echo json_encode(["status" => "error", "msg" => "unknown client"]);
     exit;
 }
 
+// Handle media upload
 $media_path = null;
 $media_type = null;
 
-if (!empty($_FILES["file"]["tmp_name"])) {
-    $tmp  = $_FILES["file"]["tmp_name"];
-    $name = basename($_FILES["file"]["name"]);
-    $ext  = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+if (!empty($_FILES['file']['name'])) {
 
-    $media_type = in_array($ext, ["jpg","jpeg","png","gif","webp"]) ? "image" : "video";
-    $newName    = time() . "_" . rand(1000,9999) . "." . $ext;
+    include "b2_upload.php";
 
-    // Upload to B2
-    $url = b2_upload($tmp, $newName);
-    if ($url) $media_path = $url;
+    $fileName = time() . "_" . $_FILES['file']['name'];
+    $uploadedUrl = b2_upload($_FILES['file']['tmp_name'], $fileName);
+
+    if ($uploadedUrl) {
+        $media_path = $uploadedUrl;
+        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $media_type = in_array($ext, ['jpg','jpeg','png','gif','webp']) ? 'image' : 'video';
+    }
 }
 
+// Save chat
 $stmt = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, media_path, media_type, created_at)
     VALUES (:cid, :stype, :msg, :mp, :mt, NOW())
@@ -53,5 +56,5 @@ $stmt->execute([
     ":mt"    => $media_type
 ]);
 
-echo json_encode(["status"=>"ok"]);
+echo json_encode(["status" => "ok"]);
 ?>
