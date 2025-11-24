@@ -1,7 +1,7 @@
 <?php
 session_start();
 include "../db_connect.php";
-include "b2_upload.php";
+include "CSR/b2_upload.php";
 header("Content-Type: application/json");
 
 $username = $_POST["username"] ?? "";
