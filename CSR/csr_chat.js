@@ -14,13 +14,13 @@ function loadClients() {
     $.get("client_list.php", function (data) {
         $("#clientList").html(data);
 
-        // auto select first client if none active
-        if (selectedClient === 0) {
+        // Auto-select first client if none is selected
+        if (!selectedClient) {
             let first = $(".client-item").first();
             if (first.length > 0) {
-                const cid = first.attr("id").replace("client-","");
-                const name = first.find(".client-name").text().trim();
-                const assigned = first.data("assigned") || "";
+                const cid = first.attr("id").replace("client-", "");
+                const name = first.find(".client-name").contents().first().text().trim();
+                const assigned = first.attr("data-assigned") || "";
                 selectClient(cid, name, assigned);
             }
         }
@@ -40,11 +40,12 @@ function selectClient(id, name, assignedTo) {
     $("#chatMessages").html("");
 
     lastMessageCount = 0;
+
     loadMessages(true);
 }
 
 // =======================================
-// LOAD CHAT MESSAGES
+// LOAD MESSAGES
 // =======================================
 function loadMessages(initial = false) {
     if (!selectedClient || loadingMessages) return;
@@ -62,8 +63,8 @@ function loadMessages(initial = false) {
 
             newMsgs.forEach((m) => {
                 const side = (m.sender_type === "csr") ? "csr" : "client";
-
                 let mediaHTML = "";
+
                 if (m.media_path) {
                     if (m.media_type === "image") {
                         mediaHTML = `<img src="${m.media_path}" class="file-img" onclick="openMedia('${m.media_path}')">`;
@@ -115,7 +116,7 @@ function sendMessage() {
         processData: false,
         contentType: false,
         data: fd,
-        success: function (res) {
+        success: function () {
             $("#messageInput").val("");
             $("#previewArea").html("");
             $("#fileInput").val("");
@@ -167,5 +168,5 @@ $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 setInterval(() => loadClients(), 2000);
 setInterval(() => loadMessages(false), 1200);
 
-// initial load
+// INITIAL LOAD
 loadClients();
