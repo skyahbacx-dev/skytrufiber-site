@@ -1,14 +1,16 @@
 // =======================================================
-// CSR CHAT — FULL JAVASCRIPT FINAL BUILD (NO PARTIALS)
+// CSR CHAT — FULL JAVASCRIPT FINAL VERSION
+// MULTI-MEDIA SUPPORT + B2 STORAGE + CLIENT INFO SLIDE
 // =======================================================
 
 let selectedClient = 0;
 let selectedClientAssigned = "";
 let filesToSend = [];
-let currentAssignClient = null;
-let currentUnassignClient = null;
 let lastMessageCount = 0;
 let loadingMessages = false;
+
+let currentAssignClient = null;
+let currentUnassignClient = null;
 
 // =============================
 // SIDEBAR
@@ -22,7 +24,7 @@ function toggleSidebar() {
 // LOAD CLIENT LIST
 // =============================
 function loadClients(search = "") {
-    $.get("client_list.php", { search: search }, (data) => {
+    $.get("client_list.php", { search: search }, function (data) {
         $("#clientList").html(data);
     });
 }
@@ -39,7 +41,6 @@ function selectClient(id, name, assignedTo) {
 
     $("#chatName").text(name);
 
-    // lock if assigned to different CSR
     const locked = assignedTo && assignedTo !== csrUser;
     $("#messageInput").prop("disabled", locked);
     $("#sendBtn").prop("disabled", locked);
@@ -53,16 +54,16 @@ function selectClient(id, name, assignedTo) {
 }
 
 // =============================
-// LOAD CLIENT INFO PANEL
+// LOAD CLIENT INFO
 // =============================
 function loadClientInfo() {
     if (!selectedClient) return;
 
-    $.getJSON("client_info.php?id=" + selectedClient, (data) => {
-        $("#infoName").text(data.name || "");
-        $("#infoEmail").text(data.email || "");
-        $("#infoDistrict").text(data.district || "");
-        $("#infoBrgy").text(data.barangay || "");
+    $.getJSON("client_info.php?id=" + selectedClient, (d) => {
+        $("#infoName").text(d.name || "");
+        $("#infoEmail").text(d.email || "");
+        $("#infoDistrict").text(d.district || "");
+        $("#infoBrgy").text(d.barangay || "");
     });
 }
 
@@ -84,25 +85,30 @@ function loadMessages(initial = false) {
             const newMsgs = messages.slice(lastMessageCount);
 
             newMsgs.forEach(m => {
-                const side = (m.sender_type === "csr") ? "csr" : "client";
+                const side = m.sender_type === "csr" ? "csr" : "client";
 
-                let attachment = "";
-                if (m.media_url) {
-                    if (m.media_type === "image") {
-                        attachment = `<img src="${m.media_url}" class="file-img" onclick="openMedia('${m.media_url}')">`;
-                    } else if (m.media_type === "video") {
-                        attachment = `<video class="file-img" controls><source src="${m.media_url}"></video>`;
-                    }
+                let body = `${m.message ? m.message : ""}`;
+
+                // MULTIPLE MEDIA
+                if (m.media_files && m.media_files.length > 0) {
+                    m.media_files.forEach(file => {
+                        if (file.media_type === "image") {
+                            body += `<img src="${file.media_path}" class="file-img" onclick="openMedia('${file.media_path}')">`;
+                        } else if (file.media_type === "video") {
+                            body += `<video class="file-img" controls><source src="${file.media_path}"></video>`;
+                        }
+                    });
                 }
 
                 const html = `
                 <div class="msg-row ${side} animate-msg">
                     <img src="upload/default-avatar.png" class="msg-avatar">
                     <div class="bubble-wrapper">
-                        <div class="bubble">${m.message || ""}${attachment}</div>
+                        <div class="bubble">${body}</div>
                         <div class="meta">${m.created_at}</div>
                     </div>
-                </div>`;
+                </div>
+                `;
 
                 $("#chatMessages").append(html);
             });
@@ -122,7 +128,7 @@ $("#sendBtn").click(sendMessage);
 $("#messageInput").keypress(e => { if (e.key === "Enter") sendMessage(); });
 
 function sendMessage() {
-    let msg = $("#messageInput").val().trim();
+    const msg = $("#messageInput").val().trim();
     if (!msg && filesToSend.length === 0) return;
 
     let fd = new FormData();
@@ -138,11 +144,12 @@ function sendMessage() {
         contentType: false,
         processData: false,
         data: fd,
-        success: () => {
+        success: function () {
             $("#messageInput").val("");
             $("#previewArea").html("");
             $("#fileInput").val("");
             filesToSend = [];
+
             loadMessages(false);
             loadClients();
         }
@@ -150,7 +157,7 @@ function sendMessage() {
 }
 
 // =============================
-// FILE PREVIEW
+// MEDIA PREVIEW BEFORE SENDING
 // =============================
 $(".upload-icon").on("click", () => $("#fileInput").click());
 
@@ -172,14 +179,15 @@ $("#fileInput").on("change", (e) => {
 });
 
 // =============================
-// ASSIGN POPUP
+// ASSIGN + UNASSIGN POPUPS
 // =============================
 function showAssignPopup(id) {
     currentAssignClient = id;
-    $("#assignPopup").fadeIn(150);
+    $("#assignPopup").fadeIn(140);
 }
-function closeAssignPopup() { $("#assignPopup").fadeOut(150); }
-
+function closeAssignPopup() {
+    $("#assignPopup").fadeOut(140);
+}
 function confirmAssign() {
     $.post("assign_client.php", { client_id: currentAssignClient }, () => {
         closeAssignPopup();
@@ -188,26 +196,24 @@ function confirmAssign() {
     });
 }
 
-// =============================
-// UNASSIGN POPUP
-// =============================
 function showUnassignPopup(id) {
     currentUnassignClient = id;
-    $("#unassignPopup").fadeIn(150);
+    $("#unassignPopup").fadeIn(140);
 }
-function closeUnassignPopup() { $("#unassignPopup").fadeOut(150); }
-
+function closeUnassignPopup() {
+    $("#unassignPopup").fadeOut(140);
+}
 function confirmUnassign() {
     $.post("unassign_client.php", { client_id: currentUnassignClient }, () => {
         closeUnassignPopup();
         loadClients();
-        $("#chatMessages").html(`<p class="placeholder">👈 Select a client to chat</p>`);
+        $("#chatMessages").html("<p class='placeholder'>👈 Select a client to chat</p>");
         selectedClient = 0;
     });
 }
 
 // =============================
-// CLIENT INFO PANEL HANDLER
+// CLIENT INFO SLIDE PANEL
 // =============================
 function toggleClientInfo() {
     document.getElementById("clientInfoPanel").classList.toggle("show");
@@ -228,7 +234,5 @@ $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 setInterval(() => loadClients($("#searchInput").val()), 2500);
 setInterval(() => loadMessages(false), 1200);
 
-// =============================
-// INITIAL
-// =============================
+// Start
 loadClients();
