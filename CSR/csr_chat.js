@@ -1,10 +1,12 @@
 // =======================================================
-// CSR CHAT — FINAL WORKING BUILD
+// CSR CHAT — FULL JAVASCRIPT FINAL BUILD (NO PARTIALS)
 // =======================================================
 
 let selectedClient = 0;
 let selectedClientAssigned = "";
 let filesToSend = [];
+let currentAssignClient = null;
+let currentUnassignClient = null;
 let lastMessageCount = 0;
 let loadingMessages = false;
 
@@ -20,13 +22,13 @@ function toggleSidebar() {
 // LOAD CLIENT LIST
 // =============================
 function loadClients(search = "") {
-    $.get("client_list.php", { search: search }, function (data) {
+    $.get("client_list.php", { search: search }, (data) => {
         $("#clientList").html(data);
     });
 }
 
 // =============================
-// SELECT CLIENT
+// SELECT A CLIENT
 // =============================
 function selectClient(id, name, assignedTo) {
     selectedClient = id;
@@ -37,6 +39,7 @@ function selectClient(id, name, assignedTo) {
 
     $("#chatName").text(name);
 
+    // lock if assigned to different CSR
     const locked = assignedTo && assignedTo !== csrUser;
     $("#messageInput").prop("disabled", locked);
     $("#sendBtn").prop("disabled", locked);
@@ -78,28 +81,30 @@ function loadMessages(initial = false) {
         }
 
         if (messages.length > lastMessageCount) {
-            let newMsgs = messages.slice(lastMessageCount);
+            const newMsgs = messages.slice(lastMessageCount);
 
-            newMsgs.forEach((m) => {
+            newMsgs.forEach(m => {
                 const side = (m.sender_type === "csr") ? "csr" : "client";
 
                 let attachment = "";
                 if (m.media_url) {
                     if (m.media_type === "image") {
                         attachment = `<img src="${m.media_url}" class="file-img" onclick="openMedia('${m.media_url}')">`;
-                    } else {
+                    } else if (m.media_type === "video") {
                         attachment = `<video class="file-img" controls><source src="${m.media_url}"></video>`;
                     }
                 }
 
-                $("#chatMessages").append(`
+                const html = `
                 <div class="msg-row ${side} animate-msg">
                     <img src="upload/default-avatar.png" class="msg-avatar">
                     <div class="bubble-wrapper">
                         <div class="bubble">${m.message || ""}${attachment}</div>
                         <div class="meta">${m.created_at}</div>
                     </div>
-                </div>`);
+                </div>`;
+
+                $("#chatMessages").append(html);
             });
 
             $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
@@ -124,6 +129,7 @@ function sendMessage() {
     fd.append("message", msg);
     fd.append("client_id", selectedClient);
     fd.append("csr_fullname", csrFullname);
+
     filesToSend.forEach(f => fd.append("files[]", f));
 
     $.ajax({
@@ -137,7 +143,6 @@ function sendMessage() {
             $("#previewArea").html("");
             $("#fileInput").val("");
             filesToSend = [];
-
             loadMessages(false);
             loadClients();
         }
@@ -149,7 +154,7 @@ function sendMessage() {
 // =============================
 $(".upload-icon").on("click", () => $("#fileInput").click());
 
-$("#fileInput").on("change", function (e) {
+$("#fileInput").on("change", (e) => {
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
@@ -167,17 +172,63 @@ $("#fileInput").on("change", function (e) {
 });
 
 // =============================
-// INFO PANEL
+// ASSIGN POPUP
+// =============================
+function showAssignPopup(id) {
+    currentAssignClient = id;
+    $("#assignPopup").fadeIn(150);
+}
+function closeAssignPopup() { $("#assignPopup").fadeOut(150); }
+
+function confirmAssign() {
+    $.post("assign_client.php", { client_id: currentAssignClient }, () => {
+        closeAssignPopup();
+        loadClients();
+        loadMessages(true);
+    });
+}
+
+// =============================
+// UNASSIGN POPUP
+// =============================
+function showUnassignPopup(id) {
+    currentUnassignClient = id;
+    $("#unassignPopup").fadeIn(150);
+}
+function closeUnassignPopup() { $("#unassignPopup").fadeOut(150); }
+
+function confirmUnassign() {
+    $.post("unassign_client.php", { client_id: currentUnassignClient }, () => {
+        closeUnassignPopup();
+        loadClients();
+        $("#chatMessages").html(`<p class="placeholder">👈 Select a client to chat</p>`);
+        selectedClient = 0;
+    });
+}
+
+// =============================
+// CLIENT INFO PANEL HANDLER
 // =============================
 function toggleClientInfo() {
     document.getElementById("clientInfoPanel").classList.toggle("show");
 }
 
 // =============================
+// MEDIA VIEWER
+// =============================
+function openMedia(src) {
+    $("#mediaModal").addClass("show");
+    $("#mediaModalContent").attr("src", src);
+}
+$("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
+
+// =============================
 // AUTO REFRESH
 // =============================
-setInterval(() => loadMessages(false), 1200);
 setInterval(() => loadClients($("#searchInput").val()), 2500);
+setInterval(() => loadMessages(false), 1200);
 
-// FIRST LOAD
+// =============================
+// INITIAL
+// =============================
 loadClients();
