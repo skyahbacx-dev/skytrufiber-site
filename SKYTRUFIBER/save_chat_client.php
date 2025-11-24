@@ -1,60 +1,48 @@
 <?php
 session_start();
-include '../db_connect.php';
-header('Content-Type: application/json');
+include "../db_connect.php";
+include "b2_upload.php";
+header("Content-Type: application/json");
 
-date_default_timezone_set("Asia/Manila");
+$username = $_POST["username"] ?? "";
+$message  = trim($_POST["message"] ?? "");
 
-$sender_type  = $_POST["sender_type"] ?? "client";
-$message      = trim($_POST["message"] ?? '');
-$username     = $_POST["username"] ?? '';
+if (!$username) { echo json_encode(["status"=>"error"]); exit; }
 
-if (!$username) {
-    echo json_encode(["status" => "error", "msg" => "missing username"]);
-    exit;
-}
+$stmt = $conn->prepare("SELECT id FROM clients WHERE name = :n LIMIT 1");
+$stmt->execute([":n" => $username]);
+$client_id = intval($stmt->fetchColumn());
 
-// Find client_id
-$stmt = $conn->prepare("SELECT id FROM clients WHERE name = :u LIMIT 1");
-$stmt->execute([":u" => $username]);
-$client_id = $stmt->fetchColumn();
+if (!$client_id) { echo json_encode(["status"=>"error"]); exit; }
 
-if (!$client_id) {
-    echo json_encode(["status" => "error", "msg" => "unknown client"]);
-    exit;
-}
-
-// Handle media upload
 $media_path = null;
 $media_type = null;
 
-if (!empty($_FILES['file']['name'])) {
+/* file upload */
+if (!empty($_FILES["file"]["name"])) {
+    $fileTmp  = $_FILES["file"]["tmp_name"];
+    $fileName = time() . "_" . basename($_FILES["file"]["name"]);
+    $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-    include "b2_upload.php";
+    if (in_array($ext, ["jpg","jpeg","png","gif","webp"])) $media_type = "image";
+    elseif (in_array($ext, ["mp4","mov","avi","mkv","webm"])) $media_type = "video";
 
-    $fileName = time() . "_" . $_FILES['file']['name'];
-    $uploadedUrl = b2_upload($_FILES['file']['tmp_name'], $fileName);
-
-    if ($uploadedUrl) {
-        $media_path = $uploadedUrl;
-        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-        $media_type = in_array($ext, ['jpg','jpeg','png','gif','webp']) ? 'image' : 'video';
+    if ($media_type) {
+        $uploaded = b2_upload($fileTmp, "chat/$fileName");
+        if ($uploaded) $media_path = $uploaded;
     }
 }
 
-// Save chat
+/* Insert message */
 $stmt = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, media_path, media_type, created_at)
-    VALUES (:cid, :stype, :msg, :mp, :mt, NOW())
+    VALUES (:cid, 'client', :msg, :p, :t, NOW())
 ");
-
 $stmt->execute([
-    ":cid"   => $client_id,
-    ":stype" => $sender_type,
-    ":msg"   => $message,
-    ":mp"    => $media_path,
-    ":mt"    => $media_type
+    ":cid" => $client_id,
+    ":msg" => $message,
+    ":p"   => $media_path,
+    ":t"   => $media_type
 ]);
 
-echo json_encode(["status" => "ok"]);
-?>
+echo json_encode(["status"=>"ok"]);
