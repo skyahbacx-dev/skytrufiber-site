@@ -1,9 +1,9 @@
 <?php
 session_start();
 include "../db_connect.php";
-include "b2_upload.php";   // must exist and return uploaded B2 URL
-
+include "b2_upload.php";  // Backblaze uploader function
 header("Content-Type: application/json");
+date_default_timezone_set("Asia/Manila");
 
 $csr_user     = $_SESSION["csr_user"] ?? null;
 $csr_fullname = $_SESSION["csr_fullname"] ?? "CSR";
@@ -15,9 +15,9 @@ if (!$csr_user || !$client_id) {
     exit;
 }
 
-// ============================================
-// 1) Insert the base chat row first
-// ============================================
+// =======================================================
+// 1️⃣ INSERT BASE CHAT MESSAGE FIRST (NO MEDIA YET)
+// =======================================================
 $stmt = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, csr_fullname, created_at)
     VALUES (:cid, 'csr', :msg, :csr, NOW())
@@ -28,43 +28,46 @@ $stmt->execute([
     ":csr" => $csr_fullname
 ]);
 
-$chat_id = $conn->lastInsertId(); // IMPORTANT for linking media records
+$chat_id = $conn->lastInsertId(); // required for linking media files
 
-// ============================================
-// 2) Process media files (if any)
-// ============================================
-if (!empty($_FILES['files']['name'][0])) {
+// =======================================================
+// 2️⃣ HANDLE FILE UPLOADS TO BACKBLAZE B2
+// =======================================================
+if (!empty($_FILES["files"]["name"][0])) {
 
-    foreach ($_FILES['files']['tmp_name'] as $index => $tmpFile) {
+    foreach ($_FILES["files"]["tmp_name"] as $i => $tmpFile) {
 
         if (!$tmpFile) continue;
 
-        $origName = $_FILES['files']['name'][$index];
-        $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+        $originalName = $_FILES["files"]["name"][$i];
+        $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
         $newName = time() . "_" . rand(1000, 9999) . "." . $ext;
 
         // Upload to Backblaze B2
-        $uploadedUrl = b2_upload($tmpFile, $newName);
+        $url = b2_upload($tmpFile, $newName);
 
-        if ($uploadedUrl) {
+        if ($url) {
+            $media_type = in_array($ext, ['jpg','jpeg','png','gif','webp'])
+                ? "image"
+                : (in_array($ext, ['mp4','mov','avi','mkv','webm']) ? "video" : null);
 
-            $media_type = in_array($ext, ['jpg','jpeg','png','gif','webp']) ? "image" :
-                          (in_array($ext, ['mp4','mov','avi','mkv','webm']) ? "video" : null);
-
-            if ($media_type) {
-                $stmt2 = $conn->prepare("
-                    INSERT INTO chat_media (chat_id, media_path, media_type, created_at)
-                    VALUES (:chat, :path, :type, NOW())
-                ");
-                $stmt2->execute([
-                    ":chat" => $chat_id,
-                    ":path" => $uploadedUrl,
-                    ":type" => $media_type
-                ]);
-            }
+            // Insert into chat_media table
+            $stmtMedia = $conn->prepare("
+                INSERT INTO chat_media (chat_id, media_path, media_type, created_at)
+                VALUES (:chat, :path, :type, NOW())
+            ");
+            $stmtMedia->execute([
+                ":chat" => $chat_id,
+                ":path" => $url,
+                ":type" => $media_type
+            ]);
         }
     }
 }
 
-// ============================================
+// =======================================================
+// 3️⃣ RESPONSE BACK TO FRONTEND
+// =======================================================
 echo json_encode(["status" => "ok"]);
+exit;
+?>
