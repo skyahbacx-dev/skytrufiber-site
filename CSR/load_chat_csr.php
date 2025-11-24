@@ -1,58 +1,58 @@
 <?php
 session_start();
 include "../db_connect.php";
-header("Content-Type: application/json; charset=utf-8");
+header("Content-Type: application/json");
+date_default_timezone_set("Asia/Manila");
 
-$csrUser = $_SESSION["csr_user"] ?? null;
-$clientId = $_GET["client_id"] ?? 0;
+$csr_user  = $_SESSION["csr_user"] ?? null;
+$client_id = (int)($_GET["client_id"] ?? 0);
 
-if (!$csrUser || !$clientId) {
+if (!$csr_user || !$client_id) {
     echo json_encode([]);
     exit;
 }
 
-// =======================================================
-// Mark client messages as seen and update last_read
-// =======================================================
-$markSeen = $conn->prepare("
-    UPDATE chat
-    SET seen = true
-    WHERE client_id = :cid
-      AND sender_type = 'client'
-");
-$markSeen->execute([":cid" => $clientId]);
+/*
+    Load chat messages sorted by time ascending
+    Join chat + chat_media to collect image/video files per message
+*/
+$sql = "
+    SELECT c.id AS chat_id, c.sender_type, c.message, c.created_at,
+           m.media_path, m.media_type
+    FROM chat c
+    LEFT JOIN chat_media m ON m.chat_id = c.id
+    WHERE c.client_id = :cid
+    ORDER BY c.created_at ASC
+";
 
-// Update chat_read record
-$updateRead = $conn->prepare("
+$stmt = $conn->prepare($sql);
+$stmt->execute([":cid" => $client_id]);
+
+$messages = [];
+
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $messages[] = [
+        "chat_id"     => $row["chat_id"],
+        "sender_type" => $row["sender_type"],
+        "message"     => $row["message"],
+        "media_path"  => $row["media_path"],
+        "media_type"  => $row["media_type"],
+        "created_at"  => date("M d h:i A", strtotime($row["created_at"]))
+    ];
+}
+
+/*
+    Update read tracking for unread badge feature
+*/
+$conn->prepare("
     INSERT INTO chat_read (client_id, csr, last_read)
     VALUES (:cid, :csr, NOW())
     ON CONFLICT (client_id, csr)
-    DO UPDATE SET last_read = EXCLUDED.last_read
-");
-$updateRead->execute([
-    ":cid" => $clientId,
-    ":csr" => $csrUser
+    DO UPDATE SET last_read = NOW()
+")->execute([
+    ":cid" => $client_id,
+    ":csr" => $csr_user
 ]);
-
-// =======================================================
-// Load all messages and attached media
-// =======================================================
-$stmt = $conn->prepare("
-    SELECT
-        m.id,
-        m.sender_type,
-        m.message,
-        m.created_at,
-        cm.media_path,
-        cm.media_type
-    FROM chat m
-    LEFT JOIN chat_media cm ON cm.chat_id = m.id
-    WHERE m.client_id = :cid
-    ORDER BY m.created_at ASC
-");
-$stmt->execute([":cid" => $clientId]);
-
-$messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 echo json_encode($messages);
 exit;
