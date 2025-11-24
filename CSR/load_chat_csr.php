@@ -1,7 +1,12 @@
 <?php
+// ==========================================================
+// load_chat_csr.php — FINAL FULL FILE
+// ==========================================================
+
 session_start();
 include "../db_connect.php";
 header("Content-Type: application/json");
+
 date_default_timezone_set("Asia/Manila");
 
 $client_id = $_GET["client_id"] ?? 0;
@@ -11,13 +16,7 @@ if (!$client_id) {
 }
 
 $stmt = $conn->prepare("
-    SELECT
-        message,
-        sender_type,
-        created_at,
-        media_url,
-        media_type,
-        csr_fullname
+    SELECT id, message, sender_type, media_url, media_type, created_at, seen
     FROM chat
     WHERE client_id = :cid
     ORDER BY created_at ASC
@@ -25,17 +24,20 @@ $stmt = $conn->prepare("
 $stmt->execute([":cid" => $client_id]);
 
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$out = [];
+$output = [];
 
 foreach ($rows as $row) {
-    $out[] = [
+    $output[] = [
+        "id"          => $row["id"],
         "message"     => $row["message"],
         "sender_type" => $row["sender_type"],
-        "created_at"  => date("M d, g:i A", strtotime($row["created_at"])),
-        "media_url"   => $row["media_url"],   // Uses B2 public URL
-        "media_type"  => $row["media_type"]
+        "media_url"   => $row["media_url"],
+        "media_type"  => $row["media_type"],
+        "seen"        => intval($row["seen"]),
+        "created_at"  => date("M d, g:i A", strtotime($row["created_at"]))
     ];
 }
 
-echo json_encode($out);
+echo json_encode($output);
+exit;
 ?>
