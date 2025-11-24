@@ -1,58 +1,57 @@
 <?php
 session_start();
 include '../db_connect.php';
+include '../b2_upload.php';
 header('Content-Type: application/json');
 
-$message = trim($_POST["message"] ?? '');
-$username = trim($_POST["username"] ?? '');
+date_default_timezone_set("Asia/Manila");
 
-if (!$username) { echo json_encode(["status"=>"err","msg"=>"no username"]); exit; }
+$username = $_POST["username"] ?? '';
+$message  = trim($_POST["message"] ?? '');
+$sender_type = "client";
 
-// get client id
-$stmt = $conn->prepare("SELECT id FROM clients WHERE name=:n LIMIT 1");
+if (!$username) {
+    echo json_encode(["status"=>"error","msg"=>"missing username"]);
+    exit;
+}
+
+$stmt = $conn->prepare("SELECT id FROM clients WHERE name = :n LIMIT 1");
 $stmt->execute([":n"=>$username]);
 $client_id = $stmt->fetchColumn();
-if(!$client_id){ echo json_encode(["status"=>"err","msg"=>"no client"]); exit; }
 
-$sender_type = "client";
-$uploadDir = __DIR__ . "/../upload/";
+if (!$client_id) {
+    echo json_encode(["status"=>"error","msg"=>"client not found"]);
+    exit;
+}
+
 $media_path = null;
 $media_type = null;
 
-if (!empty($_FILES['file']['name'])) {
+if (!empty($_FILES["file"]["tmp_name"])) {
+    $tmp  = $_FILES["file"]["tmp_name"];
+    $name = basename($_FILES["file"]["name"]);
+    $ext  = strtolower(pathinfo($name, PATHINFO_EXTENSION));
 
-    $ext = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
-    $tmp = $_FILES['file']['tmp_name'];
+    $media_type = in_array($ext, ["jpg","jpeg","png","gif","webp"]) ? "image" : "video";
+    $newName    = time() . "_" . rand(1000,9999) . "." . $ext;
 
-    if (in_array($ext,['jpg','jpeg','png','gif','webp'])) {
-        $media_type='image';
-        $folder=$uploadDir."chat_images/";
-        $rel="upload/chat_images/";
-    } else if (in_array($ext,['mp4','mov','avi','mkv','webm'])) {
-        $media_type='video';
-        $folder=$uploadDir."chat_videos/";
-        $rel="upload/chat_videos/";
-    }
-
-    if ($media_type) {
-        if (!is_dir($folder)) mkdir($folder,0775,true);
-        $newName = time()."_".rand(1000,9999).".".$ext;
-        if (move_uploaded_file($tmp, $folder.$newName)) {
-            $media_path = $rel.$newName;
-        }
-    }
+    // Upload to B2
+    $url = b2_upload($tmp, $newName);
+    if ($url) $media_path = $url;
 }
 
 $stmt = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, media_path, media_type, created_at)
-    VALUES (:cid,:type,:msg,:path,:mt,NOW())
+    VALUES (:cid, :stype, :msg, :mp, :mt, NOW())
 ");
+
 $stmt->execute([
-    ":cid"=>$client_id,
-    ":type"=>$sender_type,
-    ":msg"=>$message,
-    ":path"=>$media_path,
-    ":mt"=>$media_type
+    ":cid"   => $client_id,
+    ":stype" => $sender_type,
+    ":msg"   => $message,
+    ":mp"    => $media_path,
+    ":mt"    => $media_type
 ]);
 
 echo json_encode(["status"=>"ok"]);
+?>
