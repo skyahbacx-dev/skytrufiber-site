@@ -13,6 +13,17 @@ let loadingMessages = false;
 function loadClients() {
     $.get("client_list.php", function (data) {
         $("#clientList").html(data);
+
+        // auto select first client if none active
+        if (selectedClient === 0) {
+            let first = $(".client-item").first();
+            if (first.length > 0) {
+                const cid = first.attr("id").replace("client-","");
+                const name = first.find(".client-name").text().trim();
+                const assigned = first.data("assigned") || "";
+                selectClient(cid, name, assigned);
+            }
+        }
     });
 }
 
@@ -20,7 +31,7 @@ function loadClients() {
 // SELECT CLIENT
 // =======================================
 function selectClient(id, name, assignedTo) {
-    selectedClient = id;
+    selectedClient = parseInt(id);
 
     $(".client-item").removeClass("active-client");
     $("#client-" + id).addClass("active-client");
@@ -40,6 +51,7 @@ function loadMessages(initial = false) {
     loadingMessages = true;
 
     $.getJSON("load_chat_csr.php?client_id=" + selectedClient, (messages) => {
+
         if (initial) {
             $("#chatMessages").html("");
             lastMessageCount = 0;
@@ -49,17 +61,15 @@ function loadMessages(initial = false) {
             const newMsgs = messages.slice(lastMessageCount);
 
             newMsgs.forEach((m) => {
-                const side = m.sender_type === "csr" ? "csr" : "client";
+                const side = (m.sender_type === "csr") ? "csr" : "client";
 
                 let mediaHTML = "";
-                if (m.media && Array.isArray(m.media)) {
-                    m.media.forEach(file => {
-                        if (file.media_type === "image") {
-                            mediaHTML += `<img src="${file.media_path}" class="file-img" onclick="openMedia('${file.media_path}')">`;
-                        } else {
-                            mediaHTML += `<video class="file-img" controls><source src="${file.media_path}"></video>`;
-                        }
-                    });
+                if (m.media_path) {
+                    if (m.media_type === "image") {
+                        mediaHTML = `<img src="${m.media_path}" class="file-img" onclick="openMedia('${m.media_path}')">`;
+                    } else {
+                        mediaHTML = `<video class="file-img" controls><source src="${m.media_path}"></video>`;
+                    }
                 }
 
                 const html = `
@@ -105,7 +115,7 @@ function sendMessage() {
         processData: false,
         contentType: false,
         data: fd,
-        success: function () {
+        success: function (res) {
             $("#messageInput").val("");
             $("#previewArea").html("");
             $("#fileInput").val("");
@@ -118,7 +128,7 @@ function sendMessage() {
 }
 
 // =======================================
-// FILE PREVIEW
+// FILE PREVIEW HANDLER
 // =======================================
 $(".upload-icon").click(() => $("#fileInput").click());
 
@@ -142,10 +152,20 @@ $("#fileInput").on("change", function (e) {
 });
 
 // =======================================
+// MEDIA VIEWER
+// =======================================
+function openMedia(src) {
+    $("#mediaModal").addClass("show");
+    $("#mediaModalContent").attr("src", src);
+}
+
+$("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
+
+// =======================================
 // AUTO REFRESH
 // =======================================
 setInterval(() => loadClients(), 2000);
 setInterval(() => loadMessages(false), 1200);
 
-// INITIAL LOAD
+// initial load
 loadClients();
