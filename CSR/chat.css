@@ -1,18 +1,18 @@
 /* =========================================
-   CHAT CSS — FULL FILE (FINAL STABLE BUILD)
+   CHAT CSS — FULL FILE (MESSENGER STYLE)
    ========================================= */
 
-/* CHAT PANEL BASE */
+/* CHAT PANEL */
 .chat-panel {
     display: flex;
     flex-direction: column;
+    width: 100%;
     background: #F4FFF4;
     height: 100%;
-    width: 100%;
     overflow: hidden;
 }
 
-/* HEADER */
+/* CHAT HEADER */
 .chat-header {
     display: flex;
     justify-content: space-between;
@@ -21,6 +21,7 @@
     padding: 12px 18px;
     border-bottom: 1px solid #dcdcdc;
 }
+
 .chat-avatar {
     width: 48px;
     height: 48px;
@@ -28,7 +29,9 @@
     border: 2px solid #0b8b43;
     object-fit: cover;
 }
-.user-section { display: flex; align-items: center; gap: 12px; }
+
+.chat-user { display: flex; align-items: center; gap: 12px; }
+
 .chat-name { font-size: 18px; font-weight: bold; }
 .chat-status { font-size: 13px; opacity: 0.75; }
 
@@ -37,12 +40,11 @@
     height: 10px;
     display: inline-block;
     border-radius: 50%;
-    margin-right: 4px;
 }
 .status-dot.online { background: #1ec21e; }
 .status-dot.offline { background: #777; }
 
-.info-btn {
+.info-toggle-btn {
     background: #e6ffe6;
     border: none;
     padding: 6px 10px;
@@ -51,45 +53,49 @@
     cursor: pointer;
 }
 
-/* CHAT AREA */
+/* CHAT CONTENT */
 .chat-box {
     flex: 1;
     width: 100%;
     overflow-y: auto;
     padding: 20px 30px;
-    background: #f0fff0;
+    scroll-behavior: smooth;
 }
 
-/* MESSAGE WRAPPING */
+/* MESSAGE ROWS */
 .msg-row {
     display: flex;
-    margin: 10px 0;
     gap: 10px;
+    margin: 10px 0;
     align-items: flex-end;
 }
+
 .msg-row.client { justify-content: flex-start; }
 .msg-row.csr { justify-content: flex-end; }
 
-/* BUBBLE */
+/* BUBBLES */
 .bubble-wrapper {
     max-width: 460px;
     display: flex;
     flex-direction: column;
 }
+
 .bubble {
-    padding: 10px 16px;
+    padding: 11px 16px;
     border-radius: 18px;
     font-size: 15px;
+    line-height: 1.35;
     word-wrap: break-word;
     white-space: pre-wrap;
-    display: inline-block;
     box-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
+
 .msg-row.client .bubble {
     background: white;
     color: black;
     border-bottom-left-radius: 6px;
 }
+
 .msg-row.csr .bubble {
     background: #41b3ff;
     color: white;
@@ -100,9 +106,10 @@
     font-size: 11px;
     opacity: 0.75;
     margin-top: 4px;
+    padding-left: 5px;
 }
 
-/* MEDIA ATTACHMENTS */
+/* MEDIA */
 .file-img,
 .file-video {
     width: 260px;
@@ -113,20 +120,21 @@
     cursor: pointer;
 }
 
-/* PREVIEW BEFORE SEND */
+/* PREVIEW */
 .preview-area {
     display: flex;
-    gap: 10px;
-    padding: 10px 15px;
+    gap: 8px;
+    padding: 8px 12px;
     background: white;
-    border-top: 1px solid #dcdcdc;
+    border-top: 1px solid #ccc;
 }
+
 .preview-thumb img,
 .preview-thumb video {
     width: 70px;
     height: 70px;
-    border-radius: 8px;
     object-fit: cover;
+    border-radius: 10px;
 }
 
 /* INPUT BAR */
@@ -135,15 +143,15 @@
     gap: 10px;
     padding: 12px 15px;
     background: white;
-    border-top: 1px solid #dcdcdc;
+    border-top: 1px solid #ccc;
     align-items: center;
 }
+
 .upload-icon i {
     font-size: 26px;
     cursor: pointer;
     color: #0b8b43;
 }
-#fileInput { display: none; }
 
 #messageInput {
     flex: 1;
@@ -156,15 +164,24 @@
 .send-btn {
     width: 48px;
     height: 48px;
-    border-radius: 50%;
-    border: none;
     background: #09a64b;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
-    cursor: pointer;
 }
-.send-btn i { color: white; font-size: 20px; }
+
+.send-btn i { font-size: 20px; color: white; }
+
+/* ANIMATION */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0px); }
+}
+
+.animate-msg { animation: fadeInUp .3s ease forwards; }
 
 /* MEDIA MODAL */
 .media-modal {
@@ -177,23 +194,18 @@
     z-index: 999;
 }
 .media-modal.show { display: flex; }
+
 .modal-content {
     max-width: 85vw;
     max-height: 85vh;
-    border-radius: 10px;
+    border-radius: 12px;
 }
+
 .close-modal {
     position: absolute;
     top: 25px;
     right: 32px;
-    font-size: 28px;
+    font-size: 30px;
     color: white;
     cursor: pointer;
 }
-
-/* ANIMATION */
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-.animate-msg { animation: fadeInUp .35s ease forwards; }
