@@ -1,11 +1,13 @@
 <?php
 session_start();
 include "../db_connect.php";
-include "b2_upload.php";  // Backblaze uploader
+include "b2_upload.php";  // Backblaze uploader function
 header("Content-Type: application/json");
 date_default_timezone_set("Asia/Manila");
 
-// CSR LOGIN CHECK
+// =========================================
+// VALIDATE SESSION & POST DATA
+// =========================================
 $csr_user     = $_SESSION["csr_user"] ?? null;
 $csr_fullname = $_SESSION["csr_fullname"] ?? "CSR";
 $message      = trim($_POST["message"] ?? "");
@@ -16,36 +18,34 @@ if (!$csr_user || !$client_id) {
     exit;
 }
 
-// =======================================================
-// INSERT BASE MESSAGE
-// =======================================================
+// =========================================
+// INSERT BASE CHAT MESSAGE FIRST
+// =========================================
 $stmt = $conn->prepare("
-    INSERT INTO chat (client_id, sender_type, message, csr_fullname, seen, created_at)
-    VALUES (:cid, 'csr', :msg, :csr, false, NOW())
+    INSERT INTO chat (client_id, sender_type, message, csr_fullname, created_at)
+    VALUES (:cid, 'csr', :msg, :csr, NOW())
 ");
-
 $stmt->execute([
     ":cid" => $client_id,
     ":msg" => $message,
     ":csr" => $csr_fullname
 ]);
 
-$chat_id = $conn->lastInsertId();
+$chat_id = $conn->lastInsertId(); // Needed for chat_media linking
 
-// =======================================================
-// PROCESS MEDIA UPLOADS
-// =======================================================
+// =========================================
+// HANDLE FILE UPLOADS TO BACKBLAZE B2
+// =========================================
 if (!empty($_FILES["files"]["name"][0])) {
 
     foreach ($_FILES["files"]["tmp_name"] as $i => $tmpFile) {
-
         if (!$tmpFile) continue;
 
         $originalName = $_FILES["files"]["name"][$i];
         $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
         $newName = time() . "_" . rand(1000, 9999) . "." . $ext;
 
-        // Upload file to Backblaze B2
+        // Upload to Backblaze B2
         $url = b2_upload($tmpFile, $newName);
 
         if ($url) {
@@ -53,6 +53,7 @@ if (!empty($_FILES["files"]["name"][0])) {
                 ? "image"
                 : (in_array($ext, ['mp4','mov','avi','mkv','webm']) ? "video" : null);
 
+            // Insert into chat_media table
             $stmtMedia = $conn->prepare("
                 INSERT INTO chat_media (chat_id, media_path, media_type, created_at)
                 VALUES (:chat, :path, :type, NOW())
@@ -66,9 +67,9 @@ if (!empty($_FILES["files"]["name"][0])) {
     }
 }
 
-// =======================================================
+// =========================================
 // RESPONSE
-// =======================================================
+// =========================================
 echo json_encode(["status" => "ok"]);
 exit;
 ?>
