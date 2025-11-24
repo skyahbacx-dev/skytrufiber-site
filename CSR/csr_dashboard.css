@@ -1,18 +1,20 @@
 /* =======================================================
-   CSR DASHBOARD — FULL CSS (MESSENGER LAYOUT)
+   CSR DASHBOARD — FULL CSS (MESSENGER LAYOUT VERSION)
    ======================================================= */
 
-* { box-sizing: border-box; }
-
+/* GLOBAL */
+* {
+    box-sizing: border-box;
+}
 body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background: #F4FFF4;
+    background:#F4FFF4;
     overflow: hidden;
 }
 
-/* ====================== TOP NAVIGATION ====================== */
+/* TOP NAVIGATION */
 .topnav {
     height: 55px;
     background: #05702e;
@@ -21,276 +23,312 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 6px 15px;
+    border-bottom:2px solid #006622;
 }
-
 .hamburger {
     font-size: 24px;
-    background: none;
-    border: none;
-    color: white;
-    cursor: pointer;
+    background:none;
+    border:none;
+    color:white;
+    cursor:pointer;
 }
-
 .top-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display:flex;
+    align-items:center;
+    gap:10px;
 }
-
-.nav-logo { height: 36px; }
-
+.nav-logo {
+    height: 36px;
+}
 .nav-buttons {
     display: flex;
-    gap: 6px;
+    gap:6px;
 }
-
 .nav-btn {
-    background: #09a64b;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 12px;
-    color: white;
-    cursor: pointer;
+    background:#09a64b;
+    border:none;
+    padding:6px 12px;
+    border-radius:12px;
+    color:white;
+    cursor:pointer;
 }
-
 .nav-btn.active {
-    background: white;
-    color: #05702e;
-    font-weight: bold;
+    background:white;
+    color:#05702e;
+    font-weight:bold;
 }
-
 .logout-btn {
-    background: white;
-    color: #05702e;
-    padding: 5px 12px;
-    border-radius: 12px;
-    text-decoration: none;
+    background:white;
+    color:#05702e;
+    padding:5px 12px;
+    border-radius:12px;
+    text-decoration:none;
 }
 
-/* ====================== MAIN LAYOUT ====================== */
-.chat-layout {
+/* SIDEBAR */
+.sidebar {
+    width:270px;
+    height:100vh;
+    background:white;
+    position:fixed;
+    top:0;
+    left:-270px;
+    transition:.30s;
+    padding-top:60px;
+    border-right:1px solid #dcdcdc;
+    z-index:20;
+}
+.sidebar.open {
+    left:0;
+}
+.sidebar-overlay {
+    display:none;
+    position:fixed;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.45);
+    z-index:15;
+}
+.sidebar-overlay.show {
+    display:block;
+}
+
+/* MAIN LAYOUT — 3 COLUMNS */
+.layout {
     display: grid;
-    grid-template-columns: 320px auto;
+    grid-template-columns: 360px auto 340px;
     height: calc(100vh - 55px);
-    position: relative;
+    border-top:1px solid #cbdccb;
 }
 
-/* ====================== LEFT SIDEBAR ====================== */
-.client-sidebar {
-    background: white;
-    border-right: 1px solid #d6d6d6;
-    overflow-y: auto;
+/* LEFT CLIENT LIST PANEL */
+.client-panel {
+    background:white;
+    border-right: 1px solid #d3e9d3;
+    overflow-y:auto;
 }
-
-.client-search {
-    width: 90%;
-    margin: 10px;
-    padding: 9px 12px;
-    border-radius: 10px;
-    border: 1px solid #bfbfbf;
+.search {
+    width:90%;
+    margin:10px auto;
+    display:block;
+    padding:8px 12px;
+    border:1px solid #aaa;
+    border-radius:12px;
 }
-
 .client-list {
-    padding-bottom: 10px;
+    padding:0;
+    margin:0;
 }
-
 .client-item {
-    padding: 10px 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    border-radius: 12px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px 14px;
+    cursor:pointer;
+    border-radius:10px;
+    border-bottom:1px solid #e7f7e7;
 }
-
 .client-item:hover,
 .client-item.active-client {
-    background: #d7ffd7;
+    background:#d7ffd7;
 }
-
 .client-avatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    object-fit: cover;
+    width:45px;
+    height:45px;
+    border-radius:50%;
+    object-fit:cover;
 }
-
-.client-content { flex: 1; }
-
+.client-content {
+    flex:1;
+}
 .client-name {
-    font-size: 15px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    font-size:15px;
+    font-weight:bold;
+}
+.client-sub {
+    font-size:12px;
+    color:#777;
 }
 
-.badge {
-    background: #ff4747;
-    color: white;
-    padding: 2px 7px;
-    border-radius: 10px;
-    font-size: 11px;
-}
-
-.client-sub { font-size: 12px; color: #606060; }
-
-/* ====================== CHAT PANEL ====================== */
+/* CENTER CHAT PANEL */
 .chat-panel {
-    display: flex;
-    flex-direction: column;
-    background: #F4FFF4;
-    border-right: 1px solid #bfbfbf;
+    background:#F4FFF4;
+    display:flex;
+    flex-direction:column;
+    border-right:1px solid #ccc;
 }
 
 /* HEADER */
 .chat-header {
-    height: 60px;
-    background: white;
-    border-bottom: 1px solid #cccccc;
-    padding: 10px 18px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    height:60px;
+    background:white;
+    border-bottom:1px solid #ccc;
+    padding:10px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
 }
-
-.chat-user {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.user-section {
+    display:flex;
+    align-items:center;
+    gap:12px;
 }
-
 .chat-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    border:2px solid #0b8b43;
+    object-fit:cover;
 }
-
-.chat-name { font-size: 18px; font-weight: bold; }
-
+.chat-name {
+    font-size:18px;
+    font-weight:bold;
+}
 .chat-status {
-    font-size: 13px;
-    color: #555;
+    font-size:13px;
+    color:#555;
 }
-
 .status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: gray;
-    display: inline-block;
+    width:8px;height:8px;
+    border-radius:50%;
+    display:inline-block;
+    margin-right:4px;
+}
+.status-dot.offline {
+    background:#777;
+}
+.status-dot.online {
+    background:#1ec21e;
+}
+.info-btn {
+    border:none;
+    background:#e6ffe6;
+    padding:6px 9px;
+    border-radius:50%;
+    font-size:18px;
+    cursor:pointer;
 }
 
-.status-dot.online { background: #1ec21e; }
-
-.info-toggle-btn {
-    border: none;
-    background: #e6ffe6;
-    padding: 8px 10px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 18px;
-}
-
-/* CHAT MESSAGES BOX */
+/* CHAT SCROLL */
 .chat-box {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px 30px;
+    flex:1;
+    overflow-y:auto;
+    padding:25px 35px;
 }
 
-/* PREVIEW BAR */
-.preview-area {
-    display: flex;
-    gap: 8px;
-    padding: 8px 12px;
-    background: white;
-    border-top: 1px solid #ccc;
+/* MESSAGES */
+.msg-row {
+    display:flex;
+    gap:10px;
+    margin:10px 0;
+    align-items:flex-end;
+}
+.msg-avatar {
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    flex-shrink:0;
+}
+.msg-row.csr {
+    justify-content:flex-end;
+}
+.msg-row.csr .msg-avatar {
+    display:none;
 }
 
-/* INPUT AREA */
+.bubble-wrapper {
+    max-width:450px;
+    display:flex;
+    flex-direction:column;
+}
+.bubble {
+    padding:12px 18px;
+    border-radius:18px;
+    font-size:15px;
+    white-space:pre-wrap;
+    word-wrap:break-word;
+}
+.msg-row.client .bubble {
+    background:white;
+    border:1px solid #cfe8cf;
+}
+.msg-row.csr .bubble {
+    background:#09a64b;
+    color:white;
+}
+.meta {
+    font-size:11px;
+    margin-top:3px;
+    color:#444;
+}
+
+/* IMAGE PREVIEW */
+.file-img {
+    width:240px;
+    border-radius:10px;
+    margin-top:6px;
+    cursor:pointer;
+}
+
+/* INPUT FOOTER */
 .chat-input {
-    display: flex;
-    gap: 10px;
-    padding: 12px;
-    background: white;
-    border-top: 1px solid #ccc;
+    display:flex;
+    gap:10px;
+    padding:12px 20px;
+    background:white;
+    border-top:1px solid #ccc;
 }
-
 .upload-icon i {
-    font-size: 25px;
-    color: #0b8b43;
+    font-size:25px;
+    color:#09a64b;
+    cursor:pointer;
 }
-
 #messageInput {
-    flex: 1;
-    padding: 10px;
-    border-radius: 25px;
-    border: 1px solid #aaa;
-    font-size: 15px;
+    flex:1;
+    padding:10px 14px;
+    border-radius:25px;
+    border:1px solid #aaa;
+    font-size:15px;
 }
-
 .send-btn {
-    width: 45px;
-    height: 45px;
-    background: #09a64b;
-    border: none;
-    color: white;
-    border-radius: 50%;
-    cursor: pointer;
+    width:46px;
+    height:46px;
+    background:#05702e;
+    border-radius:50%;
+    border:none;
+    cursor:pointer;
+}
+.send-btn i {
+    color:white;
+    font-size:22px;
 }
 
-.send-btn i { font-size: 20px; }
-
-/* ====================== RIGHT SLIDE PANEL ====================== */
+/* RIGHT SIDE INFO PANEL */
 .client-info-panel {
-    width: 350px;
-    height: 100%;
-    background: white;
-    border-left: 1px solid #ccc;
-    position: absolute;
-    top: 0;
-    right: -350px;
-    transition: right .30s ease-in-out;
-    padding: 20px;
-    overflow-y: auto;
+    background:white;
+    border-left:1px solid #ccc;
+    padding:20px;
+    overflow-y:auto;
+    transform: translateX(0);
+    transition:.3s ease-in-out;
 }
-
-.client-info-panel.show {
-    right: 0;
+.client-info-panel.hidden {
+    transform: translateX(350px);
 }
-
 .close-info {
-    background: none;
-    border: none;
-    font-size: 22px;
-    float: right;
-    cursor: pointer;
+    display:block;
+    margin-left:auto;
+    font-size:22px;
+    background:none;
+    border:none;
+    cursor:pointer;
 }
 
-/* MODAL VIEWER */
-.media-modal {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 999;
+/* ANIMATION */
+.animate-msg {
+    animation: fadeInUp .33s ease forwards;
 }
-
-.media-modal.show { display: flex; }
-
-.modal-content {
-    max-width: 85vw;
-    max-height: 85vh;
-}
-
-.close-modal {
-    position: absolute;
-    top: 20px;
-    right: 40px;
-    color: white;
-    font-size: 30px;
-    cursor: pointer;
+@keyframes fadeInUp {
+    from { opacity:0;transform:translateY(12px);}
+    to { opacity:1;transform:translateY(0);}
 }
