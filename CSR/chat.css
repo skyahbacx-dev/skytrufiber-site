@@ -1,15 +1,25 @@
 /* =========================================
-   CHAT CSS — FULL FILE
-   For CSR Dashboard Chat Panel
+   CHAT CSS — FULL FILE (FIXED VERSION)
    ========================================= */
 
+.chat-container {
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 60px);
+    overflow: hidden;
+    background: #F4FFF4;
+}
+
+/* CHAT PANEL */
 .chat-panel {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 60px);
+    width: 100%;
     background: #F4FFF4;
     position: relative;
     overflow: hidden;
+    z-index: 1;
 }
 
 /* HEADER */
@@ -51,31 +61,29 @@
 .status-dot.online { background: #34c759; }
 .status-dot.offline { background: #9d9d9d; }
 
-/* CHAT MESSAGES */
+/* CHAT MESSAGES BOX */
 .chat-box {
     flex: 1;
+    width: 100%;
     overflow-y: auto;
     padding: 18px 25px;
     background: #f0fff0;
+    display: block;
 }
 
+/* MESSAGE ROW */
 .msg-row {
     display: flex;
     margin: 10px 0;
     gap: 8px;
     align-items: flex-end;
+    width: 100%;
 }
 
 .msg-row.client { justify-content: flex-start; }
 .msg-row.csr { justify-content: flex-end; }
 
-.msg-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
+/* BUBBLE */
 .bubble-wrapper {
     max-width: 420px;
     display: flex;
@@ -119,7 +127,7 @@
     cursor: pointer;
 }
 
-/* PREVIEW THUMBNAILS */
+/* PREVIEW */
 .preview-area {
     display: flex;
     gap: 10px;
@@ -173,7 +181,7 @@
 }
 .send-btn i { color: white; font-size: 20px; }
 
-/* CLIENT INFO PANEL */
+/* INFO PANEL */
 .client-info-panel {
     position: absolute;
     right: -320px;
@@ -184,6 +192,7 @@
     padding: 18px;
     border-left: 1px solid #dcdcdc;
     transition: 0.35s ease-in-out;
+    z-index: 5;
 }
 .client-info-panel.show { right: 0; }
 
@@ -192,7 +201,6 @@
     border: none;
     font-size: 18px;
     cursor: pointer;
-    padding: 4px 6px;
 }
 
 /* MEDIA MODAL */
