@@ -1,7 +1,6 @@
 <?php
 session_start();
 include "../db_connect.php";
-
 header("Content-Type: application/json");
 date_default_timezone_set("Asia/Manila");
 
@@ -13,7 +12,6 @@ if (!$csr_user || !$client_id) {
     exit;
 }
 
-// Load chat + attached media files
 $sql = "
     SELECT c.id AS chat_id, c.sender_type, c.message, c.created_at,
            m.media_path, m.media_type
@@ -27,6 +25,7 @@ $stmt = $conn->prepare($sql);
 $stmt->execute([":cid" => $client_id]);
 
 $messages = [];
+
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $messages[] = [
         "chat_id"     => $row["chat_id"],
@@ -34,11 +33,11 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         "message"     => $row["message"],
         "media_path"  => $row["media_path"],
         "media_type"  => $row["media_type"],
-        "created_at"  => date("M d h:i A", strtotime($row["created_at"]))
+        "created_at"  => date("M d, h:i A", strtotime($row["created_at"]))
     ];
 }
 
-// Update read status for CSR
+/* Update read timestamp for badge */
 $conn->prepare("
     INSERT INTO chat_read (client_id, csr, last_read)
     VALUES (:cid, :csr, NOW())
