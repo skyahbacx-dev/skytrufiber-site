@@ -60,8 +60,15 @@ body {
 }
 
 .client-content { flex: 1; }
-.client-name { font-size: 15px; font-weight: bold; }
+.client-name { font-size: 15px; font-weight: bold; display:flex; gap:6px; }
 .client-sub { font-size: 12px; color: #666; }
+.badge {
+    background: #ff4747;
+    color:white;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-size: 11px;
+}
 
 /* ================= CENTER CHAT PANEL ================= */
 #chat-panel {
@@ -108,13 +115,27 @@ body {
     font-size: 18px;
 }
 
-/* ================= CHAT MESSAGES ================= */
+/* ================= CHAT BODY ================= */
 .messages-body {
     flex: 1;
     overflow-y: auto;
     padding: 20px 30px;
 }
 
+/* DATE SEPARATOR */
+.date-separator {
+    width: 100%;
+    text-align: center;
+    background: #dfffd7;
+    padding: 4px 0;
+    border-radius: 10px;
+    margin: 10px 0;
+    font-size: 12px;
+    color: #0b8b43;
+    font-weight: 600;
+}
+
+/* MESSAGE BUBBLES */
 .msg-row {
     display: flex;
     gap: 10px;
@@ -144,17 +165,21 @@ body {
     margin-top: 4px;
 }
 
-/* DATE SEPARATOR */
-.date-separator {
-    width: 100%;
-    text-align: center;
-    background: #dfffd7;
-    padding: 4px 0;
-    border-radius: 10px;
-    margin: 10px 0;
+/* SEEN / DELIVERED */
+.tick {
+    font-weight: bold;
+    margin-left: 6px;
     font-size: 12px;
-    color: #0b8b43;
-    font-weight: 600;
+    opacity: .8;
+}
+.tick.blue { color: #0b8b43; font-weight: 900; }
+
+/* ================= IMAGES & VIDEOS ================= */
+.file-img, .file-video {
+    width: 260px;
+    border-radius: 12px;
+    margin-top: 8px;
+    cursor: pointer;
 }
 
 /* ================= TYPING INDICATOR ================= */
@@ -187,44 +212,14 @@ body {
     100%{ opacity:.3; transform:translateY(0); }
 }
 
-/* ================= PREVIEW ================= */
-.preview-area {
-    display: flex;
-    gap: 10px;
-    padding: 8px 15px;
-    background: white;
-    border-top: 1px solid #dcdcdc;
-}
-
-.preview-thumb img {
-    width: 70px;
-    height: 70px;
-    border-radius: 10px;
-    object-fit: cover;
-}
-
 /* ================= INPUT BAR ================= */
-#chat-input-bar {
-    display:flex; gap:10px;
-    padding:12px 15px;
-    background:white;
-    border-top:1px solid #dcdcdc;
-    align-items:center;
-}
+.preview-area { display: flex; gap: 10px; padding: 8px 15px; background: white; border-top: 1px solid #dcdcdc; }
+.preview-thumb img { width: 70px; height: 70px; border-radius: 10px; object-fit: cover; }
 
-.file-upload-icon i {
-    font-size: 24px;
-    color: #0b8b43;
-    cursor:pointer;
-}
+#chat-input-bar { display:flex; gap:10px; padding:12px 15px; background:white; border-top:1px solid #dcdcdc; align-items:center; }
 
-.message-field {
-    flex:1;
-    padding:12px;
-    border-radius: 20px;
-    border:1px solid #bbb;
-    font-size: 15px;
-}
+.file-upload-icon i { font-size: 24px; color: #0b8b43; cursor:pointer; }
+.message-field { flex:1; padding:12px; border-radius: 20px; border:1px solid #bbb; font-size: 15px; }
 
 .send-btn {
     width:45px; height:45px;
@@ -234,7 +229,6 @@ body {
     cursor:pointer;
     display:flex; align-items:center; justify-content:center;
 }
-
 .send-btn i { color:white; font-size:20px; }
 
 /* ================= RIGHT PANEL ================= */
@@ -273,10 +267,7 @@ body {
 }
 .media-viewer.show { display:flex; }
 
-.media-content {
-    max-width:85vw;
-    max-height:85vh;
-}
+.media-content { max-width:85vw; max-height:85vh; }
 
 .media-close {
     position:absolute;
