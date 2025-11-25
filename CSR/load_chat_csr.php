@@ -3,10 +3,10 @@ session_start();
 include "../db_connect.php";
 header("Content-Type: application/json");
 
-$csr_user = $_SESSION["csr_user"] ?? null;
-$user_id = (int)($_GET["client_id"] ?? 0);
+$csr_user  = $_SESSION["csr_user"] ?? null;
+$client_id = (int)($_GET["client_id"] ?? 0);
 
-if (!$csr_user || !$user_id) {
+if (!$csr_user || !$client_id) {
     echo json_encode([]);
     exit;
 }
@@ -16,16 +16,16 @@ $sql = "
            m.media_path, m.media_type
     FROM chat c
     LEFT JOIN chat_media m ON c.id = m.chat_id
-    WHERE c.user_id = :uid
+    WHERE c.client_id = :cid
     ORDER BY c.created_at ASC
 ";
 
 $stmt = $conn->prepare($sql);
-$stmt->execute([":uid" => $user_id]);
+$stmt->execute([":cid" => $client_id]);
 
-$messages = [];
+$data = [];
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $messages[] = [
+    $data[] = [
         "chat_id"     => $row["chat_id"],
         "sender_type" => $row["sender_type"],
         "message"     => $row["message"],
@@ -38,10 +38,10 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 }
 
 $conn->prepare("
-    UPDATE chat SET seen = true
-    WHERE user_id = :uid AND sender_type = 'client' AND seen = false
-")->execute([":uid" => $user_id]);
+    UPDATE chat
+    SET seen = true
+    WHERE client_id = :cid AND sender_type='client' AND seen=false
+")->execute([":cid" => $client_id]);
 
-echo json_encode($messages);
+echo json_encode($data);
 exit;
-?>
