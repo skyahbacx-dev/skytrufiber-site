@@ -1,22 +1,11 @@
 <?php
-session_start();
 include "../db_connect.php";
 header("Content-Type: application/json");
 
 $client_id = (int)($_GET["id"] ?? 0);
 
-$stmt = $conn->prepare("
-    SELECT typing
-    FROM typing_status
-    WHERE client_id = :cid
-    LIMIT 1
-");
-$stmt->execute([":cid" => $client_id]);
+$stmt = $conn->prepare("SELECT typing FROM typing_status WHERE user_id = :id LIMIT 1");
+$stmt->execute([":id" => $client_id]);
 
-$row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-echo json_encode([
-    "typing" => $row ? (bool)$row["typing"] : false
-]);
+echo json_encode(["typing" => (bool)$stmt->fetchColumn()]);
 exit;
-?>
