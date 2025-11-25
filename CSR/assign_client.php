@@ -1,20 +1,26 @@
 <?php
 session_start();
 include "../db_connect.php";
+header("Content-Type: application/json");
 
-$client_id = $_POST["client_id"] ?? 0;
-$csr = $_SESSION["csr_user"] ?? "";
+$csr = $_SESSION["csr_user"] ?? null;
+$client_id = (int)($_POST["client_id"] ?? 0);
 
-if (!$client_id || !$csr) {
-    echo "error";
+if (!$csr || !$client_id) {
+    echo json_encode(["status" => "error", "msg" => "Invalid"]);
     exit;
 }
 
-$stmt = $conn->prepare("UPDATE clients SET assigned_csr = :csr WHERE id = :id");
+$stmt = $conn->prepare("
+    UPDATE clients
+    SET assigned_csr = :csr
+    WHERE id = :cid
+");
 $stmt->execute([
     ":csr" => $csr,
-    ":id"  => $client_id
+    ":cid" => $client_id
 ]);
 
-echo "ok";
+echo json_encode(["status" => "ok"]);
+exit;
 ?>
