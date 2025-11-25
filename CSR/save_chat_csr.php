@@ -3,52 +3,44 @@ session_start();
 include "../db_connect.php";
 include "../b2_upload.php";
 header("Content-Type: application/json");
-date_default_timezone_set("Asia/Manila");
 
-$csr_user  = $_SESSION["csr_user"] ?? null;
-$message   = trim($_POST["message"] ?? "");
-$client_id = (int)($_POST["client_id"] ?? 0);
+$csr_user = $_SESSION["csr_user"] ?? null;
+$message = trim($_POST["message"] ?? "");
+$user_id = (int)($_POST["client_id"] ?? 0);
 
-if (!$csr_user || !$client_id) {
-    echo json_encode(["status" => "error", "msg" => "Invalid session or client"]);
+if (!$csr_user || !$user_id) {
+    echo json_encode(["status" => "error"]);
     exit;
 }
 
-/* INSERT CHAT */
 $stmt = $conn->prepare("
-    INSERT INTO chat (client_id, sender_type, message, created_at, delivered)
-    VALUES (:cid, 'csr', :msg, NOW(), true)
+    INSERT INTO chat (user_id, sender_type, message, created_at, delivered, seen)
+    VALUES (:uid, 'csr', :msg, NOW(), true, false)
 ");
-$stmt->execute([
-    ":cid" => $client_id,
-    ":msg" => $message
-]);
+$stmt->execute([":uid" => $user_id, ":msg" => $message]);
 
 $chat_id = $conn->lastInsertId();
 
-/* MEDIA UPLOAD SUPPORT */
+/* MEDIA UPLOADS */
 if (!empty($_FILES["media"]["name"][0])) {
+    foreach ($_FILES["media"]["tmp_name"] as $i => $tmp) {
+        if (!$tmp) continue;
 
-    foreach ($_FILES["media"]["tmp_name"] as $i => $tmpFile) {
-        if (!$tmpFile) continue;
-
-        $originalName = $_FILES["media"]["name"][$i];
-        $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+        $ext = strtolower(pathinfo($_FILES["media"]["name"][$i], PATHINFO_EXTENSION));
         $newName = time() . "_" . rand(1000, 9999) . "." . $ext;
 
-        $url = b2_upload($tmpFile, $newName);
+        $url = b2_upload($tmp, $newName);
 
         if ($url) {
-            $media_type = (in_array($ext, ['jpg','jpeg','png','gif','webp']))
+            $media_type = in_array($ext, ["jpg","jpeg","png","gif","webp"])
                 ? "image"
-                : (in_array($ext, ['mp4','mov','avi','mkv','webm']) ? "video" : null);
+                : "video";
 
-            $stmtMedia = $conn->prepare("
+            $conn->prepare("
                 INSERT INTO chat_media (chat_id, media_path, media_type, created_at)
-                VALUES (:chat, :path, :type, NOW())
-            ");
-            $stmtMedia->execute([
-                ":chat" => $chat_id,
+                VALUES (:cid, :path, :type, NOW())
+            ")->execute([
+                ":cid" => $chat_id,
                 ":path" => $url,
                 ":type" => $media_type
             ]);
@@ -58,3 +50,4 @@ if (!empty($_FILES["media"]["name"][0])) {
 
 echo json_encode(["status" => "ok"]);
 exit;
+?>
