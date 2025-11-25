@@ -24,11 +24,10 @@ $sql = "
               AND m.seen = false
         ) AS unread
     FROM users u
-    WHERE u.source = 'client'
 ";
 
 if ($search !== "") {
-    $sql .= " AND LOWER(u.full_name) LIKE LOWER(:search)";
+    $sql .= " WHERE LOWER(u.full_name) LIKE LOWER(:search)";
 }
 
 $sql .= " ORDER BY unread DESC, u.full_name ASC";
