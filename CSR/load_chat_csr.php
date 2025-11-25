@@ -1,6 +1,7 @@
 <?php
 session_start();
 include "../db_connect.php";
+
 header("Content-Type: application/json");
 date_default_timezone_set("Asia/Manila");
 
@@ -12,10 +13,7 @@ if (!$csr_user || !$client_id) {
     exit;
 }
 
-/*
-    Load chat messages sorted by time ascending
-    Join chat + chat_media to collect image/video files per message
-*/
+// Load chat + attached media files
 $sql = "
     SELECT c.id AS chat_id, c.sender_type, c.message, c.created_at,
            m.media_path, m.media_type
@@ -29,7 +27,6 @@ $stmt = $conn->prepare($sql);
 $stmt->execute([":cid" => $client_id]);
 
 $messages = [];
-
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $messages[] = [
         "chat_id"     => $row["chat_id"],
@@ -41,9 +38,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     ];
 }
 
-/*
-    Update read tracking for unread badge feature
-*/
+// Update read status for CSR
 $conn->prepare("
     INSERT INTO chat_read (client_id, csr, last_read)
     VALUES (:cid, :csr, NOW())
