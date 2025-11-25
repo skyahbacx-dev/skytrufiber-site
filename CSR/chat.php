@@ -1,4 +1,5 @@
 <?php
+session_start();
 if (!isset($_SESSION['csr_user'])) {
     http_response_code(401);
     exit("Unauthorized");
@@ -18,7 +19,7 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
         <div id="clientList" class="client-scroll"></div>
     </aside>
 
-    <!-- MIDDLE PANEL – CHAT -->
+    <!-- CENTER CHAT PANEL -->
     <main id="chat-panel">
 
         <!-- CHAT HEADER -->
@@ -35,10 +36,19 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
             <button id="infoBtn" class="info-btn" onclick="toggleClientInfo()">ⓘ</button>
         </header>
 
-        <!-- CHAT BODY -->
+        <!-- CHAT MESSAGES -->
         <section id="chatMessages" class="messages-body"></section>
 
-        <!-- FILE PREVIEW -->
+        <!-- TYPING INDICATOR -->
+        <div id="typingIndicator" class="typing-indicator">
+            <div class="typing-bubble">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+
+        <!-- MEDIA PREVIEW (BEFORE SEND) -->
         <section id="previewArea" class="preview-area"></section>
 
         <!-- INPUT BAR -->
@@ -52,6 +62,7 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
         </footer>
+
     </main>
 
     <!-- RIGHT PANEL – CLIENT INFO -->
@@ -71,7 +82,7 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 
 </div>
 
-<!-- MEDIA VIEWER MODAL -->
+<!-- MEDIA MODAL VIEWER -->
 <div id="mediaModal" class="media-viewer">
     <span id="closeMediaModal" class="media-close">✖</span>
     <img id="mediaModalContent" class="media-content">
