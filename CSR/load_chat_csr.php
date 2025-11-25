@@ -5,7 +5,7 @@ header("Content-Type: application/json");
 date_default_timezone_set("Asia/Manila");
 
 $csr_user  = $_SESSION["csr_user"] ?? null;
-$client_id = (int)($_GET["client_id"] ?? 0);
+$client_id = intval($_GET["client_id"] ?? 0);
 
 if (!$csr_user || !$client_id) {
     echo json_encode([]);
@@ -38,6 +38,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     ];
 }
 
+/* Mark client messages seen */
 $conn->prepare("
     UPDATE chat SET seen = true
     WHERE client_id = :cid AND sender_type = 'client' AND seen = false
@@ -45,3 +46,4 @@ $conn->prepare("
 
 echo json_encode($messages);
 exit;
+?>
