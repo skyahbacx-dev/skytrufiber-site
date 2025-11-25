@@ -1,18 +1,12 @@
-/* =======================================================
+/* ========================================================
    CSR CHAT — FINAL FULL JS (MESSENGER SYSTEM)
-   ======================================================= */
+   ======================================================== */
 
 let activeClient = 0;
 let selectedClientAssigned = "";
 let filesToSend = [];
 let lastMessageCount = 0;
 let loadingMessages = false;
-
-/* ================= SIDEBAR ================= */
-function toggleSidebar() {
-    document.querySelector(".sidebar")?.classList.toggle("open");
-    document.querySelector(".sidebar-overlay")?.classList.toggle("show");
-}
 
 /* ================= LOAD CLIENT LIST ================= */
 function loadClients(search = "") {
@@ -50,8 +44,8 @@ function loadClientInfo() {
     $.getJSON("client_info.php?id=" + activeClient, data => {
         $("#infoName").text(data.name);
         $("#infoEmail").text(data.email);
-        $("#infoDistrict").text(data.district);
-        $("#infoBrgy").text(data.barangay);
+        $("#infoDistrict").text("District: " + data.district);
+        $("#infoBrgy").text("Barangay: " + data.barangay);
     });
 }
 
@@ -60,8 +54,7 @@ function dateLabel(date) {
     const today = new Date().toDateString();
     const d = new Date(date).toDateString();
 
-    if (today === d) return "Today";
-    return new Date(date).toLocaleDateString();
+    return today === d ? "Today" : new Date(date).toLocaleDateString();
 }
 
 /* ================= LOAD MESSAGES ================= */
@@ -80,15 +73,13 @@ function loadMessages(initial = false) {
             const newMsgs = messages.slice(lastMessageCount);
 
             newMsgs.forEach((m, idx) => {
-                /* Date Separator */
+
                 if (idx === 0 || dateLabel(m.created_at) !== dateLabel(newMsgs[idx - 1].created_at)) {
                     $("#chatMessages").append(`<div class="date-separator">${dateLabel(m.created_at)}</div>`);
                 }
 
-                /* Message Side */
                 const side = (m.sender_type === "csr") ? "csr" : "client";
 
-                /* Media attachment */
                 let attachment = "";
                 if (m.media_path) {
                     if (m.media_type === "image") {
@@ -98,18 +89,15 @@ function loadMessages(initial = false) {
                     }
                 }
 
-                /* TICKS */
+                // MESSAGE STATUS
                 let statusHTML = "";
                 if (m.sender_type === "csr") {
-                    if (m.seen) {
-                        statusHTML = `<span class="tick blue">✓✓</span>`;
-                    } else if (m.delivered) {
-                        statusHTML = `<span class="tick">✓✓</span>`;
-                    }
+                    if (m.seen) statusHTML = `<span class="tick blue">✓✓</span>`;
+                    else if (m.delivered) statusHTML = `<span class="tick">✓✓</span>`;
                 }
 
                 const html = `
-                <div class="msg-row ${side} animate-msg">
+                <div class="msg-row ${side}">
                     <div class="bubble-wrapper">
                         <div class="bubble">${m.message || ""}${attachment}</div>
                         <div class="meta">${m.created_at} ${statusHTML}</div>
@@ -129,9 +117,7 @@ function loadMessages(initial = false) {
 
 /* ================= SEND MESSAGE ================= */
 $("#sendBtn").click(sendMessage);
-$("#messageInput").keypress(e => {
-    if (e.key === "Enter") sendMessage();
-});
+$("#messageInput").keypress(e => { if (e.key === "Enter") sendMessage(); });
 
 function sendMessage() {
     let msg = $("#messageInput").val().trim();
@@ -163,6 +149,7 @@ function sendMessage() {
 
 /* ================= FILE PREVIEW ================= */
 $(".file-upload-icon").click(() => $("#fileInput").click());
+
 $("#fileInput").on("change", e => {
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
@@ -174,7 +161,8 @@ $("#fileInput").on("change", e => {
                 <div class="preview-thumb">
                     ${file.type.includes("video")
                         ? `<video src="${ev.target.result}" muted></video>`
-                        : `<img src="${ev.target.result}">`}
+                        : `<img src="${ev.target.result}">`
+                    }
                 </div>
             `);
         };
@@ -182,47 +170,7 @@ $("#fileInput").on("change", e => {
     });
 });
 
-/* ================= TYPING INDICATOR ================= */
-setInterval(() => {
-    if (!activeClient) return;
-
-    $.get(`typing_status.php?id=${activeClient}`, res => {
-        if (res.typing) {
-            $("#typingIndicator").fadeIn(150);
-        } else {
-            $("#typingIndicator").fadeOut(150);
-        }
-    });
-}, 900);
-
-/* ================= ASSIGNMENT POPUPS ================= */
-function showAssignPopup(id) {
-    window.assignTarget = id;
-    $("#assignPopup").fadeIn(160);
-}
-function closeAssignPopup() { $("#assignPopup").fadeOut(160); }
-
-function confirmAssign() {
-    $.post("assign_client.php", { client_id: window.assignTarget }, () => {
-        closeAssignPopup();
-        loadClients();
-    });
-}
-
-function showUnassignPopup(id) {
-    window.unassignTarget = id;
-    $("#unassignPopup").fadeIn(160);
-}
-function closeUnassignPopup() { $("#unassignPopup").fadeOut(160); }
-
-function confirmUnassign() {
-    $.post("unassign_client.php", { client_id: window.unassignTarget }, () => {
-        closeUnassignPopup();
-        loadClients();
-    });
-}
-
-/* ================= RIGHT PANEL TOGGLE ================= */
+/* ================= RIGHT PANEL ================= */
 function toggleClientInfo() {
     $("#infoPanel").toggleClass("show");
 }
