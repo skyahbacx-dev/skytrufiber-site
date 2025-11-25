@@ -4,7 +4,7 @@ include "../db_connect.php";
 include "../b2_upload.php";
 header("Content-Type: application/json");
 
-$username = $_POST["username"] ?? "";
+$username = $_SESSION["name"] ?? "";
 $message  = trim($_POST["message"] ?? "");
 
 if (!$username) {
@@ -24,9 +24,9 @@ if (!$client_id) {
 $media_path = null;
 $media_type = null;
 
-if (!empty($_FILES['file']['tmp_name'])) {
-    $tmp  = $_FILES['file']['tmp_name'];
-    $name = time() . "_" . $_FILES['file']['name'];
+if (!empty($_FILES['media']['tmp_name'])) {
+    $tmp  = $_FILES['media']['tmp_name'];
+    $name = time() . "_" . $_FILES['media']['name'];
 
     $url = b2_upload($tmp, $name);
 
