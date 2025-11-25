@@ -14,7 +14,7 @@ $search = $_GET["search"] ?? "";
 $sql = "
     SELECT
         c.id,
-        c.client_name AS name,
+        c.full_name,
         c.assigned_csr,
         (
             SELECT COUNT(*)
@@ -27,48 +27,46 @@ $sql = "
 ";
 
 if ($search !== "") {
-    $sql .= " WHERE LOWER(c.client_name) LIKE LOWER(:search)";
+    $sql .= " WHERE LOWER(c.full_name) LIKE LOWER(:search)";
 }
 
-$sql .= " ORDER BY unread DESC, c.client_name ASC";
+$sql .= " ORDER BY unread DESC, c.full_name ASC";
 
 $stmt = $conn->prepare($sql);
 
 $params = [];
-if ($search !== "") $params[":search"] = "%$search%";
+if ($search !== "") $params[\":search\"] = \"%$search%\";
 
 $stmt->execute($params);
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $id       = $row[\"id\"];
+    $name     = htmlspecialchars($row[\"full_name\"]);
+    $assigned = $row[\"assigned_csr\"];
+    $unread   = intval($row[\"unread\"]);
 
-    $id       = $row["id"];
-    $name     = htmlspecialchars($row["name"]);
-    $assigned = $row["assigned_csr"];
-    $unread   = intval($row["unread"]);
-
-    // buttons
     if ($assigned === null) {
-        $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'><i class=\"fa-solid fa-plus\"></i></button>";
+        $btn = \"<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'><i class='fa-solid fa-plus'></i></button>\";
     } elseif ($assigned === $csrUser) {
-        $btn = "<button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($id)'><i class=\"fa-solid fa-minus\"></i></button>";
+        $btn = \"<button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($id)'><i class='fa-solid fa-minus'></i></button>\";
     } else {
-        $btn = "<button class='lock-btn' disabled><i class=\"fa-solid fa-lock\"></i></button>";
+        $btn = \"<button class='lock-btn' disabled><i class='fa-solid fa-lock'></i></button>\";
     }
 
-    echo "
-    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
+    echo \"
+    <div class='client-item' id='client-$id' onclick='selectClient($id, \\\"$name\\\", \\\"$assigned\\\")'>
         <img src='upload/default-avatar.png' class='client-avatar'>
         <div class='client-content'>
             <div class='client-name'>
-                $name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
+                $name \" . ($unread > 0 ? \"<span class='badge'>$unread</span>\" : \"\") . \"
             </div>
             <div class='client-sub'>
-                " . ($assigned === null ? "Unassigned"
-                    : ($assigned === $csrUser ? "Assigned to YOU"
-                    : "Assigned to $assigned")) . "
+                \" . ($assigned === null ? \"Unassigned\"
+                    : ($assigned === $csrUser ? \"Assigned to YOU\"
+                    : \"Assigned to $assigned\")) . \"
             </div>
         </div>
         <div class='client-actions'>$btn</div>
-    </div>";
+    </div>\";
 }
 ?>
