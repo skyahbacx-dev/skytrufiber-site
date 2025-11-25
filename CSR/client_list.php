@@ -14,7 +14,7 @@ $search = $_GET["search"] ?? "";
 $sql = "
     SELECT
         u.id,
-        u.full_name,
+        u.full_name AS name,
         u.assigned_csr,
         (
             SELECT COUNT(*)
@@ -24,24 +24,27 @@ $sql = "
               AND m.seen = false
         ) AS unread
     FROM users u
+    WHERE u.source = 'client'
 ";
 
 if ($search !== "") {
-    $sql .= " WHERE LOWER(u.full_name) LIKE LOWER(:search)";
+    $sql .= " AND LOWER(u.full_name) LIKE LOWER(:search)";
 }
 
 $sql .= " ORDER BY unread DESC, u.full_name ASC";
 
 $stmt = $conn->prepare($sql);
+
 $params = [];
 if ($search !== "") $params[":search"] = "%$search%";
+
 $stmt->execute($params);
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $id = $row["id"];
-    $name = htmlspecialchars($row["full_name"]);
+    $id       = $row["id"];
+    $name     = htmlspecialchars($row["name"]);
     $assigned = $row["assigned_csr"];
-    $unread = intval($row["unread"]);
+    $unread   = intval($row["unread"]);
 
     if ($assigned === null) {
         $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'><i class='fa-solid fa-plus'></i></button>";
