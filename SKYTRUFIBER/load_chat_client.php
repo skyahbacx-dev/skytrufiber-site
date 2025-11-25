@@ -5,7 +5,7 @@ date_default_timezone_set("Asia/Manila");
 
 $username = $_GET["client"] ?? "";
 
-$stmt = $conn->prepare("SELECT id FROM clients WHERE name = :u LIMIT 1");
+$stmt = $conn->prepare("SELECT id FROM clients WHERE client_name = :u LIMIT 1");
 $stmt->execute([":u" => $username]);
 $client_id = $stmt->fetchColumn();
 
@@ -39,8 +39,12 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     ];
 }
 
-$conn->prepare("UPDATE chat SET delivered = true WHERE client_id = :cid AND delivered = false")
-    ->execute([":cid" => $client_id]);
+/* Mark delivered to device */
+$conn->prepare("
+    UPDATE chat SET delivered = true
+    WHERE client_id = :cid AND delivered = false
+")->execute([":cid" => $client_id]);
 
 echo json_encode($messages);
 exit;
+?>
