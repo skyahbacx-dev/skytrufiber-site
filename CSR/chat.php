@@ -36,13 +36,13 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
             <button id="infoBtn" class="info-btn" onclick="toggleClientInfo()">ⓘ</button>
         </header>
 
-        <!-- CHAT BODY -->
+        <!-- CHAT MESSAGES -->
         <section id="chatMessages" class="messages-body"></section>
 
-        <!-- File Preview -->
+        <!-- FILE PREVIEW AREA -->
         <section id="previewArea" class="preview-area"></section>
 
-        <!-- INPUT BAR -->
+        <!-- SEND INPUT AREA -->
         <footer id="chat-input-bar">
             <label for="fileInput" class="file-upload-icon">
                 <i class="fa-regular fa-image"></i>
@@ -53,10 +53,9 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
         </footer>
-
     </main>
 
-    <!-- RIGHT PANEL – CLIENT INFO -->
+    <!-- RIGHT INFO PANEL -->
     <aside id="infoPanel" class="right-panel">
         <button class="close-info" onclick="toggleClientInfo()">✖</button>
 
@@ -68,7 +67,6 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
             <div><b>Barangay:</b> <span id="infoBrgy"></span></div>
         </div>
     </aside>
-
 </div>
 
 <!-- MEDIA VIEWER -->
