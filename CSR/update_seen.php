@@ -1,19 +1,14 @@
 <?php
-session_start();
 include "../db_connect.php";
+header("Content-Type: application/json");
 
-$csr = $_SESSION['csr_user'] ?? null;
-$clientId = $_POST['client_id'] ?? null;
-
-if (!$csr || !$clientId) exit("fail");
+$client_id = (int)($_POST["client_id"] ?? 0);
 
 $stmt = $conn->prepare("
-    UPDATE chat
-    SET seen = TRUE
-    WHERE client_id = :client_id
-      AND sender_type = 'client'
-      AND seen = FALSE
+    UPDATE chat SET seen = true
+    WHERE client_id = :cid AND sender_type='csr'
 ");
-$stmt->execute([":client_id" => $clientId]);
+$stmt->execute([":cid" => $client_id]);
 
-echo "OK";
+echo json_encode(["status"=>"ok"]);
+exit;
