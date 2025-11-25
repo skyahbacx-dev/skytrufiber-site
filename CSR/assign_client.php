@@ -7,20 +7,17 @@ $csr = $_SESSION["csr_user"] ?? null;
 $client_id = (int)($_POST["client_id"] ?? 0);
 
 if (!$csr || !$client_id) {
-    echo json_encode(["status" => "error", "msg" => "Invalid"]);
+    echo json_encode(["status" => "error", "msg" => "Missing data"]);
     exit;
 }
 
 $stmt = $conn->prepare("
-    UPDATE clients
-    SET assigned_csr = :csr
-    WHERE id = :cid
+    UPDATE clients SET assigned_csr = :csr WHERE id = :id
 ");
 $stmt->execute([
     ":csr" => $csr,
-    ":cid" => $client_id
+    ":id"  => $client_id
 ]);
 
 echo json_encode(["status" => "ok"]);
 exit;
-?>
