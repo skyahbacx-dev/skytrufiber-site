@@ -1,5 +1,5 @@
 /* =======================================================
-   CSR CHAT — FULL MESSENGER SYSTEM JS (FINAL RELEASE)
+   CSR CHAT — FULL FINAL JS (MESSENGER ENGINE)
    ======================================================= */
 
 let activeClient = 0;
@@ -10,8 +10,8 @@ let loadingMessages = false;
 
 /* ================= SIDEBAR ================= */
 function toggleSidebar() {
-    document.querySelector(".sidebar")?.classList.toggle("open");
-    document.querySelector(".sidebar-overlay")?.classList.toggle("show");
+    $(".sidebar").toggleClass("open");
+    $(".sidebar-overlay").toggleClass("show");
 }
 
 /* ================= LOAD CLIENT LIST ================= */
@@ -43,27 +43,28 @@ function selectClient(id, name, assignedTo) {
     loadClientInfo();
 }
 
-/* ================= LOAD CLIENT INFO ================= */
+/* ================= LOAD CLIENT INFO (RIGHT PANEL) ================= */
 function loadClientInfo() {
     if (!activeClient) return;
 
-    $.getJSON("client_info.php?id=" + activeClient, data => {
-        $("#infoName").text(data.client_name);
+    $.getJSON("client_info.php?id=" + activeClient, function (data) {
+        $("#infoName").text(data.name);
         $("#infoEmail").text(data.email);
         $("#infoDistrict").text(data.district);
         $("#infoBrgy").text(data.barangay);
     });
 }
 
-/* ================= DATE SEPARATOR ================= */
+/* ================= DATE LABEL ================= */
 function dateLabel(date) {
     const today = new Date().toDateString();
     const d = new Date(date).toDateString();
+
     if (today === d) return "Today";
     return new Date(date).toLocaleDateString();
 }
 
-/* ================= LOAD CHAT MESSAGES ================= */
+/* ================= LOAD MESSAGES ================= */
 function loadMessages(initial = false) {
     if (!activeClient || loadingMessages) return;
     loadingMessages = true;
@@ -78,9 +79,9 @@ function loadMessages(initial = false) {
         if (messages.length > lastMessageCount) {
             const newMsgs = messages.slice(lastMessageCount);
 
-            newMsgs.forEach((m, idx) => {
+            newMsgs.forEach((m, index) => {
 
-                if (idx === 0 || dateLabel(m.created_at) !== dateLabel(newMsgs[idx - 1]?.created_at)) {
+                if (index === 0 || dateLabel(m.created_at) !== dateLabel(newMsgs[index - 1].created_at)) {
                     $("#chatMessages").append(`<div class="date-separator">${dateLabel(m.created_at)}</div>`);
                 }
 
@@ -97,7 +98,7 @@ function loadMessages(initial = false) {
 
                 let statusHTML = "";
                 if (m.sender_type === "csr") {
-                    if (m.seen) statusHTML = `<span class="tick blue">✓✓</span>`;
+                    if (m.seen)      statusHTML = `<span class="tick blue">✓✓</span>`;
                     else if (m.delivered) statusHTML = `<span class="tick">✓✓</span>`;
                 }
 
@@ -145,13 +146,14 @@ function sendMessage() {
             $("#previewArea").html("");
             $("#fileInput").val("");
             filesToSend = [];
+
             loadMessages(false);
             loadClients();
         }
     });
 }
 
-/* ================= PREVIEW FILES ================= */
+/* ================= FILE PREVIEW ================= */
 $(".file-upload-icon").click(() => $("#fileInput").click());
 
 $("#fileInput").on("change", e => {
@@ -162,18 +164,17 @@ $("#fileInput").on("change", e => {
         const reader = new FileReader();
         reader.onload = ev => {
             $("#previewArea").append(`
-                <div class="preview-thumb">
-                    ${file.type.includes("video")
-                        ? `<video src="${ev.target.result}" muted></video>`
-                        : `<img src="${ev.target.result}">`}
-                </div>
-            `);
+            <div class="preview-thumb">
+                ${file.type.includes("video")
+                    ? `<video src="${ev.target.result}" muted></video>`
+                    : `<img src="${ev.target.result}">`}
+            </div>`);
         };
         reader.readAsDataURL(file);
     });
 });
 
-/* ================= ASSIGN & UNASSIGN ================= */
+/* ================= ASSIGN / UNASSIGN ================= */
 function showAssignPopup(id) { window.assignTarget = id; $("#assignPopup").fadeIn(160); }
 function closeAssignPopup() { $("#assignPopup").fadeOut(160); }
 
@@ -192,6 +193,11 @@ function confirmUnassign() {
     });
 }
 
+/* ================= RIGHT PANEL ================= */
+function toggleClientInfo() {
+    $("#infoPanel").toggleClass("show");
+}
+
 /* ================= MEDIA VIEWER ================= */
 function openMedia(src) {
     $("#mediaModal").addClass("show");
@@ -203,5 +209,5 @@ $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 setInterval(() => loadClients($("#searchInput").val()), 2000);
 setInterval(() => loadMessages(false), 1200);
 
-/* START */
+/* INITIAL LOAD */
 loadClients();
