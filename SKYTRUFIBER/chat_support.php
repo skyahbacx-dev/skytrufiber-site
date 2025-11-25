@@ -1,62 +1,57 @@
 <?php
 session_start();
-include "../db_connect.php";
+include '../db_connect.php';
 
-if (!isset($_SESSION["user"])) {
+if (!isset($_SESSION['user'])) {
     header("Location: skytrufiber.php");
     exit;
 }
 
-$user_id = $_SESSION["user"];
-$full_name = $_SESSION["name"];
+$client_id = $_SESSION['user'];
+$client_name = $_SESSION['name'];
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>SkyTruFiber Support Chat</title>
-
 <link rel="stylesheet" href="support_chat.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
 </head>
+
 <body>
 
-<div id="support-layout">
-
-    <header id="support-header">
-        <div class="user-info-area">
-            <img src="../AHBALOGO.png" class="client-avatar-header">
-            <div>
-                <h2><?php echo strtoupper($full_name); ?></h2>
-                <span>Connected to CSR Support</span>
-            </div>
-        </div>
+<div class="chat-container">
+    <header class="chat-header">
+        <img src="../SKYTRUFIBER.png" class="logo">
+        <h2><?php echo htmlspecialchars($client_name); ?></h2>
+        <span class="subtext">Connected to CSR Support</span>
     </header>
 
-    <section id="chatMessages" class="messages-body"></section>
+    <div id="chatMessages" class="chat-messages"></div>
 
-    <section id="previewArea" class="preview-area"></section>
+    <div id="typingIndicator" class="typing-indicator" style="display:none;">
+        CSR is typing...
+    </div>
 
-    <footer id="chat-input-bar">
-        <label for="fileInput" class="file-upload-icon">
-            <i class="fa-regular fa-image"></i>
+    <div class="input-container">
+        <label class="file-upload">
+            <input type="file" id="fileInput" multiple>
+            <img src="img/upload.png" class="upload-icon">
         </label>
-        <input type="file" id="fileInput" multiple style="display:none;">
-        <input type="text" id="messageInput" class="message-field" placeholder="Type a message…">
-        <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
-    </footer>
 
+        <input id="messageInput" type="text" placeholder="Type a message...">
+
+        <button id="sendBtn" class="send-btn">
+            <img src="img/send.png">
+        </button>
+    </div>
+
+    <div id="previewArea" class="preview-area"></div>
 </div>
 
-<script src="support_chat.js"></script>
-
 <script>
-const username = "<?php echo htmlspecialchars($full_name, ENT_QUOTES); ?>";
-const userId  = "<?php echo $user_id; ?>";
+let clientId = <?php echo $client_id; ?>;
 </script>
-
+<script src="client_support.js"></script>
 </body>
 </html>
