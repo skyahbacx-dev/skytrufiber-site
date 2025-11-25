@@ -16,12 +16,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user && password_verify($password, $user['password'])) {
+
+                // SET SESSION
                 $_SESSION['user'] = $user['id'];
                 $_SESSION['name'] = $user['full_name'];
                 $_SESSION['email'] = $user['email'];
 
+                // INSERT first concern into chat DB
+                if (!empty($concern)) {
+                    $insert = $conn->prepare("
+                        INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
+                        VALUES (:cid, 'client', :msg, false, false, NOW())
+                    ");
+                    $insert->execute([
+                        ':cid' => $user['id'],
+                        ':msg' => $concern
+                    ]);
+                }
+
+                // REDIRECT TO CHAT PAGE
                 header("Location: chat_support.php?username=" . urlencode($user['full_name']));
                 exit;
+
             } else {
                 $message = "❌ Invalid email/full name or password.";
             }
@@ -34,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = "⚠ Please fill in all fields.";
     }
 }
-?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
