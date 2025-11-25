@@ -12,7 +12,7 @@ if (!$csrUser) {
 $search = $_GET["search"] ?? "";
 
 /* ============================================================
-   Client List Query (Corrected to use `users` table + client_id)
+   Client List Query using USERS table (not clients)
    ============================================================ */
 $sql = "
     SELECT
@@ -20,7 +20,8 @@ $sql = "
         u.fullname AS name,
         u.assigned_csr,
         (
-            SELECT COUNT(*) FROM chat m
+            SELECT COUNT(*)
+            FROM chat m
             WHERE m.client_id = u.id
               AND m.sender_type = 'client'
               AND m.seen = false
@@ -32,7 +33,7 @@ $params = [];
 
 if ($search !== "") {
     $sql .= " WHERE LOWER(u.fullname) LIKE LOWER(:search)";
-    $params[":search"] = "%$search%";
+    $params[\":search\"] = \"%$search%\";
 }
 
 $sql .= " ORDER BY unread DESC, u.fullname ASC";
@@ -41,9 +42,8 @@ $stmt = $conn->prepare($sql);
 $stmt->execute($params);
 
 /* ============================================================
-   Build list output items
+   OUTPUT CLIENT LIST ITEMS
    ============================================================ */
-
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
     $id       = $row["id"];
@@ -51,7 +51,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $assigned = $row["assigned_csr"];
     $unread   = intval($row["unread"]);
 
-    // ASSIGNMENT BUTTON STATUS
+    // Action button depending on assignment
     if ($assigned === null) {
         $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'>
                     <i class='fa-solid fa-plus'></i>
@@ -68,8 +68,8 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
     echo "
     <div class='client-item' id='client-$id'
-        onclick='selectClient($id, \"$name\", \"$assigned\")'>
-
+         onclick='selectClient($id, \"$name\", \"$assigned\")'>
+         
         <img src='../SKYTRUFIBER.png' class='client-avatar'>
 
         <div class='client-content'>
