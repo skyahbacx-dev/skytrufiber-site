@@ -17,7 +17,7 @@ $sql = "
            m.media_path, m.media_type
     FROM chat c
     LEFT JOIN chat_media m ON c.id = m.chat_id
-    WHERE c.user_id = :cid
+    WHERE c.client_id = :cid
     ORDER BY c.created_at ASC
 ";
 
@@ -39,9 +39,8 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 }
 
 $conn->prepare("
-    UPDATE chat
-    SET seen = true
-    WHERE user_id = :cid AND sender_type = 'client' AND seen = false
+    UPDATE chat SET seen = true
+    WHERE client_id = :cid AND sender_type = 'client' AND seen = false
 ")->execute([":cid" => $client_id]);
 
 echo json_encode($messages);
