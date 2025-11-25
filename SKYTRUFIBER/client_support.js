@@ -1,112 +1,68 @@
-/* ==========================================================
-   CLIENT SUPPORT CHAT JS — FINAL FULL VERSION
-   ========================================================== */
+const chatMessages = document.getElementById("chatMessages");
+const messageInput = document.getElementById("messageInput");
+const sendBtn = document.getElementById("sendBtn");
+const previewArea = document.getElementById("previewArea");
+const fileInput = document.getElementById("fileInput");
 
-let messagesLoaded = 0;
-let filesToSend = [];
-let polling = true;
-
-/* ================= AUTOSCROLL ================= */
 function scrollToBottom() {
-    const box = document.getElementById("chatBox");
-    box.scrollTop = box.scrollHeight;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-/* ================= LOAD CHAT ================= */
-function loadChat(initial = false) {
-    const username = document.getElementById("usernameHolder").value;
-    if (!username) return;
-
-    fetch(`load_chat_client.php?client=${username}`)
-        .then(res => res.json())
+function loadMessages() {
+    fetch("load_chat_client.php")
+        .then(response => response.json())
         .then(data => {
-            if (initial) {
-                document.getElementById("chatBox").innerHTML = "";
-                messagesLoaded = 0;
-            }
+            chatMessages.innerHTML = "";
+            let lastDate = "";
 
-            if (data.length > messagesLoaded) {
-                const newMsgs = data.slice(messagesLoaded);
+            data.forEach(msg => {
+                const date = new Date(msg.created_at).toLocaleDateString();
+                if (date !== lastDate) {
+                    chatMessages.innerHTML += `<div class="date-separator">${date}</div>`;
+                    lastDate = date;
+                }
 
-                newMsgs.forEach(m => {
-                    let attachment = "";
-                    if (m.media_path) {
-                        attachment = m.media_type === "image"
-                            ? `<img src="${m.media_path}" class="chat-img">`
-                            : `<video class="chat-img" controls><source src="${m.media_path}"></video>`;
-                    }
+                let row = document.createElement("div");
+                row.classList.add("msg-row", msg.sender_type);
 
-                    const side = m.sender_type === "client" ? "me" : "csr";
+                let bubble = document.createElement("div");
+                bubble.classList.add("bubble");
+                bubble.textContent = msg.message;
 
-                    const bubble = `
-                        <div class="msg-row ${side}">
-                            <div class="bubble">
-                                ${m.message || ""}
-                                ${attachment}
-                                <div class="meta">${m.created_at}</div>
-                            </div>
-                        </div>
-                    `;
-                    document.getElementById("chatBox").innerHTML += bubble;
-                });
+                row.appendChild(bubble);
+                chatMessages.appendChild(row);
+            });
 
-                scrollToBottom();
-            }
-
-            messagesLoaded = data.length;
+            scrollToBottom();
         });
 }
 
-/* ================= SEND MESSAGE ================= */
-function sendMessage() {
-    const msg = document.getElementById("message").value.trim();
-    const username = document.getElementById("usernameHolder").value;
-
-    if (!msg && filesToSend.length === 0) return;
-
-    const fd = new FormData();
-    fd.append("message", msg);
-    fd.append("username", username);
-
-    filesToSend.forEach(f => fd.append("file", f));
+function sendMessage(text) {
+    const formData = new FormData();
+    formData.append("message", text);
 
     fetch("save_chat_client.php", {
         method: "POST",
-        body: fd
+        body: formData
     }).then(() => {
-        document.getElementById("message").value = "";
-        document.getElementById("preview").innerHTML = "";
-        filesToSend = [];
-        document.getElementById("fileInput").value = "";
-        loadChat();
+        messageInput.value = "";
+        loadMessages();
     });
 }
 
-/* ================= FILE PREVIEW ================= */
-document.getElementById("fileInput").addEventListener("change", e => {
-    filesToSend = [...e.target.files];
-    document.getElementById("preview").innerHTML = "";
-
-    filesToSend.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = ev => {
-            document.getElementById("preview").innerHTML +=
-                file.type.includes("video")
-                    ? `<video src="${ev.target.result}" muted></video>`
-                    : `<img src="${ev.target.result}">`;
-        };
-        reader.readAsDataURL(file);
-    });
+sendBtn.addEventListener("click", () => {
+    const message = messageInput.value.trim();
+    if (message.length > 0) sendMessage(message);
 });
 
-/* ================= EVENT LISTENERS ================= */
-document.getElementById("sendBtn").addEventListener("click", sendMessage);
-document.getElementById("message").addEventListener("keypress", e => {
-    if (e.key === "Enter") sendMessage();
+messageInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        const message = messageInput.value.trim();
+        if (message.length > 0) sendMessage(message);
+    }
 });
 
-/* ================= AUTOPOLL ================= */
-setInterval(() => loadChat(false), 1200);
-
-/* Initial */
-loadChat(true);
+// Load messages every 2 seconds
+setInterval(loadMessages, 2000);
+loadMessages();
