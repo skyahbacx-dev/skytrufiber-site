@@ -11,55 +11,67 @@ if (!$csrUser) {
 
 $search = $_GET["search"] ?? "";
 
-/**
- * Correct unread counter: only count client messages unseen by CSR
- */
+/* ============================================================
+   Client List Query (Corrected to use `users` table + client_id)
+   ============================================================ */
 $sql = "
     SELECT
-        c.id,
-        c.full_name,
-        c.assigned_csr,
+        u.id,
+        u.fullname AS name,
+        u.assigned_csr,
         (
-            SELECT COUNT(*)
-            FROM chat m
-            WHERE m.client_id = c.id
+            SELECT COUNT(*) FROM chat m
+            WHERE m.client_id = u.id
               AND m.sender_type = 'client'
               AND m.seen = false
         ) AS unread
-    FROM clients c
+    FROM users u
 ";
 
+$params = [];
+
 if ($search !== "") {
-    $sql .= " WHERE LOWER(c.full_name) LIKE LOWER(:search)";
+    $sql .= " WHERE LOWER(u.fullname) LIKE LOWER(:search)";
+    $params[":search"] = "%$search%";
 }
 
-$sql .= " ORDER BY unread DESC, c.full_name ASC";
+$sql .= " ORDER BY unread DESC, u.fullname ASC";
 
 $stmt = $conn->prepare($sql);
-
-$params = [];
-if ($search !== "") $params[":search"] = "%$search%";
-
 $stmt->execute($params);
+
+/* ============================================================
+   Build list output items
+   ============================================================ */
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
     $id       = $row["id"];
-    $name     = htmlspecialchars($row["full_name"]);
+    $name     = htmlspecialchars($row["name"]);
     $assigned = $row["assigned_csr"];
     $unread   = intval($row["unread"]);
 
+    // ASSIGNMENT BUTTON STATUS
     if ($assigned === null) {
-        $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'><i class='fa-solid fa-plus'></i></button>";
+        $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'>
+                    <i class='fa-solid fa-plus'></i>
+                </button>";
     } elseif ($assigned === $csrUser) {
-        $btn = "<button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($id)'><i class='fa-solid fa-minus'></i></button>";
+        $btn = "<button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($id)'>
+                    <i class='fa-solid fa-minus'></i>
+                </button>";
     } else {
-        $btn = "<button class='lock-btn' disabled><i class='fa-solid fa-lock'></i></button>";
+        $btn = "<button class='lock-btn' disabled>
+                    <i class='fa-solid fa-lock'></i>
+                </button>";
     }
 
     echo "
-    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
-        <img src='upload/default-avatar.png' class='client-avatar'>
+    <div class='client-item' id='client-$id'
+        onclick='selectClient($id, \"$name\", \"$assigned\")'>
+
+        <img src='../SKYTRUFIBER.png' class='client-avatar'>
+
         <div class='client-content'>
             <div class='client-name'>
                 $name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
@@ -70,6 +82,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     : "Assigned to $assigned")) . "
             </div>
         </div>
+
         <div class='client-actions'>$btn</div>
     </div>";
 }
