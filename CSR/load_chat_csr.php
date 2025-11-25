@@ -38,6 +38,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     ];
 }
 
+/* Mark messages from client as seen */
 $conn->prepare("
     UPDATE chat SET seen = true
     WHERE client_id = :cid AND sender_type = 'client' AND seen = false
@@ -45,3 +46,4 @@ $conn->prepare("
 
 echo json_encode($messages);
 exit;
+?>
