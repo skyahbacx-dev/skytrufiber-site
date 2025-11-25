@@ -1,62 +1,67 @@
 <?php
 session_start();
-if (!isset($_SESSION["user"])) {
+include "../db_connect.php";
+
+if (!isset($_SESSION["name"])) {
     header("Location: skytrufiber.php");
     exit;
 }
 
-$username = $_SESSION["name"] ?? "Guest";
+$username = $_SESSION["name"];
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SkyTruFiber Support Chat</title>
+<title>SkyTruFiber Support — <?= htmlspecialchars($username) ?></title>
 
 <link rel="stylesheet" href="support_chat.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-const username = "<?= htmlspecialchars($username, ENT_QUOTES) ?>";
+const currentUser = "<?= htmlspecialchars($username, ENT_QUOTES) ?>";
 </script>
-<script src="support_chat.js"></script>
-
+<script src="client_support.js"></script>
 </head>
+
 <body>
 
-<div class="chat-wrapper">
+<div id="client-chat-layout">
 
     <!-- HEADER -->
-    <div class="chat-header">
-        <img src="default-avatar.png">
-        <div class="chat-header-title">
-            SkyTruFiber Support <br>
-            <small>Online • 24/7 Support</small>
+    <header id="client-chat-header">
+        <div class="header-left">
+            <img src="../SKYTRUFIBER.png" class="chat-logo">
+            <h2>Support Chat</h2>
         </div>
-    </div>
+        <div class="header-right">
+            <b><?= htmlspecialchars($username) ?></b>
+            <a href="logout.php" class="logout-btn">Logout</a>
+        </div>
+    </header>
 
-    <!-- CHAT MESSAGES -->
-    <div id="chatBody" class="chat-body"></div>
+    <!-- CHAT BODY -->
+    <section id="clientMessages" class="messages-body"></section>
 
-    <!-- IMAGE PREVIEW -->
-    <div id="previewArea" style="padding:10px"></div>
+    <!-- FILE PREVIEW -->
+    <section id="previewArea" class="preview-area"></section>
 
     <!-- INPUT BAR -->
-    <div class="chat-input-area">
-        <label for="fileInput" class="file-btn"><i class="fa-regular fa-image"></i></label>
+    <footer id="clientInputBar">
+        <label for="fileInput" class="file-upload-icon">
+            <i class="fa-regular fa-image"></i>
+        </label>
         <input type="file" id="fileInput" multiple style="display:none;">
-        <input type="text" id="messageInput" class="input-box" placeholder="Type a message…">
+        <input type="text" id="messageInput" placeholder="Type a message...">
         <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
-    </div>
+    </footer>
 
 </div>
 
 <!-- MEDIA VIEWER -->
-<div id="mediaViewer" class="viewer">
-    <span id="viewerClose" class="viewer-close">✖</span>
-    <img id="viewerImage">
+<div id="mediaModal" class="media-viewer">
+    <span id="closeMediaModal" class="media-close">✖</span>
+    <img id="mediaModalContent" class="media-content">
 </div>
 
 </body>
