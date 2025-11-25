@@ -1,77 +1,69 @@
 /* =======================================================
-   CSR CHAT — MESSENGER SYSTEM (FINAL FULL JS)
+   CSR CHAT — FULL MESSENGER SYSTEM JS (FINAL RELEASE)
    ======================================================= */
 
 let activeClient = 0;
+let selectedClientAssigned = "";
 let filesToSend = [];
 let lastMessageCount = 0;
 let loadingMessages = false;
 
-/* ========================= SIDEBAR ========================= */
+/* ================= SIDEBAR ================= */
 function toggleSidebar() {
     document.querySelector(".sidebar")?.classList.toggle("open");
     document.querySelector(".sidebar-overlay")?.classList.toggle("show");
 }
 
-/* ======================= LOAD CLIENT LIST ======================== */
+/* ================= LOAD CLIENT LIST ================= */
 function loadClients(search = "") {
     $.get("client_list.php", { search: search }, function (data) {
         $("#clientList").html(data);
-
-        // Auto-select first available client if none selected
-        if (activeClient === 0) {
-            const firstElem = $("#clientList .client-item").first();
-            if (firstElem.length) {
-                const cid = firstElem.data("id");
-                const cname = firstElem.data("name");
-                const asg = firstElem.data("assigned");
-                selectClient(cid, cname, asg);
-            }
-        }
     });
 }
 
-/* ======================= SELECT CLIENT ======================== */
+/* ================= SELECT CLIENT ================= */
 function selectClient(id, name, assignedTo) {
     activeClient = id;
+    selectedClientAssigned = assignedTo || "";
 
     $(".client-item").removeClass("active-client");
-    $(`#client-${id}`).addClass("active-client");
+    $("#client-" + id).addClass("active-client");
 
     $("#chatName").text(name);
-    $("#chatMessages").html("");
-    lastMessageCount = 0;
 
-    loadClientInfo();
-    loadMessages(true);
-
-    // Lock input if assigned to other CSR
     const locked = assignedTo && assignedTo !== csrUser;
     $("#messageInput").prop("disabled", locked);
     $("#sendBtn").prop("disabled", locked);
     $(".file-upload-icon").toggle(!locked);
+
+    $("#chatMessages").html("");
+    lastMessageCount = 0;
+
+    loadMessages(true);
+    loadClientInfo();
 }
 
-/* ===================== LOAD CLIENT INFO ===================== */
+/* ================= LOAD CLIENT INFO ================= */
 function loadClientInfo() {
-    $.getJSON("client_info.php?id=" + activeClient, function (data) {
-        if (!data) return;
+    if (!activeClient) return;
 
-        $("#infoName").text(data.name);
+    $.getJSON("client_info.php?id=" + activeClient, data => {
+        $("#infoName").text(data.client_name);
         $("#infoEmail").text(data.email);
         $("#infoDistrict").text(data.district);
         $("#infoBrgy").text(data.barangay);
     });
 }
 
-/* ======================== DATE LABEL ======================== */
+/* ================= DATE SEPARATOR ================= */
 function dateLabel(date) {
     const today = new Date().toDateString();
     const d = new Date(date).toDateString();
-    return d === today ? "Today" : new Date(date).toLocaleDateString();
+    if (today === d) return "Today";
+    return new Date(date).toLocaleDateString();
 }
 
-/* =================== LOAD CHAT MESSAGES ==================== */
+/* ================= LOAD CHAT MESSAGES ================= */
 function loadMessages(initial = false) {
     if (!activeClient || loadingMessages) return;
     loadingMessages = true;
@@ -86,8 +78,9 @@ function loadMessages(initial = false) {
         if (messages.length > lastMessageCount) {
             const newMsgs = messages.slice(lastMessageCount);
 
-            newMsgs.forEach((m, index) => {
-                if (index === 0 || dateLabel(m.created_at) !== dateLabel(newMsgs[index - 1].created_at)) {
+            newMsgs.forEach((m, idx) => {
+
+                if (idx === 0 || dateLabel(m.created_at) !== dateLabel(newMsgs[idx - 1]?.created_at)) {
                     $("#chatMessages").append(`<div class="date-separator">${dateLabel(m.created_at)}</div>`);
                 }
 
@@ -102,20 +95,21 @@ function loadMessages(initial = false) {
                     }
                 }
 
-                let tick = "";
+                let statusHTML = "";
                 if (m.sender_type === "csr") {
-                    if (m.seen) tick = `<span class="tick blue">✓✓</span>`;
-                    else if (m.delivered) tick = `<span class="tick">✓✓</span>`;
+                    if (m.seen) statusHTML = `<span class="tick blue">✓✓</span>`;
+                    else if (m.delivered) statusHTML = `<span class="tick">✓✓</span>`;
                 }
 
-                $("#chatMessages").append(`
-                    <div class="msg-row ${side} animate-msg">
-                        <div class="bubble-wrapper">
-                            <div class="bubble">${m.message || ""}${attachment}</div>
-                            <div class="meta">${m.created_at} ${tick}</div>
-                        </div>
+                const html = `
+                <div class="msg-row ${side} animate-msg">
+                    <div class="bubble-wrapper">
+                        <div class="bubble">${m.message || ""}${attachment}</div>
+                        <div class="meta">${m.created_at} ${statusHTML}</div>
                     </div>
-                `);
+                </div>`;
+
+                $("#chatMessages").append(html);
             });
 
             $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
@@ -126,7 +120,7 @@ function loadMessages(initial = false) {
     });
 }
 
-/* ========================= SEND MESSAGE ========================= */
+/* ================= SEND MESSAGE ================= */
 $("#sendBtn").click(sendMessage);
 $("#messageInput").keypress(e => { if (e.key === "Enter") sendMessage(); });
 
@@ -143,25 +137,24 @@ function sendMessage() {
     $.ajax({
         url: "save_chat_csr.php",
         method: "POST",
-        contentType: false,
         processData: false,
+        contentType: false,
         data: fd,
-        success: () => {
+        success: function () {
             $("#messageInput").val("");
             $("#previewArea").html("");
             $("#fileInput").val("");
             filesToSend = [];
-
             loadMessages(false);
             loadClients();
         }
     });
 }
 
-/* ======================== FILE PREVIEW ======================== */
+/* ================= PREVIEW FILES ================= */
 $(".file-upload-icon").click(() => $("#fileInput").click());
 
-$("#fileInput").change(e => {
+$("#fileInput").on("change", e => {
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
@@ -180,48 +173,35 @@ $("#fileInput").change(e => {
     });
 });
 
-/* ====================== INFO PANEL ===================== */
-function toggleClientInfo() {
-    $("#infoPanel").toggleClass("show");
+/* ================= ASSIGN & UNASSIGN ================= */
+function showAssignPopup(id) { window.assignTarget = id; $("#assignPopup").fadeIn(160); }
+function closeAssignPopup() { $("#assignPopup").fadeOut(160); }
+
+function confirmAssign() {
+    $.post("assign_client.php", { client_id: window.assignTarget }, () => {
+        closeAssignPopup(); loadClients();
+    });
 }
 
-/* ====================== MEDIA VIEWER ===================== */
+function showUnassignPopup(id) { window.unassignTarget = id; $("#unassignPopup").fadeIn(160); }
+function closeUnassignPopup() { $("#unassignPopup").fadeOut(160); }
+
+function confirmUnassign() {
+    $.post("unassign_client.php", { client_id: window.unassignTarget }, () => {
+        closeUnassignPopup(); loadClients();
+    });
+}
+
+/* ================= MEDIA VIEWER ================= */
 function openMedia(src) {
     $("#mediaModal").addClass("show");
     $("#mediaModalContent").attr("src", src);
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-/* =================== ASSIGN / UNASSIGN =================== */
-function showAssignPopup(id) {
-    window.assignTarget = id;
-    $("#assignPopup").fadeIn(160);
-}
-function closeAssignPopup() { $("#assignPopup").fadeOut(160); }
-
-function confirmAssign() {
-    $.post("assign_client.php", { client_id: window.assignTarget }, () => {
-        closeAssignPopup();
-        loadClients();
-    });
-}
-
-function showUnassignPopup(id) {
-    window.unassignTarget = id;
-    $("#unassignPopup").fadeIn(160);
-}
-function closeUnassignPopup() { $("#unassignPopup").fadeOut(160); }
-
-function confirmUnassign() {
-    $.post("unassign_client.php", { client_id: window.unassignTarget }, () => {
-        closeUnassignPopup();
-        loadClients();
-    });
-}
-
-/* ======================= AUTO REFRESH ======================= */
+/* ================= AUTO REFRESH ================= */
 setInterval(() => loadClients($("#searchInput").val()), 2000);
 setInterval(() => loadMessages(false), 1200);
 
-/* INITIAL */
+/* START */
 loadClients();
