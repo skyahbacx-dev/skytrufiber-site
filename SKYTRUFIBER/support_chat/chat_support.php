@@ -2,67 +2,61 @@
 session_start();
 include "../db_connect.php";
 
-if (!isset($_SESSION["name"])) {
-    header("Location: skytrufiber.php");
+if (!isset($_SESSION["user"])) {
+    header("Location: ../skytrufiber.php");
     exit;
 }
 
-$username = $_SESSION["name"];
+$user_id = $_SESSION["user"];
+$full_name = $_SESSION["name"];
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SkyTruFiber Support — <?= htmlspecialchars($username) ?></title>
+<title>SkyTruFiber Support Chat</title>
 
 <link rel="stylesheet" href="support_chat.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-const currentUser = "<?= htmlspecialchars($username, ENT_QUOTES) ?>";
-</script>
-<script src="client_support.js"></script>
-</head>
 
+</head>
 <body>
 
-<div id="client-chat-layout">
+<div id="support-layout">
 
-    <!-- HEADER -->
-    <header id="client-chat-header">
-        <div class="header-left">
-            <img src="../SKYTRUFIBER.png" class="chat-logo">
-            <h2>Support Chat</h2>
-        </div>
-        <div class="header-right">
-            <b><?= htmlspecialchars($username) ?></b>
-            <a href="logout.php" class="logout-btn">Logout</a>
+    <header id="support-header">
+        <div class="user-info-area">
+            <img src="../AHBALOGO.png" class="client-avatar-header">
+            <div>
+                <h2><?php echo strtoupper($full_name); ?></h2>
+                <span>Connected to CSR Support</span>
+            </div>
         </div>
     </header>
 
-    <!-- CHAT BODY -->
-    <section id="clientMessages" class="messages-body"></section>
+    <section id="chatMessages" class="messages-body"></section>
 
-    <!-- FILE PREVIEW -->
     <section id="previewArea" class="preview-area"></section>
 
-    <!-- INPUT BAR -->
-    <footer id="clientInputBar">
+    <footer id="chat-input-bar">
         <label for="fileInput" class="file-upload-icon">
             <i class="fa-regular fa-image"></i>
         </label>
         <input type="file" id="fileInput" multiple style="display:none;">
-        <input type="text" id="messageInput" placeholder="Type a message...">
+        <input type="text" id="messageInput" class="message-field" placeholder="Type a message…">
         <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
     </footer>
 
 </div>
 
-<!-- MEDIA VIEWER -->
-<div id="mediaModal" class="media-viewer">
-    <span id="closeMediaModal" class="media-close">✖</span>
-    <img id="mediaModalContent" class="media-content">
-</div>
+<script src="support_chat.js"></script>
+
+<script>
+const username = "<?php echo htmlspecialchars($full_name, ENT_QUOTES); ?>";
+const userId  = "<?php echo $user_id; ?>";
+</script>
 
 </body>
 </html>
