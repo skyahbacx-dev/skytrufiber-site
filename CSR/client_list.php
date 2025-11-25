@@ -1,11 +1,9 @@
 <?php
 session_start();
 include "../db_connect.php";
-
 header("Content-Type: text/html; charset=utf-8");
 
 $csrUser = $_SESSION["csr_user"] ?? null;
-
 if (!$csrUser) {
     http_response_code(401);
     exit("Unauthorized");
@@ -13,9 +11,9 @@ if (!$csrUser) {
 
 $search = $_GET["search"] ?? "";
 
-/*
-    Display list of clients + unread badge + assignment buttons
-*/
+/**
+ * Correct unread counter: only count client messages unseen by CSR
+ */
 $sql = "
     SELECT
         c.id,
@@ -44,25 +42,19 @@ if ($search !== "") $params[":search"] = "%$search%";
 
 $stmt->execute($params);
 
-/*
-    Print client rows
-*/
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
     $id       = $row["id"];
     $name     = htmlspecialchars($row["full_name"]);
     $assigned = $row["assigned_csr"];
     $unread   = intval($row["unread"]);
 
-    // Button logic
     if ($assigned === null) {
-        $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'><i class=\"fa-solid fa-plus\"></i></button>";
-        $status = "Unassigned";
+        $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'><i class='fa-solid fa-plus'></i></button>";
     } elseif ($assigned === $csrUser) {
-        $btn = "<button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($id)'><i class=\"fa-solid fa-minus\"></i></button>";
-        $status = "Assigned to YOU";
+        $btn = "<button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($id)'><i class='fa-solid fa-minus'></i></button>";
     } else {
-        $btn = "<button class='lock-btn' disabled><i class=\"fa-solid fa-lock\"></i></button>";
-        $status = "Assigned to $assigned";
+        $btn = "<button class='lock-btn' disabled><i class='fa-solid fa-lock'></i></button>";
     }
 
     echo "
@@ -72,7 +64,11 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             <div class='client-name'>
                 $name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
             </div>
-            <div class='client-sub'>$status</div>
+            <div class='client-sub'>
+                " . ($assigned === null ? "Unassigned"
+                    : ($assigned === $csrUser ? "Assigned to YOU"
+                    : "Assigned to $assigned")) . "
+            </div>
         </div>
         <div class='client-actions'>$btn</div>
     </div>";
