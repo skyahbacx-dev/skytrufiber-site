@@ -4,7 +4,7 @@ include "../db_connect.php";
 include "../b2_upload.php";
 header("Content-Type: application/json");
 
-$username = $_SESSION["name"] ?? "";
+$username = $_POST["username"] ?? "";
 $message  = trim($_POST["message"] ?? "");
 
 if (!$username) {
@@ -12,7 +12,7 @@ if (!$username) {
     exit;
 }
 
-$stmt = $conn->prepare("SELECT id FROM clients WHERE name = :name LIMIT 1");
+$stmt = $conn->prepare("SELECT id FROM users WHERE full_name = :name LIMIT 1");
 $stmt->execute([":name" => $username]);
 $client_id = $stmt->fetchColumn();
 
@@ -24,12 +24,12 @@ if (!$client_id) {
 $media_path = null;
 $media_type = null;
 
-if (!empty($_FILES['media']['tmp_name'])) {
-    $tmp  = $_FILES['media']['tmp_name'];
-    $name = time() . "_" . $_FILES['media']['name'];
+/* Upload optional file */
+if (!empty($_FILES['file']['tmp_name'])) {
+    $tmp  = $_FILES['file']['tmp_name'];
+    $name = time() . "_" . $_FILES['file']['name'];
 
     $url = b2_upload($tmp, $name);
-
     if ($url) {
         $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
         $media_type = in_array($ext, ['jpg','jpeg','png','gif','webp']) ? 'image' : 'video';
@@ -37,6 +37,7 @@ if (!empty($_FILES['media']['tmp_name'])) {
     }
 }
 
+/* Insert message */
 $stmt = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, created_at)
     VALUES (:cid, 'client', :msg, NOW())
@@ -45,9 +46,9 @@ $stmt->execute([
     ":cid" => $client_id,
     ":msg" => $message
 ]);
-
 $chat_id = $conn->lastInsertId();
 
+/* Save media */
 if ($media_path) {
     $conn->prepare("
         INSERT INTO chat_media (chat_id, media_path, media_type, created_at)
@@ -59,8 +60,10 @@ if ($media_path) {
     ]);
 }
 
+/* client auto delivered */
 $conn->prepare("UPDATE chat SET delivered = true WHERE id = :id")
     ->execute([":id" => $chat_id]);
 
 echo json_encode(["status" => "ok"]);
 exit;
+?>
