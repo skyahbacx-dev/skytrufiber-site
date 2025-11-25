@@ -228,3 +228,35 @@ function openMedia(path) {
 function toggleClientInfo() {
     clientInfoPanel.classList.toggle("show");
 }
+function showAssignPopup(id) {
+    window.assignTarget = id;
+    $("#assignPopup").fadeIn(160);
+}
+
+function closeAssignPopup() {
+    $("#assignPopup").fadeOut(160);
+}
+
+function confirmAssign() {
+    $.post("assign_client.php", { client_id: window.assignTarget }, function () {
+        closeAssignPopup();
+        loadClients();
+    });
+}
+
+function showUnassignPopup(id) {
+    window.unassignTarget = id;
+    $("#unassignPopup").fadeIn(160);
+}
+
+function closeUnassignPopup() {
+    $("#unassignPopup").fadeOut(160);
+}
+
+function confirmUnassign() {
+    $.post("unassign_client.php", { client_id: window.unassignTarget }, function () {
+        closeUnassignPopup();
+        loadClients();
+    });
+}
+
