@@ -11,29 +11,32 @@ if (!$csrUser) {
 
 $search = $_GET["search"] ?? "";
 
+/*
+   Only show clients who ALREADY have chat messages
+*/
 $sql = "
     SELECT
-        c.id,
-        c.name,
-        c.assigned_csr,
+        u.id,
+        u.full_name AS name,
+        u.assigned_csr,
         (
             SELECT COUNT(*)
             FROM chat m
-            WHERE m.client_id = c.id
+            WHERE m.client_id = u.id
               AND m.sender_type = 'client'
               AND m.seen = false
         ) AS unread
-    FROM clients c
+    FROM users u
+    WHERE EXISTS (SELECT 1 FROM chat c WHERE c.client_id = u.id)
 ";
 
 if ($search !== "") {
-    $sql .= " WHERE LOWER(c.name) LIKE LOWER(:search)";
+    $sql .= " AND LOWER(u.full_name) LIKE LOWER(:search)";
 }
 
-$sql .= " ORDER BY unread DESC, c.name ASC";
+$sql .= " ORDER BY unread DESC, u.full_name ASC";
 
 $stmt = $conn->prepare($sql);
-
 $params = [];
 if ($search !== "") $params[":search"] = "%$search%";
 $stmt->execute($params);
@@ -45,16 +48,28 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $unread   = intval($row["unread"]);
 
     if ($assigned === null) {
-        $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'><i class='fa-solid fa-plus'></i></button>";
+        $btn = "
+            <button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'>
+                <i class='fa-solid fa-plus'></i>
+            </button>";
     } elseif ($assigned === $csrUser) {
-        $btn = "<button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($id)'><i class='fa-solid fa-minus'></i></button>";
+        $btn = "
+            <button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($id)'>
+                <i class='fa-solid fa-minus'></i>
+            </button>";
     } else {
-        $btn = "<button class='lock-btn' disabled><i class='fa-solid fa-lock'></i></button>";
+        $btn = "
+            <button class='lock-btn' disabled>
+                <i class='fa-solid fa-lock'></i>
+            </button>";
     }
 
     echo "
-    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
+    <div class='client-item' id='client-$id'
+         onclick='selectClient($id, \"$name\", \"$assigned\")'>
+
         <img src='upload/default-avatar.png' class='client-avatar'>
+
         <div class='client-content'>
             <div class='client-name'>
                 $name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
@@ -65,6 +80,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     : "Assigned to $assigned")) . "
             </div>
         </div>
+
         <div class='client-actions'>$btn</div>
     </div>";
 }
