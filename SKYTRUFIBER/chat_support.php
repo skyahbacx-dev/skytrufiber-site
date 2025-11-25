@@ -1,7 +1,5 @@
 <?php
 session_start();
-include "../db_connect.php";
-
 if (!isset($_SESSION["user"])) {
     header("Location: skytrufiber.php");
     exit;
@@ -10,45 +8,69 @@ if (!isset($_SESSION["user"])) {
 $username = $_SESSION["name"];
 $email    = $_SESSION["email"];
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>SkyTruFiber Support Chat</title>
-<link rel="stylesheet" href="support_chat.css">
+
+<link rel="stylesheet" href="chat_support.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-</head>
 
+<script>
+    const username = "<?= htmlspecialchars($username, ENT_QUOTES) ?>";
+</script>
+
+<script src="chat_support.js"></script>
+</head>
 <body>
 
-<div id="chat-container">
+<div id="messenger-layout">
 
-    <header id="chat-header">
-        <div class="chat-title">
-            <img src="../SKYTRUFIBER.png" class="logo">
-            <div>
-                <h2>Customer Support</h2>
-                <p>Logged in as <b><?= htmlspecialchars($username) ?></b></p>
-            </div>
+    <!-- LEFT PANEL HEADER -->
+    <aside id="left-panel">
+        <div class="left-header">
+            <h3 class="client-title">SUPPORT TEAM</h3>
+            <p style="font-size:13px; color:#555;">Chat with our CSR team</p>
         </div>
-        <button onclick="location.href='../logout.php'" class="logout-btn">Logout</button>
-    </header>
+    </aside>
 
-    <main id="chatMessages" class="messages-body"></main>
+    <!-- CENTER CHAT PANEL -->
+    <main id="chat-panel">
 
-    <div id="previewArea" class="preview-area"></div>
+        <!-- CHAT HEADER -->
+        <header id="chat-header">
+            <div class="chat-user-info">
+                <img src="upload/default-avatar.png" class="chat-header-avatar">
+                <div>
+                    <div class="chat-header-name">SkyTruFiber Support</div>
+                    <div class="chat-header-status">
+                        <span class="status-dot online"></span> Online
+                    </div>
+                </div>
+            </div>
+        </header>
 
-    <footer id="chat-input-bar">
-        <label for="fileInput" class="file-upload-icon">
-            <i class="fa-regular fa-image"></i>
-        </label>
-        <input type="file" id="fileInput" multiple style="display:none;">
-        <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off">
-        <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
-    </footer>
+        <!-- CHAT BODY -->
+        <section id="chatMessages" class="messages-body"></section>
 
+        <!-- FILE PREVIEW -->
+        <section id="previewArea" class="preview-area"></section>
+
+        <!-- INPUT BAR -->
+        <footer id="chat-input-bar">
+            <label for="fileInput" class="file-upload-icon">
+                <i class="fa-regular fa-image"></i>
+            </label>
+            <input type="file" id="fileInput" multiple style="display:none;">
+            <input type="text" id="messageInput" class="message-field" placeholder="Type a message…">
+            <button id="sendBtn" class="send-btn">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </footer>
+
+    </main>
 </div>
 
 <!-- MEDIA VIEWER -->
@@ -57,10 +79,5 @@ $email    = $_SESSION["email"];
     <img id="mediaModalContent" class="media-content">
 </div>
 
-<script>
-const clientUsername = "<?= htmlspecialchars($username) ?>";
-</script>
-
-<script src="support_chat.js"></script>
 </body>
 </html>
