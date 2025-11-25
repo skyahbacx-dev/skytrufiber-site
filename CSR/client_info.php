@@ -1,13 +1,32 @@
 <?php
+session_start();
 include "../db_connect.php";
 header("Content-Type: application/json");
 
-$id = intval($_GET["id"] ?? 0);
+$csrUser   = $_SESSION["csr_user"] ?? null;
+$client_id = (int)($_GET["id"] ?? 0);
 
-$stmt = $conn->prepare("SELECT name, email, district, barangay FROM clients WHERE id = :id LIMIT 1");
-$stmt->execute([":id" => $id]);
+if (!$csrUser || !$client_id) {
+    echo json_encode([]);
+    exit;
+}
 
-$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$sql = "SELECT full_name, email, district, barangay, date_installed FROM users WHERE id = :id LIMIT 1";
+$stmt = $conn->prepare($sql);
+$stmt->execute([":id" => $client_id]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-echo json_encode($row ?: []);
+if (!$user) {
+    echo json_encode([]);
+    exit;
+}
+
+echo json_encode([
+    "name"      => $user["full_name"],
+    "email"     => $user["email"],
+    "district"  => $user["district"],
+    "barangay"  => $user["barangay"],
+    "installed" => $user["date_installed"]
+]);
 exit;
+?>
