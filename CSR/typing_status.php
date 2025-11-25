@@ -1,25 +1,11 @@
 <?php
 include "../db_connect.php";
+header("Content-Type: application/json");
 
-$clientId = $_GET['client_id'] ?? null;
-if (!$clientId) exit("stop");
+$client_id = (int)($_GET["id"] ?? 0);
 
-$stmt = $conn->prepare("
-    SELECT is_typing, updated_at
-    FROM typing_status
-    WHERE client_id = :client_id
-    ORDER BY updated_at DESC
-    LIMIT 1
-");
-$stmt->execute([":client_id" => $clientId]);
-$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$stmt = $conn->prepare("SELECT typing FROM clients WHERE id = :id");
+$stmt->execute([":id" => $client_id]);
 
-if (!$row) exit("stop");
-
-// auto-stop typing after 2 seconds without update
-$lastUpdate = strtotime($row["updated_at"]);
-if (time() - $lastUpdate > 2) {
-    exit("stop");
-}
-
-echo $row["is_typing"] ? "typing" : "stop";
+echo json_encode(["typing" => (bool)$stmt->fetchColumn()]);
+exit;
