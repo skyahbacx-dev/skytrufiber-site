@@ -14,7 +14,7 @@ $search = $_GET["search"] ?? "";
 $sql = "
     SELECT
         c.id,
-        c.name,
+        c.client_name AS name,
         c.assigned_csr,
         (
             SELECT COUNT(*)
@@ -27,10 +27,10 @@ $sql = "
 ";
 
 if ($search !== "") {
-    $sql .= " WHERE LOWER(c.name) LIKE LOWER(:search)";
+    $sql .= " WHERE LOWER(c.client_name) LIKE LOWER(:search)";
 }
 
-$sql .= " ORDER BY unread DESC, c.name ASC";
+$sql .= " ORDER BY unread DESC, c.client_name ASC";
 
 $stmt = $conn->prepare($sql);
 
@@ -40,17 +40,19 @@ if ($search !== "") $params[":search"] = "%$search%";
 $stmt->execute($params);
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
     $id       = $row["id"];
     $name     = htmlspecialchars($row["name"]);
     $assigned = $row["assigned_csr"];
     $unread   = intval($row["unread"]);
 
+    // buttons
     if ($assigned === null) {
-        $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'><i class='fa-solid fa-plus'></i></button>";
+        $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'><i class=\"fa-solid fa-plus\"></i></button>";
     } elseif ($assigned === $csrUser) {
-        $btn = "<button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($id)'><i class='fa-solid fa-minus'></i></button>";
+        $btn = "<button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($id)'><i class=\"fa-solid fa-minus\"></i></button>";
     } else {
-        $btn = "<button class='lock-btn' disabled><i class='fa-solid fa-lock'></i></button>";
+        $btn = "<button class='lock-btn' disabled><i class=\"fa-solid fa-lock\"></i></button>";
     }
 
     echo "
