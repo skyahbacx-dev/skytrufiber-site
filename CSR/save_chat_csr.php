@@ -14,42 +14,45 @@ if (!$csr_user || !$client_id) {
     exit;
 }
 
+/* Insert message */
 $stmt = $conn->prepare("
-    INSERT INTO chat (client_id, sender_type, message, created_at, delivered, seen)
-    VALUES (:cid, 'csr', :msg, NOW(), false, false)
+    INSERT INTO chat (client_id, sender_type, message, created_at)
+    VALUES (:cid, 'csr', :msg, NOW())
 ");
 $stmt->execute([
     ":cid" => $client_id,
     ":msg" => $message
 ]);
-
 $chat_id = $conn->lastInsertId();
 
+/* File uploads */
 if (!empty($_FILES["media"]["name"][0])) {
     foreach ($_FILES["media"]["tmp_name"] as $i => $tmpFile) {
         if (!$tmpFile) continue;
 
-        $ext = strtolower(pathinfo($_FILES["media"]["name"][$i], PATHINFO_EXTENSION));
+        $originalName = $_FILES["media"]["name"][$i];
+        $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
         $newName = time() . "_" . rand(1000, 9999) . "." . $ext;
 
         $url = b2_upload($tmpFile, $newName);
         if ($url) {
             $media_type = in_array($ext, ['jpg','jpeg','png','gif','webp'])
                 ? "image"
-                : "video";
+                : (in_array($ext, ['mp4','mov','avi','mkv','webm']) ? "video" : null);
 
             $conn->prepare("
                 INSERT INTO chat_media (chat_id, media_path, media_type, created_at)
-                VALUES (:cid, :mp, :mt, NOW())
+                VALUES (:chat, :path, :type, NOW())
             ")->execute([
-                ":cid" => $chat_id,
-                ":mp"  => $url,
-                ":mt"  => $media_type
+                ":chat" => $chat_id,
+                ":path" => $url,
+                ":type" => $media_type
             ]);
         }
     }
 }
 
+/* Mark delivered for client */
 $conn->prepare("UPDATE chat SET delivered = true WHERE id = :id")
      ->execute([":id" => $chat_id]);
 
