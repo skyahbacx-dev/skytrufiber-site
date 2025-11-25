@@ -11,18 +11,16 @@ if (!$csrUser) {
 
 $search = $_GET["search"] ?? "";
 
-/*
-    QUERY USERS table (REAL CLIENTS)
-*/
+/* ================= GET USERS WITH UNREAD COUNT ================= */
 $sql = "
     SELECT
-        u.id,
+        u.id AS user_id,
         u.full_name,
         u.assigned_csr,
         (
             SELECT COUNT(*)
             FROM chat m
-            WHERE m.client_id = u.id
+            WHERE m.user_id = u.id
               AND m.sender_type = 'client'
               AND m.seen = false
         ) AS unread
@@ -36,32 +34,34 @@ if ($search !== "") {
 $sql .= " ORDER BY unread DESC, u.full_name ASC";
 
 $stmt = $conn->prepare($sql);
+
 $params = [];
 if ($search !== "") $params[":search"] = "%$search%";
+
 $stmt->execute($params);
 
+/* ================= RENDER LIST ================= */
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-    $id       = $row["id"];
+    $user_id  = $row["user_id"];
     $name     = htmlspecialchars($row["full_name"]);
     $assigned = $row["assigned_csr"];
     $unread   = intval($row["unread"]);
 
-    if ($assigned === null) {
-        $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'><i class='fa-solid fa-plus'></i></button>";
+    /* ACTION BUTTON CONDITIONS */
+    if ($assigned === null || $assigned === "") {
+        $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($user_id)'><i class=\"fa-solid fa-plus\"></i></button>";
     } elseif ($assigned === $csrUser) {
-        $btn = "<button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($id)'><i class='fa-solid fa-minus'></i></button>";
+        $btn = "<button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($user_id)'><i class=\"fa-solid fa-minus\"></i></button>";
     } else {
-        $btn = "<button class='lock-btn' disabled><i class='fa-solid fa-lock'></i></button>";
+        $btn = "<button class='lock-btn' disabled><i class=\"fa-solid fa-lock\"></i></button>";
     }
 
     echo "
-    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\", \"$assigned\")'>
+    <div class='client-item' id='client-$user_id' onclick='selectClient($user_id, \"$name\", \"$assigned\")'>
         <img src='upload/default-avatar.png' class='client-avatar'>
-
         <div class='client-content'>
             <div class='client-name'>
-                $name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
+                $name ". ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
             </div>
             <div class='client-sub'>
                 " . ($assigned === null ? "Unassigned"
@@ -69,7 +69,6 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     : "Assigned to $assigned")) . "
             </div>
         </div>
-
         <div class='client-actions'>$btn</div>
     </div>";
 }
