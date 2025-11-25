@@ -1,27 +1,30 @@
 <?php
-session_start();
 include "../db_connect.php";
 header("Content-Type: application/json");
 date_default_timezone_set("Asia/Manila");
 
-$user_id = $_SESSION["user"] ?? null;
+$username = $_GET["client"] ?? "";
 
-if (!$user_id) {
+$stmt = $conn->prepare("SELECT id FROM clients WHERE client_name = :u LIMIT 1");
+$stmt->execute([":u" => $username]);
+$client_id = $stmt->fetchColumn();
+
+if (!$client_id) {
     echo json_encode([]);
     exit;
 }
 
 $sql = "
-    SELECT c.id AS chat_id, c.sender_type, c.message, c.created_at, c.seen,
+    SELECT c.id AS chat_id, c.sender_type, c.message, c.created_at, c.seen, c.delivered,
            m.media_path, m.media_type
     FROM chat c
-    LEFT JOIN chat_media m ON m.chat_id = c.id
-    WHERE c.user_id = :uid
+    LEFT JOIN chat_media m ON c.id = m.chat_id
+    WHERE c.client_id = :cid
     ORDER BY c.created_at ASC
 ";
 
 $stmt = $conn->prepare($sql);
-$stmt->execute([":uid" => $user_id]);
+$stmt->execute([":cid" => $client_id]);
 
 $messages = [];
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -32,12 +35,13 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         "media_path"  => $row["media_path"],
         "media_type"  => $row["media_type"],
         "created_at"  => date("M d h:i A", strtotime($row["created_at"])),
-        "seen"        => $row["seen"]
+        "seen"        => $row["seen"],
+        "delivered"   => $row["delivered"]
     ];
 }
 
-$conn->prepare("UPDATE chat SET delivered = true WHERE user_id = :id")
-     ->execute([":id" => $user_id]);
+$conn->prepare("UPDATE chat SET delivered = TRUE WHERE client_id = :cid AND delivered = FALSE")
+    ->execute([":cid" => $client_id]);
 
 echo json_encode($messages);
 exit;
