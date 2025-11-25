@@ -10,8 +10,8 @@ if (!$csr || !$client_id) {
     exit;
 }
 
-$conn->prepare("UPDATE users SET assigned_csr = :csr WHERE id = :id")
-     ->execute([":csr" => $csr, ":id" => $client_id]);
+$conn->prepare("UPDATE users SET assigned_csr = NULL WHERE id = :id")
+     ->execute([":id" => $client_id]);
 
 echo "OK";
 ?>
