@@ -48,7 +48,7 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
             </div>
         </div>
 
-        <!-- MEDIA PREVIEW (BEFORE SEND) -->
+        <!-- FILE PREVIEW -->
         <section id="previewArea" class="preview-area"></section>
 
         <!-- INPUT BAR -->
@@ -82,7 +82,7 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 
 </div>
 
-<!-- MEDIA MODAL VIEWER -->
+<!-- MEDIA VIEWER -->
 <div id="mediaModal" class="media-viewer">
     <span id="closeMediaModal" class="media-close">✖</span>
     <img id="mediaModalContent" class="media-content">
