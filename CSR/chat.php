@@ -1,84 +1,83 @@
 <?php
 
-if (!isset($_SESSION['csr_user'])) {
-    http_response_code(401);
-    exit("Unauthorized");
+if (!isset($_SESSION["csr_user"])) {
+    header("Location: csr_login.php");
+    exit;
 }
-
-$csrUser     = $_SESSION["csr_user"];
-$csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
+$csrUser = $_SESSION["csr_user"];
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CSR CHAT — SkyTruFiber</title>
+<link rel="stylesheet" href="chat.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    const csrUser = "<?php echo $csrUser; ?>";
+</script>
+</head>
+
+<body>
 
 <div id="messenger-layout">
 
-    <!-- LEFT PANEL – CLIENT LIST -->
-    <aside id="left-panel">
+    <!-- LEFT SIDEBAR CLIENT LIST -->
+    <div id="left-panel">
         <div class="left-header">
-            <input type="text" id="searchInput" class="search-clients" placeholder="Search clients...">
+            <input id="searchInput" type="text" placeholder="Search clients..." class="search-clients"
+                   onkeyup="loadClients(this.value)">
         </div>
         <div id="clientList" class="client-scroll"></div>
-    </aside>
+    </div>
 
     <!-- CENTER CHAT PANEL -->
-    <main id="chat-panel">
+    <div id="chat-panel">
 
-        <!-- CHAT HEADER -->
-        <header id="chat-header">
+        <!-- HEADER -->
+        <div id="chat-header">
             <div class="chat-user-info">
                 <img id="chatAvatar" src="upload/default-avatar.png" class="chat-header-avatar">
                 <div>
                     <div id="chatName" class="chat-header-name">Select a client</div>
-                    <div id="chatStatus" class="chat-header-status">
-                        <span id="statusDot" class="status-dot offline"></span> Offline
+                    <div class="chat-header-status">
+                        <span class="status-dot offline"></span>
+                        <span id="statusText">Offline</span>
                     </div>
                 </div>
             </div>
-            <button id="infoBtn" class="info-btn" onclick="toggleClientInfo()">ⓘ</button>
-        </header>
+            <button class="info-btn" onclick="toggleClientInfo()">ℹ️</button>
+        </div>
 
-        <!-- CHAT MESSAGES -->
-        <section id="chatMessages" class="messages-body"></section>
-
-        <!-- TYPING INDICATOR -->
+        <!-- CHAT BODY -->
+        <div id="chatMessages" class="messages-body"></div>
         <div id="typingIndicator" class="typing-indicator">
             <div class="typing-bubble">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
             </div>
         </div>
 
         <!-- FILE PREVIEW -->
-        <section id="previewArea" class="preview-area"></section>
+        <div id="previewArea" class="preview-area"></div>
 
         <!-- INPUT BAR -->
-        <footer id="chat-input-bar">
-            <label for="fileInput" class="file-upload-icon">
-                <i class="fa-regular fa-image"></i>
-            </label>
-            <input type="file" id="fileInput" multiple style="display:none;">
-            <input type="text" id="messageInput" class="message-field" placeholder="Type a message…">
-            <button id="sendBtn" class="send-btn">
-                <i class="fa-solid fa-paper-plane"></i>
-            </button>
-        </footer>
-
-    </main>
-
-    <!-- RIGHT PANEL – CLIENT INFO -->
-    <aside id="infoPanel" class="right-panel">
-        <button class="close-info" onclick="toggleClientInfo()">✖</button>
-
-        <div class="info-content">
-            <img src="upload/default-avatar.png" id="infoAvatar" class="info-avatar">
-
-            <h2 id="infoName">Client Name</h2>
-            <p id="infoEmail"></p>
-
-            <div class="info-block"><b>District:</b> <span id="infoDistrict"></span></div>
-            <div class="info-block"><b>Barangay:</b> <span id="infoBrgy"></span></div>
+        <div id="chat-input-bar">
+            <span class="file-upload-icon"><i class="fa-regular fa-image"></i></span>
+            <input type="file" id="fileInput" hidden multiple>
+            <input type="text" id="messageInput" placeholder="Write a message..." class="message-field">
+            <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
-    </aside>
+    </div>
+
+    <!-- RIGHT INFO PANEL -->
+    <div id="infoPanel" class="right-panel">
+        <button class="close-info" onclick="toggleClientInfo()">✖</button>
+        <img src="upload/default-avatar.png" id="infoAvatar" class="info-avatar">
+        <h3 id="infoName" style="text-align:center;margin-top:10px;"></h3>
+        <p id="infoEmail"></p>
+        <p id="infoDistrict"></p>
+        <p id="infoBrgy"></p>
+    </div>
 
 </div>
 
@@ -87,3 +86,8 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
     <span id="closeMediaModal" class="media-close">✖</span>
     <img id="mediaModalContent" class="media-content">
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
+<script src="csr_chat.js"></script>
+</body>
+</html>
