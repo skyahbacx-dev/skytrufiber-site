@@ -21,9 +21,9 @@ $sql = "
         (
             SELECT COUNT(*)
             FROM chat c
-            WHERE c.user_id = u.id
+            WHERE c.client_id = u.id
               AND c.sender_type = 'client'
-              AND c.seen = false
+              AND c.seen = FALSE
         ) AS unread
     FROM users u
 ";
@@ -36,13 +36,15 @@ $sql .= " ORDER BY unread DESC, full_name ASC";
 
 $stmt = $conn->prepare($sql);
 
-if ($search !== "") $stmt->execute([":search" => "%$search%"]);
-else $stmt->execute();
+if ($search !== "") {
+    $stmt->execute([":search" => "%$search%"]);
+} else {
+    $stmt->execute();
+}
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $id = $row["id"];
     $name = htmlspecialchars($row["full_name"]);
-    $assigned = $row["assigned_csr"];
     $unread = intval($row["unread"]);
 
     echo "
