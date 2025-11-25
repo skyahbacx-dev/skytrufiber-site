@@ -13,30 +13,29 @@ $search = $_GET["search"] ?? "";
 
 $sql = "
     SELECT
-        u.id,
-        u.full_name AS name,
-        u.assigned_csr,
+        c.id,
+        c.name,
+        c.assigned_csr,
         (
             SELECT COUNT(*)
             FROM chat m
-            WHERE m.client_id = u.id
+            WHERE m.client_id = c.id
               AND m.sender_type = 'client'
               AND m.seen = false
         ) AS unread
-    FROM users u
+    FROM clients c
 ";
 
 if ($search !== "") {
-    $sql .= " WHERE LOWER(u.full_name) LIKE LOWER(:search)";
+    $sql .= " WHERE LOWER(c.name) LIKE LOWER(:search)";
 }
 
-$sql .= " ORDER BY unread DESC, u.full_name ASC";
+$sql .= " ORDER BY unread DESC, c.name ASC";
 
 $stmt = $conn->prepare($sql);
 
 $params = [];
 if ($search !== "") $params[":search"] = "%$search%";
-
 $stmt->execute($params);
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
