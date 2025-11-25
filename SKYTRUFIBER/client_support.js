@@ -1,100 +1,112 @@
+/* ==========================================================
+   CLIENT SUPPORT CHAT JS — FINAL FULL VERSION
+   ========================================================== */
+
+let messagesLoaded = 0;
 let filesToSend = [];
-let lastMessageCount = 0;
+let polling = true;
 
-function loadMessages(initial = false) {
-    $.getJSON("load_chat_client.php", messages => {
-
-        if (initial) {
-            $("#clientMessages").html("");
-            lastMessageCount = 0;
-        }
-
-        if (messages.length > lastMessageCount) {
-            const newMsgs = messages.slice(lastMessageCount);
-
-            newMsgs.forEach(m => {
-                const side = (m.sender_type === "csr") ? "csr" : "client";
-
-                let attachment = "";
-                if (m.media_path) {
-                    attachment = m.media_type === "image"
-                        ? `<img src="${m.media_path}" class="file-img" onclick="openMedia('${m.media_path}')">`
-                        : `<video class="file-img" controls><source src="${m.media_path}"></video>`;
-                }
-
-                const html = `
-                <div class="msg-row ${side}">
-                    <div class="bubble-wrapper">
-                        <div class="bubble">${m.message || ""}${attachment}</div>
-                        <div class="meta">${m.created_at}</div>
-                    </div>
-                </div>`;
-
-                $("#clientMessages").append(html);
-            });
-
-            $("#clientMessages").scrollTop($("#clientMessages")[0].scrollHeight);
-        }
-
-        lastMessageCount = messages.length;
-    });
+/* ================= AUTOSCROLL ================= */
+function scrollToBottom() {
+    const box = document.getElementById("chatBox");
+    box.scrollTop = box.scrollHeight;
 }
 
-$("#sendBtn").click(sendMessage);
-$("#messageInput").keypress(e => { if (e.key === "Enter") sendMessage(); });
+/* ================= LOAD CHAT ================= */
+function loadChat(initial = false) {
+    const username = document.getElementById("usernameHolder").value;
+    if (!username) return;
 
+    fetch(`load_chat_client.php?client=${username}`)
+        .then(res => res.json())
+        .then(data => {
+            if (initial) {
+                document.getElementById("chatBox").innerHTML = "";
+                messagesLoaded = 0;
+            }
+
+            if (data.length > messagesLoaded) {
+                const newMsgs = data.slice(messagesLoaded);
+
+                newMsgs.forEach(m => {
+                    let attachment = "";
+                    if (m.media_path) {
+                        attachment = m.media_type === "image"
+                            ? `<img src="${m.media_path}" class="chat-img">`
+                            : `<video class="chat-img" controls><source src="${m.media_path}"></video>`;
+                    }
+
+                    const side = m.sender_type === "client" ? "me" : "csr";
+
+                    const bubble = `
+                        <div class="msg-row ${side}">
+                            <div class="bubble">
+                                ${m.message || ""}
+                                ${attachment}
+                                <div class="meta">${m.created_at}</div>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById("chatBox").innerHTML += bubble;
+                });
+
+                scrollToBottom();
+            }
+
+            messagesLoaded = data.length;
+        });
+}
+
+/* ================= SEND MESSAGE ================= */
 function sendMessage() {
-    let msg = $("#messageInput").val().trim();
+    const msg = document.getElementById("message").value.trim();
+    const username = document.getElementById("usernameHolder").value;
+
     if (!msg && filesToSend.length === 0) return;
 
-    let fd = new FormData();
+    const fd = new FormData();
     fd.append("message", msg);
+    fd.append("username", username);
 
-    filesToSend.forEach(f => fd.append("media", f));
+    filesToSend.forEach(f => fd.append("file", f));
 
-    $.ajax({
-        url: "save_chat_client.php",
+    fetch("save_chat_client.php", {
         method: "POST",
-        processData: false,
-        contentType: false,
-        data: fd,
-        success: function () {
-            $("#messageInput").val("");
-            $("#previewArea").html("");
-            $("#fileInput").val("");
-            filesToSend = [];
-            loadMessages(false);
-        }
+        body: fd
+    }).then(() => {
+        document.getElementById("message").value = "";
+        document.getElementById("preview").innerHTML = "";
+        filesToSend = [];
+        document.getElementById("fileInput").value = "";
+        loadChat();
     });
 }
 
-$(".file-upload-icon").click(() => $("#fileInput").click());
-
-$("#fileInput").on("change", e => {
+/* ================= FILE PREVIEW ================= */
+document.getElementById("fileInput").addEventListener("change", e => {
     filesToSend = [...e.target.files];
-    $("#previewArea").html("");
+    document.getElementById("preview").innerHTML = "";
 
     filesToSend.forEach(file => {
         const reader = new FileReader();
         reader.onload = ev => {
-            $("#previewArea").append(`
-                <div class="preview-thumb">
-                    ${file.type.includes("video")
-                        ? `<video src="${ev.target.result}" muted></video>`
-                        : `<img src="${ev.target.result}">`}
-                </div>
-            `);
+            document.getElementById("preview").innerHTML +=
+                file.type.includes("video")
+                    ? `<video src="${ev.target.result}" muted></video>`
+                    : `<img src="${ev.target.result}">`;
         };
         reader.readAsDataURL(file);
     });
 });
 
-function openMedia(src) {
-    $("#mediaModal").addClass("show");
-    $("#mediaModalContent").attr("src", src);
-}
-$("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
+/* ================= EVENT LISTENERS ================= */
+document.getElementById("sendBtn").addEventListener("click", sendMessage);
+document.getElementById("message").addEventListener("keypress", e => {
+    if (e.key === "Enter") sendMessage();
+});
 
-setInterval(() => loadMessages(false), 1200);
+/* ================= AUTOPOLL ================= */
+setInterval(() => loadChat(false), 1200);
 
-loadMessages(true);
+/* Initial */
+loadChat(true);
