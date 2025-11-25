@@ -1,142 +1,115 @@
 /* =======================================================
-   CSR CHAT — FULL JS (FINAL BUILD)
-   ======================================================= */
+   CSR CHAT — FULL JS (MESSENGER SYSTEM FINAL)
+==========================================================*/
 
 let activeClient = 0;
 let filesToSend = [];
-let lastMessageCount = 0;
-let loadingMessages = false;
+let lastCount = 0;
+let isLoading = false;
 
-/* ================= LOAD CLIENTS ================= */
+/* LOAD CLIENT LIST */
 function loadClients(search = "") {
-    $.get("client_list.php", { search: search }, function (data) {
-        $("#clientList").html(data);
+    $.get("client_list.php", { search }, function(res) {
+        $("#clientList").html(res);
     });
 }
 
-/* ================= SELECT CLIENT ================= */
-function selectClient(id, name, assignedTo) {
+/* SELECT CLIENT */
+function selectClient(id, name) {
     activeClient = id;
-
     $(".client-item").removeClass("active-client");
     $("#client-" + id).addClass("active-client");
 
     $("#chatName").text(name);
     $("#chatMessages").html("");
-    lastMessageCount = 0;
+    lastCount = 0;
 
     loadMessages(true);
     loadClientInfo();
 }
 
-/* ================= LOAD CLIENT INFO ================= */
-function loadClientInfo() {
-    if (!activeClient) return;
+/* LOAD MESSAGES */
+function loadMessages(initial = false) {
+    if (!activeClient || isLoading) return;
+    isLoading = true;
 
-    $.getJSON("client_info.php?id=" + activeClient, data => {
-        $("#infoName").text(data.full_name);
-        $("#infoEmail").text(data.email);
-        $("#infoDistrict").text(data.district);
-        $("#infoBrgy").text(data.barangay);
-    });
-}
+    $.getJSON("load_chat_csr.php?client_id=" + activeClient, function(data) {
 
-/* ================= DATE LABEL ================= */
-function dateLabel(date) {
-    const today = new Date().toDateString();
-    const d = new Date(date).toDateString();
-    if (today === d) return "Today";
-    return new Date(date).toLocaleDateString();
-}
+        if (initial) $("#chatMessages").html("");
 
-/* ================= LOAD MESSAGES ================= */
-function loadMessages(initial=false) {
-    if (!activeClient || loadingMessages) return;
-    loadingMessages = true;
+        if (data.length > lastCount) {
+            const newMsgs = data.slice(lastCount);
 
-    $.getJSON("load_chat_csr.php?client_id=" + activeClient, function(messages) {
+            newMsgs.forEach(m => {
+                let side = m.sender_type === "csr" ? "csr" : "client";
 
-        if (initial) {
-            $("#chatMessages").html("");
-            lastMessageCount = 0;
-        }
-
-        if (messages.length > lastMessageCount) {
-            const newMsgs = messages.slice(lastMessageCount);
-
-            newMsgs.forEach((m, idx) => {
-                if (idx === 0 || dateLabel(m.created_at) !== dateLabel(newMsgs[idx-1]?.created_at)) {
-                    $("#chatMessages").append(`<div class="date-separator">${dateLabel(m.created_at)}</div>`);
-                }
-
-                const side = (m.sender_type === "csr") ? "csr" : "client";
-
-                let attachment = "";
+                let media = "";
                 if (m.media_path) {
                     if (m.media_type === "image") {
-                        attachment = `<img src="${m.media_path}" class="file-img" onclick="openMedia('${m.media_path}')">`;
+                        media = `<img src="${m.media_path}" class="file-img" onclick="openMedia('${m.media_path}')">`;
                     } else {
-                        attachment = `<video class="file-img" controls><source src="${m.media_path}"></video>`;
+                        media = `<video class="file-img" controls><source src="${m.media_path}"></video>`;
                     }
                 }
 
-                let statusHTML = "";
+                let tick = "";
                 if (m.sender_type === "csr") {
-                    if (m.seen) statusHTML = `<span class="tick blue">✓✓ Seen</span>`;
-                    else if (m.delivered) statusHTML = `<span class="tick">✓✓ Delivered</span>`;
+                    if (m.seen) tick = `<span class="tick blue">✓✓</span>`;
+                    else if (m.delivered) tick = `<span class="tick">✓✓</span>`;
                 }
 
                 $("#chatMessages").append(`
-                    <div class="msg-row ${side} animate-msg">
+                    <div class="msg-row ${side}">
                         <div class="bubble-wrapper">
-                            <div class="bubble">${m.message || ""}${attachment}</div>
-                            <div class="meta">${m.created_at} ${statusHTML}</div>
+                            <div class="bubble">${m.message || ""}${media || ""}</div>
+                            <div class="meta">${m.created_at} ${tick}</div>
                         </div>
                     </div>
                 `);
             });
+
             $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
         }
 
-        lastMessageCount = messages.length;
-        loadingMessages = false;
+        lastCount = data.length;
+        isLoading = false;
     });
 }
 
-/* ================= SEND MESSAGE ================= */
+/* SEND MESSAGE */
 $("#sendBtn").click(sendMessage);
-$("#messageInput").keypress(e => {
-    if (e.key === "Enter") sendMessage();
-});
+$("#messageInput").keypress(e => { if (e.key === "Enter") sendMessage(); });
 
 function sendMessage() {
-    let msg = $("#messageInput").val().trim();
-    if (!msg && filesToSend.length === 0) return;
+    let txt = $("#messageInput").val().trim();
+    if (!txt && filesToSend.length === 0) return;
 
     let fd = new FormData();
-    fd.append("message", msg);
+    fd.append("message", txt);
     fd.append("client_id", activeClient);
 
-    filesToSend.forEach(file => fd.append("media[]", file));
+    filesToSend.forEach(f => fd.append("media[]", f));
 
     $.ajax({
         url: "save_chat_csr.php",
         method: "POST",
+        data: fd,
         processData: false,
         contentType: false,
-        data: fd,
-        success: function () {
+        success: () => {
             $("#messageInput").val("");
-            $("#previewArea").html("");
             $("#fileInput").val("");
+            $("#previewArea").html("");
             filesToSend = [];
-            loadMessages();
+
+            loadMessages(false);
             loadClients();
         }
     });
 }
 
-/* ================= FILE PREVIEW ================= */
+/* FILE PREVIEW */
+$(".file-upload-icon").click(() => $("#fileInput").click());
 $("#fileInput").on("change", e => {
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
@@ -146,8 +119,10 @@ $("#fileInput").on("change", e => {
         reader.onload = ev => {
             $("#previewArea").append(`
                 <div class="preview-thumb">
-                    ${file.type.includes("video") ? `<video src="${ev.target.result}" muted></video>` :
-                        `<img src="${ev.target.result}">`}
+                    ${file.type.includes("video")
+                        ? `<video src="${ev.target.result}" muted></video>`
+                        : `<img src="${ev.target.result}">`
+                    }
                 </div>
             `);
         };
@@ -155,21 +130,27 @@ $("#fileInput").on("change", e => {
     });
 });
 
-/* ================= MEDIA VIEWER ================= */
+/* CLIENT INFO PANEL */
+function loadClientInfo() {
+    $.getJSON("client_info.php?id=" + activeClient, res => {
+        $("#infoName").text(res.name);
+        $("#infoEmail").text(res.email);
+        $("#infoDistrict").text(res.district);
+        $("#infoBrgy").text(res.barangay);
+    });
+}
+function toggleClientInfo() { $("#infoPanel").toggleClass("show"); }
+
+/* MEDIA VIEWER */
 function openMedia(src) {
     $("#mediaModal").addClass("show");
     $("#mediaModalContent").attr("src", src);
 }
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
-/* ================= SEARCH ================= */
-$("#searchInput").keyup(function() {
-    loadClients($(this).val());
-});
-
 /* AUTO REFRESH */
 setInterval(() => loadClients($("#searchInput").val()), 2000);
-setInterval(() => loadMessages(false), 1500);
+setInterval(() => loadMessages(false), 1200);
 
-/* INITIAL LOAD */
+/* INITIAL */
 loadClients();
