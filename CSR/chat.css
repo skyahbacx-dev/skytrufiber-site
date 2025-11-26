@@ -1,64 +1,313 @@
-/* LAYOUT */
+/* ============================================================
+   CSR CHAT UI — Messenger Style (Final Complete File)
+============================================================ */
+
+/* Main Layout */
 #messenger-layout {
     display: grid;
-    grid-template-columns: 270px auto 300px;
-    height: 100vh;
-    background: #f4fff4;
+    grid-template-columns: 300px 1fr 300px;
+    height: calc(100vh - 60px);
+    width: 100vw;
+    background: #f2f7f3;
+    overflow: hidden;
 }
 
-/* LEFT PANEL */
-#left-panel { background: white; border-right: 1px solid #ccc; display: flex; flex-direction: column; }
-.search-input { margin: 10px; padding: 10px; border-radius: 10px; border:1px solid #ccc; }
-.client-scroll { overflow-y: auto; padding: 8px; }
+/* ================= LEFT PANEL ================= */
+#left-panel {
+    background: #ffffff;
+    border-right: 1px solid #dcdcdc;
+    display: flex;
+    flex-direction: column;
+}
 
+.search-input {
+    padding: 12px 14px;
+    border: none;
+    border-bottom: 1px solid #ddd;
+    font-size: 15px;
+    width: 100%;
+    outline: none;
+}
+
+.client-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* Client Item Row */
 .client-item {
-    padding: 10px; display:flex; gap:10px; align-items:center;
-    border-radius: 10px; cursor:pointer; transition:.2s;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 6px;
+    background: #ffffff;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.25s;
+    position: relative;
 }
-.client-item:hover, .active-client { background:#dfffe0; }
 
-.client-avatar { width:46px;height:46px;border-radius:50%; }
-.client-name { font-size:15px;font-weight:700; }
-.client-sub { font-size:12px;color:#777; }
-.badge { background:red;color:white;padding:2px 6px;border-radius:12px;font-size:11px; }
+.client-item:hover {
+    background: #e9f8e9;
+}
 
-/* CHAT */
-#chat-panel { display: flex; flex-direction: column; background:#f3fff3; }
-#chat-header { padding:12px; background:white; border-bottom:1px solid #ccc; display:flex; justify-content: space-between; }
-.chat-user-info { display:flex; gap:10px; align-items:center; }
-.chat-header-avatar { width:45px;height:45px;border-radius:50%; }
-.chat-header-name { font-weight:800;font-size:17px; }
-.status-dot { width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px; }
-.status-dot.offline { background:#777; } .status-dot.online { background:#1fc41f; }
+.active-client {
+    background: #d6f5d6 !important;
+    border: 1px solid #55c455;
+}
 
-.messages-body { flex:1; padding:20px; overflow-y:auto; }
+/* Avatar */
+.client-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    margin-right: 12px;
+    object-fit: cover;
+}
 
-.msg-row { display:flex; margin:10px 0; max-width:78%; }
-.msg-row.client { justify-content:flex-start; }
-.msg-row.csr { justify-content:flex-end; }
+/* Client Text */
+.client-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
 
-.bubble { padding:12px 16px; border-radius:18px;font-size:15px;white-space:pre-wrap; }
-.msg-row.client .bubble { background:#ececec;color:black;border-bottom-left-radius:5px; }
-.msg-row.csr .bubble { background:#0c8b3c;color:white;border-bottom-right-radius:5px; }
+.client-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: #222;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
 
-.meta { font-size:11px; opacity:.6;margin-top:3px; }
+.client-sub {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+}
 
-/* INPUT */
-#chat-input-bar { padding:14px;background:white;border-top:1px solid #ccc;display:flex;gap:10px;align-items:center; }
-.message-field { flex:1;padding:12px;border-radius:22px;border:1px solid #ccc; }
-.send-btn { width:50px;height:50px;border-radius:50%;border:none;background:#0a8b00;color:white;font-size:20px; }
+/* ASSIGN BUTTONS */
+.client-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
 
-/* RIGHT PANEL */
-.right-panel { background:white;border-left:1px solid #ccc;padding:18px;display:none;flex-direction:column; }
-.right-panel.show { display:flex; }
+.assign-btn, .unassign-btn, .lock-btn {
+    border: none;
+    background: none;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 6px;
+}
 
-/* ASSIGN BOX */
-.assign-btn { margin-top:10px;padding:8px 14px;border:none;border-radius:8px;cursor:pointer;font-weight:bold; }
-.assign-btn.yes { background:#0a8b00;color:white; }
-.assign-btn.no { background:#d9534f;color:white; }
+.assign-btn {
+    color: #008000;
+    background: #d6f5d6;
+}
 
-/* MEDIA VIEWER */
-.media-viewer { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.7); }
-.media-viewer.show { display:flex; }
-.media-content { max-width:85vw;max-height:85vh; }
-.media-close { position:absolute; top:20px; right:30px; font-size:28px; color:white; cursor:pointer; }
+.unassign-btn {
+    color: #b00000;
+    background: #ffd6d6;
+}
+
+.lock-btn {
+    color: #777;
+    background: #ececec;
+}
+
+/* RED UNREAD BADGE */
+.badge {
+    background: #ff3b30;
+    color: #fff;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: auto;
+}
+
+/* ================= CHAT PANEL ================= */
+#chat-panel {
+    display: flex;
+    flex-direction: column;
+    background: #f8fff7;
+}
+
+/* Header */
+#chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: #ffffff;
+    border-bottom: 1px solid #dcdcdc;
+}
+
+.chat-header-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.chat-header-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0a0a0a;
+}
+
+.chat-header-status {
+    font-size: 13px;
+    color: #666;
+}
+
+/* Status Dot */
+.status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.online { background: #00c853; }
+.offline { background: #999; }
+
+/* Messages Area */
+.messages-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px;
+}
+
+.msg-row {
+    width: 100%;
+    margin-bottom: 15px;
+    display: flex;
+}
+
+.msg-row.csr {
+    justify-content: flex-end;
+}
+
+.msg-row.client {
+    justify-content: flex-start;
+}
+
+.bubble-wrapper {
+    max-width: 60%;
+}
+
+.bubble {
+    padding: 10px 14px;
+    font-size: 14px;
+    border-radius: 18px;
+    background: #ffffff;
+    color: #000;
+    display: inline-block;
+    word-break: break-word;
+    line-height: 1.3;
+    box-shadow: 0 3px 8px rgba(0,0,0,.08);
+}
+
+.msg-row.csr .bubble {
+    background: #4caf50;
+    color: white;
+    border-bottom-right-radius: 6px;
+}
+
+.msg-row.client .bubble {
+    background: #e5e5e5;
+    border-bottom-left-radius: 6px;
+}
+
+/* Timestamp */
+.meta {
+    font-size: 11px;
+    margin-top: 5px;
+    color: #777;
+}
+
+/* ================= INPUT AREA ================= */
+#chat-input-bar {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    gap: 10px;
+    background: #ffffff;
+    border-top: 1px solid #ddd;
+}
+
+.message-field {
+    flex: 1;
+    padding: 11px 14px;
+    border-radius: 30px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+}
+
+/* Buttons */
+.file-upload-icon,
+.send-btn {
+    background: #4caf50;
+    color: #fff;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.file-upload-icon { background: #3b8a3b; }
+
+/* File Preview */
+.preview-area {
+    display: flex;
+    gap: 10px;
+    padding: 8px 14px;
+    overflow-x: auto;
+}
+.preview-thumb {
+    height: 60px;
+    border-radius: 8px;
+}
+
+/* ================= RIGHT PANEL ================= */
+.right-panel {
+    background: #ffffff;
+    border-left: 1px solid #dcdcdc;
+    padding: 20px;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: 0.4s;
+    position: relative;
+}
+
+.right-panel.show {
+    transform: translateX(0);
+}
+
+.info-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: block;
+    margin: auto;
+    margin-bottom: 15px;
+}
+
+.close-info {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    border: none;
+    background: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.assign-btn.yes { background: #4caf50; color:#fff; }
+.assign-btn.no { background:#b00000; color:#fff; }
