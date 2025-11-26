@@ -188,3 +188,16 @@ body {
     display:block;
     margin:10px auto;
 }
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-left: auto;
+}
+
+.online-dot { background: #28c728; }
+.offline-dot { background: #bababa; }
+
+.assigned { color:#009688; font-size:18px; margin-right:8px; }
+.unassigned { color:#007bff; font-size:18px; margin-right:8px; cursor:pointer; }
+.locked { color:#555; font-size:18px; margin-right:8px; opacity:0.6; }
