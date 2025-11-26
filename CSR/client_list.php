@@ -7,7 +7,7 @@ if (!isset($_SESSION["csr_user"])) {
     exit("Unauthorized");
 }
 
-$currentCSR = $_SESSION["csr_user"];
+$csrUser = $_SESSION["csr_user"];
 $search = $_GET["search"] ?? "";
 
 $sql = "
@@ -19,8 +19,9 @@ $sql = "
         u.barangay,
         u.assigned_csr,
         (
-            SELECT COUNT(*) FROM chat c
-            WHERE c.client_id = u.id
+            SELECT COUNT(*)
+            FROM chat c
+            WHERE c.user_id = u.id
               AND c.sender_type = 'client'
               AND c.seen = false
         ) AS unread
@@ -35,44 +36,39 @@ $sql .= " ORDER BY unread DESC, full_name ASC";
 
 $stmt = $conn->prepare($sql);
 
-if ($search !== "") $stmt->execute([":search" => "%$search%"]);
-else $stmt->execute();
+if ($search !== "") {
+    $stmt->execute([":search" => "%$search%"]);
+} else {
+    $stmt->execute();
+}
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $clientID = $row["id"];
+    $id = $row["id"];
     $name = htmlspecialchars($row["full_name"]);
-    $email = htmlspecialchars($row["email"]);
-    $district = htmlspecialchars($row["district"]);
-    $brgy = htmlspecialchars($row["barangay"]);
     $assigned = $row["assigned_csr"];
     $unread = intval($row["unread"]);
 
-    // ICON LOGIC
-    if ($assigned === null || $assigned === "0") {
-        $icon = "<span class='assign-btn' onclick='assignClient($clientID); event.stopPropagation();'>➕</span>";
-    } elseif ($assigned == $currentCSR) {
-        $icon = "<span class='assign-btn remove' onclick='unassignClient($clientID); event.stopPropagation();'>➖</span>";
+    // Button logic
+    if ($assigned === null) {
+        $btn = "<i class='fa-solid fa-plus assign-icon green' onclick='assignClient(event, $id)'></i>";
+    } elseif ($assigned === $csrUser) {
+        $btn = "<i class='fa-solid fa-minus assign-icon red' onclick='unassignClient(event, $id)'></i>";
     } else {
-        $icon = "<span class='assign-btn locked'>🔒</span>";
+        $btn = "<i class='fa-solid fa-lock assign-icon lock'></i>";
     }
 
     echo "
-    <div class='client-item' id='client-$clientID' onclick='selectClient($clientID, \"$name\")'>
-        
-        <img src=\"upload/default-avatar.png\" class='client-avatar'>
-
+    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\")'>
+        <img src='upload/default-avatar.png' class='client-avatar'>
         <div class='client-info'>
-            <div class='client-name'>$name</div>
-            <div class='client-email'>$email</div>
-            <div class='client-meta'>Dist: $district | Brgy: $brgy</div>
+            <div class='client-name'>
+                $name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
+            </div>
+            <div class='client-sub'>
+                District: {$row["district"]} • Brgy: {$row["barangay"]}
+            </div>
         </div>
-
-        <div class='right'>
-            $icon
-            " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
-        </div>
-
-    </div>
-    ";
+        $btn
+    </div>";
 }
 ?>
