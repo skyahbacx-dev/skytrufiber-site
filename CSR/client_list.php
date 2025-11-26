@@ -7,14 +7,13 @@ if (!isset($_SESSION["csr_user"])) {
     exit("Unauthorized");
 }
 
-$csrUser = $_SESSION["csr_user"]; // logged CSR username
-$search = $_GET["search"] ?? "";
+$csrUser = $_SESSION["csr_user"];
+$search  = $_GET["search"] ?? "";
 
 $sql = "
     SELECT
         u.id,
         u.full_name,
-        u.email,
         u.district,
         u.barangay,
         u.assigned_csr,
@@ -45,13 +44,12 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $assigned = $row["assigned_csr"];
     $unread   = intval($row["unread"]);
 
-    // Determine button style
     if ($assigned === null || $assigned === "") {
-        $actionBtn = "<button class='assign-btn' onclick='event.stopPropagation();showAssignPopup($id)'>+</button>";
+        $btn = "<button class='assign-btn' onclick='event.stopPropagation(); showAssignPopup($id)'><i class=\"fa-solid fa-plus\"></i></button>";
     } elseif ($assigned === $csrUser) {
-        $actionBtn = "<button class='unassign-btn' onclick='event.stopPropagation();showUnassignPopup($id)'>−</button>";
+        $btn = "<button class='unassign-btn' onclick='event.stopPropagation(); showUnassignPopup($id)'><i class=\"fa-solid fa-minus\"></i></button>";
     } else {
-        $actionBtn = "<button class='lock-btn' disabled>🔒</button>";
+        $btn = "<button class='lock-btn' disabled><i class=\"fa-solid fa-lock\"></i></button>";
     }
 
     echo "
@@ -61,11 +59,10 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             <div class='client-name'>
                 $name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
             </div>
-            <div class='client-sub'>
-                District: {$row["district"]} | Brgy: {$row["barangay"]}
-            </div>
+            <div class='client-sub'>District: {$row["district"]} | Brgy: {$row["barangay"]}</div>
         </div>
-        <div class='client-action-btn'>$actionBtn</div>
-    </div>";
+        <div class='client-actions'>$btn</div>
+    </div>
+    ";
 }
 ?>
