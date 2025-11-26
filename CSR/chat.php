@@ -87,7 +87,16 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
     <span id="closeMediaModal" class="media-close">✖</span>
     <img id="mediaModalContent" class="media-content">
 </div>
+<div id="mediaModal" onclick="this.style.display='none'">
+  <img id="mediaViewer">
+</div>
 
+<script>
+function openMedia(src){
+    document.getElementById("mediaViewer").src = src;
+    document.getElementById("mediaModal").style.display = "flex";
+}
+</script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="csr_chat.js"></script>
 </body>
