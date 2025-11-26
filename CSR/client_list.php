@@ -1,34 +1,31 @@
 <?php
-require '../db_connect.php';
 session_start();
+require "../db_config.php";
 
-if (!isset($_SESSION['csr_user'])) {
-    http_response_code(401);
-    exit;
-}
+$csr   = $_SESSION['csr_user'] ?? null;
+$search = $_POST['search'] ?? '';
 
-header('Content-Type: application/json');
+$sql = "
+    SELECT id, full_name, email, district, barangay, assigned_csr, is_online
+    FROM users
+    WHERE full_name ILIKE :s OR email ILIKE :s
+    ORDER BY is_online DESC, full_name ASC
+";
 
-// Fetch unassigned or assigned to logged CSR user
-$csr_username = $_SESSION["csr_user"];
+$stmt = $pdo->prepare($sql);
+$stmt->execute([":s" => "%$search%"]);
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$query = $pdo->prepare("
-    SELECT 
-        u.id,
-        u.full_name,
-        u.barangay,
-        u.district,
-        u.assigned_csr,
-        u.is_online,
-        MAX(c.created_at) AS last_message_at
-    FROM users u
-    LEFT JOIN chat c ON c.client_id = u.id
-    GROUP BY u.id
-    ORDER BY last_message_at DESC NULLS LAST
-");
-
-$query->execute();
-$users = $query->fetchAll(PDO::FETCH_ASSOC);
-
-echo json_encode(["clients" => $users]);
-exit;
+foreach ($rows as $row):
+    $assigned = ($row["assigned_csr"] === $csr);
+?>
+<div class="client-item" data-id="<?= $row['id']; ?>">
+    <img src="upload/default-avatar.png" class="client-avatar">
+    <div class="client-info-box">
+        <span class="client-name"><?= htmlspecialchars($row['full_name']); ?></span>
+        <span class="client-email"><?= htmlspecialchars($row['email']); ?></span>
+        <small><?= $row['district']; ?> - <?= $row['barangay']; ?></small>
+    </div>
+    <span class="status-dot <?= $row['is_online'] ? 'online' : 'offline' ?>"></span>
+</div>
+<?php endforeach; ?>
