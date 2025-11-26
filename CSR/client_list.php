@@ -21,7 +21,7 @@ $sql = "
         (
             SELECT COUNT(*)
             FROM chat c
-            WHERE c.user_id = u.id
+            WHERE c.client_id = u.id
               AND c.sender_type = 'client'
               AND c.seen = false
         ) AS unread
@@ -48,7 +48,6 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $assigned = $row["assigned_csr"];
     $unread = intval($row["unread"]);
 
-    // Button logic
     if ($assigned === null) {
         $btn = "<i class='fa-solid fa-plus assign-icon green' onclick='assignClient(event, $id)'></i>";
     } elseif ($assigned === $csrUser) {
@@ -69,6 +68,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             </div>
         </div>
         $btn
-    </div>";
+    </div>
+    ";
 }
 ?>
