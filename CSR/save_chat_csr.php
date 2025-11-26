@@ -1,78 +1,52 @@
 <?php
+require '../db_connect.php';
+require '../b2_upload.php';
 session_start();
-include "../db_connect.php";
 
-if (!isset($_SESSION['csr_user'])) {
+header("Content-Type: application/json");
+
+if (!isset($_SESSION["csr_user"])) {
     echo json_encode(["error" => "Unauthorized"]);
     exit;
 }
 
-$csrUser = $_SESSION['csr_user'];  // example "CSR1"
-$client_id = $_POST["client_id"] ?? null;
-$message   = $_POST["message"] ?? "";
-$user      = $_POST["user"] ?? "";   // CLIENT EMAIL / ACCOUNT NUMBER
+$client_id  = intval($_POST["client_id"] ?? 0);
+$message    = trim($_POST["message"] ?? "");
+$files      = $_FILES["media"] ?? null;
 
-if (!$client_id) {
-    echo json_encode(["error" => "Missing client id"]);
+if ($client_id <= 0) {
+    echo json_encode(["error" => "Invalid client"]);
     exit;
 }
 
-// ========== INSERT MESSAGE FIRST ==========
-$stmt = $pdo->prepare("INSERT INTO chat (client_id, sender_type, message, delivered, seen, user)
-                       VALUES (:cid, 'csr', :msg, FALSE, FALSE, :usr)
-                       RETURNING id");
-$stmt->execute([
-    ":cid" => $client_id,
-    ":msg" => $message,
-    ":usr" => $user
-]);
+if ($message === "" && (!$files || count($files["name"]) === 0)) {
+    echo json_encode(["error" => "Send a message or upload a file"]);
+    exit;
+}
 
+// Save text message first
+$stmt = $pdo->prepare("
+    INSERT INTO chat (client_id, sender_type, message, delivered, seen)
+    VALUES (:cid, 'csr', :msg, TRUE, FALSE)
+    RETURNING id
+");
+$stmt->execute(["cid" => $client_id, "msg" => $message]);
 $chat_id = $stmt->fetchColumn();
 
-// ============ HANDLE MEDIA UPLOAD ============
-if (!empty($_FILES["media"]["name"][0])) {
-
-    $bucketName = "ahba-chat-media";
-    $endpoint   = "https://s3.us-east-005.backblazeb2.com";
-    $keyId      = "005a548887f9c4f0000000002";
-    $appKey     = "K005fOYaprINPto/Qdm9wex0w4v/L2k";
-
-    foreach ($_FILES["media"]["tmp_name"] as $i => $tmp) {
-
-        $filename = time() . "_" . basename($_FILES["media"]["name"][$i]);
-        $b2Path   = "chat_uploads/" . $filename;
-
-        $fileData = file_get_contents($tmp);
-
-        $curl = curl_init("$endpoint/$bucketName/$b2Path");
-        curl_setopt_array($curl, [
-            CURLOPT_PUT => true,
-            CURLOPT_CUSTOMREQUEST => "PUT",
-            CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
-            CURLOPT_USERPWD => "$keyId:$appKey",
-            CURLOPT_INFILESIZE => strlen($fileData),
-            CURLOPT_POSTFIELDS => $fileData,
-            CURLOPT_RETURNTRANSFER => true
-        ]);
-
-        $result = curl_exec($curl);
-        curl_close($curl);
-
-        $url = "$endpoint/$bucketName/$b2Path";
-
-        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        $type = (in_array($ext, ['jpg','jpeg','png','gif','webp'])) ? "image" : "video";
-
-        $insertMedia = $pdo->prepare(
-            "INSERT INTO chat_media (chat_id, media_path, media_type) VALUES (:cid, :path, :type)"
-        );
-        $insertMedia->execute([
-            ":cid" => $chat_id,
-            ":path" => $url,
-            ":type" => $type
-        ]);
+// Upload media if exists
+if ($files) {
+    for ($i = 0; $i < count($files["name"]); $i++) {
+        if ($files["error"][$i] === 0) {
+            $mediaUrl = uploadToB2($files["tmp_name"][$i], $files["name"][$i]);
+            
+            $pm = $pdo->prepare("
+                INSERT INTO chat_media (chat_id, media_path)
+                VALUES (:cid, :path)
+            ");
+            $pm->execute(["cid" => $chat_id, "path" => $mediaUrl]);
+        }
     }
 }
 
-echo json_encode(["status" => "ok"]);
-?>
+echo json_encode(["success" => true]);
+exit;
