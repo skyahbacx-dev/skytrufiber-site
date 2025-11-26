@@ -62,6 +62,23 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
     <span id="closeMediaModal" class="media-close">✖</span>
     <img id="mediaModalContent" class="media-content">
 </div>
+<div id="assignModal" class="modal-bg">
+  <div class="modal-box">
+    <h3>Assign Client?</h3>
+    <input type="hidden" id="assignClientId">
+    <button class="modal-ok" onclick="assignClient()">Assign</button>
+    <button class="modal-cancel" onclick="$('#assignModal').removeClass('show')">Cancel</button>
+  </div>
+</div>
+
+<div id="unassignModal" class="modal-bg">
+  <div class="modal-box">
+    <h3>Unassign Client?</h3>
+    <input type="hidden" id="unassignClientId">
+    <button class="modal-ok" onclick="unassignClient()">Unassign</button>
+    <button class="modal-cancel" onclick="$('#unassignModal').removeClass('show')">Cancel</button>
+  </div>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="csr_chat.js"></script>
