@@ -1,8 +1,15 @@
 <?php
 session_start();
-include '../db_connect.php';
+include "../db_connect.php";
 
-$csr = $_SESSION["csr_user"];
+// Use correct session key
+$csr = $_SESSION["csr_username"] ?? $_SESSION["csr_user"] ?? null;
+
+if (!$csr) {
+    http_response_code(401);
+    exit("Unauthorized: CSR session missing");
+}
+
 $search = $_GET["search"] ?? "";
 
 $sql = "
@@ -23,8 +30,9 @@ $stmt = $conn->prepare($sql);
 ($search !== "") ? $stmt->execute([":search" => "%$search%"]) : $stmt->execute();
 
 while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
     $lock = ($r["assigned_csr"] && $r["assigned_csr"] !== $csr)
-        ? "<i class='fa-solid fa-lock' style='color:red'></i>"
+        ? "<i class='fa-solid fa-lock' style='color:red;margin-left:6px'></i>"
         : "";
 
     echo "
@@ -38,3 +46,4 @@ while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
         </div>
     </div>";
 }
+?>
