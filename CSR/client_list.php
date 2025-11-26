@@ -21,7 +21,7 @@ $sql = "
         (
             SELECT COUNT(*)
             FROM chat c
-            WHERE c.user_id = u.id
+            WHERE c.client_id = u.id
               AND c.sender_type = 'client'
               AND c.seen = false
         ) AS unread
@@ -51,19 +51,19 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
     /* BUTTON LOGIC */
     if ($assigned === null || $assigned === "") {
-        $actionBtn = "
+        $btn = "
             <button class='assign-btn' onclick='event.stopPropagation(); assignSelected($id)'>
                 <i class='fa-solid fa-plus'></i>
             </button>";
     }
     else if ($assigned === $csrUser) {
-        $actionBtn = "
+        $btn = "
             <button class='unassign-btn' onclick='event.stopPropagation(); unassignSelected($id)'>
                 <i class='fa-solid fa-minus'></i>
             </button>";
     }
     else {
-        $actionBtn = "
+        $btn = "
             <button class='lock-btn' disabled>
                 <i class='fa-solid fa-lock'></i>
             </button>";
@@ -72,7 +72,6 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     echo "
     <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\")'>
         <img src='upload/default-avatar.png' class='client-avatar'>
-
         <div class='client-content'>
             <div class='client-name'>
                 $name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
@@ -81,11 +80,9 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 District: {$row["district"]} | Brgy: {$row["barangay"]}
             </div>
         </div>
-
         <div class='client-actions'>
-            $actionBtn
+            $btn
         </div>
-    </div>
-    ";
+    </div>";
 }
 ?>
