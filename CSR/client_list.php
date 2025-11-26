@@ -1,6 +1,6 @@
 <?php
 session_start();
-require "../db_config.php";
+require "../db_connect.php";
 
 $csr = $_SESSION["csr_user"] ?? null;
 
