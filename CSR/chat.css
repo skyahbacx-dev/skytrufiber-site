@@ -467,3 +467,6 @@ body {
 .msg-row {
     animation: fadeInUp .25s ease;
 }
+.msg { padding:10px 15px; margin:5px 0; max-width:70%; border-radius:12px; }
+.msg-client { background:#d7eaf7; margin-right:auto; }
+.msg-csr { background:#c7ffd2; margin-left:auto; }
