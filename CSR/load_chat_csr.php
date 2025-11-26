@@ -1,35 +1,41 @@
 <?php
+session_start();
 include "../db_connect.php";
 
-$username = $_GET["client"] ?? null;
+if (!isset($_SESSION["csr_user"])) {
+    echo json_encode(["error" => "Unauthorized"]);
+    exit;
+}
 
-$stmt = $pdo->prepare("
-    SELECT id FROM users WHERE account_number = ?
-");
-$stmt->execute([$username]);
-$row = $stmt->fetch();
+$client_id = $_GET["client_id"] ?? null;
 
-if (!$row) {
+if (!$client_id) {
     echo json_encode([]);
     exit;
 }
 
-$cid = $row["id"];
+// Update delivered status for client messages
+$pdo->prepare("UPDATE chat SET delivered = TRUE WHERE client_id = :cid AND delivered = FALSE AND sender_type = 'client'")
+    ->execute([":cid" => $client_id]);
 
-$pdo->prepare("UPDATE chat SET seen = TRUE WHERE client_id = ? AND sender_type = 'csr'")
-    ->execute([$cid]);
-
+// Fetch chat + media files in one query
 $sql = "
-    SELECT c.*, 
-    COALESCE((
-        SELECT json_agg(json_build_object('media_path', m.media_path, 'media_type', m.media_type))
-        FROM chat_media m WHERE m.chat_id = c.id
-    ), '[]') AS media
-    FROM chat c
-    WHERE c.client_id = ?
-    ORDER BY c.created_at ASC
+SELECT c.id, c.client_id, c.sender_type, c.message, c.delivered, c.seen, c.created_at, c.user,
+       COALESCE(json_agg(json_build_object(
+            'id', m.id,
+            'media_path', m.media_path,
+            'media_type', m.media_type
+       ) ORDER BY m.id) FILTER (WHERE m.id IS NOT NULL), '[]') AS media
+FROM chat c
+LEFT JOIN chat_media m ON m.chat_id = c.id
+WHERE c.client_id = :cid
+GROUP BY c.id
+ORDER BY c.id ASC
 ";
+
 $stmt = $pdo->prepare($sql);
-$stmt->execute([$cid]);
-echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+$stmt->execute([":cid" => $client_id]);
+$messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+echo json_encode($messages);
 ?>
