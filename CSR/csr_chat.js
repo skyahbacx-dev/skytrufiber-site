@@ -1,20 +1,19 @@
 /* =======================================================
-   CSR CHAT – FINAL FULL VERSION
-======================================================= */
+   CSR CHAT — FINAL FULL JS (Auto refresh + Assign buttons)
+========================================================= */
 
 const BASE_MEDIA = "https://f000.backblazeb2.com/file/ahba-chat-media/";
+
 let activeClient = 0;
 let filesToSend = [];
 let lastMessageCount = 0;
 
-// Load clients
 function loadClients(search = "") {
     $.get("client_list.php", { search: search }, function (data) {
         $("#clientList").html(data);
     });
 }
 
-// Select client
 function selectClient(id, name) {
     activeClient = id;
 
@@ -25,12 +24,13 @@ function selectClient(id, name) {
     $("#chatMessages").html("");
     lastMessageCount = 0;
 
-    loadClientInfo();
     loadMessages(true);
+    loadClientInfo();
 }
 
 function loadClientInfo() {
     $.getJSON("client_info.php?id=" + activeClient, data => {
+        $("#infoAvatar").attr("src", data.avatar);
         $("#infoName").text(data.name);
         $("#infoEmail").text(data.email);
         $("#infoDistrict").text(data.district);
@@ -38,7 +38,6 @@ function loadClientInfo() {
     });
 }
 
-// Load chat messages
 function loadMessages(initial = false) {
     if (!activeClient) return;
 
@@ -47,23 +46,23 @@ function loadMessages(initial = false) {
 
         if (messages.length > lastMessageCount) {
             const newMsgs = messages.slice(lastMessageCount);
+
             newMsgs.forEach(m => {
+                const side = (m.sender_type === "csr") ? "me" : "them";
 
-                const side = (m.sender_type === "csr") ? "csr" : "client";
-
-                let attach = "";
+                let mediaHTML = "";
                 if (m.media_path) {
                     if (m.media_type === "image") {
-                        attach = `<img src="${BASE_MEDIA + m.media_path}" class="file-img" onclick="openMedia('${BASE_MEDIA + m.media_path}')">`;
+                        mediaHTML = `<img src="${BASE_MEDIA + m.media_path}" class="file-img" onclick="openMedia('${BASE_MEDIA + m.media_path}')">`;
                     } else {
-                        attach = `<video class="file-img" controls><source src="${BASE_MEDIA + m.media_path}"></video>`;
+                        mediaHTML = `<video controls class="file-img"><source src="${BASE_MEDIA + m.media_path}"></video>`;
                     }
                 }
 
                 $("#chatMessages").append(`
                     <div class="msg-row ${side}">
-                        <div class="bubble">${m.message || ""}${attach}</div>
-                        <div class="meta">${m.created_at}</div>
+                        <div class="bubble">${m.message || ""}${mediaHTML}</div>
+                        <small class="meta">${m.created_at}</small>
                     </div>
                 `);
             });
@@ -104,7 +103,7 @@ function sendMessage() {
     });
 }
 
-$("#fileInput").on("change", function (e) {
+$("#fileInput").on("change", e => {
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
@@ -117,18 +116,18 @@ $("#fileInput").on("change", function (e) {
     });
 });
 
-// Assign & Unassign AJAX
-function assignClient(id, e) {
-    e.stopPropagation();
-    $.post("assign_client.php", { client_id: id }, loadClients);
+function assignClient(id) {
+    $.post("assign_client.php", { client_id: id }, () => loadClients());
 }
 
-function unassignClient(id, e) {
-    e.stopPropagation();
-    $.post("unassign_client.php", { client_id: id }, loadClients);
+function removeClient(id) {
+    $.post("unassign_client.php", { client_id: id }, () => loadClients());
 }
 
-// Media Viewer
+function toggleClientInfo() {
+    $("#infoPanel").toggleClass("show");
+}
+
 function openMedia(src) {
     $("#mediaModalContent").attr("src", src);
     $("#mediaModal").addClass("show");
@@ -136,8 +135,9 @@ function openMedia(src) {
 $("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
 
 // Auto refresh
-setInterval(() => loadMessages(false), 1200);
-setInterval(() => loadClients($("#searchInput").val()), 2000);
+setInterval(() => {
+    loadClients($("#searchInput").val());
+    loadMessages(false);
+}, 2000);
 
-// Init load
 loadClients();
