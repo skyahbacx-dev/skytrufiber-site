@@ -1,9 +1,16 @@
 <?php
-include "../db_connect.php";
+include '../db_connect.php';
 
-$id = (int)($_GET["id"] ?? 0);
+$id = $_GET["id"] ?? 0;
 
-$stmt = $conn->prepare("SELECT full_name, email, district, barangay FROM users WHERE id = :id");
-$stmt->execute([":id" => $id]);
-echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));
-?>
+$stmt = $conn->prepare("SELECT full_name,email,district,barangay FROM users WHERE id=?");
+$stmt->execute([$id]);
+$u = $stmt->fetch(PDO::FETCH_ASSOC);
+
+echo json_encode([
+    "name" => $u["full_name"],
+    "email" => $u["email"],
+    "district" => $u["district"],
+    "barangay" => $u["barangay"],
+    "avatar" => "upload/default-avatar.png"
+]);
