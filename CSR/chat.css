@@ -55,3 +55,22 @@
 .assign-btn, .unassign-btn { font-size:28px; background:none; border:none; cursor:pointer; margin-top:12px; }
 
 .lock-icon { font-size:18px; color:#777; display:none; }
+.client-actions {
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+
+.assign-btn, .unassign-btn, .lock-btn {
+    width:30px; height:30px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    color:white;
+    font-size:14px;
+}
+
+.assign-btn { background:#0bb63d; }
+.unassign-btn { background:#ff5555; }
+.lock-btn { background:#777; cursor:not-allowed; }
