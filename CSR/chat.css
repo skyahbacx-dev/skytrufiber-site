@@ -1,76 +1,106 @@
+/* 3-column layout */
+#messenger-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr 320px;
+    height: calc(100vh - 120px);
+    background:#f5fff4;
+}
+
+/* LEFT PANEL */
 #left-panel {
-    width: 300px;
-    background: white;
-    border-right: 1px solid #dadada;
-    overflow-y: auto;
+    background:#fff;
+    border-right:1px solid #ccc;
+    overflow-y:auto;
 }
 
 .client-item {
-    display: flex;
-    align-items: center;
-    padding: 12px;
-    border-radius: 10px;
-    cursor: pointer;
-    margin-bottom: 6px;
-    transition: background .2s;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    padding:10px;
+    border-radius:12px;
+    margin:5px;
+    cursor:pointer;
+    border:1px solid #ebebeb;
+    transition:0.3s;
 }
 
-.client-item:hover {
-    background: #e9f9e9;
-}
-
+.client-item:hover,
 .active-client {
-    background: #d9ffd9 !important;
-    border-left: 4px solid #28a745;
-}
-
-.avatar-wrap {
-    position: relative;
+    background:#eaffea;
+    border-color:#6cd96c;
 }
 
 .client-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
+    width:50px;height:50px;border-radius:50%;
 }
 
-.status-dot {
-    position: absolute;
-    right: 3px;
-    bottom: 3px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-}
-
-.status-dot.online { background: #2ecc71; }
-.status-dot.offline { background: #aaa; }
+.client-body { flex:1; }
 
 .client-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+   display:flex; justify-content:space-between; align-items:center;
 }
 
-.controls {
-    margin-left: 10px;
-}
+.client-name { font-size:15px; font-weight:600; }
 
-.assign-btn, .unassign-btn {
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 18px;
-}
+.client-email { font-size:12px; color:#666; }
 
-.assign-btn { color: #2ecc71; }
-.unassign-btn { color: #e74c3c; }
-.lock-btn { color: #555; font-size: 18px; }
+.client-status { font-size:12px; margin-top:3px; }
 
 .badge {
-    background: red;
-    color: white;
-    padding: 3px 8px;
-    font-size: 11px;
-    border-radius: 10px;
+    background:#ff5757; color:#fff; padding:2px 6px;
+    border-radius:8px; font-size:11px; margin-left:6px;
 }
+
+.dot { width:10px;height:10px;border-radius:50%;display:inline-block; }
+.dot.online { background:#27cc59;}
+.dot.offline { background:#888; }
+
+.assign-plus { color:#10a800; font-size:18px; cursor:pointer; }
+.assign-minus { color:#d90000; font-size:18px; cursor:pointer; }
+.client-locked { color:#444; font-size:18px; }
+
+/* CHAT */
+#chat-panel { display:flex; flex-direction:column; }
+#chat-header { padding:12px; background:#fff; border-bottom:1px solid #ccc; }
+
+#chatMessages {
+    padding:20px;
+    flex:1;
+    overflow-y:auto;
+}
+
+.msg-row { margin-bottom:12px; display:flex; flex-direction:column; }
+.me { align-items:flex-end; }
+.them { align-items:flex-start; }
+
+.bubble {
+    max-width:60%;
+    padding:12px 15px;
+    border-radius:18px;
+    background:#e7e7e7;
+}
+
+.me .bubble {
+    background:#3cbf49; color:#fff;
+}
+
+.meta { font-size:10px; color:#555; margin-top:3px; }
+
+/* INPUT BAR */
+#chat-input-bar { padding:12px; display:flex; gap:8px; background:white; }
+
+.message-field {
+    flex:1; padding:10px 15px;
+    border-radius:25px; border:1px solid #ccc;
+}
+
+.send-btn {
+    width:44px;height:44px;border-radius:50%;
+    background:#0a8b00; color:white;
+    border:none;cursor:pointer;
+}
+
+/* INFO PANEL */
+.right-panel { padding:20px; background:#fff; border-left:1px solid #ccc;}
+.info-avatar {width:140px;height:140px;border-radius:50%;margin-bottom:12px;}
