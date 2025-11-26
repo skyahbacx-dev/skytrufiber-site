@@ -64,7 +64,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 <!-- MAIN CHAT LAYOUT -->
 <div class="page-wrapper">
     <div class="client-panel">
-        <input class="search" placeholder="Search clients..." id="searchInput">
+
         <div id="clientList" class="client-list"></div>
     </div>
 
