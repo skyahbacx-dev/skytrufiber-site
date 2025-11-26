@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../db_connect.php';
+include '../db_connect.php';
 
 if (!isset($_SESSION["csr_user"])) {
     http_response_code(401);
@@ -15,13 +15,15 @@ $sql = "
         u.id,
         u.full_name,
         u.email,
-        u.profile_pic,
-        u.is_online,
+        u.district,
+        u.barangay,
+        u.assigned_csr,
         (
-            SELECT COUNT(*) FROM chat c
+            SELECT COUNT(*)
+            FROM chat c
             WHERE c.user_id = u.id
-            AND c.sender_type = 'client'
-            AND c.seen = false
+              AND c.sender_type = 'client'
+              AND c.seen = false
         ) AS unread
     FROM users u
 ";
@@ -30,34 +32,31 @@ if ($search !== "") {
     $sql .= " WHERE LOWER(u.full_name) LIKE LOWER(:search)";
 }
 
-$sql .= " ORDER BY unread DESC, u.full_name ASC";
+$sql .= " ORDER BY unread DESC, full_name ASC";
 
 $stmt = $conn->prepare($sql);
 
-if ($search !== "") {
-    $stmt->execute([":search" => "%$search%"]);
-} else {
-    $stmt->execute();
-}
+$params = [];
+if ($search !== "") $params[":search"] = "%$search%";
+
+$stmt->execute($params);
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $id     = $row["id"];
-    $name   = htmlspecialchars($row["full_name"]);
-    $email  = htmlspecialchars($row["email"]);
-    $avatar = $row["profile_pic"] ?: "upload/default-avatar.png";
-    $online = $row["is_online"] ? "online" : "offline";
+
+    $id = $row["id"];
+    $name = htmlspecialchars($row["full_name"]);
     $unread = intval($row["unread"]);
 
     echo "
     <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\")'>
         <div class='client-icon'>
-            <img src='$avatar' class='client-avatar'>
-            <span class='status-dot $online'></span>
+            <img src=\"upload/default-avatar.png\" class='client-avatar'>
+            <span class='status-dot offline'></span>
         </div>
 
         <div class='client-info'>
             <div class='client-name'>$name</div>
-            <div class='client-email'>$email</div>
+            <div class='client-email'>{$row["email"]}</div>
         </div>
 
         " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
