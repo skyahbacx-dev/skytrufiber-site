@@ -1,138 +1,71 @@
-/* =======================================================
-   CSR CHAT — Final Full JS
-======================================================= */
+<?php
+session_start();
+include '../db_connect.php';
 
-let activeClient = 0;
-let filesToSend = [];
-let lastMessageCount = 0;
-let loadingMessages = false;
-
-const BASE_MEDIA = "https://f000.backblazeb2.com/file/ahba-chat-media/";
-
-/* LOAD CLIENT LIST */
-function loadClients(search = "") {
-    $.get("client_list.php", { search: search }, function(data) {
-        $("#clientList").html(data);
-    });
+if (!isset($_SESSION["csr_user"])) {
+    http_response_code(401);
+    exit("Unauthorized");
 }
 
-/* SELECT CLIENT */
-function selectClient(id, name) {
-    activeClient = id;
-    $(".client-item").removeClass("active-client");
-    $("#client-" + id).addClass("active-client");
+$csrUser = $_SESSION["csr_user"]; // logged CSR username
+$search = $_GET["search"] ?? "";
 
-    $("#chatName").text(name);
-    $("#chatMessages").html("");
-    lastMessageCount = 0;
+$sql = "
+    SELECT
+        u.id,
+        u.full_name,
+        u.email,
+        u.district,
+        u.barangay,
+        u.assigned_csr,
+        (
+            SELECT COUNT(*)
+            FROM chat c
+            WHERE c.user_id = u.id
+              AND c.sender_type = 'client'
+              AND c.seen = false
+        ) AS unread
+    FROM users u
+";
 
-    loadMessages(true);
-    loadClientInfo();
+if ($search !== "") {
+    $sql .= " WHERE LOWER(u.full_name) LIKE LOWER(:search)";
 }
 
-/* RIGHT INFO PANEL */
-function loadClientInfo() {
-    $.getJSON("client_info.php?id=" + activeClient, data => {
-        $("#infoName").text(data.name);
-        $("#infoEmail").text(data.email);
-        $("#infoDistrict").text(data.district);
-        $("#infoBrgy").text(data.barangay);
-    });
+$sql .= " ORDER BY unread DESC, full_name ASC";
+
+$stmt = $conn->prepare($sql);
+
+if ($search !== "") $stmt->execute([":search" => "%$search%"]);
+else $stmt->execute();
+
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $id       = $row["id"];
+    $name     = htmlspecialchars($row["full_name"]);
+    $assigned = $row["assigned_csr"];
+    $unread   = intval($row["unread"]);
+
+    // Determine button style
+    if ($assigned === null || $assigned === "") {
+        $actionBtn = "<button class='assign-btn' onclick='event.stopPropagation();showAssignPopup($id)'>+</button>";
+    } elseif ($assigned === $csrUser) {
+        $actionBtn = "<button class='unassign-btn' onclick='event.stopPropagation();showUnassignPopup($id)'>−</button>";
+    } else {
+        $actionBtn = "<button class='lock-btn' disabled>🔒</button>";
+    }
+
+    echo "
+    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\")'>
+        <img src='upload/default-avatar.png' class='client-avatar'>
+        <div class='client-content'>
+            <div class='client-name'>
+                $name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
+            </div>
+            <div class='client-sub'>
+                District: {$row["district"]} | Brgy: {$row["barangay"]}
+            </div>
+        </div>
+        <div class='client-action-btn'>$actionBtn</div>
+    </div>";
 }
-
-/* LOAD MESSAGES */
-function loadMessages(initial = false) {
-    if (!activeClient) return;
-
-    $.getJSON("load_chat_csr.php?client_id=" + activeClient, function(messages) {
-
-        if (initial) $("#chatMessages").html("");
-
-        if (messages.length > lastMessageCount) {
-            messages.slice(lastMessageCount).forEach(m => {
-                const side = m.sender_type === "csr" ? "csr" : "client";
-
-                let attach = "";
-                if (m.media_path) {
-                    attach = m.media_type === "image"
-                        ? `<img src="${m.media_path}" class="file-img" onclick="openMedia('${m.media_path}')">`
-                        : `<video class="file-img" controls><source src="${m.media_path}"></video>`;
-                }
-
-                $("#chatMessages").append(`
-                    <div class="msg-row ${side}">
-                        <div class="bubble-wrapper">
-                            <div class="bubble">${m.message || ""}${attach}</div>
-                            <div class="meta">${m.created_at}</div>
-                        </div>
-                    </div>
-                `);
-            });
-
-            $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
-        }
-
-        lastMessageCount = messages.length;
-    });
-}
-
-/* SEND */
-$("#sendBtn").click(sendMessage);
-$("#messageInput").keypress(e => { if (e.key === "Enter") sendMessage(); });
-
-function sendMessage() {
-    const msg = $("#messageInput").val().trim();
-    if (!msg && filesToSend.length === 0) return;
-
-    let fd = new FormData();
-    fd.append("message", msg);
-    fd.append("client_id", activeClient);
-    filesToSend.forEach(f => fd.append("media[]", f));
-
-    $.ajax({
-        url: "save_chat_csr.php",
-        method: "POST",
-        processData: false,
-        contentType: false,
-        data: fd,
-        success: function () {
-            $("#messageInput").val("");
-            $("#previewArea").html("");
-            $("#fileInput").val("");
-            filesToSend = [];
-            loadMessages(false);
-            loadClients();
-        }
-    });
-}
-
-/* FILE PREVIEW */
-$("#fileInput").on("change", e => {
-    filesToSend = [...e.target.files];
-    $("#previewArea").html("");
-
-    filesToSend.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = ev => {
-            $("#previewArea").append(`<img src="${ev.target.result}" class="preview-thumb">`);
-        };
-        reader.readAsDataURL(file);
-    });
-});
-
-/* RIGHT INFO PANEL */
-function toggleClientInfo() {
-    $("#infoPanel").toggleClass("show");
-}
-
-/* MEDIA VIEWER */
-function openMedia(src) {
-    $("#mediaModalContent").attr("src", src);
-    $("#mediaModal").addClass("show");
-}
-$("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
-
-setInterval(() => loadMessages(false), 1200);
-setInterval(() => loadClients($("#searchInput").val()), 3000);
-
-loadClients();
+?>
