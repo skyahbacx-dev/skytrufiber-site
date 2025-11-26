@@ -1,6 +1,6 @@
 <?php
 session_start();
-require "../db_config.php";
+require "../db_connect.php";
 
 $clientId = $_POST["client_id"] ?? null;
 $message  = trim($_POST["message"] ?? "");
