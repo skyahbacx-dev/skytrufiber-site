@@ -15,8 +15,8 @@ $sql = "
         u.id,
         u.full_name,
         u.email,
-        u.district,
-        u.barangay,
+        u.profile_pic,
+        u.is_online,
         (
             SELECT COUNT(*) FROM chat c
             WHERE c.user_id = u.id
@@ -41,15 +41,18 @@ if ($search !== "") {
 }
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $id = $row["id"];
-    $name = htmlspecialchars($row["full_name"]);
-    $email = htmlspecialchars($row["email"]);
+    $id     = $row["id"];
+    $name   = htmlspecialchars($row["full_name"]);
+    $email  = htmlspecialchars($row["email"]);
+    $avatar = $row["profile_pic"] ?: "upload/default-avatar.png";
+    $online = $row["is_online"] ? "online" : "offline";
     $unread = intval($row["unread"]);
 
     echo "
     <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\")'>
         <div class='client-icon'>
-            <i class='fa-solid fa-plus'></i>
+            <img src='$avatar' class='client-avatar'>
+            <span class='status-dot $online'></span>
         </div>
 
         <div class='client-info'>
