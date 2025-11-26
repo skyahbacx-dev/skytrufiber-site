@@ -1,6 +1,6 @@
 <?php
 session_start();
-include "../db_connect.php";
+include '../db_connect.php';
 
 if (!isset($_SESSION["csr_user"])) {
     http_response_code(401);
@@ -8,7 +8,7 @@ if (!isset($_SESSION["csr_user"])) {
 }
 
 $csrUser = $_SESSION["csr_user"];
-$search = $_GET["search"] ?? "";
+$search  = $_GET["search"] ?? "";
 
 $sql = "
     SELECT
@@ -23,51 +23,37 @@ $sql = "
             FROM chat c
             WHERE c.client_id = u.id
               AND c.sender_type = 'client'
-              AND c.seen = false
+              AND c.seen = FALSE
         ) AS unread
     FROM users u
+    WHERE u.full_name ILIKE :search
+    ORDER BY unread DESC, full_name ASC
 ";
 
-if ($search !== "") {
-    $sql .= " WHERE LOWER(u.full_name) LIKE LOWER(:search)";
-}
-
-$sql .= " ORDER BY unread DESC, full_name ASC";
-
 $stmt = $conn->prepare($sql);
-
-if ($search !== "") {
-    $stmt->execute([":search" => "%$search%"]);
-} else {
-    $stmt->execute();
-}
+$stmt->execute([":search" => "%$search%"]);
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $id = $row["id"];
-    $name = htmlspecialchars($row["full_name"]);
+    $id      = $row["id"];
+    $name    = htmlspecialchars($row["full_name"]);
+    $email   = htmlspecialchars($row["email"]);
+    $unread  = intval($row["unread"]);
     $assigned = $row["assigned_csr"];
-    $unread = intval($row["unread"]);
 
-    if ($assigned === null) {
-        $btn = "<i class='fa-solid fa-plus assign-icon green' onclick='assignClient(event, $id)'></i>";
-    } elseif ($assigned === $csrUser) {
-        $btn = "<i class='fa-solid fa-minus assign-icon red' onclick='unassignClient(event, $id)'></i>";
-    } else {
-        $btn = "<i class='fa-solid fa-lock assign-icon lock'></i>";
+    $badge = ($unread > 0) ? "<span class='badge'>$unread</span>" : "";
+    $lock = "";
+
+    if ($assigned && $assigned != $csrUser) {
+        $lock = "<span class='lock-icon'>🔒</span>";
     }
 
     echo "
     <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\")'>
         <img src='upload/default-avatar.png' class='client-avatar'>
-        <div class='client-info'>
-            <div class='client-name'>
-                $name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
-            </div>
-            <div class='client-sub'>
-                District: {$row["district"]} • Brgy: {$row["barangay"]}
-            </div>
+        <div class='client-content'>
+            <div class='client-name'>$lock $name $badge</div>
+            <div class='client-sub'>$email</div>
         </div>
-        $btn
     </div>
     ";
 }
