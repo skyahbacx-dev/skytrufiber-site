@@ -1,106 +1,120 @@
-/* 3-column layout */
+/* MAIN GRID LAYOUT */
 #messenger-layout {
     display: grid;
-    grid-template-columns: 300px 1fr 320px;
+    grid-template-columns: 280px 1fr 300px;
     height: calc(100vh - 120px);
+    overflow: hidden;
     background:#f5fff4;
 }
 
-/* LEFT PANEL */
+/* LEFT LIST */
 #left-panel {
     background:#fff;
-    border-right:1px solid #ccc;
+    border-right:1px solid #ddd;
     overflow-y:auto;
 }
 
 .client-item {
     display:flex;
-    gap:10px;
-    align-items:center;
     padding:10px;
-    border-radius:12px;
-    margin:5px;
+    align-items:center;
+    gap:10px;
     cursor:pointer;
-    border:1px solid #ebebeb;
-    transition:0.3s;
+    border-radius:10px;
+    margin:6px;
+    background:#fff;
+    border:1px solid #eaeaea;
+    transition:0.25s;
 }
-
-.client-item:hover,
-.active-client {
-    background:#eaffea;
-    border-color:#6cd96c;
+.client-item:hover, .active-client {
+    background:#e9fbe9;
+    border-color:#53c353;
 }
 
 .client-avatar {
-    width:50px;height:50px;border-radius:50%;
+    width:45px;height:45px;
+    border-radius:50%;
 }
 
-.client-body { flex:1; }
-
-.client-row {
-   display:flex; justify-content:space-between; align-items:center;
+/* CHAT PANEL */
+#chat-panel {
+    display:flex;
+    flex-direction:column;
+    background:#f8fff7;
+    border-right:1px solid #ddd;
 }
 
-.client-name { font-size:15px; font-weight:600; }
-
-.client-email { font-size:12px; color:#666; }
-
-.client-status { font-size:12px; margin-top:3px; }
-
-.badge {
-    background:#ff5757; color:#fff; padding:2px 6px;
-    border-radius:8px; font-size:11px; margin-left:6px;
+#chat-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px;
+    background:white;
+    border-bottom:1px solid #ddd;
 }
-
-.dot { width:10px;height:10px;border-radius:50%;display:inline-block; }
-.dot.online { background:#27cc59;}
-.dot.offline { background:#888; }
-
-.assign-plus { color:#10a800; font-size:18px; cursor:pointer; }
-.assign-minus { color:#d90000; font-size:18px; cursor:pointer; }
-.client-locked { color:#444; font-size:18px; }
-
-/* CHAT */
-#chat-panel { display:flex; flex-direction:column; }
-#chat-header { padding:12px; background:#fff; border-bottom:1px solid #ccc; }
 
 #chatMessages {
-    padding:20px;
     flex:1;
     overflow-y:auto;
+    padding:15px 20px;
 }
 
-.msg-row { margin-bottom:12px; display:flex; flex-direction:column; }
-.me { align-items:flex-end; }
-.them { align-items:flex-start; }
+/* MESSAGES */
+.msg-row { margin-bottom:10px; }
+.me { text-align:right; }
+.them { text-align:left; }
 
 .bubble {
+    display:inline-block;
+    padding:10px 14px;
+    border-radius:16px;
     max-width:60%;
-    padding:12px 15px;
-    border-radius:18px;
-    background:#e7e7e7;
+    font-size:14px;
 }
 
-.me .bubble {
-    background:#3cbf49; color:#fff;
-}
+.me .bubble { background:#2fa84c; color:white; }
+.them .bubble { background:#e6e6e6; }
 
-.meta { font-size:10px; color:#555; margin-top:3px; }
+.meta { font-size:11px; margin-top:2px; color:#666; }
 
 /* INPUT BAR */
-#chat-input-bar { padding:12px; display:flex; gap:8px; background:white; }
+#chat-input-bar {
+    background:white;
+    padding:12px;
+    display:flex;
+    gap:10px;
+    border-top:1px solid #ccc;
+}
+
+#fileInput { display:none; }
+
+.file-upload-icon { font-size:22px; cursor:pointer; }
 
 .message-field {
-    flex:1; padding:10px 15px;
-    border-radius:25px; border:1px solid #ccc;
+    flex:1;
+    padding:10px 15px;
+    border-radius:25px;
+    border:1px solid #ccc;
 }
 
 .send-btn {
-    width:44px;height:44px;border-radius:50%;
-    background:#0a8b00; color:white;
-    border:none;cursor:pointer;
+    width:44px; height:44px;
+    border-radius:50%;
+    background:#0a8b00;
+    color:white;
+    border:none;
+    cursor:pointer;
 }
 
-/* INFO PANEL */
-.right-panel { padding:20px; background:#fff; border-left:1px solid #ccc;}
-.info-avatar {width:140px;height:140px;border-radius:50%;margin-bottom:12px;}
+/* RIGHT INFO PANEL */
+.right-panel {
+    padding:20px;
+    background:white;
+    border-left:1px solid #ddd;
+    overflow-y:auto;
+}
+
+.info-avatar {
+    width:110px;height:110px;
+    border-radius:50%;margin-bottom:10px;
+}
