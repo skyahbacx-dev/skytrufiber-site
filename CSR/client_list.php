@@ -1,73 +1,58 @@
 <?php
+include "../db_connect.php";
+session_start();
 
-include '../db_connect.php';
-
-if (!isset($_SESSION["csr_user"])) {
-    http_response_code(401);
-    exit("Unauthorized");
-}
-
-$csrUser = $_SESSION["csr_user"];
+$csr = $_SESSION["csr_user"] ?? "";
 $search = $_GET["search"] ?? "";
 
 $sql = "
-    SELECT
-        u.id,
-        u.full_name,
-        u.email,
-        u.district,
-        u.barangay,
-        u.assigned_csr,
-        u.is_online,
-        (
-            SELECT COUNT(*)
-            FROM chat c
-            WHERE c.client_id = u.id
-              AND c.sender_type = 'client'
-              AND c.seen = false
-        ) AS unread
-    FROM users u
+SELECT
+    u.id,
+    u.full_name,
+    u.email,
+    u.district,
+    u.barangay,
+    u.assigned_csr,
+    u.is_online,
+    (
+        SELECT COUNT(*) FROM chat c
+        WHERE c.client_id = u.id AND c.sender_type = 'client'
+        AND c.id NOT IN (SELECT chat_id FROM chat_read WHERE client_id = u.id AND csr = :csr)
+    ) AS unread_count
+FROM users u
+WHERE u.full_name ILIKE :s OR u.email ILIKE :s
+ORDER BY unread_count DESC, u.full_name ASC;
 ";
 
-if ($search !== "") {
-    $sql .= " WHERE LOWER(u.full_name) LIKE LOWER(:search)";
-}
+$stmt = $pdo->prepare($sql);
+$stmt->execute([
+    ":csr" => $csr,
+    ":s" => "%$search%"
+]);
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$sql .= " ORDER BY unread DESC, full_name ASC";
+foreach ($rows as $r) {
+    $active = $r["assigned_csr"] === $csr ? "assigned-me" : "";
+    $lock = $r["assigned_csr"] && $r["assigned_csr"] !== $csr;
 
-$stmt = $conn->prepare($sql);
-
-if ($search !== "") $stmt->execute([":search" => "%$search%"]);
-else $stmt->execute();
-
-while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $id = $row["id"];
-    $name = htmlspecialchars($row["full_name"]);
-    $email = htmlspecialchars($row["email"]);
-    $online = $row["is_online"] ? "online-dot" : "offline-dot";
-    $unread = intval($row["unread"]);
-    $assigned = $row["assigned_csr"];
-
-    $badge = ($unread > 0) ? "<span class='badge'>$unread</span>" : "";
-    $icon = "";
-
-    if ($assigned === $csrUser) {
-        $icon = "<i class='fa-solid fa-user-check assigned'></i>";
-    } elseif (!empty($assigned)) {
-        $icon = "<i class='fa-solid fa-lock locked'></i>";
-    } else {
-        $icon = "<i class='fa-solid fa-user-plus unassigned'></i>";
-    }
+    $icon = $lock
+        ? "<i class='fa-solid fa-lock lock-icon'></i>"
+        : "<i class='fa-solid fa-comment'></i>";
 
     echo "
-    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\")'>
-        <div class='avatar-small'>$icon</div>
-        <div class='client-content'>
-            <div class='client-name'>$name $badge</div>
-            <div class='client-sub'>$email</div>
+    <div class='client-item $active' id='client-{$r["id"]}' onclick='selectClient({$r["id"]}, \"{$r["full_name"]}\")'>
+        <div class='client-left'>
+            <div class='avatar-small'>".strtoupper($r["full_name"][0])."</div>
+            <div>
+                <div class='client-name'>{$r["full_name"]}</div>
+                <div class='client-email'>{$r["email"]}</div>
+            </div>
         </div>
-        <span class='$online status-dot'></span>
-    </div>
-    ";
+
+        <div class='client-right'>
+            ".($r["unread_count"] > 0 ? "<span class='badge'>{$r["unread_count"]}</span>" : "")."
+            $icon
+        </div>
+    </div>";
 }
 ?>
