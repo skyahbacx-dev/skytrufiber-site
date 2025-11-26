@@ -1,19 +1,20 @@
 /* =======================================================
-   CSR CHAT — FINAL VERSION (CLIENT LIST LEFT SIDE DESIGN)
+   CSR CHAT – FINAL FULL VERSION
 ======================================================= */
 
 const BASE_MEDIA = "https://f000.backblazeb2.com/file/ahba-chat-media/";
-
 let activeClient = 0;
 let filesToSend = [];
 let lastMessageCount = 0;
 
+// Load clients
 function loadClients(search = "") {
-    $.get("client_list.php", { search }, data => {
+    $.get("client_list.php", { search: search }, function (data) {
         $("#clientList").html(data);
     });
 }
 
+// Select client
 function selectClient(id, name) {
     activeClient = id;
 
@@ -24,8 +25,8 @@ function selectClient(id, name) {
     $("#chatMessages").html("");
     lastMessageCount = 0;
 
-    loadMessages(true);
     loadClientInfo();
+    loadMessages(true);
 }
 
 function loadClientInfo() {
@@ -37,31 +38,33 @@ function loadClientInfo() {
     });
 }
 
+// Load chat messages
 function loadMessages(initial = false) {
     if (!activeClient) return;
 
-    $.getJSON("load_chat_csr.php?client_id=" + activeClient, messages => {
-        
+    $.getJSON("load_chat_csr.php?client_id=" + activeClient, function (messages) {
         if (initial) $("#chatMessages").html("");
 
         if (messages.length > lastMessageCount) {
             const newMsgs = messages.slice(lastMessageCount);
-
             newMsgs.forEach(m => {
-                let side = (m.sender_type === "csr") ? "me" : "them";
 
-                let media = "";
+                const side = (m.sender_type === "csr") ? "csr" : "client";
+
+                let attach = "";
                 if (m.media_path) {
-                    media = `<img src="${BASE_MEDIA + m.media_path}" class="file-img">`;
+                    if (m.media_type === "image") {
+                        attach = `<img src="${BASE_MEDIA + m.media_path}" class="file-img" onclick="openMedia('${BASE_MEDIA + m.media_path}')">`;
+                    } else {
+                        attach = `<video class="file-img" controls><source src="${BASE_MEDIA + m.media_path}"></video>`;
+                    }
                 }
 
                 $("#chatMessages").append(`
-                <div class="msg-row ${side}">
-                    <div class="bubble">
-                        ${m.message || ""} ${media}
+                    <div class="msg-row ${side}">
+                        <div class="bubble">${m.message || ""}${attach}</div>
+                        <div class="meta">${m.created_at}</div>
                     </div>
-                    <div class="meta">${m.created_at}</div>
-                </div>
                 `);
             });
 
@@ -101,7 +104,7 @@ function sendMessage() {
     });
 }
 
-$("#fileInput").on("change", e => {
+$("#fileInput").on("change", function (e) {
     filesToSend = [...e.target.files];
     $("#previewArea").html("");
 
@@ -114,7 +117,27 @@ $("#fileInput").on("change", e => {
     });
 });
 
+// Assign & Unassign AJAX
+function assignClient(id, e) {
+    e.stopPropagation();
+    $.post("assign_client.php", { client_id: id }, loadClients);
+}
+
+function unassignClient(id, e) {
+    e.stopPropagation();
+    $.post("unassign_client.php", { client_id: id }, loadClients);
+}
+
+// Media Viewer
+function openMedia(src) {
+    $("#mediaModalContent").attr("src", src);
+    $("#mediaModal").addClass("show");
+}
+$("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
+
+// Auto refresh
 setInterval(() => loadMessages(false), 1200);
 setInterval(() => loadClients($("#searchInput").val()), 2000);
 
+// Init load
 loadClients();
