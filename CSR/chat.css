@@ -1,192 +1,57 @@
-/* =======================================
-   MESSENGER MAIN GRID LAYOUT
-======================================= */
+/* LAYOUT */
 #messenger-layout {
     display: grid;
-    grid-template-columns: 330px 1fr 340px;
+    grid-template-columns: 300px 1fr 320px;
     height: calc(100vh - 120px);
-    overflow: hidden;
-    background: #f5fff5;
+    background: #f6fff4;
 }
 
-/* =======================================
-   LEFT PANEL (Client List)
-======================================= */
-#left-panel {
-    background: white;
-    border-right: 2px solid #e5e5e5;
-    display: flex;
-    flex-direction: column;
-}
-
-.search-clients {
-    width: 90%;
-    margin: 12px auto;
-    padding: 10px 15px;
-    border-radius: 30px;
-    border: 1px solid #bbb;
-    font-size: 15px;
-}
-
-.client-scroll {
-    overflow-y: auto;
-    padding: 5px 15px;
-}
+/* LEFT PANEL */
+#left-panel { background: white; border-right:1px solid #ddd; padding:10px; }
+.search-clients { width:100%; padding:8px; margin-bottom:10px; border-radius:20px; border:1px solid #ccc; }
+.client-scroll { overflow-y:auto; height:calc(100vh - 180px); }
 
 .client-item {
-    display: flex;
-    align-items: center;
-    padding: 12px;
-    border-radius: 12px;
-    background: #fff;
-    cursor: pointer;
-    margin-bottom: 8px;
-    border: 1px solid #ddd;
-    transition: 0.2s;
+    display:flex; align-items:center; padding:10px; margin-bottom:8px;
+    border-radius:10px; cursor:pointer; border:1px solid #eee;
+    transition:background .2s;
+}
+.client-item:hover { background:#e9f8e9; }
+
+.client-avatar { width:46px; height:46px; border-radius:50%; margin-right:8px; }
+
+/* CHAT PANEL */
+#chat-panel { display:flex; flex-direction:column; background:#f6fff4; }
+
+#chat-header { display:flex; justify-content:space-between; align-items:center; padding:10px; background:white; border-bottom:1px solid #ddd; }
+
+/* MESSAGES */
+#chatMessages {
+    flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column;
 }
 
-.client-item:hover {
-    background: #dbffe1;
-    border-color: #3aaa50;
-}
-
-.client-avatar {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    margin-right: 12px;
-}
-
-.client-info {
-    flex: 1;
-}
-
-.client-name {
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.client-email {
-    font-size: 13px;
-    color: #666;
-}
-
-.badge {
-    background: red;
-    color: white;
-    padding: 4px 10px;
-    font-size: 12px;
-    border-radius: 12px;
-}
-
-/* =======================================
-   CHAT PANEL (Messages)
-======================================= */
-#chat-panel {
-    display: flex;
-    flex-direction: column;
-    background: #f3fff5;
-}
-
-#chat-header {
-    padding: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid #ddd;
-    background: white;
-}
-
-.messages-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 18px;
-}
-
-/* =======================================
-   Message Bubbles
-======================================= */
 .message {
-    max-width: 65%;
-    padding: 11px 16px;
-    margin-bottom: 12px;
-    border-radius: 18px;
-    font-size: 15px;
-    clear: both;
+    max-width:60%; padding:10px 15px; border-radius:16px;
+    margin-bottom:12px; font-size:14px; line-height:1.4;
 }
 
 .me {
-    float: right;
-    background: #2ca33b;
-    color: white;
-    border-bottom-right-radius: 5px;
+    align-self:flex-end; background:#11a83b; color:white;
+    border-bottom-right-radius:5px;
 }
 
 .them {
-    float: left;
-    background: #e8e8e8;
-    border-bottom-left-radius: 5px;
+    align-self:flex-start; background:#e9e9e9; border-bottom-left-radius:5px;
 }
 
-/* =======================================
-   INPUT BAR
-======================================= */
-#chat-input-bar {
-    display: flex;
-    padding: 12px;
-    gap: 10px;
-    background: white;
-    border-top: 1px solid #ddd;
-}
+/* INPUT */
+#chat-input-bar { display:flex; gap:10px; padding:12px; border-top:1px solid #ddd; background:white; }
+.message-field { flex:1; border-radius:30px; padding:10px 15px; border:1px solid #ccc; }
+.send-btn { background:#0a8b00; color:white; width:44px; height:44px; border-radius:50%; border:none; cursor:pointer; }
 
-.message-field {
-    flex: 1;
-    border-radius: 25px;
-    padding: 12px 15px;
-    border: 1px solid #ccc;
-    font-size: 15px;
-}
+/* RIGHT PANEL */
+.right-panel { border-left:1px solid #ddd; background:white; padding:15px; }
 
-.send-btn {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: none;
-    background: #0da60e;
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
-}
+.assign-btn, .unassign-btn { font-size:28px; background:none; border:none; cursor:pointer; margin-top:12px; }
 
-/* =======================================
-   RIGHT INFO PANEL
-======================================= */
-.right-panel {
-    background: white;
-    padding: 20px;
-    border-left: 2px solid #ddd;
-}
-
-.info-avatar {
-    display: block;
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    margin: 0 auto 10px;
-}
-
-.assign-btn, .unassign-btn {
-    width: 100%;
-    padding: 10px;
-    background: #2ca33b;
-    border: none;
-    color: white;
-    margin-top: 15px;
-    border-radius: 25px;
-    cursor: pointer;
-    font-size: 15px;
-}
-
-.unassign-btn {
-    background: #c70000;
-}
+.lock-icon { font-size:18px; color:#777; display:none; }
