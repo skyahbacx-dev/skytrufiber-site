@@ -1,10 +1,17 @@
 <?php
-include "../db_connect.php";
+session_start();
+require "../db_config.php";
 
-$id = $_GET["id"] ?? 0;
+$clientId = $_POST["client_id"] ?? null;
 
-$sql = "SELECT full_name,email,district,barangay,assigned_csr FROM users WHERE id = :id";
+$sql = "
+    SELECT id, full_name, email, district, barangay, is_online, assigned_csr
+    FROM users WHERE id = :id
+";
 $stmt = $pdo->prepare($sql);
-$stmt->execute([":id" => $id]);
-echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));
-?>
+$stmt->execute([":id" => $clientId]);
+$info = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$info["assigned"] = ($info["assigned_csr"] === $_SESSION["csr_user"]) ? "yes" : "no";
+
+echo json_encode($info);
