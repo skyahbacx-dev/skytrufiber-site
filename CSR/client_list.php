@@ -1,58 +1,95 @@
 <?php
-include "../db_connect.php";
 session_start();
+include '../db_connect.php';
 
-$csr = $_SESSION["csr_user"] ?? "";
-$search = $_GET["search"] ?? "";
+if (!isset($_SESSION["csr_user"])) {
+    http_response_code(401);
+    exit("Unauthorized");
+}
 
+$csrUser = $_SESSION["csr_user"];  // logged-in CSR
+$search  = $_GET["search"] ?? "";
+
+// SQL TO LOAD CLIENT LIST
 $sql = "
-SELECT
-    u.id,
-    u.full_name,
-    u.email,
-    u.district,
-    u.barangay,
-    u.assigned_csr,
-    u.is_online,
-    (
-        SELECT COUNT(*) FROM chat c
-        WHERE c.client_id = u.id AND c.sender_type = 'client'
-        AND c.id NOT IN (SELECT chat_id FROM chat_read WHERE client_id = u.id AND csr = :csr)
-    ) AS unread_count
-FROM users u
-WHERE u.full_name ILIKE :s OR u.email ILIKE :s
-ORDER BY unread_count DESC, u.full_name ASC;
+    SELECT
+        u.id,
+        u.full_name,
+        u.email,
+        u.district,
+        u.barangay,
+        u.assigned_csr,
+        (
+            SELECT COUNT(*)
+            FROM chat c
+            WHERE c.user_id = u.id
+              AND c.sender_type = 'client'
+              AND c.seen = false
+        ) AS unread
+    FROM users u
 ";
 
-$stmt = $pdo->prepare($sql);
-$stmt->execute([
-    ":csr" => $csr,
-    ":s" => "%$search%"
-]);
-$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+if ($search !== "") {
+    $sql .= " WHERE LOWER(u.full_name) LIKE LOWER(:search)";
+}
 
-foreach ($rows as $r) {
-    $active = $r["assigned_csr"] === $csr ? "assigned-me" : "";
-    $lock = $r["assigned_csr"] && $r["assigned_csr"] !== $csr;
+$sql .= " ORDER BY unread DESC, u.full_name ASC";
 
-    $icon = $lock
-        ? "<i class='fa-solid fa-lock lock-icon'></i>"
-        : "<i class='fa-solid fa-comment'></i>";
+$stmt = $conn->prepare($sql);
+
+$params = [];
+if ($search !== "") $params[":search"] = "%$search%";
+
+$stmt->execute($params);
+
+// loop results
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+    $id       = $row["id"];
+    $name     = htmlspecialchars($row["full_name"]);
+    $assigned = $row["assigned_csr"];
+    $unread   = intval($row["unread"]);
+
+    /* ---- Determine button state ---- */
+    if ($assigned === null || $assigned === "") {
+        // NOT ASSIGNED — show assign button +
+        $button = "
+            <button class='assign-btn' onclick='event.stopPropagation(); assignClient($id)'>
+                <i class='fa-solid fa-plus'></i>
+            </button>";
+    }
+    else if ($assigned === $csrUser) {
+        // assigned to current CSR — show remove button -
+        $button = "
+            <button class='unassign-btn' onclick='event.stopPropagation(); unassignClient($id)'>
+                <i class='fa-solid fa-minus'></i>
+            </button>";
+    }
+    else {
+        // assigned to another CSR — show lock icon
+        $button = "
+            <button class='lock-btn' disabled>
+                <i class='fa-solid fa-lock'></i>
+            </button>";
+    }
 
     echo "
-    <div class='client-item $active' id='client-{$r["id"]}' onclick='selectClient({$r["id"]}, \"{$r["full_name"]}\")'>
-        <div class='client-left'>
-            <div class='avatar-small'>".strtoupper($r["full_name"][0])."</div>
-            <div>
-                <div class='client-name'>{$r["full_name"]}</div>
-                <div class='client-email'>{$r["email"]}</div>
+    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\")'>
+        <img src='upload/default-avatar.png' class='client-avatar'>
+
+        <div class='client-info'>
+            <div class='client-name'>
+                $name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
+            </div>
+            <div class='client-sub'>
+                District: {$row["district"]} | Brgy: {$row["barangay"]}
             </div>
         </div>
 
-        <div class='client-right'>
-            ".($r["unread_count"] > 0 ? "<span class='badge'>{$r["unread_count"]}</span>" : "")."
-            $icon
+        <div class='client-actions'>
+            $button
         </div>
-    </div>";
+    </div>
+    ";
 }
 ?>
