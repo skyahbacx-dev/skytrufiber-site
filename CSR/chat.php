@@ -1,5 +1,4 @@
 <?php
-session_start();
 if (!isset($_SESSION['csr_user'])) {
     http_response_code(401);
     exit("Unauthorized");
