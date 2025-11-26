@@ -1,141 +1,135 @@
-// ================== GLOBAL =====================
+// ================================================
+// CSR CHAT DASHBOARD JS
+// ================================================
+
+// ACTIVE CLIENT ID
 let activeClient = null;
-let typingTimer = null;
-const chatMessages = $("#chatMessages");
-const clientList = $("#clientList");
-function loadClientList() {
-    $.post("client_list.php", {}, function(res) {
-        let data = JSON.parse(res);
-        let html = "";
 
-        data.clients.forEach(c => {
-            html += `
-                <div class="client-item" data-id="${c.id}">
-                    <div class="client-avatar"></div>
-                    <div class="client-meta">
-                        <div class="client-name">${c.full_name}</div>
-                        <div class="client-status">${c.is_online ? "🟢 Online" : "⚫ Offline"}</div>
-                    </div>
-                </div>
-            `;
-        });
+// DOM ELEMENTS
+const clientList = document.getElementById("clientList");
+const chatMessages = document.getElementById("chatMessages");
+const chatName = document.getElementById("chatName");
+const chatStatus = document.getElementById("chatStatus");
+const infoPanel = document.getElementById("infoPanel");
+const infoName = document.getElementById("infoName");
+const infoEmail = document.getElementById("infoEmail");
+const infoBrgy = document.getElementById("infoBrgy");
+const infoDistrict = document.getElementById("infoDistrict");
+const infoAvatar = document.getElementById("infoAvatar");
 
-        $("#clientList").html(html);
-
-        $(".client-item").click(function() {
-            activeClient = $(this).data("id");
-            $("#chatName").text($(this).find(".client-name").text());
-            loadChat(activeClient);
-            loadClientInfo(activeClient);
-        });
+// =====================================================
+// LOAD CLIENT LIST
+// =====================================================
+function loadClientList(query = "") {
+    $.post("client_list.php", { search: query }, function (data) {
+        clientList.innerHTML = data;
+        attachClientEvents();
     });
 }
 
-loadClientList();
-
-// ================== LOAD CLIENT LIST =====================
-function loadClients(query = "") {
-    $.post("client_list.php", { search: query }, function (response) {
-        clientList.html(response);
-
-        $(".client-item").on("click", function () {
-            const clientId = $(this).data("id");
-            selectClient(clientId);
-        });
+// Attach click events to client sidebar items
+function attachClientEvents() {
+    $(".client-item").click(function () {
+        let id = $(this).data("id");
+        selectClient(id);
     });
 }
 
-// search filter
-$("#searchInput").on("input", function () {
-    loadClients($(this).val());
-});
-
-// ================== SELECT CLIENT =====================
+// =====================================================
+// SELECT CLIENT
+// =====================================================
 function selectClient(clientId) {
     activeClient = clientId;
     loadClientInfo(clientId);
-    loadMessages(clientId);
+    chatMessages.innerHTML = "";     // Clear messages
+    chatName.innerHTML = "Loading...";
+
+    $(".client-item").removeClass("active");
+    $(`.client-item[data-id='${clientId}']`).addClass("active");
 }
 
-// Load details
-function loadClientInfo(clientId) {
-    $.post("client_info.php", { client_id: clientId }, function (data) {
-        let info = JSON.parse(data);
+// =====================================================
+// LOAD CLIENT INFO PANEL
+// =====================================================
+function loadClientInfo(id) {
+    $.post("client_info.php", { client_id: id }, function (res) {
+        let data = JSON.parse(res);
 
-        $("#chatName").text(info.full_name);
-        $("#infoName").text(info.full_name);
-        $("#infoEmail").text(info.email);
-        $("#infoDistrict").text(info.district);
-        $("#infoBrgy").text(info.barangay);
+        infoName.innerText = data.fullname ?? "Unknown";
+        infoEmail.innerText = data.email ?? "";
+        infoDistrict.innerText = data.district ?? "";
+        infoBrgy.innerText = data.barangay ?? "";
+        infoAvatar.src = data.avatar ?? "upload/default-avatar.png";
 
-        $("#statusDot").removeClass("online offline")
-            .addClass(info.is_online ? "online" : "offline");
-        $("#chatStatus").text(info.is_online ? "Online" : "Offline");
+        chatName.innerText = data.fullname ?? "Unknown";
+        chatStatus.innerHTML = data.is_online
+            ? `<span class="status-dot online"></span> Online`
+            : `<span class="status-dot offline"></span> Offline`;
 
-        if (info.assigned === "yes") {
-            $("#assignYes").hide();
-            $("#assignNo").show();
-        } else {
-            $("#assignYes").show();
-            $("#assignNo").hide();
-        }
+        updateAssignButtons(data.assigned_csr);
     });
 }
 
-// ================== ASSIGN / UNASSIGN =====================
-$("#assignYes").on("click", function () {
-    $.post("assign_client.php", { client_id: activeClient }, function () {
-        $("#assignYes").hide();
-        $("#assignNo").show();
-        loadClients();
-    });
-});
-
-$("#assignNo").on("click", function () {
-    $.post("unassign_client.php", { client_id: activeClient }, function () {
+// =====================================================
+// ASSIGN / UNASSIGN CLIENT UI
+// =====================================================
+function updateAssignButtons(assigned) {
+    if (!assigned) {
         $("#assignYes").show();
         $("#assignNo").hide();
-        loadClients();
+        $("#assignLabel").text("Assign this client?");
+    } else {
+        $("#assignYes").hide();
+        $("#assignNo").show();
+        $("#assignLabel").text("Assigned to you");
+    }
+}
+
+// Handle Assign
+$("#assignYes").click(function () {
+    if (!activeClient) return;
+
+    $.post("assign_client.php", { client_id: activeClient }, function (res) {
+        let data = JSON.parse(res);
+        if (data.status === "success") {
+            updateAssignButtons(true);
+            loadClientList();
+        } else {
+            alert("Assignment failed");
+        }
     });
 });
 
-// ================== LOAD MESSAGES =====================
-function loadMessages(clientId) {
-    $.post("load_chat_csr.php", { client_id: clientId }, function (response) {
-        chatMessages.html(response);
-        chatMessages.scrollTop(chatMessages[0].scrollHeight);
-    });
-}
+// Handle Remove Assignment
+$("#assignNo").click(function () {
+    if (!activeClient) return;
 
-// ================== SEND MESSAGE =====================
-$("#sendBtn").on("click", function () {
-    sendMessage();
+    $.post("unassign_client.php", { client_id: activeClient }, function (res) {
+        let data = JSON.parse(res);
+        if (data.status === "success") {
+            updateAssignButtons(false);
+            loadClientList();
+        } else {
+            alert("Remove failed");
+        }
+    });
 });
 
-$("#messageInput").keypress(function (e) {
-    if (e.which === 13) sendMessage();
+// =====================================================
+// SEARCH CLIENTS LIVE
+// =====================================================
+$("#searchInput").on("input", function () {
+    loadClientList($(this).val());
 });
 
-function sendMessage() {
-    let msg = $("#messageInput").val().trim();
-    if (msg === "" || !activeClient) return;
-
-    $.post("save_chat_csr.php", { client_id: activeClient, message: msg }, function () {
-        $("#messageInput").val("");
-        loadMessages(activeClient);
-    });
+// =====================================================
+// INFO PANEL TOGGLE
+// =====================================================
+function toggleClientInfo() {
+    infoPanel.classList.toggle("show");
 }
 
-// ================== POLLING =====================
-setInterval(function () {
-    if (activeClient) loadMessages(activeClient);
-}, 2000);
-
-// ================== SIDEBAR TOGGLE =====================
-function toggleSidebar() {
-    $("#infoPanel").toggleClass("show");
-}
-window.toggleSidebar = toggleSidebar;
-
-// ================== INITIAL CALL =====================
-loadClients();
+// =====================================================
+// INITIAL LOAD
+// =====================================================
+loadClientList();
