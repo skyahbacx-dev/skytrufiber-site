@@ -1,44 +1,41 @@
 <?php
 session_start();
 require "../db_connect.php";
+if (!isset($_SESSION['csr_user'])) exit("Unauthorized");
 
-$clientId = $_POST["client_id"] ?? null;
+$client_id = $_POST["client_id"];
+$file = $_FILES["file"];
 
-if (!$clientId) {
-    echo json_encode(["status" => "error", "message" => "Missing client ID"]);
-    exit;
-}
+$bucketName = "ahba-chat-media";
+$endpoint = "https://s3.us-east-005.backblazeb2.com";
+$keyId = "005a548887f9c4f0000000002";
+$appKey = "K005fOYaprINPto/Qdm9wex0w4v/L2k";
 
-$sql = "
-    SELECT c.id, c.message, c.sender_type, c.delivered, c.seen, c.created_at,
-           m.media_path, m.media_type
-    FROM chat c
-    LEFT JOIN chat_media m ON c.id = m.chat_id
-    WHERE c.client_id = :client_id
-    ORDER BY c.created_at ASC
-";
+$filename = "CSR_" . time() . "_" . basename($file["name"]);
+$path = $endpoint . "/" . $bucketName . "/" . $filename;
 
-$stmt = $pdo->prepare($sql);
-$stmt->execute([":client_id" => $clientId]);
-$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$ch = curl_init();
+curl_setopt_array($ch, [
+    CURLOPT_URL => $path,
+    CURLOPT_PUT => true,
+    CURLOPT_INFILE => fopen($file["tmp_name"], "r"),
+    CURLOPT_INFILESIZE => filesize($file["tmp_name"]),
+    CURLOPT_HTTPHEADER => [
+        "Authorization: Basic " . base64_encode("$keyId:$appKey"),
+        "Content-Type: " . mime_content_type($file["tmp_name"])
+    ]
+]);
 
-// group messages by date
-$grouped = [];
-foreach ($rows as $row) {
-    $date = date("M d, Y", strtotime($row["created_at"]));
-    if (!isset($grouped[$date])) $grouped[$date] = [];
-    $grouped[$date][] = $row;
-}
+curl_exec($ch);
+curl_close($ch);
 
-// update read tracking
-$csr = $_SESSION["csr_user"] ?? null;
-$update = $pdo->prepare("
-    INSERT INTO chat_read (client_id, csr, last_read)
-    VALUES (:client, :csr, CURRENT_TIMESTAMP)
-    ON CONFLICT (client_id, csr)
-    DO UPDATE SET last_read = CURRENT_TIMESTAMP
-");
-$update->execute([":client" => $clientId, ":csr" => $csr]);
+$type = explode("/", mime_content_type($file["tmp_name"]))[0] === "image" ? "image" : "video";
 
-echo json_encode(["status" => "success", "messages" => $grouped]);
-s
+$sql = $conn->prepare("INSERT INTO chat_media (chat_id, media_path, media_type) VALUES (
+    (SELECT id FROM chat WHERE client_id=? ORDER BY id DESC LIMIT 1),
+    ?, ?
+)");
+$sql->execute([$client_id, $path, $type]);
+
+echo "OK";
+?>
