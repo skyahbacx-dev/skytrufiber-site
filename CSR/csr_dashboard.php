@@ -61,11 +61,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<!-- MAIN CHAT LAYOUT -->
-<div class="page-wrapper">
-    <div class="client-panel">
 
-        <div id="clientList" class="client-list"></div>
     </div>
 
     <?php include "chat.php"; ?>
