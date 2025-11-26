@@ -21,7 +21,7 @@ $sql = "
         (
             SELECT COUNT(*)
             FROM chat c
-            WHERE c.user_id = u.id
+            WHERE c.client_id = u.id
               AND c.sender_type = 'client'
               AND c.seen = false
         ) AS unread
@@ -50,8 +50,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     echo "
     <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\")'>
         <div class='client-icon'>
-            <img src=\"upload/default-avatar.png\" class='client-avatar'>
-            <span class='status-dot offline'></span>
+            <img src='upload/default-avatar.png' class='client-avatar'>
         </div>
 
         <div class='client-info'>
