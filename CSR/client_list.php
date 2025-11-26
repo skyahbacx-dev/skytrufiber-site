@@ -1,49 +1,34 @@
 <?php
+require '../db_connect.php';
+session_start();
 
-include "../db_connect.php";
-
-// Use correct session key
-$csr = $_SESSION["csr_username"] ?? $_SESSION["csr_user"] ?? null;
-
-if (!$csr) {
+if (!isset($_SESSION['csr_user'])) {
     http_response_code(401);
-    exit("Unauthorized: CSR session missing");
+    exit;
 }
 
-$search = $_GET["search"] ?? "";
+header('Content-Type: application/json');
 
-$sql = "
-SELECT
-    u.id,
-    u.full_name,
-    u.district,
-    u.barangay,
-    u.assigned_csr,
-    (SELECT COUNT(*) FROM chat c WHERE c.client_id = u.id AND c.sender_type='client' AND c.seen=false) AS unread
-FROM users u
-";
+// Fetch unassigned or assigned to logged CSR user
+$csr_username = $_SESSION["csr_user"];
 
-if ($search !== "") $sql .= " WHERE LOWER(u.full_name) LIKE LOWER(:search)";
-$sql .= " ORDER BY unread DESC, full_name ASC";
+$query = $pdo->prepare("
+    SELECT 
+        u.id,
+        u.full_name,
+        u.barangay,
+        u.district,
+        u.assigned_csr,
+        u.is_online,
+        MAX(c.created_at) AS last_message_at
+    FROM users u
+    LEFT JOIN chat c ON c.client_id = u.id
+    GROUP BY u.id
+    ORDER BY last_message_at DESC NULLS LAST
+");
 
-$stmt = $conn->prepare($sql);
-($search !== "") ? $stmt->execute([":search" => "%$search%"]) : $stmt->execute();
+$query->execute();
+$users = $query->fetchAll(PDO::FETCH_ASSOC);
 
-while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-    $lock = ($r["assigned_csr"] && $r["assigned_csr"] !== $csr)
-        ? "<i class='fa-solid fa-lock' style='color:red;margin-left:6px'></i>"
-        : "";
-
-    echo "
-    <div class='client-item' id='client-{$r['id']}' onclick='selectClient({$r['id']}, \"{$r['full_name']}\")'>
-        <img src='upload/default-avatar.png' class='client-avatar'>
-        <div class='client-content'>
-            <div class='client-name'>{$r['full_name']} {$lock}
-                " . ($r['unread'] > 0 ? "<span class='badge'>{$r['unread']}</span>" : "") . "
-            </div>
-            <div class='client-sub'>{$r['district']} • {$r['barangay']}</div>
-        </div>
-    </div>";
-}
-?>
+echo json_encode(["clients" => $users]);
+exit;
