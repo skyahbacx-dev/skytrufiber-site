@@ -1,112 +1,104 @@
-// ===============================
-// CSR CHAT FRONTEND JS (FULL FILE)
-// ===============================
+// ================================
+// CSR CHAT JAVASCRIPT (FULL FILE)
+// ================================
 
-let ACTIVE_CLIENT = null;
-let lastMessageCount = 0;
+let activeClient = null;
+let typingTimeout = null;
+const chatMessages = document.getElementById("chatMessages");
+const typingIndicator = document.createElement("div");
 
-// ================= LOADING CLIENT LIST =================
-function loadClients() {
-    $.get("client_list.php", function (html) {
-        $("#clientList").html(html);
+typingIndicator.className = "typing-notice";
+typingIndicator.innerHTML = `<em>Typing...</em>`;
+typingIndicator.style.display = "none";
+chatMessages.appendChild(typingIndicator);
+
+// ================================
+// LOAD CLIENT LIST
+// ================================
+function loadClientList() {
+    $.get("client_list.php", function (data) {
+        $("#clientList").html(data);
     });
 }
 
-// ================= LOADING CHAT MESSAGES ===============
+// ================================
+// SELECT CLIENT
+// ================================
+function openChat(clientID, fullname, email, district, brgy) {
+    activeClient = clientID;
+
+    document.getElementById("chatName").textContent = fullname;
+    document.getElementById("infoName").textContent = fullname;
+    document.getElementById("infoEmail").textContent = email;
+    document.getElementById("infoDistrict").textContent = district;
+    document.getElementById("infoBrgy").textContent = brgy;
+
+    loadChat();
+}
+
+// ================================
+// LOAD CHAT MESSAGES
+// ================================
 function loadChat() {
-    if (!ACTIVE_CLIENT) return;
+    if (!activeClient) return;
 
-    $.get("load_chat_csr.php", { client_id: ACTIVE_CLIENT }, function (response) {
-        try {
-            let data = JSON.parse(response);
+    $.getJSON("load_chat_csr.php?client_id=" + activeClient, function (list) {
+        chatMessages.innerHTML = "";
 
-            $("#chatMessages").html("");
-
-            data.messages.forEach(msg => renderMessage(msg));
-
-            $("#chatName").text(data.client.full_name);
-            $("#infoName").text(data.client.full_name);
-            $("#infoEmail").text(data.client.email);
-            $("#infoDistrict").text(data.client.district);
-            $("#infoBrgy").text(data.client.barangay);
-
-            $("#statusDot").removeClass("online offline")
-                .addClass(data.client.is_online ? "online" : "offline");
-            $("#chatStatus").html(`<span id="statusDot" class="status-dot ${data.client.is_online ? "online" : "offline"}"></span> ${data.client.is_online ? "Online" : "Offline"}`);
-
-            if (data.assigned && data.assigned !== "NONE") {
-                $("#assignLabel").text(`Assigned to ${data.assigned}`);
-                $("#assignYes").hide();
-                $("#assignNo").show();
-            } else {
-                $("#assignLabel").text("Assign this client?");
-                $("#assignYes").show();
-                $("#assignNo").hide();
-            }
-
-            let newCount = data.messages.length;
-            if (newCount > lastMessageCount) {
-                $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
-            }
-
-            lastMessageCount = newCount;
-
-        } catch (e) {
-            console.log("Error loading chat:", e, response);
-        }
+        list.forEach((m) => renderMessage(m));
+        chatMessages.appendChild(typingIndicator);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     });
 }
 
-// =============== RENDER UI MESSAGE BUBBLE =================
+// ================================
+// RENDER MESSAGE BUBBLE
+// ================================
 function renderMessage(m) {
-    const wrap = document.createElement("div");
-    wrap.className = (m.sender_type === "csr") ? "msg-row msg-out" : "msg-row msg-in";
+    const row = document.createElement("div");
+    row.className = m.sender_type === "csr" ? "msg-row msg-out" : "msg-row msg-in";
 
     const bubble = document.createElement("div");
     bubble.className = "bubble";
 
-    if (m.message && m.message !== "null") {
-        bubble.appendChild(document.createTextNode(m.message));
-    }
+    if (m.message) bubble.appendChild(document.createTextNode(m.message));
 
+    // Media display
     if (m.media && Array.isArray(m.media)) {
-        m.media.forEach(file => {
+        m.media.forEach((file) => {
             if (file.media_type === "image") {
                 const img = document.createElement("img");
                 img.src = file.media_path;
                 img.className = "media-img";
-                img.onclick = () => openMedia(img.src);
+                img.onclick = () => openMediaModal(file.media_path);
                 bubble.appendChild(img);
-
-            } else if (file.media_type === "video") {
-                const video = document.createElement("video");
-                video.src = file.media_path;
-                video.controls = true;
-                video.className = "media-video";
-                bubble.appendChild(video);
+            } else {
+                const vid = document.createElement("video");
+                vid.src = file.media_path;
+                vid.controls = true;
+                vid.className = "media-video";
+                bubble.appendChild(vid);
             }
         });
     }
 
-    const time = document.createElement("div");
-    time.className = "time";
+    // Timestamp & status
+    const t = document.createElement("div");
+    t.className = "time";
+    t.innerHTML = m.created_at + (m.sender_type === "csr" ? "" :
+        m.seen ? " <span class='seen-ic'>✓✓</span>" : " <span class='delivered-ic'>✓</span>");
 
-    let status = "";
-    if (m.sender_type === "csr") {
-        status = m.seen ? " <span class='seen-ic'>Seen ✓✓</span>" :
-            m.delivered ? " <span class='delivered-ic'>Delivered ✓</span>" : "";
-    }
+    bubble.appendChild(t);
 
-    time.innerHTML = `${m.created_at}${status}`;
-    bubble.appendChild(time);
-
-    wrap.appendChild(bubble);
-    document.getElementById("chatMessages").appendChild(wrap);
+    row.appendChild(bubble);
+    chatMessages.appendChild(row);
 }
 
-// =================== SENDING MESSAGE ===================
+// ================================
+// SEND MESSAGE
+// ================================
 $("#sendBtn").click(() => sendMessage());
-$("#messageInput").keydown(e => {
+$("#messageInput").keydown((e) => {
     if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
@@ -114,56 +106,70 @@ $("#messageInput").keydown(e => {
 });
 
 function sendMessage() {
-    if (!ACTIVE_CLIENT) return;
+    const message = $("#messageInput").val().trim();
+    const fileInput = document.getElementById("fileInput");
+    if (!message && fileInput.files.length === 0) return;
+    if (!activeClient) return;
 
-    const msg = $("#messageInput").val().trim();
-    const files = $("#fileInput")[0].files;
+    let form = new FormData();
+    form.append("client_id", activeClient);
+    form.append("sender_type", "csr");
+    form.append("message", message);
 
-    if (!msg && files.length === 0) return;
+    for (let file of fileInput.files) {
+        form.append("file[]", file);
+    }
 
-    const form = new FormData();
-    form.append("client_id", ACTIVE_CLIENT);
-    form.append("message", msg);
-
-    for (let f of files) form.append("media[]", f);
-
-    $.ajax({
-        url: "save_chat_csr.php",
-        method: "POST",
-        data: form,
-        processData: false,
-        contentType: false,
-        success: function () {
+    fetch("save_chat_csr.php", { method: "POST", body: form })
+        .then(res => res.json())
+        .then(() => {
             $("#messageInput").val("");
-            $("#fileInput").val("");
+            fileInput.value = "";
             loadChat();
-        }
+        });
+}
+
+// ================================
+// TYPING INDICATOR
+// ================================
+$("#messageInput").on("input", () => {
+    if (!activeClient) return;
+
+    fetch("typing_update.php", {
+        method: "POST",
+        body: new URLSearchParams({ client_id: activeClient, csr_typing: 1 })
+    });
+
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+        fetch("typing_update.php", {
+            method: "POST",
+            body: new URLSearchParams({ client_id: activeClient, csr_typing: 0 })
+        });
+    }, 1200);
+});
+
+// CHECK CLIENT TYPING STATUS
+function checkTyping() {
+    if (!activeClient) return;
+    $.post("check_typing.php", { client_id: activeClient }, function (isTyping) {
+        typingIndicator.style.display = isTyping == 1 ? "block" : "none";
     });
 }
 
-// ==================== MEDIA VIEWING =====================
-function openMedia(src) {
-    $("#mediaModalContent").attr("src", src);
-    $("#mediaModal").show();
+// ================================
+// MEDIA MODAL
+// ================================
+function openMediaModal(path) {
+    document.getElementById("mediaModalContent").src = path;
+    document.getElementById("mediaModal").style.display = "flex";
 }
-$("#closeMediaModal").click(() => $("#mediaModal").hide());
+document.getElementById("closeMediaModal").onclick = () =>
+    document.getElementById("mediaModal").style.display = "none";
 
-// ====================== ASSIGN ==========================
-$("#assignYes").click(() => {
-    $.post("assign_csr.php", { client_id: ACTIVE_CLIENT }, loadChat);
-});
-
-$("#assignNo").click(() => {
-    $.post("unassign_csr.php", { client_id: ACTIVE_CLIENT }, loadChat);
-});
-
-// ==================== SELECT CLIENT LIST ================
-$(document).on("click", ".client-item", function () {
-    ACTIVE_CLIENT = $(this).data("id");
-    lastMessageCount = 0;
-    loadChat();
-});
-
-// =================== POLLING EVERY SECOND ===============
-setInterval(loadChat, 1000);
-loadClients();
+// ================================
+// INTERVALS
+// ================================
+setInterval(loadChat, 1200);
+setInterval(checkTyping, 1000);
+loadClientList();
