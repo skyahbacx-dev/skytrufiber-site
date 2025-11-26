@@ -2,48 +2,77 @@
 session_start();
 include "../db_connect.php";
 
-if (!isset($_SESSION["csr_user"])) {
-    echo json_encode(["status" => "error", "message" => "Not authorized"]);
+if (!isset($_SESSION['csr_user'])) {
+    echo json_encode(["error" => "Unauthorized"]);
     exit;
 }
 
-$csr  = $_SESSION["csr_user"];
-$cid  = $_POST["client_id"] ?? null;
-$msg  = trim($_POST["message"] ?? "");
-$media = $_POST["media"] ?? null;
+$csrUser = $_SESSION['csr_user'];  // example "CSR1"
+$client_id = $_POST["client_id"] ?? null;
+$message   = $_POST["message"] ?? "";
+$user      = $_POST["user"] ?? "";   // CLIENT EMAIL / ACCOUNT NUMBER
 
-if (!$cid) {
-    echo json_encode(["status" => "error", "message" => "No client"]);
+if (!$client_id) {
+    echo json_encode(["error" => "Missing client id"]);
     exit;
 }
 
-try {
-    $pdo->beginTransaction();
+// ========== INSERT MESSAGE FIRST ==========
+$stmt = $pdo->prepare("INSERT INTO chat (client_id, sender_type, message, delivered, seen, user)
+                       VALUES (:cid, 'csr', :msg, FALSE, FALSE, :usr)
+                       RETURNING id");
+$stmt->execute([
+    ":cid" => $client_id,
+    ":msg" => $message,
+    ":usr" => $user
+]);
 
-    $stmt = $pdo->prepare("
-        INSERT INTO chat (client_id, sender_type, message, delivered, seen)
-        VALUES (?, 'csr', ?, TRUE, FALSE)
-        RETURNING id
-    ");
-    $stmt->execute([$cid, $msg]);
-    $chatId = $stmt->fetchColumn();
+$chat_id = $stmt->fetchColumn();
 
-    if ($media) {
-        foreach ($media as $m) {
-            $mData = json_decode($m, true);
-            $pdo->prepare("INSERT INTO chat_media (chat_id, media_path, media_type) VALUES (?, ?, ?)")
-                ->execute([$chatId, $mData["url"], $mData["type"]]);
-        }
+// ============ HANDLE MEDIA UPLOAD ============
+if (!empty($_FILES["media"]["name"][0])) {
+
+    $bucketName = "ahba-chat-media";
+    $endpoint   = "https://s3.us-east-005.backblazeb2.com";
+    $keyId      = "005a548887f9c4f0000000002";
+    $appKey     = "K005fOYaprINPto/Qdm9wex0w4v/L2k";
+
+    foreach ($_FILES["media"]["tmp_name"] as $i => $tmp) {
+
+        $filename = time() . "_" . basename($_FILES["media"]["name"][$i]);
+        $b2Path   = "chat_uploads/" . $filename;
+
+        $fileData = file_get_contents($tmp);
+
+        $curl = curl_init("$endpoint/$bucketName/$b2Path");
+        curl_setopt_array($curl, [
+            CURLOPT_PUT => true,
+            CURLOPT_CUSTOMREQUEST => "PUT",
+            CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
+            CURLOPT_USERPWD => "$keyId:$appKey",
+            CURLOPT_INFILESIZE => strlen($fileData),
+            CURLOPT_POSTFIELDS => $fileData,
+            CURLOPT_RETURNTRANSFER => true
+        ]);
+
+        $result = curl_exec($curl);
+        curl_close($curl);
+
+        $url = "$endpoint/$bucketName/$b2Path";
+
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $type = (in_array($ext, ['jpg','jpeg','png','gif','webp'])) ? "image" : "video";
+
+        $insertMedia = $pdo->prepare(
+            "INSERT INTO chat_media (chat_id, media_path, media_type) VALUES (:cid, :path, :type)"
+        );
+        $insertMedia->execute([
+            ":cid" => $chat_id,
+            ":path" => $url,
+            ":type" => $type
+        ]);
     }
-
-    $pdo->prepare("UPDATE chat_read SET last_read = NOW() WHERE client_id = ? AND csr = ?")
-        ->execute([$cid, $csr]);
-
-    $pdo->commit();
-    echo json_encode(["status" => "success"]);
-
-} catch (Exception $e) {
-    $pdo->rollBack();
-    echo json_encode(["status" => "error", "message" => $e->getMessage()]);
 }
+
+echo json_encode(["status" => "ok"]);
 ?>
