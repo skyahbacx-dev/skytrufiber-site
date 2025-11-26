@@ -1,60 +1,46 @@
 <?php
-session_start();
 include "../db_connect.php";
-include "../b2_upload.php";
-header("Content-Type: application/json");
 
-$username = trim($_POST["username"] ?? "");
-$message  = trim($_POST["message"] ?? "");
+$username = $_POST["username"] ?? null;
+$msg      = trim($_POST["message"] ?? "");
+$media    = $_POST["media"] ?? null;
 
 if (!$username) {
-    echo json_encode(["status"=>"error","msg"=>"No username"]);
+    echo json_encode(["status" => "error", "message" => "No user"]);
     exit;
 }
 
-$stmt = $conn->prepare("SELECT id FROM users WHERE full_name = :u LIMIT 1");
-$stmt->execute([":u" => $username]);
-$client_id = $stmt->fetchColumn();
+$client = $pdo->prepare("SELECT id FROM users WHERE account_number = ?");
+$client->execute([$username]);
+$row = $client->fetch();
 
-if (!$client_id) {
-    echo json_encode(["status"=>"error","msg"=>"Client not found"]);
+if (!$row) {
+    echo json_encode(["status" => "error", "message" => "Unknown user"]);
     exit;
 }
 
-$media_path = null;
-$media_type = null;
+$cid = $row["id"];
 
-if (!empty($_FILES["file"]["tmp_name"])) {
-    $tmp = $_FILES["file"]["tmp_name"];
-    $name = time() . "_" . $_FILES["file"]["name"];
+try {
+    $pdo->beginTransaction();
 
-    $url = b2_upload($tmp, $name);
+    $stmt = $pdo->prepare("INSERT INTO chat (client_id, sender_type, message) VALUES (?, 'client', ?) RETURNING id");
+    $stmt->execute([$cid, $msg]);
+    $chatId = $stmt->fetchColumn();
 
-    if ($url) {
-        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-        $media_type = in_array($ext, ["jpg","jpeg","png","gif","webp"]) ? "image" : "video";
-        $media_path = $url;
+    if ($media) {
+        foreach ($media as $m) {
+            $mData = json_decode($m, true);
+            $pdo->prepare("INSERT INTO chat_media (chat_id, media_path, media_type) VALUES (?, ?, ?)")
+                ->execute([$chatId, $mData["url"], $mData["type"]]);
+        }
     }
+
+    $pdo->commit();
+    echo json_encode(["status" => "success"]);
+
+} catch (Exception $e) {
+    $pdo->rollBack();
+    echo json_encode(["status" => "error", "message" => $e->getMessage()]);
 }
-
-$stmt = $conn->prepare("
-    INSERT INTO chat (client_id, sender_type, message, created_at)
-    VALUES (:cid, 'client', :msg, NOW())
-");
-$stmt->execute([":cid"=>$client_id, ":msg"=>$message]);
-
-$chat_id = $conn->lastInsertId();
-
-if ($media_path) {
-    $conn->prepare("
-        INSERT INTO chat_media (chat_id, media_path, media_type, created_at)
-        VALUES (:c, :p, :t, NOW())
-    ")->execute([
-        ":c"=>$chat_id,
-        ":p"=>$media_path,
-        ":t"=>$media_type
-    ]);
-}
-
-echo json_encode(["status"=>"ok"]);
-exit;
+?>
