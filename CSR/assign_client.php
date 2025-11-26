@@ -1,6 +1,27 @@
 <?php
 session_start();
-include "../db_connect.php";
-$csr = $_SESSION["csr_user"];
-$id = $_POST["client_id"];
-$conn->prepare("UPDATE users SET assigned_csr=:c WHERE id=:id")->execute([":c"=>$csr,":id"=>$id]);
+require "../db_config.php";
+
+if (!isset($_SESSION['csr_user'])) {
+    exit(json_encode(["status" => "error", "message" => "Unauthorized"]));
+}
+
+$csrUser = $_SESSION['csr_user'];
+$clientId = $_POST['client_id'] ?? null;
+
+if (!$clientId) {
+    exit(json_encode(["status" => "error", "message" => "Missing client ID"]));
+}
+
+try {
+    $sql = "UPDATE users SET assigned_csr = :csr WHERE id = :id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        ":csr" => $csrUser,
+        ":id"  => $clientId
+    ]);
+
+    echo json_encode(["status" => "success"]);
+} catch (Exception $e) {
+    echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+}
