@@ -2,19 +2,19 @@
 session_start();
 require "../db_config.php";
 
-$csr   = $_SESSION['csr_user'] ?? null;
-$search = $_POST['search'] ?? '';
+$csr = $_SESSION["csr_user"] ?? null;
 
 $sql = "
-    SELECT id, full_name, email, district, barangay, assigned_csr, is_online
+    SELECT id, full_name, email, district, barangay, is_online, assigned_csr
     FROM users
-    WHERE full_name ILIKE :s OR email ILIKE :s
     ORDER BY is_online DESC, full_name ASC
 ";
 
 $stmt = $pdo->prepare($sql);
-$stmt->execute([":s" => "%$search%"]);
-$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$stmt->execute();
+$clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+echo json_encode(["status" => "success", "clients" => $clients]);
 
 foreach ($rows as $row):
     $assigned = ($row["assigned_csr"] === $csr);
