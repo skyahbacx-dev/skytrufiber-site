@@ -34,26 +34,31 @@ $stmt = $conn->prepare($sql);
 $stmt->execute([":search" => "%$search%"]);
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $id      = $row["id"];
-    $name    = htmlspecialchars($row["full_name"]);
-    $email   = htmlspecialchars($row["email"]);
-    $unread  = intval($row["unread"]);
+    $id       = $row["id"];
+    $name     = htmlspecialchars($row["full_name"]);
+    $email    = htmlspecialchars($row["email"]);
+    $unread   = intval($row["unread"]);
     $assigned = $row["assigned_csr"];
 
     $badge = ($unread > 0) ? "<span class='badge'>$unread</span>" : "";
-    $lock = "";
 
-    if ($assigned && $assigned != $csrUser) {
-        $lock = "<span class='lock-icon'>🔒</span>";
+    // BUTTON LOGIC
+    if ($assigned === null) {
+        $btn = "<button class='assign-btn' onclick='assignClient($id); event.stopPropagation();'>Assign</button>";
+    } elseif ($assigned === $csrUser) {
+        $btn = "<button class='unassign-btn' onclick='unassignClient($id); event.stopPropagation();'>Unassign</button>";
+    } else {
+        $btn = "<button class='lock-btn' disabled>🔒</button>";
     }
 
     echo "
     <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\")'>
         <img src='upload/default-avatar.png' class='client-avatar'>
         <div class='client-content'>
-            <div class='client-name'>$lock $name $badge</div>
-            <div class='client-sub'>$email</div>
+            <div class='client-name'>$name $badge</div>
+            <div class='client-sub'>District: {$row["district"]} | Brgy: {$row["barangay"]}</div>
         </div>
+        <div class='client-actions'>$btn</div>
     </div>
     ";
 }
