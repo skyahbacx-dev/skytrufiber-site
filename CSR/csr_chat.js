@@ -1,24 +1,18 @@
 // ================================================
-// CSR CHAT DASHBOARD JS
+// CSR CHAT DASHBOARD JS — Batch 5
 // ================================================
 
-// ACTIVE CLIENT ID
 let activeClient = null;
+let refreshInterval = null;
 
-// DOM ELEMENTS
+// DOM
 const clientList = document.getElementById("clientList");
 const chatMessages = document.getElementById("chatMessages");
-const chatName = document.getElementById("chatName");
-const chatStatus = document.getElementById("chatStatus");
-const infoPanel = document.getElementById("infoPanel");
-const infoName = document.getElementById("infoName");
-const infoEmail = document.getElementById("infoEmail");
-const infoBrgy = document.getElementById("infoBrgy");
-const infoDistrict = document.getElementById("infoDistrict");
-const infoAvatar = document.getElementById("infoAvatar");
+const messageInput = document.getElementById("messageInput");
+const sendBtn = document.getElementById("sendBtn");
 
 // =====================================================
-// LOAD CLIENT LIST
+// INITIAL LOAD CLIENT LIST
 // =====================================================
 function loadClientList(query = "") {
     $.post("client_list.php", { search: query }, function (data) {
@@ -27,7 +21,6 @@ function loadClientList(query = "") {
     });
 }
 
-// Attach click events to client sidebar items
 function attachClientEvents() {
     $(".client-item").click(function () {
         let id = $(this).data("id");
@@ -40,12 +33,16 @@ function attachClientEvents() {
 // =====================================================
 function selectClient(clientId) {
     activeClient = clientId;
-    loadClientInfo(clientId);
-    chatMessages.innerHTML = "";     // Clear messages
-    chatName.innerHTML = "Loading...";
 
     $(".client-item").removeClass("active");
     $(`.client-item[data-id='${clientId}']`).addClass("active");
+
+    chatMessages.innerHTML = "Loading messages...";
+    loadClientInfo(clientId);
+    loadMessages();
+
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(loadMessages, 2000);
 }
 
 // =====================================================
@@ -55,81 +52,93 @@ function loadClientInfo(id) {
     $.post("client_info.php", { client_id: id }, function (res) {
         let data = JSON.parse(res);
 
-        infoName.innerText = data.fullname ?? "Unknown";
-        infoEmail.innerText = data.email ?? "";
-        infoDistrict.innerText = data.district ?? "";
-        infoBrgy.innerText = data.barangay ?? "";
+        infoName.innerText = data.fullname;
+        infoEmail.innerText = data.email;
+        infoDistrict.innerText = data.district;
+        infoBrgy.innerText = data.barangay;
         infoAvatar.src = data.avatar ?? "upload/default-avatar.png";
 
-        chatName.innerText = data.fullname ?? "Unknown";
+        chatName.innerText = data.fullname;
         chatStatus.innerHTML = data.is_online
-            ? `<span class="status-dot online"></span> Online`
-            : `<span class="status-dot offline"></span> Offline`;
+            ? `<span class='status-dot online'></span> Online`
+            : `<span class='status-dot offline'></span> Offline`;
 
         updateAssignButtons(data.assigned_csr);
     });
 }
 
 // =====================================================
-// ASSIGN / UNASSIGN CLIENT UI
+// LOAD MESSAGES
 // =====================================================
-function updateAssignButtons(assigned) {
-    if (!assigned) {
-        $("#assignYes").show();
-        $("#assignNo").hide();
-        $("#assignLabel").text("Assign this client?");
-    } else {
-        $("#assignYes").hide();
-        $("#assignNo").show();
-        $("#assignLabel").text("Assigned to you");
-    }
+function loadMessages() {
+    if (!activeClient) return;
+
+    $.post("load_chat_csr.php", { client_id: activeClient }, function (res) {
+        chatMessages.innerHTML = res;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
 }
 
-// Handle Assign
-$("#assignYes").click(function () {
-    if (!activeClient) return;
-
-    $.post("assign_client.php", { client_id: activeClient }, function (res) {
-        let data = JSON.parse(res);
-        if (data.status === "success") {
-            updateAssignButtons(true);
-            loadClientList();
-        } else {
-            alert("Assignment failed");
-        }
-    });
+// =====================================================
+// SEND MESSAGE
+// =====================================================
+sendBtn.addEventListener("click", sendMessage);
+messageInput.addEventListener("keypress", function (e) {
+    if (e.key === "Enter") sendMessage();
 });
 
-// Handle Remove Assignment
-$("#assignNo").click(function () {
-    if (!activeClient) return;
+function sendMessage() {
+    let msg = messageInput.value.trim();
+    if (!msg || !activeClient) return;
 
-    $.post("unassign_client.php", { client_id: activeClient }, function (res) {
-        let data = JSON.parse(res);
-        if (data.status === "success") {
-            updateAssignButtons(false);
-            loadClientList();
-        } else {
-            alert("Remove failed");
+    $.post("save_chat_csr.php",
+        { message: msg, client_id: activeClient },
+        function (res) {
+            if (res === "OK") {
+                messageInput.value = "";
+                loadMessages();
+            } else {
+                console.log(res);
+            }
         }
-    });
-});
+    );
+}
 
 // =====================================================
-// SEARCH CLIENTS LIVE
+// SEARCH
 // =====================================================
 $("#searchInput").on("input", function () {
     loadClientList($(this).val());
 });
 
 // =====================================================
-// INFO PANEL TOGGLE
+// ASSIGN / UNASSIGN CLIENT
 // =====================================================
-function toggleClientInfo() {
-    infoPanel.classList.toggle("show");
+function updateAssignButtons(assigned) {
+    if (!assigned) {
+        $("#assignYes").show();
+        $("#assignNo").hide();
+    } else {
+        $("#assignYes").hide();
+        $("#assignNo").show();
+    }
 }
 
+$("#assignYes").click(function () {
+    $.post("assign_client.php", { client_id: activeClient }, function () {
+        updateAssignButtons(true);
+        loadClientList();
+    });
+});
+
+$("#assignNo").click(function () {
+    $.post("unassign_client.php", { client_id: activeClient }, function () {
+        updateAssignButtons(false);
+        loadClientList();
+    });
+});
+
 // =====================================================
-// INITIAL LOAD
+// INITIALIZE
 // =====================================================
 loadClientList();
