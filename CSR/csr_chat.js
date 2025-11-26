@@ -14,6 +14,17 @@ function loadClients(search = "") {
         $("#clientList").html(data);
     });
 }
+function assignClient(id) {
+    $.post("assign_client.php", { client_id: id }, function () {
+        loadClients();
+    });
+}
+
+function unassignClient(id) {
+    $.post("unassign_client.php", { client_id: id }, function () {
+        loadClients();
+    });
+}
 
 /* SELECT A CLIENT */
 function selectClient(id, name) {
