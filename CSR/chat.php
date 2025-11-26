@@ -1,25 +1,31 @@
 <?php
-if (!isset($_SESSION['csr_user'])) {
+
+if (!isset($_SESSION["csr_user"])) {
     http_response_code(401);
     exit("Unauthorized");
 }
 
-$csrUser     = $_SESSION["csr_user"];
-$csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
+$csrUser = $_SESSION["csr_user"];
+$csrFullName = $_SESSION["csr_fullname"] ?? "CSR";
 ?>
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="chat.css?v=<?php echo time(); ?>">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
 
 <div id="messenger-layout">
 
-    <!-- LEFT PANEL – CLIENT LIST -->
+    <!-- LEFT PANEL -->
     <aside id="left-panel">
-        <div class="left-header">
-            <input type="text" id="searchInput" class="search-clients" placeholder="Search clients...">
-        </div>
-
+        <input type="text" id="searchInput" class="search-clients" placeholder="Search clients..." onkeyup="loadClientList()">
         <div id="clientList" class="client-scroll"></div>
     </aside>
 
-    <!-- CENTER CHAT PANEL -->
+    <!-- CHAT PANEL -->
     <main id="chat-panel">
 
         <!-- HEADER -->
@@ -39,25 +45,18 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
         <!-- CHAT BODY -->
         <section id="chatMessages" class="messages-body"></section>
 
-        <!-- FILE PREVIEW -->
-        <section id="previewArea" class="preview-area"></section>
-
         <!-- INPUT BAR -->
         <footer id="chat-input-bar">
-            <label for="fileInput" class="file-upload-icon">
-                <i class="fa-regular fa-image"></i>
-            </label>
             <input type="file" id="fileInput" multiple style="display:none;">
-            <input type="text" id="messageInput" class="message-field" placeholder="Type a message…">
-            <button id="sendBtn" class="send-btn">
-                <i class="fa-solid fa-paper-plane"></i>
-            </button>
+            <input type="text" id="messageInput" class="message-field" placeholder="Type a message…" disabled>
+            <button id="sendBtn" class="send-btn" disabled><i class="fa-solid fa-paper-plane"></i></button>
         </footer>
 
     </main>
 
-    <!-- RIGHT PANEL – CLIENT INFO -->
-    <aside id="infoPanel" class="right-panel">
+    <!-- RIGHT PANEL -->
+    <aside id="infoPanel" class="right-panel" style="display:none;">
+
         <button class="close-info" onclick="toggleClientInfo()">✖</button>
 
         <div class="info-content">
@@ -66,13 +65,22 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
             <p id="infoEmail"></p>
             <div><b>District:</b> <span id="infoDistrict"></span></div>
             <div><b>Barangay:</b> <span id="infoBrgy"></span></div>
+
+            <div id="assignControls" style="margin-top:15px; text-align:center;">
+                <button id="assignBtn" class="assign-btn" onclick="assignSelected()">➕ Assign</button>
+                <button id="unassignBtn" class="unassign-btn" onclick="unassignSelected()">➖ Unassign</button>
+                <span id="lockedIcon" class="lock-icon">🔒 Assigned to another CSR</span>
+            </div>
         </div>
+
     </aside>
 
 </div>
 
-<!-- MEDIA VIEWER -->
-<div id="mediaModal" class="media-viewer">
-    <span id="closeMediaModal" class="media-close">✖</span>
-    <img id="mediaModalContent" class="media-content">
-</div>
+<script>
+var csrUser = "<?php echo $csrUser; ?>";
+</script>
+<script src="client_support.js?v=<?php echo time(); ?>"></script>
+
+</body>
+</html>
