@@ -1,65 +1,138 @@
-<?php
-session_start();
-include '../db_connect.php';
+/* =======================================================
+   CSR CHAT — Final Full JS
+======================================================= */
 
-if (!isset($_SESSION["csr_user"])) {
-    http_response_code(401);
-    exit("Unauthorized");
+let activeClient = 0;
+let filesToSend = [];
+let lastMessageCount = 0;
+let loadingMessages = false;
+
+const BASE_MEDIA = "https://f000.backblazeb2.com/file/ahba-chat-media/";
+
+/* LOAD CLIENT LIST */
+function loadClients(search = "") {
+    $.get("client_list.php", { search: search }, function(data) {
+        $("#clientList").html(data);
+    });
 }
 
-$csrUser = $_SESSION["csr_user"];
-$search  = $_GET["search"] ?? "";
+/* SELECT CLIENT */
+function selectClient(id, name) {
+    activeClient = id;
+    $(".client-item").removeClass("active-client");
+    $("#client-" + id).addClass("active-client");
 
-$sql = "
-    SELECT
-        u.id,
-        u.full_name,
-        u.email,
-        u.district,
-        u.barangay,
-        u.assigned_csr,
-        (
-            SELECT COUNT(*)
-            FROM chat c
-            WHERE c.client_id = u.id
-              AND c.sender_type = 'client'
-              AND c.seen = FALSE
-        ) AS unread
-    FROM users u
-    WHERE u.full_name ILIKE :search
-    ORDER BY unread DESC, full_name ASC
-";
+    $("#chatName").text(name);
+    $("#chatMessages").html("");
+    lastMessageCount = 0;
 
-$stmt = $conn->prepare($sql);
-$stmt->execute([":search" => "%$search%"]);
-
-while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $id       = $row["id"];
-    $name     = htmlspecialchars($row["full_name"]);
-    $email    = htmlspecialchars($row["email"]);
-    $unread   = intval($row["unread"]);
-    $assigned = $row["assigned_csr"];
-
-    $badge = ($unread > 0) ? "<span class='badge'>$unread</span>" : "";
-
-    // BUTTON LOGIC
-    if ($assigned === null) {
-        $btn = "<button class='assign-btn' onclick='assignClient($id); event.stopPropagation();'>Assign</button>";
-    } elseif ($assigned === $csrUser) {
-        $btn = "<button class='unassign-btn' onclick='unassignClient($id); event.stopPropagation();'>Unassign</button>";
-    } else {
-        $btn = "<button class='lock-btn' disabled>🔒</button>";
-    }
-
-    echo "
-    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\")'>
-        <img src='upload/default-avatar.png' class='client-avatar'>
-        <div class='client-content'>
-            <div class='client-name'>$name $badge</div>
-            <div class='client-sub'>District: {$row["district"]} | Brgy: {$row["barangay"]}</div>
-        </div>
-        <div class='client-actions'>$btn</div>
-    </div>
-    ";
+    loadMessages(true);
+    loadClientInfo();
 }
-?>
+
+/* RIGHT INFO PANEL */
+function loadClientInfo() {
+    $.getJSON("client_info.php?id=" + activeClient, data => {
+        $("#infoName").text(data.name);
+        $("#infoEmail").text(data.email);
+        $("#infoDistrict").text(data.district);
+        $("#infoBrgy").text(data.barangay);
+    });
+}
+
+/* LOAD MESSAGES */
+function loadMessages(initial = false) {
+    if (!activeClient) return;
+
+    $.getJSON("load_chat_csr.php?client_id=" + activeClient, function(messages) {
+
+        if (initial) $("#chatMessages").html("");
+
+        if (messages.length > lastMessageCount) {
+            messages.slice(lastMessageCount).forEach(m => {
+                const side = m.sender_type === "csr" ? "csr" : "client";
+
+                let attach = "";
+                if (m.media_path) {
+                    attach = m.media_type === "image"
+                        ? `<img src="${m.media_path}" class="file-img" onclick="openMedia('${m.media_path}')">`
+                        : `<video class="file-img" controls><source src="${m.media_path}"></video>`;
+                }
+
+                $("#chatMessages").append(`
+                    <div class="msg-row ${side}">
+                        <div class="bubble-wrapper">
+                            <div class="bubble">${m.message || ""}${attach}</div>
+                            <div class="meta">${m.created_at}</div>
+                        </div>
+                    </div>
+                `);
+            });
+
+            $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
+        }
+
+        lastMessageCount = messages.length;
+    });
+}
+
+/* SEND */
+$("#sendBtn").click(sendMessage);
+$("#messageInput").keypress(e => { if (e.key === "Enter") sendMessage(); });
+
+function sendMessage() {
+    const msg = $("#messageInput").val().trim();
+    if (!msg && filesToSend.length === 0) return;
+
+    let fd = new FormData();
+    fd.append("message", msg);
+    fd.append("client_id", activeClient);
+    filesToSend.forEach(f => fd.append("media[]", f));
+
+    $.ajax({
+        url: "save_chat_csr.php",
+        method: "POST",
+        processData: false,
+        contentType: false,
+        data: fd,
+        success: function () {
+            $("#messageInput").val("");
+            $("#previewArea").html("");
+            $("#fileInput").val("");
+            filesToSend = [];
+            loadMessages(false);
+            loadClients();
+        }
+    });
+}
+
+/* FILE PREVIEW */
+$("#fileInput").on("change", e => {
+    filesToSend = [...e.target.files];
+    $("#previewArea").html("");
+
+    filesToSend.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+            $("#previewArea").append(`<img src="${ev.target.result}" class="preview-thumb">`);
+        };
+        reader.readAsDataURL(file);
+    });
+});
+
+/* RIGHT INFO PANEL */
+function toggleClientInfo() {
+    $("#infoPanel").toggleClass("show");
+}
+
+/* MEDIA VIEWER */
+function openMedia(src) {
+    $("#mediaModalContent").attr("src", src);
+    $("#mediaModal").addClass("show");
+}
+$("#closeMediaModal").click(() => $("#mediaModal").removeClass("show"));
+
+setInterval(() => loadMessages(false), 1200);
+setInterval(() => loadClients($("#searchInput").val()), 3000);
+
+loadClients();
