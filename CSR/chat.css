@@ -470,3 +470,20 @@ body {
 .msg { padding:10px 15px; margin:5px 0; max-width:70%; border-radius:12px; }
 .msg-client { background:#d7eaf7; margin-right:auto; }
 .msg-csr { background:#c7ffd2; margin-left:auto; }
+.chat-img {
+    max-width: 200px;
+    border-radius: 10px;
+    display: block;
+    margin-top: 6px;
+    cursor: pointer;
+}
+
+.chat-video {
+    max-width: 260px;
+    border-radius: 10px;
+    margin-top: 6px;
+}
+
+#mediaModal { position:fixed; inset:0; background:rgba(0,0,0,.8); display:none;
+  align-items:center; justify-content:center; }
+#mediaModal img { max-width:90%; max-height:90%; }
