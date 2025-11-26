@@ -1,38 +1,44 @@
 <?php
-require '../db_connect.php';
 session_start();
+require "../db_config.php";
 
-header("Content-Type: application/json");
+$clientId = $_POST["client_id"] ?? null;
 
-if (!isset($_SESSION['csr_user'])) {
-    echo json_encode(["error" => "Unauthorized"]);
+if (!$clientId) {
+    echo json_encode(["status" => "error", "message" => "Missing client ID"]);
     exit;
 }
 
-$client_id = intval($_GET["client_id"] ?? 0);
-if ($client_id <= 0) {
-    echo json_encode(["messages" => [], "media" => []]);
-    exit;
-}
-
-// Fetch messages + media
 $sql = "
-SELECT 
-    c.id,
-    c.message,
-    c.sender_type,
-    c.created_at,
-    c.seen,
-    COALESCE(json_agg(cm.media_path) FILTER (WHERE cm.media_path IS NOT NULL), '[]') AS media
-FROM chat c
-LEFT JOIN chat_media cm ON cm.chat_id = c.id
-WHERE c.client_id = :cid
-GROUP BY c.id
-ORDER BY c.created_at ASC
+    SELECT c.id, c.message, c.sender_type, c.delivered, c.seen, c.created_at,
+           m.media_path, m.media_type
+    FROM chat c
+    LEFT JOIN chat_media m ON c.id = m.chat_id
+    WHERE c.client_id = :client_id
+    ORDER BY c.created_at ASC
 ";
-$stmt = $pdo->prepare($sql);
-$stmt->execute(["cid" => $client_id]);
-$messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-echo json_encode(["messages" => $messages]);
-exit;
+$stmt = $pdo->prepare($sql);
+$stmt->execute([":client_id" => $clientId]);
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// group messages by date
+$grouped = [];
+foreach ($rows as $row) {
+    $date = date("M d, Y", strtotime($row["created_at"]));
+    if (!isset($grouped[$date])) $grouped[$date] = [];
+    $grouped[$date][] = $row;
+}
+
+// update read tracking
+$csr = $_SESSION["csr_user"] ?? null;
+$update = $pdo->prepare("
+    INSERT INTO chat_read (client_id, csr, last_read)
+    VALUES (:client, :csr, CURRENT_TIMESTAMP)
+    ON CONFLICT (client_id, csr)
+    DO UPDATE SET last_read = CURRENT_TIMESTAMP
+");
+$update->execute([":client" => $clientId, ":csr" => $csr]);
+
+echo json_encode(["status" => "success", "messages" => $grouped]);
+s
