@@ -3,6 +3,35 @@ let activeClient = null;
 let typingTimer = null;
 const chatMessages = $("#chatMessages");
 const clientList = $("#clientList");
+function loadClientList() {
+    $.post("client_list.php", {}, function(res) {
+        let data = JSON.parse(res);
+        let html = "";
+
+        data.clients.forEach(c => {
+            html += `
+                <div class="client-item" data-id="${c.id}">
+                    <div class="client-avatar"></div>
+                    <div class="client-meta">
+                        <div class="client-name">${c.full_name}</div>
+                        <div class="client-status">${c.is_online ? "🟢 Online" : "⚫ Offline"}</div>
+                    </div>
+                </div>
+            `;
+        });
+
+        $("#clientList").html(html);
+
+        $(".client-item").click(function() {
+            activeClient = $(this).data("id");
+            $("#chatName").text($(this).find(".client-name").text());
+            loadChat(activeClient);
+            loadClientInfo(activeClient);
+        });
+    });
+}
+
+loadClientList();
 
 // ================== LOAD CLIENT LIST =====================
 function loadClients(query = "") {
