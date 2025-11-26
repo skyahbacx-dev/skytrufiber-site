@@ -15,11 +15,14 @@ $sql = "
         u.id,
         u.full_name,
         u.email,
-        u.district,
-        u.barangay,
         u.assigned_csr,
-        u.is_online,
-        (SELECT COUNT(*) FROM chat WHERE client_id = u.id AND sender_type='client' AND seen=false) AS unread
+        (
+            SELECT COUNT(*)
+            FROM chat ch
+            WHERE ch.client_id = u.id
+              AND ch.sender_type = 'client'
+              AND ch.seen = false
+        ) AS unread
     FROM users u
 ";
 
@@ -30,48 +33,36 @@ if ($search !== "") {
 $sql .= " ORDER BY unread DESC, full_name ASC";
 
 $stmt = $conn->prepare($sql);
-
 if ($search !== "") $stmt->execute([":search" => "%$search%"]);
 else $stmt->execute();
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
-    $id = $row["id"];
-    $name = htmlspecialchars($row["full_name"]);
-    $email = htmlspecialchars($row["email"]);
-    $unread = intval($row["unread"]);
+    $id       = $row["id"];
+    $name     = htmlspecialchars($row["full_name"]);
+    $email    = htmlspecialchars($row["email"]);
     $assigned = $row["assigned_csr"];
-    $online = $row["is_online"];
+    $unread   = intval($row["unread"]);
 
-    // STATUS DOT COLOR
-    $statusClass = $online ? "online" : "offline";
-
-    // BUTTON LOGIC
-    if (!$assigned) {
-        $button = "<button class='assign-btn' onclick='assignClient($id, event)'>➕</button>";
-    } elseif ($assigned == $csrUser) {
-        $button = "<button class='unassign-btn' onclick='unassignClient($id, event)'>➖</button>";
+    // STATUS ICONS
+    $statusIcon = "";
+    if ($assigned === $csrUser) {
+        $statusIcon = "<span class='status assigned'>−</span>";
+    } elseif ($assigned !== null) {
+        $statusIcon = "<span class='status locked'>🔒</span>";
     } else {
-        $button = "<span class='lock-btn'>🔒</span>";
+        $statusIcon = "<span class='status assign'>＋</span>";
     }
 
     echo "
-    <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\")'>
-        <div class='avatar-wrap'>
+        <div class='client-item' id='client-$id' onclick='selectClient($id, \"$name\")'>
             <img src='upload/default-avatar.png' class='client-avatar'>
-            <span class='status-dot $statusClass'></span>
-        </div>
-
-        <div class='client-content'>
-            <div class='client-row'>
-                <span class='client-name'>$name</span>
-                <span class='controls'>$button</span>
+            <div class='client-info'>
+                <div class='client-name'>$name " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "</div>
+                <div class='client-email'>$email</div>
             </div>
-
-            <div class='client-email'>$email</div>
-            " . ($unread > 0 ? "<span class='badge'>$unread</span>" : "") . "
+            <div class='client-action'>$statusIcon</div>
         </div>
-    </div>
     ";
 }
 ?>
