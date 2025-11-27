@@ -3,38 +3,29 @@ if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
 $client_id = $_POST["client_id"] ?? null;
-$csr       = $_POST["csr"] ?? null;
-$typing    = isset($_POST["typing"]) ? (int)$_POST["typing"] : 0;
+$user      = $_POST["user"] ?? null;
+$typing    = $_POST["typing"] ?? null;
 
-if (!$client_id || !$csr) {
-    exit("Missing data");
+if (!$client_id || $typing === null || !$user) {
+    echo "Missing data";
+    exit;
 }
 
 try {
-    // Check if record already exists
-    $check = $conn->prepare("
-        SELECT id FROM typing_status WHERE client_id = ?
+    $stmt = $conn->prepare("
+        INSERT INTO typing_status (client_id, typing, updated_at, user)
+        VALUES (:client_id, :typing, NOW(), :user)
+        ON CONFLICT (client_id)
+        DO UPDATE SET typing = :typing, updated_at = NOW(), user = :user
     ");
-    $check->execute([$client_id]);
-    $exists = $check->fetch(PDO::FETCH_ASSOC);
-
-    if ($exists) {
-        $update = $conn->prepare("
-            UPDATE typing_status
-            SET typing = ?, updated_at = NOW()
-            WHERE client_id = ?
-        ");
-        $update->execute([$typing, $client_id]);
-    } else {
-        $insert = $conn->prepare("
-            INSERT INTO typing_status (client_id, typing, updated_at)
-            VALUES (?, ?, NOW())
-        ");
-        $insert->execute([$client_id, $typing]);
-    }
+    $stmt->execute([
+        ":client_id" => $client_id,
+        ":typing"    => $typing,
+        ":user"      => $user,
+    ]);
 
     echo "OK";
 
 } catch (Exception $e) {
-    echo "ERROR: " . $e->getMessage();
+    echo "DB Error: " . $e->getMessage();
 }
