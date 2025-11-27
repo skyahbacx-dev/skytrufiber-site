@@ -2,59 +2,58 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$clientID = $_POST["client_id"] ?? null;
-if (!$clientID) {
-    exit("No client selected.");
+$client_id = $_POST["client_id"] ?? null;
+
+if (!$client_id) {
+    echo "No client selected";
+    exit;
 }
 
 try {
     $stmt = $conn->prepare("
         SELECT c.id, c.sender_type, c.message, c.created_at,
-               m.media_path, m.media_type
+        (SELECT media_path FROM chat_media WHERE chat_id = c.id LIMIT 1) AS media_path,
+        (SELECT media_type FROM chat_media WHERE chat_id = c.id LIMIT 1) AS media_type
         FROM chat c
-        LEFT JOIN chat_media m ON c.id = m.chat_id
-        WHERE c.client_id = :cid
+        WHERE c.client_id = ?
         ORDER BY c.created_at ASC
     ");
-    $stmt->execute([":cid" => $clientID]);
+    $stmt->execute([$client_id]);
     $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    if (!$messages) {
-        echo "<p style='color:#999; font-style:italic;'>No messages yet.</p>";
-        exit;
-    }
-
     foreach ($messages as $m) {
-        $sender = $m["sender_type"];
-        $msg    = htmlspecialchars($m["message"] ?? "");
-        $time   = date("M d g:i A", strtotime($m["created_at"]));
-        $media  = $m["media_path"];
-        $mtype  = $m["media_type"];
+        $isCSR = ($m["sender_type"] === "csr");
+        $bubbleClass = $isCSR ? "msg-csr" : "msg-client";
 
-        $class = ($sender === "client") ? "msg-client" : "msg-csr";
+        echo "<div class='chat-bubble $bubbleClass'>";
 
-        echo "<div class='chat-bubble $class'>";
-
-        // TEXT
-        if (!empty($msg)) {
-            echo "<p>$msg</p>";
+        // TEXT MESSAGE
+        if (!empty($m["message"])) {
+            echo nl2br(htmlspecialchars($m["message"]));
         }
 
-        // MEDIA PREVIEW
-        if (!empty($media)) {
-            if ($mtype === "image") {
-                echo "<img src='../../$media' class='chat-img' onclick='window.open(\"../../$media\")'>";
-            } elseif ($mtype === "video") {
-                echo "<video class='chat-video' controls><source src='../../$media'></video>";
+        // MEDIA THUMBNAILS
+        if ($m["media_path"]) {
+            $path = "../../" . $m["media_path"];
+            $isImage = in_array($m["media_type"], ["image"]);
+            $isVideo = in_array($m["media_type"], ["video"]);
+
+            if ($isImage) {
+                echo "<img src='$path' class='chat-img' onclick='openMediaViewer(\"$path\")'>";
+            } else if ($isVideo) {
+                echo "<video class='chat-video' controls><source src='$path'></video>";
             } else {
-                echo "<a href='../../$media' download class='chat-file'>📎 Download File</a>";
+                echo "<a href='$path' download class='chat-file-preview'>
+                        <i class='fa fa-file'></i> Download File
+                      </a>";
             }
         }
 
-        echo "<span class='chat-time'>$time</span>";
+        echo "<span class='chat-time'>" . date("M d g:i A", strtotime($m["created_at"])) . "</span>";
         echo "</div>";
     }
 
-} catch (PDOException $e) {
-    echo "DB ERROR: " . htmlspecialchars($e->getMessage());
+} catch (Exception $e) {
+    echo "DB Error: " . $e->getMessage();
 }
+?>
