@@ -241,3 +241,31 @@
 ::-webkit-scrollbar-thumb:hover {
     background: #9aa49a;
 }
+.chat-img {
+    max-width: 200px;
+    max-height: 200px;
+    margin-top: 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: block;
+}
+
+.chat-video {
+    width: 250px;
+    margin-top: 8px;
+    border-radius: 10px;
+}
+
+.chat-file {
+    display: inline-block;
+    margin-top: 8px;
+    background: #007bff;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+}
+.chat-file:hover {
+    background: #0056b3;
+}
+
