@@ -2,69 +2,67 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$client_id = $_POST['client_id'] ?? null;
+$clientID = $_POST["client_id"] ?? null;
+$csrUser  = $_SESSION["csr_user"] ?? null;
 
-if (!$client_id) {
-    echo "<div class='no-chat'>Select a client to start chat.</div>";
+if (!$clientID) {
+    echo "<p style='padding:10px; color:#777'>No client selected</p>";
     exit;
 }
 
-// Fetch chat messages
-$query = $conn->prepare("
-    SELECT c.id, c.sender_type, c.message, c.created_at, c.seen, c.delivered,
-        m.media_path, m.media_type
-    FROM chat c
-    LEFT JOIN chat_media m ON m.chat_id = c.id
-    WHERE c.client_id = ?
-    ORDER BY c.created_at ASC
+$stmt = $conn->prepare("
+    SELECT sender_type, message, media, created_at
+    FROM chat
+    WHERE client_id = :cid
+    ORDER BY created_at ASC
 ");
-$query->execute([$client_id]);
-$messages = $query->fetchAll(PDO::FETCH_ASSOC);
+$stmt->execute([":cid" => $clientID]);
+$messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (!$messages) {
-    echo "<div class='no-chat'>No messages yet — start the conversation.</div>";
+    echo "<p style='padding:10px; color:#777'>Start conversation now...</p>";
     exit;
 }
 
-foreach ($messages as $msg) {
-    $isCSR = ($msg['sender_type'] === 'csr');
-
-    // Choose bubble side
-    $class = $isCSR ? "bubble-csr" : "bubble-client";
-
-    // Convert timestamp to formatted string
-    $time = date("M d, h:i A", strtotime($msg['created_at']));
-
-    echo "<div class='chat-row {$class}'>";
-
-    // Media
-    if ($msg['media_path']) {
-        $mediaPath = "../../" . $msg['media_path'];
-
-        if ($msg['media_type'] === "image") {
-            echo "<img src='{$mediaPath}' class='chat-image'>";
-        } elseif ($msg['media_type'] === "video") {
-            echo "<video controls class='chat-video'>
-                    <source src='{$mediaPath}' type='video/mp4'>
-                  </video>";
-        } else {
-            $fileName = basename($mediaPath);
-            echo "<a href='{$mediaPath}' download class='chat-file'><i class='fa fa-file'></i> {$fileName}</a>";
-        }
-    }
-
-    // Text message
-    if ($msg['message']) {
-        echo "<p class='msg-text'>" . htmlspecialchars($msg['message']) . "</p>";
-    }
-
-    // Status (only for CSR messages)
-    if ($isCSR) {
-        $status = $msg["seen"] ? "Seen" : ($msg["delivered"] ? "Delivered" : "Sent");
-        echo "<span class='status-label'>{$status}</span>";
-    }
-
-    echo "<div class='msg-time'>{$time}</div>";
-    echo "</div>";
-}
+foreach ($messages as $m):
+    $sender = $m["sender_type"];
+    $msg    = htmlspecialchars($m["message"]);
+    $media  = $m["media"];
+    $time   = date("h:i A", strtotime($m["created_at"]));
+    
+    // Determine message alignment
+    $class = ($sender === "csr") ? "msg-csr" : "msg-client";
 ?>
+
+<div class="chat-bubble <?= $class ?>">
+
+    <?php if ($media): ?>
+        <?php
+        $ext = strtolower(pathinfo($media, PATHINFO_EXTENSION));
+
+        if (in_array($ext, ["jpg","jpeg","png","gif"])) {
+            echo "<img class='chat-img' src=\"../upload/chat_images/$media\">";
+        }
+        else if (in_array($ext, ["mp4","mov","avi"])) {
+            echo "<video class='chat-video' controls src=\"../upload/chat_videos/$media\"></video>";
+        }
+        else if ($ext === "pdf") {
+            echo "<a class='chat-file' href=\"../upload/chat_files/$media\" target='_blank'>
+                    📄 View PDF
+                  </a>";
+        } else {
+            echo "<a class='chat-file' href=\"../upload/chat_files/$media\" download>
+                    📎 Download File
+                  </a>";
+        }
+        ?>
+    <?php endif; ?>
+
+    <?php if ($msg): ?>
+        <p><?= $msg ?></p>
+    <?php endif; ?>
+
+    <small class="chat-time"><?= $time ?></small>
+</div>
+
+<?php endforeach; ?>
