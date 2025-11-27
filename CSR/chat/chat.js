@@ -204,3 +204,13 @@ function unassignClient(cid) {
         }
     });
 }
+// Lightbox Preview
+$(document).on("click", ".media-thumb", function () {
+    const src = $(this).attr("src");
+    $("#lightbox-image").attr("src", src);
+    $("#lightbox-overlay").fadeIn(200);
+});
+
+$("#lightbox-close, #lightbox-overlay").on("click", function () {
+    $("#lightbox-overlay").fadeOut(200);
+});
