@@ -1,4 +1,9 @@
 <?php
+echo 'DOC ROOT = ' . $_SERVER['DOCUMENT_ROOT'] . '<br>';
+echo 'THIS FILE = ' . __FILE__ . '<br>';
+exit;
+?>
+
 session_start();
 if (!isset($_SESSION['csr_user'])) {
     header("Location: ../csr_login.php");
