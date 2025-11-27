@@ -1,17 +1,20 @@
-// ==============================
-// CSR CHAT – FULL JS
-// ==============================
+// ========================================
+// SkyTruFiber CSR Chat System - chat.js
+// ========================================
 
 let currentClientID = null;
-let messagePoll = null;
+let messageInterval;
+let clientRefreshInterval;
 
 $(document).ready(function () {
 
-    // initial load + polling for clients
+    // First load clients
     loadClients();
-    setInterval(loadClients, 4000);
 
-    // search filter
+    // Refresh client list every 4 seconds
+    clientRefreshInterval = setInterval(loadClients, 4000);
+
+    // Search filter
     $("#client-search").on("keyup", function () {
         const q = $(this).val().toLowerCase();
         $("#client-list .client-item").each(function () {
@@ -19,82 +22,76 @@ $(document).ready(function () {
         });
     });
 
-    // send message by button
-    $("#send-btn").on("click", function () {
+    // Send message button
+    $("#send-btn").click(function () {
         sendMessage();
     });
 
-    // send by Enter
-    $("#chat-input").on("keypress", function (e) {
+    // Send message via Enter
+    $("#chat-input").keypress(function (e) {
         if (e.which === 13) {
             e.preventDefault();
             sendMessage();
-        } else {
-            // optional typing ping if you have typing_update.php
-            if (currentClientID) {
-                $.post("../chat/typing_update.php", {
-                    client_id: currentClientID,
-                    typing: 1,
-                    user: "csr"
-                });
-            }
         }
     });
 
-    // upload media
-    $("#upload-btn").on("click", function () {
+    // Upload file button
+    $("#upload-btn").click(function () {
         $("#chat-upload-media").click();
     });
 
-    $("#chat-upload-media").on("change", function () {
+    $("#chat-upload-media").change(function () {
         if (currentClientID) {
             uploadMedia();
         }
     });
 
-    // delegate client row click
+    // Selecting a client
     $(document).on("click", ".client-item", function (e) {
-        // ignore click from action buttons (they handle themselves)
-        if ($(e.target).closest(".client-row-actions").length) return;
 
-        const id   = $(this).data("id");
-        const name = $(this).data("name");
+        // ignore clicking icons
+        if ($(e.target).closest(".client-icons").length) return;
 
-        currentClientID = id;
-        $("#chat-client-name").text(name);
+        currentClientID = $(this).data("id");
+        let clientName = $(this).data("name");
 
-        loadClientInfo(id);
+        $("#chat-client-name").text(clientName);
+        $("#chat-messages").html("");
+
+        loadClientInfo(currentClientID);
         loadMessages(true);
 
-        if (messagePoll) clearInterval(messagePoll);
-        messagePoll = setInterval(() => {
-            if (currentClientID) loadMessages(false);
-        }, 2000);
+        if (messageInterval) clearInterval(messageInterval);
+
+        messageInterval = setInterval(function () {
+            loadMessages(false);
+        }, 1500);
     });
 
-    // delegate assign / remove / lock icons
+    // Assign client (+)
     $(document).on("click", ".add-client", function (e) {
         e.stopPropagation();
-        const id = $(this).data("id");
-        assignClient(id);
+        let cid = $(this).data("id");
+        assignClient(cid);
     });
 
+    // Unassign client (–)
     $(document).on("click", ".remove-client", function (e) {
         e.stopPropagation();
-        const id = $(this).data("id");
-        removeClient(id);
+        let cid = $(this).data("id");
+        unassignClient(cid);
     });
 
-    // lock is just visual for now – no action, but prevent click bubbling
+    // Lock icon does nothing but prevents events
     $(document).on("click", ".lock-client", function (e) {
         e.stopPropagation();
     });
 
-});
+}); // end document ready
 
-// ==============================
-// CLIENT LIST
-// ==============================
+// ========================================
+// LOAD CLIENT LIST
+// ========================================
 function loadClients() {
     $.ajax({
         url: "../chat/load_clients.php",
@@ -105,24 +102,24 @@ function loadClients() {
     });
 }
 
-// ==============================
-// CLIENT INFO (RIGHT PANEL)
-// ==============================
-function loadClientInfo(clientID) {
+// ========================================
+// LOAD CLIENT INFO (RIGHT PANEL)
+// ========================================
+function loadClientInfo(id) {
     $.ajax({
         url: "../chat/load_client_info.php",
         type: "POST",
-        data: { client_id: clientID },
+        data: { client_id: id },
         success: function (html) {
             $("#client-info-content").html(html);
         }
     });
 }
 
-// ==============================
-// MESSAGES
-// ==============================
-function loadMessages(scrollToBottom) {
+// ========================================
+// LOAD MESSAGES
+// ========================================
+function loadMessages(scrollBottom) {
     if (!currentClientID) return;
 
     $.ajax({
@@ -131,23 +128,27 @@ function loadMessages(scrollToBottom) {
         data: { client_id: currentClientID },
         success: function (html) {
             $("#chat-messages").html(html);
-            if (scrollToBottom) {
+
+            if (scrollBottom) {
                 $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
             }
         }
     });
 }
 
+// ========================================
+// SEND TEXT MESSAGE
+// ========================================
 function sendMessage() {
-    const text = $("#chat-input").val().trim();
-    if (!text || !currentClientID) return;
+    let msg = $("#chat-input").val().trim();
+    if (!msg || !currentClientID) return;
 
     $.ajax({
         url: "../chat/send_message.php",
         type: "POST",
         data: {
             client_id: currentClientID,
-            message: text,
+            message: msg,
             sender_type: "csr"
         },
         success: function () {
@@ -157,6 +158,9 @@ function sendMessage() {
     });
 }
 
+// ========================================
+// UPLOAD MEDIA
+// ========================================
 function uploadMedia() {
     const fileInput = $("#chat-upload-media")[0];
     if (!fileInput.files.length) return;
@@ -164,14 +168,14 @@ function uploadMedia() {
     const formData = new FormData();
     formData.append("media", fileInput.files[0]);
     formData.append("client_id", currentClientID);
-    formData.append("user", "csr");
+    formData.append("csr", $("#csr-username").val());
 
     $.ajax({
         url: "../chat/upload_media.php",
         type: "POST",
         data: formData,
-        contentType: false,
         processData: false,
+        contentType: false,
         success: function () {
             $("#chat-upload-media").val("");
             loadMessages(true);
@@ -179,17 +183,24 @@ function uploadMedia() {
     });
 }
 
-// ==============================
-// ASSIGN / UNASSIGN
-// ==============================
-function assignClient(clientID) {
-    $.post("../chat/assign_client.php", { client_id: clientID }, function () {
+// ========================================
+// ASSIGN CLIENT (+)
+// ========================================
+function assignClient(cid) {
+    $.post("../chat/assign_client.php", { client_id: cid }, function () {
         loadClients();
+        if (cid == currentClientID) loadClientInfo(cid);
     });
 }
 
-function removeClient(clientID) {
-    $.post("../chat/unassign_client.php", { client_id: clientID }, function () {
+// ========================================
+// UNASSIGN CLIENT (–)
+// ========================================
+function unassignClient(cid) {
+    $.post("../chat/unassign_client.php", { client_id: cid }, function () {
         loadClients();
+        if (cid == currentClientID) {
+            $("#client-info-content").html("<p>Select a client.</p>");
+        }
     });
 }
