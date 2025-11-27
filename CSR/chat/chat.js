@@ -33,6 +33,13 @@ $(document).ready(function () {
             updateTyping();
         }
     });
+$("#chat-input").on("input", function () {
+    $.post("typing_update.php", {
+        client_id: currentClientId,
+        user: csrUsername,
+        typing: $(this).val().length > 0
+    });
+});
 
     // Upload
     $("#upload-btn").click(() => $("#chat-upload-media").click());
