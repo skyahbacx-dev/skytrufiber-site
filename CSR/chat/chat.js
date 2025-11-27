@@ -10,7 +10,7 @@ let clientLocked = false;
 // ============================
 function loadClients() {
     $.ajax({
-        url: "load_clients.php",
+        url: "../chat/load_clients.php",  // <-- PATH FIX
         type: "POST",
         success: function(data) {
             $("#client-list").html(data);
@@ -26,18 +26,17 @@ setInterval(loadClients, 4000);
 function selectClient(id) {
     selectedClientID = id;
 
-    // load client info panel
-    $.post("load_client_info.php", { id: id }, function(html) {
+    // load client info
+    $.post("../chat/load_client_info.php", { id: id }, function(html) {
         $("#client-info-content").html(html);
     });
 
     // load lock status
-    $.post("check_lock.php", { id: id }, function(status) {
+    $.post("../chat/check_lock.php", { id: id }, function(status) {
         clientLocked = (status.trim() === "locked");
         updateLockUI();
     });
 
-    // load chat messages
     loadMessages();
     if (messageInterval) clearInterval(messageInterval);
     messageInterval = setInterval(loadMessages, 1500);
@@ -51,7 +50,7 @@ function selectClient(id) {
 function loadMessages() {
     if (!selectedClientID) return;
 
-    $.post("load_messages.php", { client_id: selectedClientID }, function(data) {
+    $.post("../chat/load_messages.php", { client_id: selectedClientID }, function(data) {
         $("#chat-messages").html(data);
         $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
     });
@@ -68,7 +67,7 @@ function sendMessage() {
     const msg = $("#chat-input").val().trim();
     if (!msg || !selectedClientID) return;
 
-    $.post("send_message.php", {
+    $.post("../chat/send_message.php", {
         client_id: selectedClientID,
         message: msg,
         sender_type: "csr"
@@ -81,13 +80,10 @@ function sendMessage() {
 // ============================
 // MEDIA UPLOAD
 // ============================
-$("#upload-btn").click(() => {
-    if (!clientLocked) $("#chat-upload-media").click();
-});
+$("#upload-btn").click(() => { if (!clientLocked) $("#chat-upload-media").click(); });
 
 $("#chat-upload-media").change(function () {
     if (clientLocked) return;
-
     const file = this.files[0];
     if (!file || !selectedClientID) return;
 
@@ -96,14 +92,12 @@ $("#chat-upload-media").change(function () {
     f.append("client_id", selectedClientID);
 
     $.ajax({
-        url: "upload_media.php",
+        url: "../chat/upload_media.php",
         type: "POST",
         data: f,
         contentType: false,
         processData: false,
-        success: function() {
-            loadMessages();
-        }
+        success: function() { loadMessages(); }
     });
 });
 
@@ -111,15 +105,13 @@ $("#chat-upload-media").change(function () {
 // ACTION BUTTONS
 // ============================
 function assignClient() {
-    $.post("assign_client.php", { id: selectedClientID }, res => alert(res));
+    $.post("../chat/assign_client.php", { id: selectedClientID }, res => alert(res));
 }
-
 function unassignClient() {
-    $.post("unassign_client.php", { id: selectedClientID }, res => alert(res));
+    $.post("../chat/unassign_client.php", { id: selectedClientID }, res => alert(res));
 }
-
 function lockClient() {
-    $.post("lock_client.php", { id: selectedClientID }, res => {
+    $.post("../chat/lock_client.php", { id: selectedClientID }, res => {
         alert(res);
         clientLocked = true;
         updateLockUI();
@@ -127,7 +119,7 @@ function lockClient() {
 }
 
 // ============================
-// LOCK UI HANDLER
+// UPDATE UI BASED ON LOCK
 // ============================
 function updateLockUI() {
     if (clientLocked) {
