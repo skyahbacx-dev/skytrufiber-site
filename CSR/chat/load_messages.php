@@ -2,58 +2,48 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$client_id = $_POST["client_id"] ?? null;
+$client_id = $_POST['client_id'] ?? null;
 
 if (!$client_id) {
-    echo "No client selected";
+    echo "Missing client ID";
     exit;
 }
 
 try {
     $stmt = $conn->prepare("
         SELECT c.id, c.sender_type, c.message, c.created_at,
-        (SELECT media_path FROM chat_media WHERE chat_id = c.id LIMIT 1) AS media_path,
-        (SELECT media_type FROM chat_media WHERE chat_id = c.id LIMIT 1) AS media_type
+               cm.media_path, cm.media_type
         FROM chat c
+        LEFT JOIN chat_media cm ON cm.chat_id = c.id
         WHERE c.client_id = ?
         ORDER BY c.created_at ASC
     ");
     $stmt->execute([$client_id]);
-    $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    foreach ($messages as $m) {
-        $isCSR = ($m["sender_type"] === "csr");
-        $bubbleClass = $isCSR ? "msg-csr" : "msg-client";
+    foreach ($rows as $row) {
 
-        echo "<div class='chat-bubble $bubbleClass'>";
+        $sender = ($row["sender_type"] === "csr") ? "csr" : "client";
 
-        // TEXT MESSAGE
-        if (!empty($m["message"])) {
-            echo nl2br(htmlspecialchars($m["message"]));
-        }
+        echo "<div class='msg {$sender}'>";
 
-        // MEDIA THUMBNAILS
-        if ($m["media_path"]) {
-            $path = "../../" . $m["media_path"];
-            $isImage = in_array($m["media_type"], ["image"]);
-            $isVideo = in_array($m["media_type"], ["video"]);
-
-            if ($isImage) {
-                echo "<img src='$path' class='chat-img' onclick='openMediaViewer(\"$path\")'>";
-            } else if ($isVideo) {
-                echo "<video class='chat-video' controls><source src='$path'></video>";
+        if (!empty($row["media_path"])) {
+            if ($row["media_type"] === "image") {
+                echo "<img src='../../{$row["media_path"]}' class='media-thumb' onclick='openLightbox(this.src)'>";
             } else {
-                echo "<a href='$path' download class='chat-file-preview'>
-                        <i class='fa fa-file'></i> Download File
-                      </a>";
+                echo "<a class='download-btn' href='../../{$row["media_path"]}' download>📎 Download File</a>";
             }
         }
 
-        echo "<span class='chat-time'>" . date("M d g:i A", strtotime($m["created_at"])) . "</span>";
+        if (!empty($row["message"])) {
+            echo nl2br(htmlspecialchars($row["message"]));
+        }
+
         echo "</div>";
+
+        echo "<div class='timestamp {$sender}'>" . date("M j g:i A", strtotime($row["created_at"])) . "</div>";
     }
 
 } catch (Exception $e) {
     echo "DB Error: " . $e->getMessage();
 }
-?>
