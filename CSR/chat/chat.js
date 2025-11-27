@@ -214,3 +214,84 @@ $(document).on("click", ".media-thumb", function () {
 $("#lightbox-close, #lightbox-overlay").on("click", function () {
     $("#lightbox-overlay").fadeOut(200);
 });
+let selectedMediaFiles = [];
+
+// Multi-file selection
+$("#chat-upload-media").on("change", function () {
+    selectedMediaFiles = Array.from(this.files);
+    $("#media-preview-grid").html("");
+
+    selectedMediaFiles.forEach((file, index) => {
+        let reader = new FileReader();
+        reader.onload = (e) => {
+            const thumb = `
+              <div class="preview-item">
+                  <img src="${e.target.result}" data-index="${index}" class="preview-thumb">
+                  <button class="remove-thumb" data-remove="${index}">✕</button>
+              </div>`;
+            $("#media-preview-grid").append(thumb);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    $("#media-preview-modal").fadeIn(200);
+});
+
+// REMOVE item from preview
+$(document).on("click", ".remove-thumb", function () {
+    const index = $(this).data("remove");
+    selectedMediaFiles.splice(index, 1);
+    $(this).parent().remove();
+});
+
+// OPEN fullscreen viewer
+$(document).on("click", ".preview-thumb", function () {
+    $("#viewer-img").attr("src", $(this).attr("src"));
+    $("#image-viewer").fadeIn(150);
+});
+
+// Close viewer
+$("#viewer-close").click(() => $("#image-viewer").fadeOut(150));
+
+// CANCEL
+$("#media-cancel-btn").click(() => {
+    selectedMediaFiles = [];
+    $("#media-preview-modal").fadeOut(200);
+});
+
+// SEND
+$("#media-send-btn").click(() => {
+    $("#media-preview-modal").fadeOut(200);
+    $("#upload-loading").fadeIn(150);
+
+    selectedMediaFiles.forEach((file, index) => {
+        uploadConfirmedMedia(file, index === selectedMediaFiles.length - 1);
+    });
+});
+
+// UPLOAD
+function uploadConfirmedMedia(file, last) {
+    const formData = new FormData();
+    formData.append("media", file);
+    formData.append("client_id", currentClientId);
+    formData.append("csr", csrUser);
+
+    $.ajax({
+        url: "chat/upload_media_csr.php",
+        type: "POST",
+        data: formData,
+        contentType: false,
+        processData: false,
+        success: () => {
+            if (last) {
+                $("#upload-loading").fadeOut(150);
+                reloadMessages();
+                setTimeout(scrollToBottom, 200);
+            }
+        }
+    });
+}
+
+function scrollToBottom() {
+    $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
+}
