@@ -258,3 +258,72 @@ body {
 }
 
 @keyframes spin { to { transform:rotate(360deg); } }
+/* AVATAR */
+.chat-row {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 4px;
+}
+
+.avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #ccc;
+    display: flex; justify-content:center; align-items:center;
+    font-weight: bold;
+    margin-right: 8px;
+    font-size: 15px;
+}
+
+.csr-avatar { background:#0084ff; color:white; margin-left:8px; }
+.client-avatar { background:#ddd; color:#222; }
+
+/* Messenger bubbles */
+.msg {
+    max-width: 60%;
+    padding: 10px 15px;
+    border-radius: 20px;
+    margin-bottom: 3px;
+    font-size: 15px;
+    line-height: 1.35;
+}
+
+.msg.client {
+    background:white;
+    border:1px solid #ddd;
+    align-self:flex-start;
+    margin-right:auto;
+    border-bottom-left-radius:6px;
+}
+
+.msg.csr {
+    background:#0084ff;
+    color:white;
+    margin-left:auto;
+    border-bottom-right-radius:6px;
+}
+
+/* Bubble stacking like Messenger */
+.msg.client + .msg.client { margin-top:-3px; }
+.msg.csr + .msg.csr { margin-top:-3px; }
+
+/* Timestamp */
+.timestamp {
+    font-size:11px;
+    opacity:.55;
+    margin:4px 0 10px 44px;
+}
+.timestamp.csr { text-align:right; margin-right:44px; }
+
+/* Image thumb preview */
+.media-thumb {
+    max-width:220px;
+    border-radius:16px;
+    cursor:pointer;
+}
+
+/* Full-screen viewer */
+.image-viewer { position:fixed; inset:0; background:rgba(0,0,0,0.88); display:none; justify-content:center; align-items:center; }
+.viewer-img { max-width:90%; max-height:90%; border-radius:12px; }
+.viewer-close { position:fixed; top:20px; right:20px; background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:45px; height:45px; color:white; font-size:25px; cursor:pointer; }
