@@ -1,30 +1,27 @@
 <?php
 if (!isset($_SESSION)) session_start();
-require "../../db_connect.php";
+require_once "../../db_connect.php";
 
-$csrUser = $_SESSION["csr_user"] ?? null;
-$clientID = $_POST["client_id"] ?? null;
+$csr       = $_SESSION["csr_user"] ?? null;
+$client_id = $_POST["client_id"] ?? null;
 
-if (!$csrUser || !$clientID) {
-    echo "Invalid request.";
-    exit;
+if (!$csr || !$client_id) {
+    exit("Missing data");
 }
 
 try {
-    // Remove only if assigned to this CSR
-    $stmt = $conn->prepare("UPDATE users SET assigned_csr = NULL WHERE id = :id AND assigned_csr = :csr");
+    $stmt = $conn->prepare("
+        UPDATE users
+        SET assigned_csr = NULL, is_locked = FALSE
+        WHERE id = :cid AND assigned_csr = :csr
+    ");
     $stmt->execute([
-        ":csr" => $csrUser,
-        ":id"  => $clientID
+        ":csr" => $csr,
+        ":cid" => $client_id
     ]);
 
-    if ($stmt->rowCount() > 0) {
-        echo "Client unassigned.";
-    } else {
-        echo "Cannot unassign. Not assigned to you.";
-    }
+    echo "OK";
 
 } catch (PDOException $e) {
-    echo "DB ERROR: " . $e->getMessage();
+    echo "DB Error: " . $e->getMessage();
 }
-?>
