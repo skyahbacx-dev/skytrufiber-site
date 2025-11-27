@@ -1,130 +1,181 @@
 // ========================================
-// SkyTruFiber CSR Chat System - FINAL
+// SkyTruFiber CSR Chat System - chat.js
 // ========================================
 
-let activeClient = null;
-let typingTimeout;
-const csrUser = $("#csr-username").val();
+let currentClientID = null;
+let messageInterval;
+let clientRefreshInterval;
 
 $(document).ready(function () {
 
+    // First load clients
     loadClients();
-    setInterval(loadClients, 4000);
-    setInterval(checkTyping, 1000);
-    setInterval(loadMessages, 1500);
+
+    // Refresh client list every 4 seconds
+    clientRefreshInterval = setInterval(loadClients, 4000);
 
     // Search filter
     $("#client-search").on("keyup", function () {
-        let q = $(this).val().toLowerCase();
-        $(".client-item").each(function () {
-            $(this).toggle($(this).text().toLowerCase().includes(q));
+        const q = $(this).val().toLowerCase();
+        $("#client-list .client-item").each(function () {
+            $(this).toggle($(this).text().toLowerCase().indexOf(q) !== -1);
         });
     });
 
-    // Send Message Button
-    $("#send-btn").click(sendMessage);
+    // Send message button
+    $("#send-btn").click(function () {
+        sendMessage();
+    });
 
-    // Enter to send
+    // Send message via Enter
     $("#chat-input").keypress(function (e) {
         if (e.which === 13) {
             e.preventDefault();
             sendMessage();
-        } else {
-            updateTyping();
         }
     });
 
-    // Upload
-    $("#upload-btn").click(() => $("#chat-upload-media").click());
-    $("#chat-upload-media").change(uploadMedia);
+    // Upload file button
+    $("#upload-btn").click(function () {
+        $("#chat-upload-media").click();
+    });
 
-    // Close media viewer
-    $("#viewer-close").click(() => $("#media-viewer").fadeOut(150));
-});
+    $("#chat-upload-media").change(function () {
+        if (currentClientID) {
+            uploadMedia();
+        }
+    });
+
+    // Selecting a client
+    $(document).on("click", ".client-item", function (e) {
+
+        // ignore clicking icons
+        if ($(e.target).closest(".client-icons").length) return;
+
+        currentClientID = $(this).data("id");
+        let clientName = $(this).data("name");
+
+        $("#chat-client-name").text(clientName);
+        $("#chat-messages").html("");
+
+        loadClientInfo(currentClientID);
+        loadMessages(true);
+
+        if (messageInterval) clearInterval(messageInterval);
+
+        messageInterval = setInterval(function () {
+            loadMessages(false);
+        }, 1500);
+    });
+
+    // Assign client (+)
+    $(document).on("click", ".add-client", function (e) {
+        e.stopPropagation();
+        let cid = $(this).data("id");
+        assignClient(cid);
+    });
+
+    // Unassign client (–)
+    $(document).on("click", ".remove-client", function (e) {
+        e.stopPropagation();
+        let cid = $(this).data("id");
+        unassignClient(cid);
+    });
+
+    // Lock icon does nothing but prevents events
+    $(document).on("click", ".lock-client", function (e) {
+        e.stopPropagation();
+    });
+
+}); // end document ready
 
 // ========================================
-// Load Clients
+// LOAD CLIENT LIST
 // ========================================
 function loadClients() {
-    $.post("chat/load_clients.php", {}, function (data) {
-        $("#client-list").html(data);
-    });
-}
-
-// ========================================
-// Client Click Event
-// ========================================
-$(document).on("click", ".client-item", function (e) {
-
-    if ($(e.target).closest(".client-icons").length) return;
-
-    activeClient = $(this).data("id");
-    $(".client-item").removeClass("active-chat");
-    $(this).addClass("active-chat");
-
-    $("#chat-client-name").text($(this).data("name"));
-
-    $("#chat-messages").html("");
-    loadMessages(true);
-    loadClientInfo(activeClient);
-    updateSeen();
-});
-
-// ========================================
-// Load Messages
-// ========================================
-function loadMessages(scroll) {
-    if (!activeClient) return;
-
-    $.post("chat/load_messages.php", { client_id: activeClient }, function (html) {
-        $("#chat-messages").html(html);
-
-        if (scroll) {
-            $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
-        } else {
-            $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
+    $.ajax({
+        url: "../chat/load_clients.php",
+        type: "POST",
+        success: function (html) {
+            $("#client-list").html(html);
         }
     });
 }
 
 // ========================================
-// Send Message
+// LOAD CLIENT INFO (RIGHT PANEL)
 // ========================================
-function sendMessage() {
-
-    let msg = $("#chat-input").val().trim();
-    if (!msg || !activeClient) return;
-
-    $.post("chat/send_message.php", {
-        client_id: activeClient,
-        message: msg,
-        sender_type: "csr"
-    }, function () {
-        $("#chat-input").val("");
-        loadMessages(true);
-        updateSeen();
+function loadClientInfo(id) {
+    $.ajax({
+        url: "../chat/load_client_info.php",
+        type: "POST",
+        data: { client_id: id },
+        success: function (html) {
+            $("#client-info-content").html(html);
+        }
     });
 }
 
 // ========================================
-// Upload Media
+// LOAD MESSAGES
 // ========================================
-function uploadMedia() {
-
-    const file = $("#chat-upload-media")[0].files[0];
-    if (!file || !activeClient) return;
-
-    const fd = new FormData();
-    fd.append("media", file);
-    fd.append("client_id", activeClient);
-    fd.append("csr", csrUser);
+function loadMessages(scrollBottom) {
+    if (!currentClientID) return;
 
     $.ajax({
-        url: "chat/upload_media.php",
+        url: "../chat/load_messages.php",
         type: "POST",
-        data: fd,
-        contentType: false,
+        data: { client_id: currentClientID },
+        success: function (html) {
+            $("#chat-messages").html(html);
+
+            if (scrollBottom) {
+                $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
+            }
+        }
+    });
+}
+
+// ========================================
+// SEND TEXT MESSAGE
+// ========================================
+function sendMessage() {
+    let msg = $("#chat-input").val().trim();
+    if (!msg || !currentClientID) return;
+
+    $.ajax({
+        url: "../chat/send_message.php",
+        type: "POST",
+        data: {
+            client_id: currentClientID,
+            message: msg,
+            sender_type: "csr"
+        },
+        success: function () {
+            $("#chat-input").val("");
+            loadMessages(true);
+        }
+    });
+}
+
+// ========================================
+// UPLOAD MEDIA
+// ========================================
+function uploadMedia() {
+    const fileInput = $("#chat-upload-media")[0];
+    if (!fileInput.files.length) return;
+
+    const formData = new FormData();
+    formData.append("media", fileInput.files[0]);
+    formData.append("client_id", currentClientID);
+    formData.append("csr", $("#csr-username").val());
+
+    $.ajax({
+        url: "../chat/upload_media.php",
+        type: "POST",
+        data: formData,
         processData: false,
+        contentType: false,
         success: function () {
             $("#chat-upload-media").val("");
             loadMessages(true);
@@ -133,59 +184,23 @@ function uploadMedia() {
 }
 
 // ========================================
-// Update Seen
+// ASSIGN CLIENT (+)
 // ========================================
-function updateSeen() {
-    if (!activeClient) return;
-    $.post("chat/update_seen.php", { client_id: activeClient });
-}
-
-// ========================================
-// Typing Indicator
-// ========================================
-function updateTyping() {
-    if (!activeClient) return;
-    $.post("chat/typing_update.php", { client_id: activeClient, user: "csr" });
-}
-
-function checkTyping() {
-    if (!activeClient) return;
-
-    $.post("chat/check_typing.php", { client_id: activeClient }, function (res) {
-        if (res == "1") $("#typing-indicator").show();
-        else $("#typing-indicator").hide();
-    });
-}
-
-// ========================================
-// Assign / Unassign Client
-// ========================================
-$(document).on("click", ".add-client", function (e) {
-    e.stopPropagation();
-    $.post("chat/assign_client.php", { client_id: $(this).data("id") }, loadClients);
-});
-
-$(document).on("click", ".remove-client", function (e) {
-    e.stopPropagation();
-    $.post("chat/unassign_client.php", { client_id: $(this).data("id") }, function () {
+function assignClient(cid) {
+    $.post("../chat/assign_client.php", { client_id: cid }, function () {
         loadClients();
-        $("#client-info-content").html("<p>Select a client.</p>");
+        if (cid == currentClientID) loadClientInfo(cid);
     });
-});
+}
 
 // ========================================
-// Media Preview Viewer
+// UNASSIGN CLIENT (–)
 // ========================================
-window.openMediaViewer = function (path) {
-    $("#media-viewer-img").attr("src", path);
-    $("#media-viewer").fadeIn(150);
-};
-
-// ========================================
-// Load Right Panel
-// ========================================
-function loadClientInfo(id) {
-    $.post("chat/load_client_info.php", { client_id: id }, function (data) {
-        $("#client-info-content").html(data);
+function unassignClient(cid) {
+    $.post("../chat/unassign_client.php", { client_id: cid }, function () {
+        loadClients();
+        if (cid == currentClientID) {
+            $("#client-info-content").html("<p>Select a client.</p>");
+        }
     });
 }
