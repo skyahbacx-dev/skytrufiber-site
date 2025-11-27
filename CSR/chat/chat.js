@@ -295,3 +295,56 @@ function uploadConfirmedMedia(file, last) {
 function scrollToBottom() {
     $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
 }
+$(document).ready(function () {
+    loadClients();
+    setInterval(() => {
+        if (currentClientId) loadMessages();
+    }, 2000);
+});
+
+let currentClientId = null;
+
+function loadClients() {
+    $.post("chat/load_clients.php", {}, function (data) {
+        $("#client-list").html(data);
+    });
+}
+
+$(document).on("click", ".client-item", function () {
+    $(".client-item").removeClass("active");
+    $(this).addClass("active");
+    currentClientId = $(this).data("id");
+    $("#chat-client-name").text($(this).data("name"));
+    loadMessages();
+});
+
+function loadMessages() {
+    $.post("chat/load_messages.php", { client_id: currentClientId }, function (result) {
+        $("#chat-messages").html(result);
+        scrollToBottom();
+    });
+}
+
+$("#send-btn").click(() => sendMessage());
+$("#chat-input").keypress(e => e.keyCode === 13 && sendMessage());
+
+function sendMessage() {
+    const msg = $("#chat-input").val().trim();
+    if (!msg || !currentClientId) return;
+
+    $.post("chat/send_message.php", { message: msg, client_id: currentClientId, sender: "csr" }, () => {
+        $("#chat-input").val("");
+        loadMessages();
+    });
+}
+
+function scrollToBottom() {
+    $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
+}
+
+/* IMAGE VIEWER */
+function openLightbox(src) {
+    $("#viewer-img").attr("src", src);
+    $("#image-viewer").fadeIn(150);
+}
+$("#viewer-close, #image-viewer").on("click", () => $("#image-viewer").fadeOut(150));
