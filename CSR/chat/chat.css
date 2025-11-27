@@ -1,4 +1,4 @@
-/* ===================== GLOBAL ===================== */
+/* ============ GLOBAL RESET ==================== */
 * {
     margin: 0;
     padding: 0;
@@ -7,243 +7,159 @@
 
 body {
     font-family: "Segoe UI", Arial, sans-serif;
-    background: #f6faff;
+    background: #e5f1ff;
 }
 
-/* ===================== MAIN LAYOUT ===================== */
+/* MAIN LAYOUT */
 #chat-container {
     display: flex;
     width: 100%;
     height: calc(100vh - 80px);
     overflow: hidden;
-    background: #e7f1ff;
 }
 
-/* ===================== LEFT PANEL ===================== */
+/* LEFT PANEL */
 .chat-left-panel {
-    width: 280px;
-    background: white;
-    border-right: 2px solid #d8e4ef;
-    padding: 15px;
+    width: 300px;
+    background: #ffffff;
+    border-right: 1px solid #d5e2f0;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
-}
-
-.left-header h3 {
-    font-size: 19px;
-    font-weight: 800;
-    margin-bottom: 8px;
+    padding: 12px;
 }
 
 #client-search {
-    width: 100%;
     padding: 10px 14px;
-    border-radius: 14px;
-    border: 1px solid #cfd9e7;
-    background: #f5f8fc;
-    margin-bottom: 14px;
-}
-
-/* CLIENT LIST */
-.client-list {
-    flex: 1;
-    overflow-y: auto;
-    padding-right: 4px;
+    border-radius: 24px;
+    background: #f0f4fa;
+    border: none;
+    outline: none;
+    margin-bottom: 12px;
 }
 
 .client-item {
-    padding: 12px 14px;
-    background: #ffffff;
-    border-radius: 16px;
-    border: 1px solid #d6e5f3;
-    margin-bottom: 10px;
+    background: #fff;
+    border-radius: 20px;
+    padding: 12px;
+    border: 1px solid #e2e6ed;
+    margin-bottom: 8px;
+    transition: 0.2s;
     cursor: pointer;
-    transition: .2s;
 }
 
-.client-item:hover {
-    background: #eaf3ff;
-    transform: translateY(-1.5px);
-}
+.client-item:hover { background: #f1f6ff; }
+.client-item.active { background: #007aff; color: white; }
 
-.client-item.active {
-    background: #007bff;
-    color: white;
-    border-color: #0068d1;
-    transform: scale(1.01);
-}
-
-.client-name {
-    font-weight: 700;
-    font-size: 15px;
-}
-
-.client-email {
-    font-size: 13px;
-    opacity: .8;
-}
-
-/* ===================== CHAT PANEL (CENTER) ===================== */
+/* CHAT PANEL */
 .chat-middle-panel {
     flex: 1;
-    padding: 20px;
+    padding: 14px 18px;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    background: #dfe8f8;
 }
 
-.chat-header {
-    margin-bottom: 12px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #dbe7f3;
-}
-
-#chat-client-name {
-    font-size: 20px;
-    font-weight: 800;
-}
-
-/* MESSAGES AREA */
 #chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding-right: 8px;
+    padding-right: 6px;
     display: flex;
     flex-direction: column;
 }
 
 /* Scrollbar */
-#chat-messages::-webkit-scrollbar,
-.chat-left-panel::-webkit-scrollbar {
+#chat-messages::-webkit-scrollbar {
     width: 6px;
 }
-#chat-messages::-webkit-scrollbar-thumb,
-.chat-left-panel::-webkit-scrollbar-thumb {
-    background: #bcd4ef;
+#chat-messages::-webkit-scrollbar-thumb {
+    background: #b5c7dd;
     border-radius: 10px;
 }
 
-/* ===================== MESSAGE BUBBLES ===================== */
+/* ===================== FB MESSENGER BUBBLES ===================== */
 .msg {
-    max-width: 68%;
-    padding: 12px 18px;
+    max-width: 60%;
+    padding: 10px 16px;
     border-radius: 22px;
-    margin-bottom: 14px;
-    position: relative;
+    margin-bottom: 10px;
     font-size: 15px;
     line-height: 1.4;
-    word-wrap: break-word;
     display: inline-block;
 }
 
-/* CLIENT (LEFT) */
 .msg.client {
     background: #ffffff;
-    border: 1px solid #cfdbe8;
     align-self: flex-start;
-    margin-right: auto;
+    border-bottom-left-radius: 6px;
 }
 
-.msg.client::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: -10px;
-    border-top: 12px solid #ffffff;
-    border-right: 12px solid transparent;
-}
-
-/* CSR (RIGHT) */
 .msg.csr {
-    background: #007bff;
+    background: #0084ff;
     color: white;
     align-self: flex-end;
-    margin-left: auto;
+    border-bottom-right-radius: 6px;
 }
 
-.msg.csr::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    right: -10px;
-    border-top: 12px solid #007bff;
-    border-left: 12px solid transparent;
-}
-
-/* TIMESTAMP */
+/* Timestamp */
 .timestamp {
     font-size: 11px;
-    margin-top: 3px;
-    color: #6b7a89;
+    opacity: .6;
+    margin-top: 2px;
 }
-.timestamp.csr {
-    text-align: right;
-    color: #e8f1ff;
-}
+.timestamp.csr { text-align: right; }
 
-/* ===================== MEDIA PREVIEW ===================== */
+/* ===================== MEDIA (FB style thumbnails) ===================== */
 .media-thumb {
-    max-width: 260px;
-    border-radius: 14px;
+    max-width: 220px;
+    border-radius: 12px;
     margin-top: 8px;
     cursor: pointer;
-    transition: .2s;
-}
-.media-thumb:hover {
-    transform: scale(1.05);
+    display: block;
 }
 
-/* FILE DOWNLOAD */
 .download-btn {
+    background: #eef1f6;
     padding: 10px 14px;
-    border-radius: 14px;
-    background: rgba(0,0,0,0.11);
-    color: #007bff;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 5px;
+    border-radius: 16px;
     text-decoration: none;
-}
-
-.msg.csr .download-btn {
-    background: rgba(255,255,255,0.25);
-    color: white;
+    display: inline-block;
+    font-size: 14px;
+    color: #007aff;
 }
 
 /* ===================== INPUT BAR ===================== */
 .chat-input-area {
     display: flex;
     align-items: center;
-    background: white;
-    border-radius: 40px;
+    background: #ffffff;
     padding: 12px 18px;
-    margin-top: 15px;
-    border: 1px solid #cdd7e6;
-    gap: 12px;
+    border-radius: 30px;
+    border: 1px solid #cdd6e2;
+    margin-top: 8px;
+    gap: 10px;
 }
 
 #chat-input {
     flex: 1;
     border: none;
-    font-size: 16px;
-    background: transparent;
     outline: none;
+    font-size: 15px;
+    background: transparent;
 }
 
 #send-btn,
 #upload-btn {
-    background: #007bff;
-    border: none;
-    width: 44px;
-    height: 44px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
-    color: white;
-    font-size: 18px;
+    background: #0084ff;
+    border: none;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
+    color: white;
     transition: .2s;
 }
 
@@ -252,38 +168,18 @@ body {
     transform: scale(1.12);
 }
 
-/* ===================== IMAGE LIGHTBOX ===================== */
+/* Lightbox */
 #lightbox-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    position: fixed; inset: 0;
     background: rgba(0,0,0,0.85);
     display: none;
     justify-content: center;
     align-items: center;
-    z-index: 999999;
+    z-index: 99999;
 }
 
 #lightbox-image {
     max-width: 90vw;
     max-height: 90vh;
     border-radius: 12px;
-    animation: fadeIn .25s ease-in-out;
-}
-
-#lightbox-close {
-    position: fixed;
-    top: 18px;
-    right: 28px;
-    font-size: 45px;
-    font-weight: bold;
-    cursor: pointer;
-    color: white;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to   { opacity: 1; transform: scale(1); }
 }
