@@ -1,20 +1,25 @@
 <?php
-require_once "../../db_connect.php";
+require "../../db_connect.php";
 
-$clientID = $_POST['id'];
+$id = $_POST["id"];
 
-$stmt = $conn->prepare("SELECT full_name, account_number, district, barangay, email, date_installed, is_online FROM users WHERE id = ?");
-$stmt->execute([$clientID]);
+$stmt = $conn->prepare("SELECT full_name, account_number, email, district, barangay, is_online 
+                        FROM users WHERE id = ?");
+$stmt->execute([$id]);
 $client = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if ($client):
-?>
-    <p><strong>Name:</strong> <?= htmlspecialchars($client['full_name']) ?></p>
-    <p><strong>Account #:</strong> <?= htmlspecialchars($client['account_number']) ?></p>
-    <p><strong>Email:</strong> <?= htmlspecialchars($client['email']) ?></p>
-    <p><strong>District:</strong> <?= htmlspecialchars($client['district']) ?></p>
-    <p><strong>Barangay:</strong> <?= htmlspecialchars($client['barangay']) ?></p>
-    <p><strong>Status:</strong> <?= $client['is_online'] ? "🟢 Online" : "🔴 Offline" ?></p>
-<?php else: ?>
-    <p>No information found.</p>
-<?php endif; ?>
+echo "
+<h3>".htmlspecialchars($client['full_name'])."</h3>
+
+<div class='client-action-icons'>
+    <span onclick='assignClient()' class='icon-btn add'>➕</span>
+    <span onclick='unassignClient()' class='icon-btn minus'>➖</span>
+    <span onclick='lockClient()' class='icon-btn lock'>🔒</span>
+</div>
+
+<p><strong>Account #:</strong> {$client['account_number']}</p>
+<p><strong>Email:</strong> {$client['email']}</p>
+<p><strong>District:</strong> {$client['district']}</p>
+<p><strong>Barangay:</strong> {$client['barangay']}</p>
+<p><strong>Status:</strong> ".($client["is_online"] ? "🟢 Online" : "🔴 Offline")."</p>
+";
