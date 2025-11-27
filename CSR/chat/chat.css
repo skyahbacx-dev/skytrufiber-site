@@ -1,6 +1,4 @@
-/* ============================
-   GLOBAL
-============================ */
+/* ===================== GLOBAL ===================== */
 * {
     margin: 0;
     padding: 0;
@@ -9,139 +7,136 @@
 
 body {
     font-family: "Segoe UI", Arial, sans-serif;
-    background: #f7fbff;
+    background: #f6faff;
 }
 
-/* ============================
-   LAYOUT PANELS
-============================ */
+/* ===================== MAIN LAYOUT ===================== */
 #chat-container {
     display: flex;
-    height: calc(100vh - 65px);
+    width: 100%;
+    height: calc(100vh - 80px);
     overflow: hidden;
+    background: #e7f1ff;
 }
 
-/* LEFT PANEL – CLIENTS LIST */
+/* ===================== LEFT PANEL ===================== */
 .chat-left-panel {
     width: 280px;
-    background: #ffffff;
-    border-right: 2px solid #e3ecf5;
+    background: white;
+    border-right: 2px solid #d8e4ef;
     padding: 15px;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
 }
 
-.left-header {
-    padding-bottom: 10px;
+.left-header h3 {
+    font-size: 19px;
+    font-weight: 800;
+    margin-bottom: 8px;
 }
 
 #client-search {
     width: 100%;
     padding: 10px 14px;
-    border-radius: 16px;
-    border: 1px solid #cdd7e6;
-    background: #f4f8fc;
+    border-radius: 14px;
+    border: 1px solid #cfd9e7;
+    background: #f5f8fc;
+    margin-bottom: 14px;
 }
 
+/* CLIENT LIST */
 .client-list {
-    margin-top: 12px;
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
-/* CLIENT CARD IN LIST */
 .client-item {
     padding: 12px 14px;
-    background: white;
-    border-radius: 18px;
-    border: 1px solid #cfdbe8;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #d6e5f3;
     margin-bottom: 10px;
     cursor: pointer;
     transition: .2s;
 }
 
 .client-item:hover {
-    background: #e9f3ff;
-    transform: translateY(-2px);
+    background: #eaf3ff;
+    transform: translateY(-1.5px);
+}
+
+.client-item.active {
+    background: #007bff;
+    color: white;
+    border-color: #0068d1;
+    transform: scale(1.01);
 }
 
 .client-name {
-    font-weight: bold;
+    font-weight: 700;
     font-size: 15px;
 }
 
 .client-email {
     font-size: 13px;
-    color: #7e8b98;
+    opacity: .8;
 }
 
-/* ONLINE DOT */
-.status-dot {
-    height: 9px;
-    width: 9px;
-    border-radius: 50%;
-    margin-right: 6px;
-    display: inline-block;
-    background: #d0d0d0;
-}
-
-.online { background: #33d657 !important; }
-.offline { background: #ff5555 !important; }
-
-/* ACTIVE SELECTED CLIENT */
-.client-item.active {
-    background: #007bff;
-    color: white;
-    transform: scale(1.01);
-}
-
-.client-item.active .client-email {
-    color: #f1f1f1;
-}
-
-/* ============================
-   MIDDLE PANEL – CHAT WINDOW
-============================ */
+/* ===================== CHAT PANEL (CENTER) ===================== */
 .chat-middle-panel {
     flex: 1;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    overflow-y: auto;
-    background: #e7f1ff;
 }
 
-/* CHAT HEADER NAME */
-.chat-header h3 {
+.chat-header {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #dbe7f3;
+}
+
+#chat-client-name {
     font-size: 20px;
-    margin-bottom: 14px;
-    font-weight: 600;
+    font-weight: 800;
 }
 
-/* CHAT MESSAGES CONTAINER */
+/* MESSAGES AREA */
 #chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding-bottom: 15px;
+    padding-right: 8px;
     display: flex;
     flex-direction: column;
 }
 
-/* ============================
-   CHAT BUBBLES
-============================ */
+/* Scrollbar */
+#chat-messages::-webkit-scrollbar,
+.chat-left-panel::-webkit-scrollbar {
+    width: 6px;
+}
+#chat-messages::-webkit-scrollbar-thumb,
+.chat-left-panel::-webkit-scrollbar-thumb {
+    background: #bcd4ef;
+    border-radius: 10px;
+}
+
+/* ===================== MESSAGE BUBBLES ===================== */
 .msg {
-    max-width: 70%;
+    max-width: 68%;
     padding: 12px 18px;
     border-radius: 22px;
     margin-bottom: 14px;
     position: relative;
     font-size: 15px;
     line-height: 1.4;
-    display: inline-block;
     word-wrap: break-word;
+    display: inline-block;
 }
 
-/* Client bubble */
+/* CLIENT (LEFT) */
 .msg.client {
     background: #ffffff;
     border: 1px solid #cfdbe8;
@@ -149,7 +144,6 @@ body {
     margin-right: auto;
 }
 
-/* Client tail */
 .msg.client::after {
     content: "";
     position: absolute;
@@ -159,7 +153,7 @@ body {
     border-right: 12px solid transparent;
 }
 
-/* CSR bubble */
+/* CSR (RIGHT) */
 .msg.csr {
     background: #007bff;
     color: white;
@@ -167,7 +161,6 @@ body {
     margin-left: auto;
 }
 
-/* CSR tail */
 .msg.csr::after {
     content: "";
     position: absolute;
@@ -177,37 +170,34 @@ body {
     border-left: 12px solid transparent;
 }
 
-/* Timestamp */
+/* TIMESTAMP */
 .timestamp {
     font-size: 11px;
     margin-top: 3px;
     color: #6b7a89;
 }
-
 .timestamp.csr {
-    color: #dfe9f8;
     text-align: right;
+    color: #e8f1ff;
 }
 
-/* MEDIA PREVIEW */
-.msg img.media-thumb {
+/* ===================== MEDIA PREVIEW ===================== */
+.media-thumb {
     max-width: 260px;
     border-radius: 14px;
-    margin-top: 6px;
+    margin-top: 8px;
     cursor: pointer;
     transition: .2s;
-    display: block;
 }
-
-.msg img.media-thumb:hover {
+.media-thumb:hover {
     transform: scale(1.05);
 }
 
-/* File download style */
+/* FILE DOWNLOAD */
 .download-btn {
     padding: 10px 14px;
-    border-radius: 16px;
-    background: rgba(0,0,0,0.1);
+    border-radius: 14px;
+    background: rgba(0,0,0,0.11);
     color: #007bff;
     display: inline-flex;
     align-items: center;
@@ -221,54 +211,79 @@ body {
     color: white;
 }
 
-/* ============================
-   INPUT AREA
-============================ */
+/* ===================== INPUT BAR ===================== */
 .chat-input-area {
     display: flex;
     align-items: center;
-    padding: 14px;
-    gap: 10px;
     background: white;
-    border-top: 2px solid #e3ecf5;
+    border-radius: 40px;
+    padding: 12px 18px;
+    margin-top: 15px;
+    border: 1px solid #cdd7e6;
+    gap: 12px;
 }
 
 #chat-input {
     flex: 1;
-    padding: 12px 18px;
-    border-radius: 22px;
-    border: 1px solid #cdd7e6;
-    background: #f7fbff;
-}
-
-#send-btn {
-    background: #007bff;
     border: none;
-    padding: 10px 16px;
-    border-radius: 50%;
-    color: white;
-    cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
+    background: transparent;
+    outline: none;
 }
 
-/* Upload button */
+#send-btn,
 #upload-btn {
     background: #007bff;
     border: none;
-    padding: 10px 14px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     color: white;
-    cursor: pointer;
     font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: .2s;
 }
 
-/* SCROLL STYLING */
-#chat-messages::-webkit-scrollbar,
-.chat-left-panel::-webkit-scrollbar {
-    width: 6px;
+#send-btn:hover,
+#upload-btn:hover {
+    transform: scale(1.12);
 }
-#chat-messages::-webkit-scrollbar-thumb,
-.chat-left-panel::-webkit-scrollbar-thumb {
-    background: #bcd4ef;
-    border-radius: 10px;
+
+/* ===================== IMAGE LIGHTBOX ===================== */
+#lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+}
+
+#lightbox-image {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 12px;
+    animation: fadeIn .25s ease-in-out;
+}
+
+#lightbox-close {
+    position: fixed;
+    top: 18px;
+    right: 28px;
+    font-size: 45px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
 }
