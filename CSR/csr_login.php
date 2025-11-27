@@ -3,7 +3,7 @@ session_start();
 include '../db_connect.php';
 
 if (isset($_SESSION['csr_user']) && $_SESSION['csr_user'] !== '') {
-    header("Location: csr_dashboard.php");
+    header("Location: dashboard/csr_dashboard.php");
     exit;
 }
 
