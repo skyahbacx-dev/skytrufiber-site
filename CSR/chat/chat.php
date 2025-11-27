@@ -1,103 +1,73 @@
 <?php
+if (!isset($_SESSION)) session_start();
 if (!isset($_SESSION['csr_user'])) {
-    http_response_code(401);
-    exit("Unauthorized");
+    header("Location: ../csr_login.php");
+    exit;
 }
-
-$csrUser     = $_SESSION["csr_user"];
-$csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
+$csrUser = $_SESSION["csr_user"];
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>CSR Chat — SkyTruFiber</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="chat.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-</head>
 
-<body>
+<div id="chat-container">
 
-<div id="messenger-layout">
+    <!-- LEFT PANEL — CLIENT LIST -->
+    <div class="chat-left-panel">
+        <div class="left-header">
+            <h3>Clients</h3>
+            <input type="text" id="client-search" placeholder="Search clients...">
+        </div>
 
-    <!-- LEFT CLIENT LIST -->
-    <aside id="left-panel">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search clients…">
-        <div id="clientList" class="client-scroll"></div>
-    </aside>
+        <div id="client-list" class="client-list">
+            <!-- CLIENT ITEMS RENDERED BY chat.js -->
+        </div>
+    </div>
 
-    <!-- CHAT WINDOW -->
-    <main id="chat-panel">
 
-        <header id="chat-header">
-            <div class="chat-user-info">
-                <img id="chatAvatar" src="upload/default-avatar.png" class="chat-header-avatar">
-                <div>
-                    <div id="chatName" class="chat-header-name">Select a client</div>
-                    <div id="chatStatus" class="chat-header-status">
-                        <span id="statusDot" class="status-dot offline"></span> Offline
-                    </div>
-                </div>
+    <!-- MIDDLE PANEL — CHAT WINDOW -->
+    <div class="chat-middle-panel">
+
+        <div class="chat-header">
+            <div class="chat-with">
+                <h3 id="chat-client-name">Select a Client</h3>
+                <span id="client-status" class="status-dot offline"></span>
             </div>
-            <button id="infoBtn" class="info-btn" onclick="toggleClientInfo()">ⓘ</button>
-        </header>
-
-        <section id="chatMessages" class="messages-body"></section>
-
-        <section id="previewArea" class="preview-area"></section>
-
-        <footer id="chat-input-bar">
-            <label for="fileInput" class="file-upload-icon">
-                <i class="fa-regular fa-image"></i>
-            </label>
-            <input type="file" id="fileInput" multiple style="display:none;">
-            <input type="text" id="messageInput" class="message-field" placeholder="Type a message…">
-
-            <button id="sendBtn" class="send-btn">
-                <i class="fa-solid fa-paper-plane"></i>
-            </button>
-        </footer>
-    </main>
-
-    <!-- RIGHT PANEL -->
-    <aside id="infoPanel" class="right-panel">
-        <button class="close-info" onclick="toggleClientInfo()">✖</button>
-
-        <div class="info-content">
-            <img src="upload/default-avatar.png" id="infoAvatar" class="info-avatar">
-            <h2 id="infoName">Client Name</h2>
-            <p id="infoEmail"></p>
-            <p><b>District:</b> <span id="infoDistrict"></span></p>
-            <p><b>Barangay:</b> <span id="infoBrgy"></span></p>
-
-            <hr>
-
-            <div id="assignContainer" class="assign-box">
-                <p id="assignLabel">Assign this client?</p>
-                <button id="assignBtn" class="assign-btn yes">Assign</button>
-                <button id="unassignBtn" class="assign-btn no">Unassign</button>
+            <div id="typing-indicator" class="typing-indicator" style="display:none;">
+                typing...
             </div>
         </div>
-    </aside>
+
+        <div id="chat-messages" class="chat-messages">
+            <!-- MESSAGES LOADED VIA AJAX -->
+        </div>
+
+        <div class="chat-input-area">
+            <input type="file" id="chat-upload-media" accept="image/*,video/*,application/pdf" hidden>
+            <button id="upload-btn" class="upload-btn"><i class="fa fa-paperclip"></i></button>
+
+            <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
+
+            <button id="send-btn" class="send-btn"><i class="fa fa-paper-plane"></i></button>
+        </div>
+
+    </div>
+
+
+    <!-- RIGHT PANEL — CLIENT DETAILS -->
+    <div class="chat-right-panel">
+        <div id="client-profile">
+            <h3>Client Details</h3>
+            <div id="client-info-fields">
+                <!-- Populated by chat.js -->
+            </div>
+        </div>
+
+        <div class="csr-controls">
+            <button id="lock-client-btn" class="lock-btn">🔒 Lock</button>
+            <button id="unlock-client-btn" class="unlock-btn">🔓 Unlock</button>
+            <button id="remove-client-btn" class="remove-btn">➖ Remove</button>
+        </div>
+    </div>
+
 </div>
 
-<!-- Media Modal -->
-<div id="mediaModal" class="media-viewer">
-    <span id="closeMediaModal" class="media-close">✖</span>
-    <img id="mediaModalContent" class="media-content">
-</div>
-<div id="mediaModal" onclick="this.style.display='none'">
-  <img id="mediaViewer">
-</div>
-
-<script>
-function openMedia(src){
-    document.getElementById("mediaViewer").src = src;
-    document.getElementById("mediaModal").style.display = "flex";
-}
-</script>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="csr_chat.js"></script>
-</body>
-</html>
+<!-- Hidden values for JS -->
+<input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
