@@ -1,136 +1,169 @@
-// ============================
-// GLOBALS
-// ============================
-let selectedClientID = null;
-let messageInterval = null;
-let clientLocked = false;
+// =============================================
+// SKYTRUFIBER CSR CHAT — FULL chat.js
+// =============================================
 
-// ============================
-// LOAD ALL CLIENTS
-// ============================
+// GLOBAL STATE
+let selectedClientID = null;
+let selectedClientName = null;
+let refreshClientsInterval = null;
+let refreshMessagesInterval = null;
+
+// Load clients list
 function loadClients() {
     $.ajax({
-        url: "../chat/load_clients.php",  // <-- PATH FIX
-        type: "POST",
-        success: function(data) {
-            $("#client-list").html(data);
+        url: "load_clients.php",
+        method: "POST",
+        success: function(res) {
+            $("#client-list").html(res);
         }
     });
 }
-loadClients();
-setInterval(loadClients, 4000);
 
-// ============================
-// SELECT CLIENT
-// ============================
-function selectClient(id) {
-    selectedClientID = id;
-
-    // load client info
-    $.post("../chat/load_client_info.php", { id: id }, function(html) {
-        $("#client-info-content").html(html);
-    });
-
-    // load lock status
-    $.post("../chat/check_lock.php", { id: id }, function(status) {
-        clientLocked = (status.trim() === "locked");
-        updateLockUI();
-    });
-
-    loadMessages();
-    if (messageInterval) clearInterval(messageInterval);
-    messageInterval = setInterval(loadMessages, 1500);
-
-    $("#chat-client-name").text("Loading...");
+// Auto refresh every 5 seconds
+function startClientAutoRefresh() {
+    if (refreshClientsInterval) clearInterval(refreshClientsInterval);
+    refreshClientsInterval = setInterval(loadClients, 5000);
 }
 
-// ============================
-// LOAD CHAT MESSAGES
-// ============================
+// Select a client from list
+function selectClient(clientID, clientName) {
+    selectedClientID = clientID;
+    selectedClientName = clientName;
+    $("#chat-client-name").text(clientName);
+    $("#chat-messages").html("");
+
+    loadMessages();
+    loadClientInfo();
+    startMessageAutoRefresh();
+}
+
+// Load chat messages for selected client
 function loadMessages() {
     if (!selectedClientID) return;
 
-    $.post("../chat/load_messages.php", { client_id: selectedClientID }, function(data) {
-        $("#chat-messages").html(data);
-        $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
+    $.ajax({
+        url: "load_messages.php",
+        method: "POST",
+        data: { client_id: selectedClientID },
+        success: function(res) {
+            $("#chat-messages").html(res);
+            $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
+        }
     });
 }
 
-// ============================
-// SEND MESSAGE
-// ============================
-$("#send-btn").click(() => sendMessage());
-$("#chat-input").keypress(e => { if (e.which === 13) sendMessage(); });
+// Auto refresh messages
+function startMessageAutoRefresh() {
+    if (refreshMessagesInterval) clearInterval(refreshMessagesInterval);
+    refreshMessagesInterval = setInterval(loadMessages, 2000);
+}
+
+// Send message
+$("#send-btn").on("click", function () {
+    sendMessage();
+});
+
+$("#chat-input").keypress(function (e) {
+    if (e.which === 13) sendMessage();
+});
 
 function sendMessage() {
-    if (clientLocked) return;
-    const msg = $("#chat-input").val().trim();
-    if (!msg || !selectedClientID) return;
+    if (!selectedClientID) return alert("Select a client first.");
+    let msg = $("#chat-input").val().trim();
+    if (msg === "") return;
 
-    $.post("../chat/send_message.php", {
-        client_id: selectedClientID,
-        message: msg,
-        sender_type: "csr"
-    }, function() {
-        $("#chat-input").val("");
-        loadMessages();
+    $.ajax({
+        url: "send_message.php",
+        method: "POST",
+        data: { client_id: selectedClientID, message: msg },
+        success: function (response) {
+            if (response === "LOCKED") {
+                alert("Client is locked and cannot receive messages.");
+                return;
+            }
+            $("#chat-input").val("");
+            loadMessages();
+        }
     });
 }
 
-// ============================
-// MEDIA UPLOAD
-// ============================
-$("#upload-btn").click(() => { if (!clientLocked) $("#chat-upload-media").click(); });
+// Load client details panel
+function loadClientInfo() {
+    $.ajax({
+        url: "load_client_info.php",
+        method: "POST",
+        data: { client_id: selectedClientID },
+        success: function(res) {
+            $("#client-info-content").html(res);
+        }
+    });
+}
 
-$("#chat-upload-media").change(function () {
-    if (clientLocked) return;
-    const file = this.files[0];
-    if (!file || !selectedClientID) return;
+// Assign CSR (+)
+function assignClient(clientID) {
+    $.ajax({
+        url: "assign_client.php",
+        method: "POST",
+        data: { client_id: clientID },
+        success: function() {
+            loadClients();
+            loadClientInfo();
+        }
+    });
+}
 
-    const f = new FormData();
-    f.append("file", file);
-    f.append("client_id", selectedClientID);
+// Unassign CSR (–)
+function unassignClient(clientID) {
+    $.ajax({
+        url: "unassign_client.php",
+        method: "POST",
+        data: { client_id: clientID },
+        success: function() {
+            loadClients();
+            loadClientInfo();
+        }
+    });
+}
+
+// Lock user (🔒)
+function lockClient(clientID) {
+    $.ajax({
+        url: "block_client.php",
+        method: "POST",
+        data: { client_id: clientID },
+        success: function() {
+            loadClients();
+            loadClientInfo();
+        }
+    });
+}
+
+// Upload button
+$("#upload-btn").on("click", function () {
+    $("#chat-upload-media").click();
+});
+
+// Media upload
+$("#chat-upload-media").on("change", function () {
+    let fileData = new FormData();
+    fileData.append("client_id", selectedClientID);
+    fileData.append("media", $("#chat-upload-media")[0].files[0]);
 
     $.ajax({
-        url: "../chat/upload_media.php",
-        type: "POST",
-        data: f,
-        contentType: false,
+        url: "upload_media.php",
+        method: "POST",
+        data: fileData,
+        cache: false,
         processData: false,
-        success: function() { loadMessages(); }
+        contentType: false,
+        success: function(response) {
+            loadMessages();
+        }
     });
 });
 
-// ============================
-// ACTION BUTTONS
-// ============================
-function assignClient() {
-    $.post("../chat/assign_client.php", { id: selectedClientID }, res => alert(res));
-}
-function unassignClient() {
-    $.post("../chat/unassign_client.php", { id: selectedClientID }, res => alert(res));
-}
-function lockClient() {
-    $.post("../chat/lock_client.php", { id: selectedClientID }, res => {
-        alert(res);
-        clientLocked = true;
-        updateLockUI();
-    });
-}
-
-// ============================
-// UPDATE UI BASED ON LOCK
-// ============================
-function updateLockUI() {
-    if (clientLocked) {
-        $("#chat-input").prop("disabled", true);
-        $("#send-btn").prop("disabled", true);
-        $("#upload-btn").prop("disabled", true);
-        $("#lock-overlay").show();
-    } else {
-        $("#chat-input").prop("disabled", false);
-        $("#send-btn").prop("disabled", false);
-        $("#upload-btn").prop("disabled", false);
-        $("#lock-overlay").hide();
-    }
-}
+// Start system
+$(document).ready(function () {
+    loadClients();
+    startClientAutoRefresh();
+});
