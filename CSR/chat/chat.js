@@ -171,7 +171,7 @@ function uploadMedia() {
     formData.append("csr", $("#csr-username").val());
 
     $.ajax({
-        url: "../chat/upload_media.php",
+        url: "../chat/upload_media_csr.php",
         type: "POST",
         data: formData,
         processData: false,
