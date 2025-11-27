@@ -68,3 +68,7 @@ $csrUser = $_SESSION["csr_user"];
 
 <!-- Hidden values for JS -->
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
+<div id="lightbox-overlay">
+    <span id="lightbox-close">&times;</span>
+    <img id="lightbox-image" src="">
+</div>
