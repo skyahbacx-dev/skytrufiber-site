@@ -1,23 +1,16 @@
 <?php
-session_start();
+if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-try {
-    $query = $conn->prepare("SELECT id, full_name, account_number, district, barangay, email, is_online FROM users ORDER BY full_name ASC");
-    $query->execute();
-    $clients = $query->fetchAll(PDO::FETCH_ASSOC);
+$csr = $_SESSION["csr_user"] ?? null;
+if (!$csr) exit(json_encode(["status" => false, "message" => "Unauthorized"]));
 
-    if (!$clients) {
-        echo "<p>No clients found.</p>";
-        exit;
-    }
+$stmt = $conn->prepare("
+    SELECT id, full_name, email, is_online, assigned_csr
+    FROM users
+    ORDER BY full_name ASC
+");
+$stmt->execute();
+$clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    foreach ($clients as $client) {
-        echo "<div class='client-item' onclick='selectClient(" . $client['id'] . ")'>
-                <span>" . htmlspecialchars($client['full_name']) . "</span>
-              </div>";
-    }
-} catch (Exception $e) {
-    echo "Error loading clients.";
-}
-?>
+echo json_encode(["status" => true, "clients" => $clients]);
