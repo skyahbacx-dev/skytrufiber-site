@@ -9,23 +9,27 @@ if (!$csr) {
 }
 
 try {
-
+    // Get all clients; we use only columns that really exist
     $stmt = $conn->prepare("
-        SELECT 
+        SELECT
             u.id,
             u.full_name,
             u.email,
             u.is_online,
             u.assigned_csr,
             COALESCE(
-                (SELECT message FROM chat WHERE client_id = u.id ORDER BY created_at DESC LIMIT 1),
+                (SELECT message
+                 FROM chat
+                 WHERE client_id = u.id
+                 ORDER BY created_at DESC
+                 LIMIT 1),
                 ''
             ) AS last_message
         FROM users u
         ORDER BY u.full_name ASC
     ");
-
     $stmt->execute();
+
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     if (!$users) {
@@ -34,39 +38,38 @@ try {
     }
 
     foreach ($users as $u) {
+        $id    = (int)$u["id"];
+        $name  = htmlspecialchars($u["full_name"]);
+        $email = htmlspecialchars($u["email"]);
+        $last  = htmlspecialchars($u["last_message"]);
 
-        $online = $u["is_online"] ? "online" : "offline";
+        $onlineClass = $u["is_online"] ? "online" : "offline";
 
+        // assignment logic
         $isUnassigned = empty($u["assigned_csr"]);
-        $isMine = ($u["assigned_csr"] === $csr);
-        $isLocked = (!$isUnassigned && !$isMine);
+        $isMine       = ($u["assigned_csr"] === $csr);
+        $isLocked     = (!$isUnassigned && !$isMine);
 
-        $addBtn = $isUnassigned
-            ? "<button class='icon add-client' data-id='{$u['id']}'><i class='fa fa-plus'></i></button>" : "";
-
-        $removeBtn = $isMine
-            ? "<button class='icon remove-client' data-id='{$u['id']}'><i class='fa fa-minus'></i></button>" : "";
-
-        $lockBtn = $isLocked
-            ? "<button class='icon lock-client' disabled><i class='fa fa-lock'></i></button>" : "";
+        $addBtn    = $isUnassigned ? "<button class='client-action-btn add-client' data-id='$id'><i class='fa fa-plus'></i></button>" : "";
+        $removeBtn = $isMine       ? "<button class='client-action-btn remove-client' data-id='$id'><i class='fa fa-minus'></i></button>" : "";
+        $lockBtn   = $isLocked     ? "<button class='client-action-btn lock-client' disabled><i class='fa fa-lock'></i></button>" : "";
 
         echo "
-        <div class='client-item' data-id='{$u['id']}'>
-            <div class='client-status $online'></div>
-            <div class='client-info'>
-                <strong>{$u['full_name']}</strong>
-                <small>{$u['email']}</small>
-                <small class='last-msg'>{$u['last_message']}</small>
+        <div class='client-item' data-id='$id' data-name='$name'>
+            <div class='client-status $onlineClass'></div>
+            <div class='client-row-left'>
+                <strong>$name</strong>
+                <small>$email</small>
+                <small class='last-msg'>$last</small>
             </div>
-            <div class='client-icons'>
+            <div class='client-row-actions'>
                 $addBtn
                 $removeBtn
                 $lockBtn
             </div>
-        </div>
-        ";
+        </div>";
     }
 
 } catch (PDOException $e) {
-    echo \"DB ERROR: \" . $e->getMessage();
+    echo 'DB ERROR: ' . htmlspecialchars($e->getMessage());
 }
