@@ -72,3 +72,26 @@ $csrUser = $_SESSION["csr_user"];
     <span id="lightbox-close">&times;</span>
     <img id="lightbox-image" src="">
 </div>
+<!-- MULTI PREVIEW MODAL -->
+<div id="media-preview-modal" class="media-modal" style="display:none;">
+  <div class="media-modal-content">
+      <h3>Send Media</h3>
+      <div id="media-preview-grid" class="preview-grid"></div>
+
+      <div class="media-modal-actions">
+          <button id="media-cancel-btn" class="btn-cancel">Cancel</button>
+          <button id="media-send-btn" class="btn-send">Send</button>
+      </div>
+  </div>
+</div>
+
+<!-- FULLSCREEN IMAGE VIEWER -->
+<div id="image-viewer" class="image-viewer" style="display:none;">
+    <button id="viewer-close" class="viewer-close">✕</button>
+    <img id="viewer-img" class="viewer-img" src="" />
+</div>
+
+<!-- Loading Overlay -->
+<div id="upload-loading" class="upload-loading" style="display:none;">
+    <div class="spinner"></div>
+</div>
