@@ -1,90 +1,195 @@
+// ==============================
+// CSR CHAT – FULL JS
+// ==============================
+
+let currentClientID = null;
+let messagePoll = null;
+
 $(document).ready(function () {
 
-    let selectedClient = null;
-    let audioNotify = new Audio("../sound/new_message.wav");
-
+    // initial load + polling for clients
     loadClients();
-    setInterval(loadClients, 3000);
+    setInterval(loadClients, 4000);
 
-    function loadClients() {
-        $.post("../chat/load_clients.php", {}, function (data) {
-            $("#client-list").html(data);
+    // search filter
+    $("#client-search").on("keyup", function () {
+        const q = $(this).val().toLowerCase();
+        $("#client-list .client-item").each(function () {
+            $(this).toggle($(this).text().toLowerCase().indexOf(q) !== -1);
         });
-    }
-
-    $(document).on("click", ".client-item", function () {
-        selectedClient = $(this).data("id");
-        $("#chat-client-name").text($(this).find("strong").text());
-        $("#chat-messages").html("");
-        loadMessages();
-        pollMessages();
     });
 
-    function pollMessages() {
-        setInterval(function () {
-            if (selectedClient !== null) {
-                loadMessages();
-            }
-        }, 2000);
-    }
+    // send message by button
+    $("#send-btn").on("click", function () {
+        sendMessage();
+    });
 
-    function loadMessages() {
-        $.post("../chat/load_messages.php", { client_id: selectedClient }, function (res) {
-            let data = JSON.parse(res);
-            $("#chat-messages").html(data.messages);
-            $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
-
-            if (data.new_message) {
-                audioNotify.play();
-                showToast("New message received");
-            }
-
-            updateStatusIndicators(data);
-        });
-    }
-
-    function updateStatusIndicators(data) {
-        if (data.is_online == 1) {
-            $("#client-status").removeClass("offline").addClass("online");
+    // send by Enter
+    $("#chat-input").on("keypress", function (e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            sendMessage();
         } else {
-            $("#client-status").removeClass("online").addClass("offline");
+            // optional typing ping if you have typing_update.php
+            if (currentClientID) {
+                $.post("../chat/typing_update.php", {
+                    client_id: currentClientID,
+                    typing: 1,
+                    user: "csr"
+                });
+            }
         }
-
-        $("#typing-indicator").toggle(data.is_typing == 1);
-    }
-
-    $("#send-btn").click(sendMessage);
-    $("#chat-input").keypress(function (e) {
-        if (e.which === 13) sendMessage();
-        updateTyping(1);
     });
 
-    function sendMessage() {
-        let text = $("#chat-input").val().trim();
-        if (!text || selectedClient == null) return;
+    // upload media
+    $("#upload-btn").on("click", function () {
+        $("#chat-upload-media").click();
+    });
 
-        $.post("../chat/send_message.php", {
-            client_id: selectedClient,
-            message: text,
-            sender_type: "csr"
-        }, function () {
-            $("#chat-input").val("");
-            updateTyping(0);
-            loadMessages();
-        });
-    }
+    $("#chat-upload-media").on("change", function () {
+        if (currentClientID) {
+            uploadMedia();
+        }
+    });
 
-    function updateTyping(status) {
-        $.post("../chat/typing_update.php", {
-            client_id: selectedClient,
-            typing: status
-        });
-    }
+    // delegate client row click
+    $(document).on("click", ".client-item", function (e) {
+        // ignore click from action buttons (they handle themselves)
+        if ($(e.target).closest(".client-row-actions").length) return;
 
-    function showToast(message) {
-        let t = $("<div class='toast-msg'>" + message + "</div>");
-        $("body").append(t);
-        setTimeout(() => t.fadeOut(400, () => t.remove()), 2000);
-    }
+        const id   = $(this).data("id");
+        const name = $(this).data("name");
+
+        currentClientID = id;
+        $("#chat-client-name").text(name);
+
+        loadClientInfo(id);
+        loadMessages(true);
+
+        if (messagePoll) clearInterval(messagePoll);
+        messagePoll = setInterval(() => {
+            if (currentClientID) loadMessages(false);
+        }, 2000);
+    });
+
+    // delegate assign / remove / lock icons
+    $(document).on("click", ".add-client", function (e) {
+        e.stopPropagation();
+        const id = $(this).data("id");
+        assignClient(id);
+    });
+
+    $(document).on("click", ".remove-client", function (e) {
+        e.stopPropagation();
+        const id = $(this).data("id");
+        removeClient(id);
+    });
+
+    // lock is just visual for now – no action, but prevent click bubbling
+    $(document).on("click", ".lock-client", function (e) {
+        e.stopPropagation();
+    });
 
 });
+
+// ==============================
+// CLIENT LIST
+// ==============================
+function loadClients() {
+    $.ajax({
+        url: "../chat/load_clients.php",
+        type: "POST",
+        success: function (html) {
+            $("#client-list").html(html);
+        }
+    });
+}
+
+// ==============================
+// CLIENT INFO (RIGHT PANEL)
+// ==============================
+function loadClientInfo(clientID) {
+    $.ajax({
+        url: "../chat/load_client_info.php",
+        type: "POST",
+        data: { client_id: clientID },
+        success: function (html) {
+            $("#client-info-content").html(html);
+        }
+    });
+}
+
+// ==============================
+// MESSAGES
+// ==============================
+function loadMessages(scrollToBottom) {
+    if (!currentClientID) return;
+
+    $.ajax({
+        url: "../chat/load_messages.php",
+        type: "POST",
+        data: { client_id: currentClientID },
+        success: function (html) {
+            $("#chat-messages").html(html);
+            if (scrollToBottom) {
+                $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
+            }
+        }
+    });
+}
+
+function sendMessage() {
+    const text = $("#chat-input").val().trim();
+    if (!text || !currentClientID) return;
+
+    $.ajax({
+        url: "../chat/send_message.php",
+        type: "POST",
+        data: {
+            client_id: currentClientID,
+            message: text,
+            sender_type: "csr"
+        },
+        success: function () {
+            $("#chat-input").val("");
+            loadMessages(true);
+        }
+    });
+}
+
+function uploadMedia() {
+    const fileInput = $("#chat-upload-media")[0];
+    if (!fileInput.files.length) return;
+
+    const formData = new FormData();
+    formData.append("media", fileInput.files[0]);
+    formData.append("client_id", currentClientID);
+    formData.append("user", "csr");
+
+    $.ajax({
+        url: "../chat/upload_media.php",
+        type: "POST",
+        data: formData,
+        contentType: false,
+        processData: false,
+        success: function () {
+            $("#chat-upload-media").val("");
+            loadMessages(true);
+        }
+    });
+}
+
+// ==============================
+// ASSIGN / UNASSIGN
+// ==============================
+function assignClient(clientID) {
+    $.post("../chat/assign_client.php", { client_id: clientID }, function () {
+        loadClients();
+    });
+}
+
+function removeClient(clientID) {
+    $.post("../chat/unassign_client.php", { client_id: clientID }, function () {
+        loadClients();
+    });
+}
