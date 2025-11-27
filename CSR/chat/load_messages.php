@@ -3,13 +3,9 @@ if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
 $clientID = $_POST["client_id"] ?? null;
-$csrUser  = $_SESSION["csr_user"] ?? null;
+if (!$clientID) exit;
 
-if (!$clientID) {
-    echo "<p style='padding:10px; color:#777'>No client selected</p>";
-    exit;
-}
-
+// Fetch messages
 $stmt = $conn->prepare("
     SELECT sender_type, message, media, created_at
     FROM chat
@@ -19,50 +15,58 @@ $stmt = $conn->prepare("
 $stmt->execute([":cid" => $clientID]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Fetch online and typing states
+$info = $conn->prepare("
+    SELECT is_online, is_typing
+    FROM users
+    WHERE id = ?
+    LIMIT 1
+");
+$info->execute([$clientID]);
+$clientState = $info->fetch(PDO::FETCH_ASSOC);
+
+$return = [
+    "messages" => "",
+    "is_online" => $clientState["is_online"] ?? 0,
+    "is_typing" => $clientState["is_typing"] ?? 0
+];
+
 if (!$messages) {
-    echo "<p style='padding:10px; color:#777'>Start conversation now...</p>";
+    $return["messages"] = "<p style='padding:10px;color:#666'>Start conversation...</p>";
+    echo json_encode($return);
     exit;
 }
 
-foreach ($messages as $m):
+$html = "";
+foreach ($messages as $m) {
     $sender = $m["sender_type"];
     $msg    = htmlspecialchars($m["message"]);
     $media  = $m["media"];
     $time   = date("h:i A", strtotime($m["created_at"]));
-    
-    // Determine message alignment
+
     $class = ($sender === "csr") ? "msg-csr" : "msg-client";
-?>
 
-<div class="chat-bubble <?= $class ?>">
+    $html .= "<div class='chat-bubble $class'>";
 
-    <?php if ($media): ?>
-        <?php
+    if ($media) {
         $ext = strtolower(pathinfo($media, PATHINFO_EXTENSION));
 
         if (in_array($ext, ["jpg","jpeg","png","gif"])) {
-            echo "<img class='chat-img' src=\"../upload/chat_images/$media\">";
-        }
-        else if (in_array($ext, ["mp4","mov","avi"])) {
-            echo "<video class='chat-video' controls src=\"../upload/chat_videos/$media\"></video>";
-        }
-        else if ($ext === "pdf") {
-            echo "<a class='chat-file' href=\"../upload/chat_files/$media\" target='_blank'>
-                    📄 View PDF
-                  </a>";
+            $html .= "<img class='chat-img' src=\"../upload/chat_images/$media\">";
+        } elseif (in_array($ext, ["mp4","mov","avi"])) {
+            $html .= "<video class='chat-video' controls src=\"../upload/chat_videos/$media\"></video>";
+        } elseif ($ext === "pdf") {
+            $html .= "<a class='chat-file' href=\"../upload/chat_files/$media\" target='_blank'>📄 View PDF</a>";
         } else {
-            echo "<a class='chat-file' href=\"../upload/chat_files/$media\" download>
-                    📎 Download File
-                  </a>";
+            $html .= "<a class='chat-file' download href=\"../upload/chat_files/$media\">📎 Download File</a>";
         }
-        ?>
-    <?php endif; ?>
+    }
 
-    <?php if ($msg): ?>
-        <p><?= $msg ?></p>
-    <?php endif; ?>
+    if ($msg) $html .= "<p>$msg</p>";
+    $html .= "<small class='chat-time'>$time</small>";
+    $html .= "</div>";
+}
 
-    <small class="chat-time"><?= $time ?></small>
-</div>
+$return["messages"] = $html;
 
-<?php endforeach; ?>
+echo json_encode($return);
