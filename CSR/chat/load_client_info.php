@@ -2,40 +2,31 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-if (!isset($_POST["client_id"])) {
-    echo "<p>No client selected.</p>";
-    exit;
-}
-
-$clientID = $_POST["client_id"];
+$clientID = $_POST["client_id"] ?? null;
+if (!$clientID) exit("No client");
 
 try {
     $stmt = $conn->prepare("
-        SELECT full_name, email, district, barangay, is_online, assigned_csr, is_locked
+        SELECT id, full_name, email, district, barangay, is_online, assigned_csr
         FROM users
-        WHERE id = ?
+        WHERE id = :cid
         LIMIT 1
     ");
-    $stmt->execute([$clientID]);
-    $client = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt->execute([":cid" => $clientID]);
+    $c = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$client) {
-        echo "<p>Client not found.</p>";
-        exit;
-    }
+    if (!$c) exit("Invalid client");
+
+    $online = $c["is_online"] ? "Online" : "Offline";
 
     echo "
-        <h3>" . htmlspecialchars($client['full_name'], ENT_QUOTES) . "</h3>
-        <p><strong>Email:</strong> {$client['email']}</p>
-        <p><strong>District:</strong> {$client['district']}</p>
-        <p><strong>Barangay:</strong> {$client['barangay']}</p>
-        <p><strong>Status:</strong> " . ($client['is_online'] ? "🟢 Online" : "🔴 Offline") . "</p>
-        <p><strong>Assigned CSR:</strong> " . ($client['assigned_csr'] ?? "None") . "</p>
-        <p><strong>Lock:</strong> " . ($client['is_locked'] ? "🔒 Locked" : "Unlocked") . "</p>
+        <p><strong>Name:</strong> {$c['full_name']}</p>
+        <p><strong>Email:</strong> {$c['email']}</p>
+        <p><strong>District:</strong> {$c['district']}</p>
+        <p><strong>Barangay:</strong> {$c['barangay']}</p>
+        <p><strong>Status:</strong> $online</p>
     ";
 
 } catch (PDOException $e) {
-    echo "<p>DB Error: " . htmlspecialchars($e->getMessage()) . "</p>";
-    exit;
+    echo \"DB Error: \" . htmlspecialchars($e->getMessage());
 }
-?>
