@@ -17,6 +17,7 @@ echo "
     <span onclick='lockClient()' class='icon-btn lock'>🔒</span>
 </div>
 
+
 <p><strong>Account #:</strong> {$client['account_number']}</p>
 <p><strong>Email:</strong> {$client['email']}</p>
 <p><strong>District:</strong> {$client['district']}</p>
