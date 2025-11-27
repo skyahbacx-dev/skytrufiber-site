@@ -202,3 +202,17 @@
 }
 .remove-btn { background: #d9534f; }
 .unlock-btn { background: #22b14c; }
+.lock-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    font-size: 22px;
+    font-weight: bold;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.65);
+    color: white;
+    padding: 18px 28px;
+    border-radius: 12px;
+    z-index: 10;
+    pointer-events: none;
+}
