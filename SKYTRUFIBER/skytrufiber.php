@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 // REDIRECT TO CHAT PAGE
-                header("Location: chat_support.php?username=" . urlencode($user['full_name']));
+                header("Location: chat/chat_support.php?username=" . urlencode($user['full_name']));
                 exit;
 
             } else {
