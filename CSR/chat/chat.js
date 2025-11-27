@@ -3,6 +3,7 @@
 // ============================
 let selectedClientID = null;
 let messageInterval = null;
+let clientLocked = false;
 
 // ============================
 // LOAD ALL CLIENTS
@@ -28,6 +29,12 @@ function selectClient(id) {
     // load client info panel
     $.post("load_client_info.php", { id: id }, function(html) {
         $("#client-info-content").html(html);
+    });
+
+    // load lock status
+    $.post("check_lock.php", { id: id }, function(status) {
+        clientLocked = (status.trim() === "locked");
+        updateLockUI();
     });
 
     // load chat messages
@@ -57,6 +64,7 @@ $("#send-btn").click(() => sendMessage());
 $("#chat-input").keypress(e => { if (e.which === 13) sendMessage(); });
 
 function sendMessage() {
+    if (clientLocked) return;
     const msg = $("#chat-input").val().trim();
     if (!msg || !selectedClientID) return;
 
@@ -73,9 +81,13 @@ function sendMessage() {
 // ============================
 // MEDIA UPLOAD
 // ============================
-$("#upload-btn").click(() => $("#chat-upload-media").click());
+$("#upload-btn").click(() => {
+    if (!clientLocked) $("#chat-upload-media").click();
+});
 
 $("#chat-upload-media").change(function () {
+    if (clientLocked) return;
+
     const file = this.files[0];
     if (!file || !selectedClientID) return;
 
@@ -96,7 +108,7 @@ $("#chat-upload-media").change(function () {
 });
 
 // ============================
-// BUTTON LOGIC
+// ACTION BUTTONS
 // ============================
 function assignClient() {
     $.post("assign_client.php", { id: selectedClientID }, res => alert(res));
@@ -107,5 +119,26 @@ function unassignClient() {
 }
 
 function lockClient() {
-    $.post("lock_client.php", { id: selectedClientID }, res => alert(res));
+    $.post("lock_client.php", { id: selectedClientID }, res => {
+        alert(res);
+        clientLocked = true;
+        updateLockUI();
+    });
+}
+
+// ============================
+// LOCK UI HANDLER
+// ============================
+function updateLockUI() {
+    if (clientLocked) {
+        $("#chat-input").prop("disabled", true);
+        $("#send-btn").prop("disabled", true);
+        $("#upload-btn").prop("disabled", true);
+        $("#lock-overlay").show();
+    } else {
+        $("#chat-input").prop("disabled", false);
+        $("#send-btn").prop("disabled", false);
+        $("#upload-btn").prop("disabled", false);
+        $("#lock-overlay").hide();
+    }
 }
