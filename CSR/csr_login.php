@@ -31,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $conn->prepare("UPDATE csr_users SET last_seen = NOW() WHERE username = :u")
                     ->execute([":u" => $row["username"]]);
 
-                header("Location: csr_dashboard.php");
+                header("Location: dashboard/csr_dashboard.php");
                 exit;
             } else {
                 $error = "Invalid password.";
