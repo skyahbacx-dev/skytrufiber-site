@@ -9,7 +9,6 @@ if (!$csr) {
 }
 
 try {
-    // Get all clients; we use only columns that really exist
     $stmt = $conn->prepare("
         SELECT
             u.id,
@@ -17,57 +16,58 @@ try {
             u.email,
             u.is_online,
             u.assigned_csr,
+            u.is_locked,
             COALESCE(
-                (SELECT message
-                 FROM chat
-                 WHERE client_id = u.id
-                 ORDER BY created_at DESC
-                 LIMIT 1),
+                (SELECT message FROM chat WHERE client_id = u.id ORDER BY created_at DESC LIMIT 1),
                 ''
             ) AS last_message
         FROM users u
         ORDER BY u.full_name ASC
     ");
     $stmt->execute();
+    $clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    if (!$users) {
-        echo "<p style='padding:10px;color:#777'>No clients registered.</p>";
+    if (!$clients) {
+        echo "<p style='padding:10px;color:#777'>No clients available.</p>";
         exit;
     }
 
-    foreach ($users as $u) {
-        $id    = (int)$u["id"];
-        $name  = htmlspecialchars($u["full_name"]);
-        $email = htmlspecialchars($u["email"]);
-        $last  = htmlspecialchars($u["last_message"]);
+    foreach ($clients as $c) {
 
-        $onlineClass = $u["is_online"] ? "online" : "offline";
+        $id      = (int)$c["id"];
+        $name    = htmlspecialchars($c["full_name"]);
+        $email   = htmlspecialchars($c["email"]);
+        $lastMsg = htmlspecialchars($c["last_message"]);
+        $online  = $c["is_online"] ? "online" : "offline";
 
-        // assignment logic
-        $isUnassigned = empty($u["assigned_csr"]);
-        $isMine       = ($u["assigned_csr"] === $csr);
-        $isLocked     = (!$isUnassigned && !$isMine);
+        $assignedCSR = $c["assigned_csr"];
+        $locked      = $c["is_locked"];
 
-        $addBtn    = $isUnassigned ? "<button class='client-action-btn add-client' data-id='$id'><i class='fa fa-plus'></i></button>" : "";
-        $removeBtn = $isMine       ? "<button class='client-action-btn remove-client' data-id='$id'><i class='fa fa-minus'></i></button>" : "";
-        $lockBtn   = $isLocked     ? "<button class='client-action-btn lock-client' disabled><i class='fa fa-lock'></i></button>" : "";
+        // Determine which icon set appears
+        $showAdd = empty($assignedCSR) && !$locked;
+        $showRemove = ($assignedCSR == $csr);
+        $showLockIcon = ($locked || (!empty($assignedCSR) && $assignedCSR != $csr));
+
+        $addBtn    = $showAdd    ? "<button class='client-action-btn add-client' data-id='$id'><i class='fa fa-plus'></i></button>" : "";
+        $removeBtn = $showRemove ? "<button class='client-action-btn remove-client' data-id='$id'><i class='fa fa-minus'></i></button>" : "";
+        $lockBtn   = $showLockIcon ? "<button class='client-action-btn lock-client' disabled><i class='fa fa-lock'></i></button>" : "";
 
         echo "
         <div class='client-item' data-id='$id' data-name='$name'>
-            <div class='client-status $onlineClass'></div>
-            <div class='client-row-left'>
+            <div class='client-status $online'></div>
+            <div class='client-info'>
                 <strong>$name</strong>
                 <small>$email</small>
-                <small class='last-msg'>$last</small>
+                <small class='last-msg'>$lastMsg</small>
             </div>
-            <div class='client-row-actions'>
+
+            <div class='client-icons'>
                 $addBtn
                 $removeBtn
                 $lockBtn
             </div>
-        </div>";
+        </div>
+        ";
     }
 
 } catch (PDOException $e) {
