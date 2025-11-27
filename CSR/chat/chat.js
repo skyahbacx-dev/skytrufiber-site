@@ -101,12 +101,11 @@ $("#chat-upload-media").change(function () {
 function assignClient() {
     $.post("assign_client.php", { id: selectedClientID }, res => alert(res));
 }
+
 function unassignClient() {
     $.post("unassign_client.php", { id: selectedClientID }, res => alert(res));
 }
+
 function lockClient() {
     $.post("lock_client.php", { id: selectedClientID }, res => alert(res));
-}
-function unlockClient() {
-    $.post("unlock_client.php", { id: selectedClientID }, res => alert(res));
 }
