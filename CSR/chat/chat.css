@@ -234,3 +234,104 @@
     margin: 8px 0;
     font-size: 15px;
 }
+/* ===== CHAT MESSAGE BUBBLES ===== */
+.msg {
+    max-width: 70%;
+    padding: 12px 18px;
+    border-radius: 22px;
+    margin-bottom: 14px;
+    position: relative;
+    font-size: 15px;
+    line-height: 1.4;
+    display: inline-block;
+    word-wrap: break-word;
+}
+
+/* CLIENT (Left bubble) */
+.msg.client {
+    background: #ffffff;
+    border: 1px solid #cfdbe8;
+    align-self: flex-start;
+    margin-right: auto;
+}
+
+/* Bubble Tail - Client */
+.msg.client::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -10px;
+    width: 0;
+    height: 0;
+    border-top: 12px solid #ffffff;
+    border-right: 12px solid transparent;
+}
+
+/* CSR (Right bubble) */
+.msg.csr {
+    background: #007bff;
+    color: white;
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+/* Bubble Tail - CSR */
+.msg.csr::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: -10px;
+    width: 0;
+    height: 0;
+    border-top: 12px solid #007bff;
+    border-left: 12px solid transparent;
+}
+
+/* TIMESTAMP BELOW BUBBLE */
+.timestamp {
+    font-size: 11px;
+    color: #6b7a89;
+    margin-top: 3px;
+}
+
+.timestamp.csr {
+    text-align: right;
+    color: #e5ecf5;
+}
+
+/* IMAGE / MEDIA */
+.msg img.media-thumb {
+    max-width: 260px;
+    border-radius: 14px;
+    margin-top: 6px;
+    cursor: pointer;
+    transition: .2s;
+    display: block;
+}
+
+.msg img.media-thumb:hover {
+    transform: scale(1.03);
+}
+
+/* FILE DOWNLOAD BUTTON */
+.download-btn {
+    padding: 10px 14px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.12);
+    color: #007bff;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 5px;
+    text-decoration: none;
+}
+
+.msg.csr .download-btn {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+}
+
+.download-btn:hover {
+    filter: brightness(90%);
+}
+
