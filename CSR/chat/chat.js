@@ -1,143 +1,181 @@
-// ============ GLOBAL STATE ============
-let selectedClientId = null;
-let pollingInterval = null;
-let isTyping = false;
-let typingTimeout = null;
+// =============================
+//  CSR CHAT JAVASCRIPT HANDLER
+// =============================
 
-// ============ INITIAL SETUP ============
+// Refresh intervals
+let refreshMessages;
+let refreshTyping;
+
+// Load clients list immediately when page loads
 $(document).ready(function () {
     loadClients();
-    startPolling();
 
-    $("#send-btn").on("click", sendMessage);
-
-    $("#chat-input").on("keypress", function (e) {
-        if (e.which === 13) {  // Enter key
-            sendMessage();
-        } else {
-            updateTypingStatus(true);
-        }
+    $("#searchClient").on("keyup", function(){
+        const value = $(this).val().toLowerCase();
+        $(".client-item").filter(function(){
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
     });
-
-    $("#upload-btn").on("click", () => $("#chat-upload-media").click());
-    $("#chat-upload-media").on("change", uploadMedia);
 });
 
-// ============ AUTO REFRESH ============
-
-function startPolling() {
-    if (pollingInterval) clearInterval(pollingInterval);
-    pollingInterval = setInterval(() => {
-        if (selectedClientId !== null) {
-            loadMessages();
-            checkTyping();
-        }
-        loadClients(); // keep client list fresh
-    }, 2000);
-}
-
-// ============ LOAD CLIENTS ============
+// =============================
+// LOAD CLIENT LIST
+// =============================
 function loadClients() {
-    $.post("load_clients.php", { csr: $("#csr-username").val() }, function (data) {
-        $("#client-list").html(data);
-
-        $(".client-item").off("click").on("click", function () {
-            selectedClientId = $(this).data("id");
-            $("#chat-client-name").text($(this).data("name"));
-            $("#client-status").removeClass().addClass("status-dot " + $(this).data("status"));
-            loadClientDetails(selectedClientId);
-            loadMessages();
-        });
-    });
-}
-
-// ============ LOAD CLIENT DETAILS ============
-function loadClientDetails(clientId) {
-    $.post("client_details.php", { client_id: clientId }, function (data) {
-        $("#client-info-fields").html(data);
-    });
-}
-
-// ============ LOAD MESSAGES ============
-function loadMessages() {
-    $.post("load_messages.php", { client_id: selectedClientId }, function (data) {
-        $("#chat-messages").html(data);
-        $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
-        updateSeen();
-    });
-}
-
-// ============ SEND MESSAGE ============
-function sendMessage() {
-    const message = $("#chat-input").val().trim();
-    if (message === "" || selectedClientId === null) return;
-
-    $.post("send_message.php", {
-        client_id: selectedClientId,
-        csr: $("#csr-username").val(),
-        message: message
-    }, function () {
-        $("#chat-input").val("");
-        loadMessages();
-        updateTypingStatus(false);
-    });
-}
-
-// ============ SEEN UPDATE ============
-function updateSeen() {
-    $.post("seen_update.php", { client_id: selectedClientId });
-}
-
-// ============ TYPING ============
-
-function updateTypingStatus(status) {
-    if (!selectedClientId) return;
-
-    $.post("typing_update.php", {
-        client_id: selectedClientId,
-        csr: $("#csr-username").val(),
-        typing: status ? 1 : 0
-    });
-
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => {
-        $.post("typing_update.php", {
-            client_id: selectedClientId,
-            csr: $("#csr-username").val(),
-            typing: 0
-        });
-    }, 2000);
-}
-
-function checkTyping() {
-    $.post("check_typing.php", { client_id: selectedClientId }, function (data) {
-        if (data.trim() === "1") {
-            $("#typing-indicator").show();
-        } else {
-            $("#typing-indicator").hide();
+    $.ajax({
+        url: "/CSR/chat/load_clients.php",
+        type: "POST",
+        success: function (data) {
+            $("#client-list").html(data);
+        },
+        error: function () {
+            console.log("ERROR: load_clients.php failed");
         }
     });
 }
 
-// ============ MEDIA UPLOAD ============
-function uploadMedia() {
-    const file = $("#chat-upload-media")[0].files[0];
-    if (!file || !selectedClientId) return;
 
-    const formData = new FormData();
-    formData.append("media", file);
-    formData.append("client_id", selectedClientId);
-    formData.append("csr", $("#csr-username").val());
+// =============================
+// SELECT A CLIENT TO OPEN CHAT
+// =============================
+function openChat(client_id) {
+
+    $("#selected-client").val(client_id);
+
+    $("#chat-messages").html(
+        '<div style="text-align:center;margin-top:30px;color:#999;">Loading messages...</div>'
+    );
+
+    loadMessages();
+
+    clearInterval(refreshMessages);
+    refreshMessages = setInterval(loadMessages, 1500);
+
+    clearInterval(refreshTyping);
+    refreshTyping = setInterval(checkTyping, 1200);
+}
+
+
+// =============================
+// LOAD CHAT MESSAGES
+// =============================
+function loadMessages() {
+    const client_id = $("#selected-client").val();
+
+    if (!client_id) return;
 
     $.ajax({
-        url: "media_upload.php",
-        method: "POST",
+        url: "/CSR/chat/load_messages.php",
+        type: "POST",
+        data: { client_id: client_id },
+        success: function (data) {
+            $("#chat-messages").html(data);
+            $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
+        },
+        error: function () {
+            console.log("ERROR: load_messages.php failed");
+        }
+    });
+}
+
+
+// =============================
+// SEND TEXT MESSAGE
+// =============================
+function sendMessage() {
+    const message = $("#message-box").val();
+    const client_id = $("#selected-client").val();
+
+    if (!message.trim() || !client_id) return;
+
+    $.ajax({
+        url: "/CSR/chat/send_message.php",
+        type: "POST",
+        data: { client_id: client_id, message: message },
+        success: function () {
+            $("#message-box").val("");
+            loadMessages();
+        },
+        error: function () {
+            console.log("ERROR: send_message.php failed");
+        }
+    });
+}
+
+
+// =============================
+// TYPING INDICATOR (CSR typing)
+// =============================
+$("#message-box").on("input", function () {
+    const client_id = $("#selected-client").val();
+
+    $.post("/CSR/chat/typing_update.php", {
+        client_id: client_id,
+        typing: 1
+    });
+
+    setTimeout(function () {
+        $.post("/CSR/chat/typing_update.php", {
+            client_id: client_id,
+            typing: 0
+        });
+    }, 1200);
+});
+
+
+// =============================
+// CHECK IF CLIENT IS TYPING
+// =============================
+function checkTyping() {
+    const client_id = $("#selected-client").val();
+    if (!client_id) return;
+
+    $.ajax({
+        url: "/CSR/chat/check_typing.php",
+        type: "POST",
+        data: { client_id: client_id },
+        success: function (response) {
+            if (response.trim() === "1") {
+                $("#typing-indicator").show();
+            } else {
+                $("#typing-indicator").hide();
+            }
+        },
+        error: function () {
+            console.log("ERROR: typing check failed");
+        }
+    });
+}
+
+
+// =============================
+// MEDIA UPLOAD
+// =============================
+function triggerUpload() {
+    $("#media-input").click();
+}
+
+function uploadMedia() {
+    const client_id = $("#selected-client").val();
+    const file = $("#media-input")[0].files[0];
+
+    if (!file || !client_id) return;
+
+    let formData = new FormData();
+    formData.append("file", file);
+    formData.append("client_id", client_id);
+
+    $.ajax({
+        url: "/CSR/chat/upload_media.php",
+        type: "POST",
         data: formData,
         contentType: false,
         processData: false,
         success: function () {
-            $("#chat-upload-media").val("");
             loadMessages();
+        },
+        error: function () {
+            console.log("ERROR: upload_media.php failed");
         }
     });
 }
