@@ -54,18 +54,12 @@ $csrUser = $_SESSION["csr_user"];
     <!-- RIGHT PANEL — CLIENT DETAILS -->
     <div class="chat-right-panel">
         <div id="client-profile">
-            <h3>Client Details</h3>
-            <div id="client-info-fields">
-                <!-- Populated by chat.js -->
-            </div>
-        </div>
+<div id="client-info-panel" class="client-info-panel">
+    <h3>Client Details</h3>
+    <p>Select a client to view details</p>
+    <div id="client-info-content"></div>
+</div>
 
-        <div class="csr-controls">
-            <button id="lock-client-btn" class="lock-btn">🔒 Lock</button>
-            <button id="unlock-client-btn" class="unlock-btn">🔓 Unlock</button>
-            <button id="remove-client-btn" class="remove-btn">➖ Remove</button>
-        </div>
-    </div>
 
 </div>
 
