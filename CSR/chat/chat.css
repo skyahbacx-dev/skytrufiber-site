@@ -183,3 +183,78 @@ body {
     max-height: 90vh;
     border-radius: 12px;
 }
+/* Multi Preview Modal */
+.media-modal {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.6);
+  display:flex; justify-content:center; align-items:center;
+  z-index:9999;
+}
+
+.media-modal-content {
+  background:white; padding:20px;
+  border-radius:14px;
+  width:420px; max-width:90%;
+  display:flex; flex-direction:column; gap:15px;
+}
+
+.preview-grid {
+  display:flex; flex-wrap:wrap; gap:10px;
+  max-height:300px; overflow-y:auto;
+}
+
+.preview-item {
+  position:relative;
+}
+
+.preview-thumb {
+  width:100px; height:100px; object-fit:cover;
+  border-radius:10px; cursor:pointer;
+}
+
+.remove-thumb {
+  position:absolute; top:4px; right:4px;
+  background:red; color:white;
+  border:none; border-radius:50%;
+  width:20px; height:20px;
+  cursor:pointer; font-size:12px;
+}
+
+/* Fullscreen Viewer */
+.image-viewer {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,0.9);
+  display:flex; justify-content:center; align-items:center;
+  z-index:10000;
+}
+
+.viewer-img {
+  max-width:90%; max-height:90%;
+  border-radius:12px;
+}
+
+.viewer-close {
+  position:absolute; top:20px; right:20px;
+  background:white; color:black;
+  border:none; font-size:22px;
+  border-radius:50%; width:40px; height:40px;
+  cursor:pointer;
+}
+
+/* Loading Spinner */
+.upload-loading {
+  position:fixed; inset:0;
+  background:rgba(255,255,255,0.5);
+  display:flex; justify-content:center; align-items:center;
+  z-index:10001;
+}
+
+.spinner {
+  width:45px; height:45px;
+  border:6px solid #ccc;
+  border-top-color:#0084ff;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform:rotate(360deg); } }
