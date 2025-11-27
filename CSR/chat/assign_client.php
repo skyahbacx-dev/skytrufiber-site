@@ -1,30 +1,27 @@
 <?php
 if (!isset($_SESSION)) session_start();
-require "../../db_connect.php";
+require_once "../../db_connect.php";
 
-$csrUser = $_SESSION["csr_user"] ?? null;
-$clientID = $_POST["client_id"] ?? null;
+$csr       = $_SESSION["csr_user"] ?? null;
+$client_id = $_POST["client_id"] ?? null;
 
-if (!$csrUser || !$clientID) {
-    echo "Invalid request.";
-    exit;
+if (!$csr || !$client_id) {
+    exit("Missing data");
 }
 
 try {
-    // Assign only if currently unassigned
-    $stmt = $conn->prepare("UPDATE users SET assigned_csr = :csr WHERE id = :id AND assigned_csr IS NULL");
+    $stmt = $conn->prepare("
+        UPDATE users
+        SET assigned_csr = :csr, is_locked = TRUE
+        WHERE id = :cid
+    ");
     $stmt->execute([
-        ":csr" => $csrUser,
-        ":id"  => $clientID
+        ":csr" => $csr,
+        ":cid" => $client_id
     ]);
 
-    if ($stmt->rowCount() > 0) {
-        echo "Client assigned.";
-    } else {
-        echo "Client already assigned.";
-    }
+    echo "OK";
 
 } catch (PDOException $e) {
-    echo "DB ERROR: " . $e->getMessage();
+    echo "DB Error: " . $e->getMessage();
 }
-?>
