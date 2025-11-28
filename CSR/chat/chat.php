@@ -41,7 +41,8 @@ $csrUser = $_SESSION["csr_user"];
             <!-- INPUT AREA -->
             <div class="chat-input-area">
 
-                <input type="file" id="chat-upload-media" accept="image/*,video/*,application/pdf" hidden multiple>
+                <!-- MULTIPLE FILE UPLOAD SUPPORT -->
+                <input type="file" id="chat-upload-media" accept="image/*,video/*,application/pdf" multiple hidden>
 
                 <button id="upload-btn" class="upload-btn">
                     <i class="fa fa-paperclip"></i>
@@ -54,7 +55,8 @@ $csrUser = $_SESSION["csr_user"];
                 <button id="send-btn" class="chat-send-btn">
                     <i class="fa fa-paper-plane"></i>
                 </button>
-            </div>
+
+            </div> <!-- chat-input-area -->
 
         </div> <!-- chat-wrapper -->
     </div> <!-- chat-middle-panel -->
@@ -72,16 +74,17 @@ $csrUser = $_SESSION["csr_user"];
 
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
 
-<!-- LIGHTBOX VIEWER FOR CLICKED IMAGES -->
+<!-- LIGHTBOX FULLSCREEN IMAGE VIEW -->
 <div id="lightbox-overlay">
     <span id="lightbox-close">&times;</span>
     <img id="lightbox-image">
 </div>
 
-<!-- DRAG & DROP / PREVIEW BEFORE SEND MODAL -->
-<div id="preview-overlay" class="preview-overlay">
+<!-- MULTIPLE FILE PREVIEW MODAL -->
+<div id="preview-overlay" class="preview-overlay" style="display:none;">
     <div class="preview-box">
-        <img id="preview-image" class="preview-img">
+        <div id="preview-files" class="preview-files"></div>
+
         <div class="preview-actions">
             <button id="cancel-preview" class="preview-btn cancel">Cancel</button>
             <button id="send-preview" class="preview-btn send">Send</button>
