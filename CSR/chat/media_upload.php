@@ -1,50 +1,51 @@
 <?php
 if (!isset($_SESSION)) session_start();
-require_once "../../db_connect.php";
-
 header("Content-Type: application/json");
 
-$csrUser  = $_SESSION["csr_user"] ?? null;
-$clientID = $_POST["client_id"] ?? null;
-
-if (!$csrUser || !$clientID || empty($_FILES["media"])) {
-    echo json_encode(["status" => "error", "msg" => "missing data"]);
+if (!isset($_SESSION["csr_user"])) {
+    echo json_encode(["status" => "error", "msg" => "Not authorized"]);
     exit;
 }
 
-$uploadDir = $_SERVER['DOCUMENT_ROOT'] . "/upload/chat_media/";
+require_once "../../db_connect.php";
+
+$csrUser   = $_SESSION["csr_user"];
+$clientID  = $_POST["client_id"] ?? null;
+
+if (!$clientID || !isset($_FILES["media"])) {
+    echo json_encode(["status" => "error", "msg" => "Missing file or client"]);
+    exit;
+}
+
+$file      = $_FILES["media"];
+$filename  = time() . "_" . basename($file["name"]);
+$uploadDir = "../../uploads/chat_media/";
+$uploadPath = $uploadDir . $filename;
+
+// ensure uploads folder exists
 if (!is_dir($uploadDir)) {
     mkdir($uploadDir, 0777, true);
 }
 
-$file = $_FILES["media"];
-$ext = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
-$allowed = ["jpg","jpeg","png","gif","pdf","docx","xlsx","mp4"];
-
-if (!in_array($ext, $allowed)) {
-    echo json_encode(["status"=>"error","msg"=>"invalid file"]);
+if (!move_uploaded_file($file["tmp_name"], $uploadPath)) {
+    echo json_encode(["status" => "error", "msg" => "Upload failed"]);
     exit;
 }
-
-$filename = time() . "_" . rand(1000,9999) . "." . $ext;
-$path = $uploadDir . $filename;
-
-if (!move_uploaded_file($file["tmp_name"], $path)) {
-    echo json_encode(["status"=>"error","msg"=>"upload failed"]);
-    exit;
-}
-
-$urlPath = "upload/chat_media/" . $filename; // stored in DB
 
 try {
+    // Record media in chat table
     $stmt = $conn->prepare("
-        INSERT INTO chat_media (client_id, media_path, media_type, created_at)
-        VALUES (?, ?, ?, NOW())
+        INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at, chat_media)
+        VALUES (:cid, 'csr', '', false, false, NOW(), :med)
     ");
-    $stmt->execute([$clientID, $urlPath, (str_contains($ext,'jpg')||str_contains($ext,'png')) ? 'image':'file']);
 
-    echo json_encode(["status"=>"ok"]);
+    $stmt->execute([
+        ":cid" => $clientID,
+        ":med" => $filename
+    ]);
+
+    echo json_encode(["status" => "ok", "media" => $filename]);
+
 } catch (PDOException $e) {
-    echo json_encode(["status"=>"error","msg"=>$e->getMessage()]);
+    echo json_encode(["status" => "error", "msg" => $e->getMessage()]);
 }
-?>
