@@ -8,7 +8,7 @@ loadClients();
 
 function loadClients() {
     $.ajax({
-        url: "chat/load_clients.php",
+        url: "../chat/load_clients.php",
         method: "GET",
         success: function (data) {
             $("#client-list").html(data);
@@ -33,7 +33,7 @@ function loadMessages() {
     if (!activeClient) return;
 
     $.ajax({
-        url: "chat/load_messages.php",
+        url: "../chat/load_messages.php",
         method: "POST",
         data: { client_id: activeClient },
         success: function (data) {
@@ -55,7 +55,7 @@ setInterval(() => {
 // Load client info
 function loadClientInfo() {
     $.ajax({
-        url: "chat/load_client_info.php",
+        url: "../chat/load_client_info.php",
         method: "POST",
         data: { client_id: activeClient },
         success: function (data) {
