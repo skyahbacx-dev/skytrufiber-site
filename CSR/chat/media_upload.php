@@ -2,92 +2,49 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-// DEBUG MODE: Print everything
-header("Content-Type: application/json; charset=utf-8");
+header("Content-Type: application/json");
 
-$client_id = $_POST["client_id"] ?? null;
-$csr       = $_SESSION["csr_user"] ?? null;
+$csrUser  = $_SESSION["csr_user"] ?? null;
+$clientID = $_POST["client_id"] ?? null;
 
-$debugFile = __DIR__ . "/debug_media.log";
-
-// Log request
-file_put_contents($debugFile, 
-    "---- MEDIA REQUEST " . date("Y-m-d H:i:s") . " ----\n" .
-    "POST: " . json_encode($_POST) . "\n" .
-    "SESSION: " . json_encode($_SESSION) . "\n" .
-    "FILES: " . json_encode($_FILES) . "\n\n",
-    FILE_APPEND
-);
-
-if (!$client_id || !$csr) {
-    echo json_encode(["status" => "error", "msg" => "Missing client or session"]);
+if (!$csrUser || !$clientID || empty($_FILES["media"])) {
+    echo json_encode(["status" => "error", "msg" => "missing data"]);
     exit;
 }
 
-if (!isset($_FILES["media"])) {
-    echo json_encode(["status" => "error", "msg" => "No media file present"]);
-    exit;
+$uploadDir = $_SERVER['DOCUMENT_ROOT'] . "/upload/chat_media/";
+if (!is_dir($uploadDir)) {
+    mkdir($uploadDir, 0777, true);
 }
 
 $file = $_FILES["media"];
-$uploadDirectory = "../../upload/chat_media/";
+$ext = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
+$allowed = ["jpg","jpeg","png","gif","pdf","docx","xlsx","mp4"];
 
-if (!file_exists($uploadDirectory)) {
-    file_put_contents($debugFile, "Upload dir missing, creating...\n", FILE_APPEND);
-    mkdir($uploadDirectory, 0775, true);
-}
-
-$fileName     = time() . "_" . basename($file["name"]);
-$targetPath   = $uploadDirectory . $fileName;
-$mediaDbPath  = "upload/chat_media/" . $fileName;
-$fileType     = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
-
-file_put_contents($debugFile, "Saving to: $targetPath\n", FILE_APPEND);
-
-$allowed = ["jpg", "jpeg", "png", "gif", "mp4", "mov", "avi", "pdf", "doc", "docx"];
-if (!in_array($fileType, $allowed)) {
-    file_put_contents($debugFile, "File type rejected: $fileType\n", FILE_APPEND);
-    echo json_encode(["status" => "error", "msg" => "Invalid type $fileType"]);
+if (!in_array($ext, $allowed)) {
+    echo json_encode(["status"=>"error","msg"=>"invalid file"]);
     exit;
 }
 
-$mediaType = "file";
-if (in_array($fileType, ["jpg", "jpeg", "png", "gif"])) $mediaType = "image";
-if (in_array($fileType, ["mp4", "mov", "avi"])) $mediaType = "video";
+$filename = time() . "_" . rand(1000,9999) . "." . $ext;
+$path = $uploadDir . $filename;
 
-if (!move_uploaded_file($file["tmp_name"], $targetPath)) {
-    file_put_contents($debugFile, "MOVE FAILED: " . $file["error"] . "\n", FILE_APPEND);
-    echo json_encode(["status" => "error", "msg" => "File move failed"]);
+if (!move_uploaded_file($file["tmp_name"], $path)) {
+    echo json_encode(["status"=>"error","msg"=>"upload failed"]);
     exit;
 }
+
+$urlPath = "upload/chat_media/" . $filename; // stored in DB
 
 try {
-    // Insert into chat first
     $stmt = $conn->prepare("
-        INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
-        VALUES (?, 'csr', NULL, false, false, NOW())
+        INSERT INTO chat_media (client_id, media_path, media_type, created_at)
+        VALUES (?, ?, ?, NOW())
     ");
-    $stmt->execute([$client_id]);
+    $stmt->execute([$clientID, $urlPath, (str_contains($ext,'jpg')||str_contains($ext,'png')) ? 'image':'file']);
 
-    $chatId = $conn->lastInsertId();
-
-    // Insert media
-    $mediaInsert = $conn->prepare("
-        INSERT INTO chat_media (chat_id, media_path, media_type)
-        VALUES (?, ?, ?)
-    ");
-    $mediaInsert->execute([$chatId, $mediaDbPath, $mediaType]);
-
-    file_put_contents($debugFile, "SUCCESS chatId=$chatId path=$mediaDbPath type=$mediaType\n\n", FILE_APPEND);
-
-    echo json_encode(["status" => "ok"]);
-    exit;
-
-} catch (Throwable $e) {
-
-    // Log error to file and output more detail
-    file_put_contents($debugFile, "ERROR: " . $e->getMessage() . "\n\n", FILE_APPEND);
-
-    echo json_encode(["status" => "error", "msg" => $e->getMessage()]);
-    exit;
+    echo json_encode(["status"=>"ok"]);
+} catch (PDOException $e) {
+    echo json_encode(["status"=>"error","msg"=>$e->getMessage()]);
 }
+?>
