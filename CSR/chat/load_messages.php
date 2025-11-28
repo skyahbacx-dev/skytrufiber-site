@@ -1,11 +1,11 @@
 <?php
 if (!isset($_SESSION)) session_start();
-require "../../db_connect.php";
+require_once "../../db_connect.php";
 
-$client_id = $_POST["client_id"] ?? null;
+$client_id = $_POST['client_id'] ?? null;
 
 if (!$client_id) {
-    echo "No client selected.";
+    echo "Missing client ID";
     exit;
 }
 
@@ -21,27 +21,27 @@ try {
     $stmt->execute([$client_id]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    if (!$rows) {
-        echo "<p style='text-align:center;color:gray;'>No messages yet.</p>";
-        exit;
-    }
-
     foreach ($rows as $row) {
+
         $sender = ($row["sender_type"] === "csr") ? "sent" : "received";
 
-        echo "<div class='message {$sender}'>
-            <div class='message-avatar'>
-            <img src='../../CSR/upload/default_avatar.png'>
+        echo "<div class='message $sender'>";
+        echo "<div class='message-avatar'>
+                <img src='/upload/default_avatar.png' alt='avatar'>
+              </div>";
 
-            </div>
-            <div>
-                <div class='message-bubble'>";
+        echo "<div>";
+
+        echo "<div class='message-bubble'>";
 
         if (!empty($row["media_path"])) {
+
+            $filePath = "/".$row["media_path"];  
+
             if ($row["media_type"] === "image") {
-                echo "<img src='../../{$row["media_path"]}' class='media-thumb'>";
+                echo "<img src='$filePath' class='media-thumb'>";
             } else {
-                echo "<a href='../../{$row["media_path"]}' download>📎 Download File</a>";
+                echo "<a class='download-btn' href='$filePath' download>📎 Download File</a>";
             }
         }
 
@@ -49,12 +49,14 @@ try {
             echo nl2br(htmlspecialchars($row["message"]));
         }
 
-        echo "</div>
-                <div class='message-time'>" . date("M j g:i A", strtotime($row["created_at"])) . "</div>
-            </div>
-        </div>";
+        echo "</div>"; // bubble
+
+        echo "<div class='message-time'>" . date("M j g:i A", strtotime($row["created_at"])) . "</div>";
+
+        echo "</div></div>";
     }
 
-} catch (Throwable $e) {
+} catch (Exception $e) {
     echo "DB Error: " . $e->getMessage();
 }
+?>
