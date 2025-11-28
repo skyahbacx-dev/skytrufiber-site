@@ -1,20 +1,19 @@
 // ========================================
-// SkyTruFiber CSR Chat System - chat.js
+// SkyTruFiber CSR Chat System - chat.js (Optimized)
 // ========================================
 
 let currentClientID = null;
-let messageInterval;
-let clientRefreshInterval;
+let messageInterval = null;
+let clientRefreshInterval = null;
 let selectedFile = null;
+let lastMessageID = 0;
 
 $(document).ready(function () {
 
-    loadClients(); // first load clients
+    loadClients();
 
-    // auto-refresh client list
     clientRefreshInterval = setInterval(loadClients, 4000);
 
-    // search filter
     $("#client-search").on("keyup", function () {
         const q = $(this).val().toLowerCase();
         $("#client-list .client-item").each(function () {
@@ -22,10 +21,7 @@ $(document).ready(function () {
         });
     });
 
-    // send message button
     $("#send-btn").click(sendMessage);
-
-    // enter to send
     $("#chat-input").keypress(function (e) {
         if (e.which === 13) {
             e.preventDefault();
@@ -33,33 +29,34 @@ $(document).ready(function () {
         }
     });
 
-    // upload button
     $("#upload-btn").click(() => $("#chat-upload-media").click());
 
-    // file selected
     $("#chat-upload-media").change(function () {
         if (!currentClientID) return;
         previewFile(this.files[0]);
     });
 
-    // selecting a client
     $(document).on("click", ".client-item", function (e) {
-        if ($(e.target).closest(".client-icons").length) return; // ignore icons
+        if ($(e.target).closest(".client-icons").length) return;
 
         currentClientID = $(this).data("id");
-        let name = $(this).data("name");
+        const name = $(this).data("name");
 
         $("#chat-client-name").text(name);
         $("#chat-messages").html("");
+        lastMessageID = 0;
 
         loadClientInfo(currentClientID);
         loadMessages(true);
 
         if (messageInterval) clearInterval(messageInterval);
-        messageInterval = setInterval(() => loadMessages(false), 1500);
+        messageInterval = setInterval(() => {
+            if (!$("#preview-overlay").is(":visible")) {
+                loadMessages(false);
+            }
+        }, 2000);
     });
 
-    // assign / unassign clients
     $(document).on("click", ".add-client", function (e) {
         e.stopPropagation();
         assignClient($(this).data("id"));
@@ -70,14 +67,8 @@ $(document).ready(function () {
         unassignClient($(this).data("id"));
     });
 
-    $(document).on("click", ".lock-client", function (e) {
-        e.stopPropagation();
-    });
-
-    // LIGHTBOX image opening
     $(document).on("click", ".media-thumb", function () {
-        const src = $(this).attr("src");
-        $("#lightbox-image").attr("src", src);
+        $("#lightbox-image").attr("src", $(this).attr("src"));
         $("#lightbox-overlay").fadeIn(200);
     });
 
@@ -85,23 +76,20 @@ $(document).ready(function () {
         $("#lightbox-overlay").fadeOut(200);
     });
 
-    // Preview action buttons
     $("#cancel-preview").click(function () {
         selectedFile = null;
         $("#preview-overlay").fadeOut(200);
     });
 
     $("#send-preview").click(function () {
-        if (selectedFile) {
-            uploadMedia(selectedFile);
-        }
+        if (selectedFile) uploadMedia(selectedFile);
     });
 
-}); // end document ready
+});
 
 
 // ========================================
-// LOAD CLIENTS
+// LOAD CLIENT LIST
 // ========================================
 function loadClients() {
     $.post("../chat/load_clients.php", function (html) {
@@ -109,8 +97,9 @@ function loadClients() {
     });
 }
 
+
 // ========================================
-// LOAD CLIENT DETAILS (right panel)
+// LOAD CLIENT INFO
 // ========================================
 function loadClientInfo(id) {
     $.post("../chat/load_client_info.php", { client_id: id }, function (html) {
@@ -118,65 +107,61 @@ function loadClientInfo(id) {
     });
 }
 
-// ========================================
-// LOAD MESSAGES
-// ========================================
-// Instead of full html() replace, use something like:
-function loadMessages() {
-  if (!currentClientID) return;
-
-  $.post("../chat/load_messages.php", { client_id: currentClientID }, function(html) {
-    const $container = $("#chat-messages");
-    // Option A: simple — only replace if different
-    if ($container.html() !== html) {
-      $container.html(html);
-      $container.scrollTop($container[0].scrollHeight);
-    }
-  });
-}
-
 
 // ========================================
-// SEND TEXT MESSAGE
+// LOAD MESSAGES (without flicker)
 // ========================================
-function sendMessage() {
-    let msg = $("#chat-input").val().trim();
-    if (!msg || !currentClientID) return;
+function loadMessages(scrollBottom = false) {
+    if (!currentClientID) return;
 
-    $.ajax({
-        url: "../chat/send_message.php",
-        type: "POST",
-        data: {
-            client_id: currentClientID,
-            message: msg,
-            sender_type: "csr"
-        },
-        dataType: "json",
+    $.post("../chat/load_messages.php", { client_id: currentClientID }, function (res) {
 
-        success: function (res) {
-            if (res.status === "ok") {
-                $("#chat-input").val("");
-                loadMessages(true);
-            } else {
-                alert("Send failed: " + res.msg);
-            }
-        },
-        error: function () {
-            alert("Network or server error");
+        const parsed = $(res);
+        const lastBubble = parsed.last();
+        const newLastID = parseInt(lastBubble.attr("data-msg-id"));
+
+        if (newLastID > lastMessageID) {
+            lastMessageID = newLastID;
+            $("#chat-messages").append(parsed);
+
+            const box = $("#chat-messages");
+            if (scrollBottom) box.scrollTop(box[0].scrollHeight);
         }
     });
 }
 
 
 // ========================================
-// PREVIEW FILE BEFORE SENDING
+// SEND TEXT
+// ========================================
+function sendMessage() {
+    let msg = $("#chat-input").val().trim();
+    if (!msg || !currentClientID) return;
+
+    $.post("../chat/send_message.php", {
+        client_id: currentClientID,
+        message: msg,
+        sender_type: "csr"
+    }, function (res) {
+        if (res.status === "ok") {
+            $("#chat-input").val("");
+            loadMessages(true);
+        } else {
+            alert("Send failed");
+        }
+    }, "json");
+}
+
+
+// ========================================
+// PREVIEW FILE
 // ========================================
 function previewFile(file) {
     selectedFile = file;
 
     if (file.type.startsWith("image")) {
         const reader = new FileReader();
-        reader.onload = function (e) {
+        reader.onload = e => {
             $("#preview-image").attr("src", e.target.result);
             $("#preview-overlay").fadeIn(200);
         };
@@ -192,34 +177,27 @@ function previewFile(file) {
 // UPLOAD MEDIA
 // ========================================
 function uploadMedia(file) {
-    const formData = new FormData();
-    formData.append("media", file);
-    formData.append("client_id", currentClientID);
-    formData.append("sender_type", "csr");
+    const fd = new FormData();
+    fd.append("media", file);
+    fd.append("client_id", currentClientID);
+    fd.append("sender_type", "csr");
+
+    $("#preview-overlay").fadeOut(200);
 
     $.ajax({
         url: "../chat/media_upload.php",
         type: "POST",
-        data: formData,
+        data: fd,
         processData: false,
         contentType: false,
         dataType: "json",
 
         success: function (res) {
-            $("#preview-overlay").hide();
-            $("#chat-upload-media").val("");
             selectedFile = null;
+            $("#chat-upload-media").val("");
 
-            if (res.status === "ok") {
-                loadMessages(true);
-            } else {
-                alert("Upload failed: " + res.msg);
-            }
-        },
-
-        error: function (xhr) {
-            alert("Upload error — check console");
-            console.error(xhr.responseText);
+            if (res.status === "ok") loadMessages(true);
+            else alert("Upload failed");
         }
     });
 }
