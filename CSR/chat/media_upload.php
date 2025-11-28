@@ -1,13 +1,13 @@
 <?php
 if (!isset($_SESSION)) session_start();
-require "../../db_connect.php";
+require_once "../../db_connect.php";
 
 header("Content-Type: application/json");
 
 $client_id = $_POST["client_id"] ?? null;
-$sender    = $_POST["sender_type"] ?? null;
+$csr       = $_SESSION["csr_user"] ?? null;
 
-if (!$client_id || !$sender) {
+if (!$client_id || !$csr) {
     echo json_encode(["status" => "error", "msg" => "Missing required data"]);
     exit;
 }
@@ -40,26 +40,23 @@ if (in_array($fileType, ["jpg", "jpeg", "png", "gif"])) $mediaType = "image";
 if (in_array($fileType, ["mp4", "mov", "avi"])) $mediaType = "video";
 
 if (!move_uploaded_file($file["tmp_name"], $targetPath)) {
-    echo json_encode(["status" => "error", "msg" => "Upload failed"]);
+    echo json_encode(["status" => "error", "msg" => "File upload failed"]);
     exit;
 }
 
 try {
-    // create chat placeholder entry
     $stmt = $conn->prepare("
         INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
-        VALUES (?, ?, NULL, 1, 0, NOW())
+        VALUES (?, 'csr', NULL, false, false, NOW())
     ");
-    $stmt->execute([$client_id, $sender]);
-
+    $stmt->execute([$client_id]);
     $chatId = $conn->lastInsertId();
 
-    // insert media detail record
-    $insertMedia = $conn->prepare("
+    $mediaInsert = $conn->prepare("
         INSERT INTO chat_media (chat_id, media_path, media_type)
         VALUES (?, ?, ?)
     ");
-    $insertMedia->execute([$chatId, $mediaDbPath, $mediaType]);
+    $mediaInsert->execute([$chatId, $mediaDbPath, $mediaType]);
 
     echo json_encode(["status" => "ok"]);
     exit;
