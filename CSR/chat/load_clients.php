@@ -39,14 +39,13 @@ try {
         $email   = htmlspecialchars($c["email"]);
         $lastMsg = htmlspecialchars($c["last_message"]);
         $online  = $c["is_online"] ? "online" : "offline";
-
         $assignedCSR = $c["assigned_csr"];
         $locked      = $c["is_locked"];
 
-        // Determine which icon set appears
-        $showAdd = empty($assignedCSR) && !$locked;
-        $showRemove = ($assignedCSR == $csr);
-        $showLockIcon = ($locked || (!empty($assignedCSR) && $assignedCSR != $csr));
+        // ICON LOGIC FIXED
+        $showAdd      = empty($assignedCSR);
+        $showRemove   = ($assignedCSR == $csr);
+        $showLockIcon = (!empty($assignedCSR) && $assignedCSR != $csr);
 
         $addBtn    = $showAdd    ? "<button class='client-action-btn add-client' data-id='$id'><i class='fa fa-plus'></i></button>" : "";
         $removeBtn = $showRemove ? "<button class='client-action-btn remove-client' data-id='$id'><i class='fa fa-minus'></i></button>" : "";
