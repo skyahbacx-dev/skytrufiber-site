@@ -1,59 +1,46 @@
 <?php
-ob_clean();
+// send_message.php - minimal, stable version
+
 if (!isset($_SESSION)) session_start();
 require "../../db_connect.php";
 
-header("Content-Type: application/json");
+// Always respond as JSON
+header("Content-Type: application/json; charset=utf-8");
 
-$csrUser  = $_SESSION["csr_user"] ?? null;   // CSR username / ID
-$clientID = $_POST["client_id"] ?? null;     // Selected client ID
-$message  = trim($_POST["message"] ?? "");   // Typed message
+// Logged in CSR username (from login)
+$csrUser  = $_SESSION["csr_user"] ?? null;
 
-// Validate input
-if (!$csrUser || !$clientID || !$message) {
+// Data from AJAX
+$clientID = $_POST["client_id"] ?? null;
+$message  = isset($_POST["message"]) ? trim($_POST["message"]) : "";
+
+// Basic validation
+if (!$csrUser || !$clientID || $message === "") {
     echo json_encode([
         "status" => "error",
-        "msg" => "Required data missing"
+        "msg"    => "Missing CSR, client, or message"
     ]);
     exit;
 }
 
 try {
-    // 🔍 Check if the client is assigned to a CSR
-    $assignCheck = $conn->prepare("
-        SELECT assigned_to
-        FROM client_assignments
-        WHERE client_id = ?
-    ");
-    $assignCheck->execute([$clientID]);
-    $assignedCSR = $assignCheck->fetchColumn();
-
-    // 🔒 If assigned to another CSR, block
-    if ($assignedCSR && $assignedCSR !== $csrUser) {
-        echo json_encode(["status" => "locked"]);
-        exit;
-    }
-
-    // 💬 Insert message
+    // Insert chat row (CSR message)
     $stmt = $conn->prepare("
         INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
-        VALUES (:cid, 'csr', :msg, 0, 0, NOW())
+        VALUES (?, 'csr', ?, 0, 0, NOW())
     ");
-    $stmt->execute([
-        ":cid" => $clientID,
-        ":msg" => $message
-    ]);
+    $stmt->execute([$clientID, $message]);
 
-    // Return success JSON response
+    // Success
     echo json_encode(["status" => "ok"]);
     exit;
 
 } catch (PDOException $e) {
 
-    // Return detailed error
+    // On DB error, send error JSON (visible in DevTools console)
     echo json_encode([
         "status" => "error",
-        "msg" => $e->getMessage()
+        "msg"    => $e->getMessage()
     ]);
     exit;
 }
