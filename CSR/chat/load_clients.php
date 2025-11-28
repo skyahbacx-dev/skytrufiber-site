@@ -1,206 +1,75 @@
-// ========================================
-// SkyTruFiber CSR Chat System - chat.js
-// ========================================
+<?php
+if (!isset($_SESSION)) session_start();
+require_once "../../db_connect.php";
 
-let currentClientID = null;
-let messageInterval;
-let clientRefreshInterval;
-
-$(document).ready(function () {
-
-    // First load clients
-    loadClients();
-
-    // Refresh client list every 4 seconds
-    clientRefreshInterval = setInterval(loadClients, 4000);
-
-    // Search filter
-    $("#client-search").on("keyup", function () {
-        const q = $(this).val().toLowerCase();
-        $("#client-list .client-item").each(function () {
-            $(this).toggle($(this).text().toLowerCase().indexOf(q) !== -1);
-        });
-    });
-
-    // Send message button
-    $("#send-btn").click(function () {
-        sendMessage();
-    });
-
-    // Send message via Enter
-    $("#chat-input").keypress(function (e) {
-        if (e.which === 13) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
-
-    // Upload file button
-    $("#upload-btn").click(function () {
-        $("#chat-upload-media").click();
-    });
-
-    $("#chat-upload-media").change(function () {
-        if (currentClientID) {
-            uploadMedia();
-        }
-    });
-
-    // Selecting a client
-    $(document).on("click", ".client-item", function (e) {
-
-        // ignore clicking icons
-        if ($(e.target).closest(".client-icons").length) return;
-
-        currentClientID = $(this).data("id");
-        let clientName = $(this).data("name");
-
-        $("#chat-client-name").text(clientName);
-        $("#chat-messages").html("");
-
-        loadClientInfo(currentClientID);
-        loadMessages(true);
-
-        if (messageInterval) clearInterval(messageInterval);
-
-        messageInterval = setInterval(function () {
-            loadMessages(false);
-        }, 1500);
-    });
-
-    // Assign client (+)
-    $(document).on("click", ".add-client", function (e) {
-        e.stopPropagation();
-        let cid = $(this).data("id");
-        assignClient(cid);
-    });
-
-    // Unassign client (–)
-    $(document).on("click", ".remove-client", function (e) {
-        e.stopPropagation();
-        let cid = $(this).data("id");
-        unassignClient(cid);
-    });
-
-    // Lock icon does nothing but prevents events
-    $(document).on("click", ".lock-client", function (e) {
-        e.stopPropagation();
-    });
-
-}); // end document ready
-
-// ========================================
-// LOAD CLIENT LIST
-// ========================================
-function loadClients() {
-    $.ajax({
-        url: "../chat/load_clients.php",
-        type: "POST",
-        success: function (html) {
-            $("#client-list").html(html);
-        }
-    });
+$csr = $_SESSION["csr_user"] ?? null;
+if (!$csr) {
+    http_response_code(403);
+    exit("Unauthorized");
 }
 
-// ========================================
-// LOAD CLIENT INFO (RIGHT PANEL)
-// ========================================
-function loadClientInfo(id) {
-    $.ajax({
-        url: "../chat/load_client_info.php",
-        type: "POST",
-        data: { client_id: id },
-        success: function (html) {
-            $("#client-info-content").html(html);
-        }
-    });
-}
+try {
+    $stmt = $conn->prepare("
+        SELECT
+            u.id,
+            u.full_name,
+            u.email,
+            u.is_online,
+            u.assigned_csr,
+            u.is_locked,
+            COALESCE(
+                (SELECT message FROM chat WHERE client_id = u.id ORDER BY created_at DESC LIMIT 1),
+                ''
+            ) AS last_message
+        FROM users u
+        ORDER BY u.full_name ASC
+    ");
+    $stmt->execute();
+    $clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// ========================================
-// LOAD MESSAGES
-// ========================================
-function loadMessages(scrollBottom) {
-    if (!currentClientID) return;
+    if (!$clients) {
+        echo "<p style='padding:10px;color:#777'>No clients available.</p>";
+        exit;
+    }
 
-    $.ajax({
-        url: "../chat/load_messages.php",
-        type: "POST",
-        data: { client_id: currentClientID },
-        success: function (html) {
-            $("#chat-messages").html(html);
+    foreach ($clients as $c) {
 
-            if (scrollBottom) {
-                $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
-            }
-        }
-    });
-}
+        $id      = (int)$c["id"];
+        $name    = htmlspecialchars($c["full_name"]);
+        $email   = htmlspecialchars($c["email"]);
+        $lastMsg = htmlspecialchars($c["last_message"]);
+        $online  = $c["is_online"] ? "online" : "offline";
 
-// ========================================
-// SEND TEXT MESSAGE
-// ========================================
-function sendMessage() {
-    let msg = $("#chat-input").val().trim();
-    if (!msg || !currentClientID) return;
+        $assignedCSR = $c["assigned_csr"];
+        $locked      = $c["is_locked"];
 
-    $.ajax({
-        url: "../chat/send_message.php",
-        type: "POST",
-        data: {
-            client_id: currentClientID,
-            message: msg,
-            sender_type: "csr"
-        },
-        success: function () {
-            $("#chat-input").val("");
-            loadMessages(true);
-        }
-    });
-}
+        // Determine which icon set appears
+        $showAdd = empty($assignedCSR) && !$locked;
+        $showRemove = ($assignedCSR == $csr);
+        $showLockIcon = ($locked || (!empty($assignedCSR) && $assignedCSR != $csr));
 
-// ========================================
-// UPLOAD MEDIA
-// ========================================
-function uploadMedia() {
-    const fileInput = $("#chat-upload-media")[0];
-    if (!fileInput.files.length) return;
+        $addBtn    = $showAdd    ? "<button class='client-action-btn add-client' data-id='$id'><i class='fa fa-plus'></i></button>" : "";
+        $removeBtn = $showRemove ? "<button class='client-action-btn remove-client' data-id='$id'><i class='fa fa-minus'></i></button>" : "";
+        $lockBtn   = $showLockIcon ? "<button class='client-action-btn lock-client' disabled><i class='fa fa-lock'></i></button>" : "";
 
-    const formData = new FormData();
-    formData.append("media", fileInput.files[0]);
-    formData.append("client_id", currentClientID);
-    formData.append("csr", $("#csr-username").val());
+        echo "
+        <div class='client-item' data-id='$id' data-name='$name'>
+            <div class='client-status $online'></div>
+            <div class='client-info'>
+                <strong>$name</strong>
+                <small>$email</small>
+                <small class='last-msg'>$lastMsg</small>
+            </div>
 
-    $.ajax({
-        url: "../chat/upload_media.php",
-        type: "POST",
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function () {
-            $("#chat-upload-media").val("");
-            loadMessages(true);
-        }
-    });
-}
+            <div class='client-icons'>
+                $addBtn
+                $removeBtn
+                $lockBtn
+            </div>
+        </div>
+        ";
+    }
 
-// ========================================
-// ASSIGN CLIENT (+)
-// ========================================
-function assignClient(cid) {
-    $.post("../chat/assign_client.php", { client_id: cid }, function () {
-        loadClients();
-        if (cid == currentClientID) loadClientInfo(cid);
-    });
-}
-
-// ========================================
-// UNASSIGN CLIENT (–)
-// ========================================
-function unassignClient(cid) {
-    $.post("../chat/unassign_client.php", { client_id: cid }, function () {
-        loadClients();
-        if (cid == currentClientID) {
-            $("#client-info-content").html("<p>Select a client.</p>");
-        }
-    });
+} catch (PDOException $e) {
+    echo 'DB ERROR: ' . htmlspecialchars($e->getMessage());
 }
