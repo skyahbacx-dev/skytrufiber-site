@@ -119,7 +119,7 @@ function sendMessage() {
     }
 
     $.ajax({
-        url: "chat/send_message.php",
+        url: "../chat/send_message.php",
         method: "POST",
         data: formData,
         cache: false,
