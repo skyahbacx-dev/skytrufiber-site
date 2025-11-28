@@ -39,7 +39,8 @@ try {
         // MEDIA HANDLING
         if (!empty($row["media_path"])) {
 
-            $filePath = "/" . $row["media_path"];
+            $filePath = "/" . ltrim($row["media_path"], "/");
+
 
             if ($row["media_type"] === "image") {
                 echo "<img src='$filePath' class='media-thumb' />";
