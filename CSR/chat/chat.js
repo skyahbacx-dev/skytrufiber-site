@@ -121,19 +121,18 @@ function loadClientInfo(id) {
 // ========================================
 // LOAD MESSAGES
 // ========================================
-function loadMessages(scrollBottom) {
-    if (!currentClientID) return;
+// Instead of full html() replace, use something like:
+function loadMessages() {
+  if (!currentClientID) return;
 
-    $.ajax({
-        url: "../chat/load_messages.php",
-        type: "POST",
-        data: { client_id: currentClientID },
-        success: function (html) {
-            const box = $("#chat-messages");
-            box.html(html);
-            if (scrollBottom) box.scrollTop(box[0].scrollHeight);
-        }
-    });
+  $.post("../chat/load_messages.php", { client_id: currentClientID }, function(html) {
+    const $container = $("#chat-messages");
+    // Option A: simple — only replace if different
+    if ($container.html() !== html) {
+      $container.html(html);
+      $container.scrollTop($container[0].scrollHeight);
+    }
+  });
 }
 
 
