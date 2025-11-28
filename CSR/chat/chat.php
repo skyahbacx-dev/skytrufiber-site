@@ -18,8 +18,10 @@ $csrUser = $_SESSION["csr_user"];
         <div id="client-list" class="client-list"></div>
     </div>
 
-    <!-- MIDDLE PANEL — CHAT WINDOW -->
-    <div class="chat-middle-panel">
+<!-- MIDDLE PANEL — CHAT WINDOW -->
+<div class="chat-middle-panel">
+
+    <div class="chat-wrapper">
 
         <!-- CHAT HEADER -->
         <div class="chat-header">
@@ -31,26 +33,23 @@ $csrUser = $_SESSION["csr_user"];
         </div>
 
         <!-- CHAT MESSAGES -->
-        <div id="chat-messages" class="chat-messages">
-            <!-- Messages dynamically loaded here by chat.js -->
-        </div>
+        <div id="chat-messages" class="chat-messages"></div>
 
-        <!-- INPUT AREA -->
+        <!-- INPUT -->
         <div class="chat-input-area">
-            <input type="file" id="chat-upload-media" accept="image/*,video/*,application/pdf" hidden />
-
-            <button id="upload-btn" class="upload-btn">
-                <i class="fa fa-paperclip"></i>
-            </button>
+            <input type="file" id="chat-upload-media" accept="image/*,video/*,application/pdf" hidden>
+            <button id="upload-btn" class="upload-btn"><i class="fa fa-paperclip"></i></button>
 
             <div class="chat-input-box">
                 <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
             </div>
 
-            <button id="send-btn" class="send-btn">
-                <i class="fa fa-paper-plane"></i>
-            </button>
+            <button id="send-btn" class="chat-send-btn"><i class="fa fa-paper-plane"></i></button>
         </div>
+    </div>
+
+</div>
+
     </div>
 
     <!-- RIGHT PANEL — CLIENT DETAILS -->
