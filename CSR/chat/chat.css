@@ -323,3 +323,10 @@
   cursor:pointer;
   color:white;
 }
+/* Remove blue focus outline from input and buttons */
+input:focus,
+button:focus,
+textarea:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
