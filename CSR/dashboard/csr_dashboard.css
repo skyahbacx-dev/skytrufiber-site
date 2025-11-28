@@ -1,5 +1,5 @@
 /* =======================================================
-   CSR DASHBOARD — UPDATED COMPLETE MESSENGER LAYOUT CSS
+   CSR DASHBOARD — CLEAN SHELL LAYOUT CSS (NO CHAT UI)
    ======================================================= */
 
 /* GLOBAL */
@@ -92,199 +92,25 @@ body {
 .sidebar-overlay.active {
     display:block;
 }
+
+/* MAIN DASHBOARD WRAPPER */
 .dashboard-container {
     height: calc(100vh - 55px);
     overflow: hidden;
 }
 
-
-
-/* LEFT PANEL */
-.chat-left-panel {
-    background:white;
-    border-right: 1px solid #dcdcdc;
-    overflow-y:auto;
-    padding-bottom:20px;
+/* Right info panel scroll */
+.chat-right-panel::-webkit-scrollbar,
+.chat-left-panel::-webkit-scrollbar {
+    width: 6px;
 }
-#client-search {
-    width:90%;
-    margin:10px auto;
-    padding:8px 12px;
-    border-radius:10px;
-    border:1px solid #9bb39d;
-}
-.client-item {
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:12px 14px;
-    border-bottom:1px solid #edf9ed;
-    cursor:pointer;
-}
-.client-item:hover,
-.client-item.active-client {
-    background:#d7ffd7;
-}
-.client-info {
-    flex:1;
-}
-.last-msg {
-    display:block;
-    font-size:12px;
-    color:#696969;
-}
-
-/* CENTER CHAT PANEL */
-.chat-middle-panel {
-    background:#F4FFF4;
-    display:flex;
-    flex-direction:column;
-}
-
-.chat-wrapper {
-    display:flex;
-    flex-direction:column;
-    height:100%;
-}
-
-/* HEADER */
-.chat-header {
-    background:white;
-    border-bottom:1px solid #cddccd;
-    padding:10px 18px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-}
-#chat-client-name {
-    margin:0;
-    font-size:18px;
-    font-weight:bold;
-}
-
-/* CHAT MESSAGES */
-.chat-messages {
-    flex:1;
-    overflow-y:auto;
-    padding:25px 30px;
-    display:flex;
-    flex-direction:column;
-    gap:18px;
-}
-
-/* SCROLLBAR */
-.chat-messages::-webkit-scrollbar,
-.chat-left-panel::-webkit-scrollbar,
-.client-info-panel::-webkit-scrollbar {
-    width:6px;
-}
-.chat-messages::-webkit-scrollbar-thumb,
-.chat-left-panel::-webkit-scrollbar-thumb,
-.client-info-panel::-webkit-scrollbar-thumb {
+.chat-right-panel::-webkit-scrollbar-thumb,
+.chat-left-panel::-webkit-scrollbar-thumb {
     background:#0ba34d;
     border-radius:8px;
 }
 
-/* MESSAGE ROW */
-.message {
-    display:flex;
-    gap:10px;
-    align-items:flex-end;
-    animation: fadeInUp .25s ease;
-}
-.message.sent {
-    justify-content:flex-end;
-    flex-direction:row-reverse;
-}
-.message-avatar {
-    width:38px;
-    height:38px;
-    border-radius:50%;
-    overflow:hidden;
-}
-.message-avatar img {
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
-
-/* TEXT BUBBLE */
-.message-bubble {
-    padding:12px 18px;
-    border-radius:18px;
-    font-size:15px;
-    max-width:450px;
-    line-height:1.4;
-    background:white;
-    border:1px solid #cfe8cf;
-}
-.message.sent .message-bubble {
-    background:#09a64b;
-    color:white;
-    border-color:#09a64b;
-}
-
-/* IMAGE MEDIA */
-.message-bubble img.media-thumb {
-    width:240px;
-    max-height:260px;
-    border-radius:12px;
-    margin-top:6px;
-    cursor:pointer;
-}
-
-/* TIMESTAMP */
-.message-time {
-    font-size:11px;
-    opacity:.6;
-    margin-top:3px;
-}
-
-/* INPUT BAR */
-.chat-input-area {
-    background:white;
-    border-top:1px solid #cbdccb;
-    padding:12px 18px;
-    display:flex;
-    gap:10px;
-    align-items:center;
-}
-.chat-input-box {
-    flex:1;
-    display:flex;
-    border:1px solid #a4c7a4;
-    border-radius:20px;
-    padding:10px 15px;
-}
-.chat-input-box input {
-    flex:1;
-    border:none;
-    outline:none;
-    background:none;
-    font-size:15px;
-}
-.chat-send-btn {
-    width:48px;
-    height:48px;
-    border-radius:50%;
-    border:none;
-    background:#05702e;
-    cursor:pointer;
-}
-.chat-send-btn i {
-    color:white;
-    font-size:22px;
-}
-
-/* RIGHT PANEL */
-.chat-right-panel {
-    background:white;
-    border-left:1px solid #dcdcdc;
-    overflow-y:auto;
-    padding:20px;
-}
-
-/* ANIMATION */
+/* ANIMATION SUPPORT */
 @keyframes fadeInUp {
     from { opacity:0; transform:translateY(10px); }
     to { opacity:1; transform:translateY(0); }
