@@ -12,21 +12,23 @@ if (!$client_id || !$csr) {
     exit;
 }
 
-$uploadDirectory = $_SERVER['DOCUMENT_ROOT'] . "/upload/chat_media/";
-
-if (!file_exists($uploadDirectory)) {
+// temp upload directory (Writable on Render)
+$uploadDirectory = "/tmp/chat_media/";
+if (!is_dir($uploadDirectory)) {
     mkdir($uploadDirectory, 0777, true);
 }
 
 $file = $_FILES["media"];
-$fileName = time() . "_" . preg_replace("/\s+/", "", $file["name"]);
+$fileName = time() . "_" . preg_replace("/\s+/", "_", $file["name"]);
 $targetPath = $uploadDirectory . $fileName;
-$mediaDbPath = "upload/chat_media/" . $fileName;
 
 if (!move_uploaded_file($file["tmp_name"], $targetPath)) {
     echo json_encode(["status" => "error", "msg" => "Move failed"]);
     exit;
 }
+
+// Save file in permanent location: public CDN or DB reference
+$mediaDbPath = "tmp/chat_media/" . $fileName;
 
 $stmt = $conn->prepare("INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
                         VALUES (?, 'csr', '', TRUE, FALSE, NOW())");
