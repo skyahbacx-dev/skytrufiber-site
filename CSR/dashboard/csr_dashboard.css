@@ -92,14 +92,12 @@ body {
 .sidebar-overlay.active {
     display:block;
 }
-
-/* MAIN DASHBOARD GRID */
 .dashboard-container {
     height: calc(100vh - 55px);
-    display: grid;
-    grid-template-columns: 300px auto 320px;
-    overflow:hidden;
+    overflow: hidden;
 }
+
+
 
 /* LEFT PANEL */
 .chat-left-panel {
