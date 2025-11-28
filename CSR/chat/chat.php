@@ -47,9 +47,6 @@ $csrUser = $_SESSION["csr_user"];
 
             <button id="send-btn" class="send-btn"><i class="fa fa-paper-plane"></i></button>
         </div>
-        <div id="lock-overlay" class="lock-overlay" style="display:none;">
-            <span>🔒 Client Locked</span>
-        </div>
 
     </div>
 
