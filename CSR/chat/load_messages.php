@@ -1,11 +1,11 @@
 <?php
 if (!isset($_SESSION)) session_start();
-require_once "../../db_connect.php";
+require "../../db_connect.php";
 
-$client_id = $_POST['client_id'] ?? null;
+$client_id = $_POST["client_id"] ?? null;
 
 if (!$client_id) {
-    echo "Missing client ID";
+    echo "No client selected.";
     exit;
 }
 
@@ -21,52 +21,39 @@ try {
     $stmt->execute([$client_id]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    foreach ($rows as $row):
+    if (!$rows) {
+        echo "<p style='text-align:center;color:gray;'>No messages yet.</p>";
+        exit;
+    }
 
-        // Determine bubble alignment
-        $isMine = ($row["sender_type"] === "csr");
-        $class = $isMine ? "sent" : "received";
+    foreach ($rows as $row) {
+        $sender = ($row["sender_type"] === "csr") ? "sent" : "received";
 
-?>
-        <div class="message <?= $class ?>">
-
-            <div class="message-avatar">
-                <img src="<?= $isMine ? '../../default_avatar.png' : '../../default_avatar.png' ?>" alt="avatar">
+        echo "<div class='message {$sender}'>
+            <div class='message-avatar'>
+                <img src='../upload/default_avatar.png'>
             </div>
-
             <div>
-                <div class="message-bubble">
-                    <?php if (!empty($row["media_path"])): ?>
+                <div class='message-bubble'>";
 
-                        <?php if ($row["media_type"] === "image"): ?>
-                            <img src="<?= "../../" . htmlspecialchars($row["media_path"]) ?>"
-                                 class="media-thumb"
-                                 onclick="openLightbox('<?= "../../" . htmlspecialchars($row["media_path"]) ?>')">
-                        <?php else: ?>
-                            <a href="<?= "../../" . htmlspecialchars($row["media_path"]) ?>" 
-                               class="download-btn" download>
-                                📎 Download File
-                            </a>
-                        <?php endif; ?>
+        if (!empty($row["media_path"])) {
+            if ($row["media_type"] === "image") {
+                echo "<img src='../../{$row["media_path"]}' class='media-thumb'>";
+            } else {
+                echo "<a href='../../{$row["media_path"]}' download>📎 Download File</a>";
+            }
+        }
 
-                    <?php endif; ?>
+        if (!empty($row["message"])) {
+            echo nl2br(htmlspecialchars($row["message"]));
+        }
 
-                    <?php if (!empty($row["message"])): ?>
-                        <?= nl2br(htmlspecialchars($row["message"])) ?>
-                    <?php endif; ?>
-                </div>
-
-                <div class="message-time">
-                    <?= date("M j g:i A", strtotime($row["created_at"])) ?>
-                </div>
+        echo "</div>
+                <div class='message-time'>" . date("M j g:i A", strtotime($row["created_at"])) . "</div>
             </div>
+        </div>";
+    }
 
-        </div>
-
-<?php
-    endforeach;
-
-} catch (Exception $e) {
+} catch (Throwable $e) {
     echo "DB Error: " . $e->getMessage();
 }
-?>
