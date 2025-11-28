@@ -31,7 +31,7 @@ try {
         <div class="message <?= $class ?>">
 
             <div class="message-avatar">
-                <img src="<?= $isMine ? '../default_avatar.png' : '../default_avatar.png' ?>" alt="avatar">
+                <img src="<?= $isMine ? '../../default_avatar.png' : '../../default_avatar.png' ?>" alt="avatar">
             </div>
 
             <div>
