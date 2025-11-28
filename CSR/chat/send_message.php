@@ -1,24 +1,25 @@
 <?php
-// Ensure clean output, disable warnings printing into JSON
-error_reporting(0);
+// No whitespace above PHP tag!
+
+// Disable notice & warning output (protect JSON)
+error_reporting(E_ERROR | E_PARSE);
+ini_set("display_errors", 0);
+
 if (!isset($_SESSION)) session_start();
 
-// Correct db path (based on your server structure from error)
+// Correct DB path as confirmed from structure
 require "../../db_connect.php";
 
-header("Content-Type: application/json; charset=utf-8");
+header("Content-Type: application/json");
 
-// Get data
+// Get POST data
 $csrUser  = $_SESSION["csr_user"] ?? null;
 $clientID = $_POST["client_id"] ?? null;
 $message  = isset($_POST["message"]) ? trim($_POST["message"]) : "";
 
-// Basic validation
+// Validate fields
 if (!$csrUser || !$clientID || $message === "") {
-    echo json_encode([
-        "status" => "error",
-        "msg"    => "Missing required data"
-    ]);
+    echo json_encode(["status" => "error", "msg" => "Missing fields"]);
     exit;
 }
 
@@ -33,9 +34,6 @@ try {
     exit;
 
 } catch (Throwable $e) {
-    echo json_encode([
-        "status" => "error",
-        "msg"    => $e->getMessage()
-    ]);
+    echo json_encode(["status" => "error", "msg" => $e->getMessage()]);
     exit;
 }
