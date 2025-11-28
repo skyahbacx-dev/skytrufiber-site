@@ -1,187 +1,289 @@
-/* General Layout */
-#chat-container {
-  display: flex;
-  height: calc(100vh - 90px);
-  background: #f0f2f5;
+/* ===================== GLOBAL ===================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* LEFT PANEL */
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f6faff;
+}
+
+/* ===================== MAIN LAYOUT ===================== */
+#chat-container {
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 80px);
+    overflow: hidden;
+    background: #e7f1ff;
+}
+
+/* ===================== LEFT PANEL ===================== */
 .chat-left-panel {
-  width: 270px;
-  background: #ffffff;
-  border-right: 1px solid #e2e2e2;
-  overflow-y: auto;
-  padding: 10px;
+    width: 280px;
+    background: white;
+    border-right: 2px solid #d8e4ef;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.left-header h3 {
+    font-size: 19px;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+#client-search {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid #cfd9e7;
+    background: #f5f8fc;
+    margin-bottom: 14px;
+}
+
+/* CLIENT LIST */
+.client-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 .client-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  margin-bottom: 6px;
-  background: white;
-  border: 1px solid #e5e5e5;
-  transition: 0.25s;
+    padding: 12px 14px;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #d6e5f3;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: .2s;
 }
 
 .client-item:hover {
-  background: #eaf3ff;
+    background: #eaf3ff;
+    transform: translateY(-1.5px);
 }
 
 .client-item.active {
-  background: #0078FF;
-  color: white;
-  border-color: #0078FF;
+    background: #007bff;
+    color: white;
+    border-color: #0068d1;
+    transform: scale(1.01);
 }
 
-/* MIDDLE CHAT WINDOW */
+.client-name {
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.client-email {
+    font-size: 13px;
+    opacity: .8;
+}
+
+/* ===================== CHAT PANEL (CENTER) ===================== */
 .chat-middle-panel {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
 }
 
+.chat-header {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #dbe7f3;
+}
+
+#chat-client-name {
+    font-size: 20px;
+    font-weight: 800;
+}
+
+/* MESSAGES AREA */
 #chat-messages {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding: 25px 30px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Messenger style chat bubbles */
-.chat-message {
-  max-width: 70%;
-  padding: 12px 18px;
-  border-radius: 22px;
-  margin-bottom: 5px;
-  font-size: 15px;
-  line-height: 1.4;
-  word-wrap: break-word;
+/* Scrollbar */
+#chat-messages::-webkit-scrollbar,
+.chat-left-panel::-webkit-scrollbar {
+    width: 6px;
+}
+#chat-messages::-webkit-scrollbar-thumb,
+.chat-left-panel::-webkit-scrollbar-thumb {
+    background: #bcd4ef;
+    border-radius: 10px;
 }
 
-.chat-message.user {
-  background: #ffffff;
-  color: #111;
-  align-self: flex-start;
-  border: 1px solid #dcdcdc;
+/* ===================== MESSAGE BUBBLES ===================== */
+.msg {
+    max-width: 68%;
+    padding: 12px 18px;
+    border-radius: 22px;
+    margin-bottom: 14px;
+    position: relative;
+    font-size: 15px;
+    line-height: 1.4;
+    word-wrap: break-word;
+    display: inline-block;
 }
 
-.chat-message.csr {
-  background: #0078FF;
-  color: white;
-  align-self: flex-end;
-  border-bottom-right-radius: 4px;
+/* CLIENT (LEFT) */
+.msg.client {
+    background: #ffffff;
+    border: 1px solid #cfdbe8;
+    align-self: flex-start;
+    margin-right: auto;
 }
 
-/* Time below messages */
-.msg-time {
-  font-size: 11px;
-  margin-top: -3px;
-  opacity: .6;
+.msg.client::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -10px;
+    border-top: 12px solid #ffffff;
+    border-right: 12px solid transparent;
 }
 
-/* FILE / IMAGE message */
-.chat-image {
-  display: block;
-  max-width: 280px;
-  max-height: 280px;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: 0.3s;
+/* CSR (RIGHT) */
+.msg.csr {
+    background: #007bff;
+    color: white;
+    align-self: flex-end;
+    margin-left: auto;
 }
 
-.chat-image:hover {
-  opacity: .85;
+.msg.csr::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: -10px;
+    border-top: 12px solid #007bff;
+    border-left: 12px solid transparent;
 }
 
-/* FILE DOWNLOAD bubble */
-.download-file-btn {
-  background: #0078FF;
-  color: #fff;
-  padding: 10px 16px;
-  border-radius: 18px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  border: none;
+/* TIMESTAMP */
+.timestamp {
+    font-size: 11px;
+    margin-top: 3px;
+    color: #6b7a89;
+}
+.timestamp.csr {
+    text-align: right;
+    color: #e8f1ff;
 }
 
-.download-file-btn:hover {
-  background: #006be0;
+/* ===================== MEDIA PREVIEW ===================== */
+.media-thumb {
+    max-width: 260px;
+    border-radius: 14px;
+    margin-top: 8px;
+    cursor: pointer;
+    transition: .2s;
+}
+.media-thumb:hover {
+    transform: scale(1.05);
 }
 
-/* TYPING INDICATOR */
-.typing-indicator {
-  background: #ffffff;
-  padding: 10px 15px;
-  width: 65px;
-  border-radius: 18px;
-  display: flex;
-  gap: 4px;
+/* FILE DOWNLOAD */
+.download-btn {
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: rgba(0,0,0,0.11);
+    color: #007bff;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 5px;
+    text-decoration: none;
 }
 
-.typing-dot {
-  width: 7px;
-  height: 7px;
-  background: #8e8e8e;
-  border-radius: 50%;
-  animation: blink 1.4s infinite both;
-}
-.typing-dot:nth-child(2) { animation-delay: .2s;}
-.typing-dot:nth-child(3) { animation-delay: .4s;}
-
-@keyframes blink {
-  0% { opacity: .1; }
-  20% { opacity: 1; }
-  100% { opacity: .1; }
+.msg.csr .download-btn {
+    background: rgba(255,255,255,0.25);
+    color: white;
 }
 
-/* INPUT SECTION */
+/* ===================== INPUT BAR ===================== */
 .chat-input-area {
-  padding: 15px;
-  background: white;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-top: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 40px;
+    padding: 12px 18px;
+    margin-top: 15px;
+    border: 1px solid #cdd7e6;
+    gap: 12px;
 }
 
 #chat-input {
-  flex-grow: 1;
-  border-radius: 25px;
-  font-size: 16px;
-  border: 1px solid #ddd;
-  padding: 12px 18px;
-  outline: none;
-  transition: .2s;
+    flex: 1;
+    border: none;
+    font-size: 16px;
+    background: transparent;
+    outline: none;
 }
 
-#chat-input:focus {
-  border-color: #0078FF;
+#send-btn,
+#upload-btn {
+    background: #007bff;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    color: white;
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: .2s;
 }
 
-.send-btn {
-  background: #0078FF;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 20px;
+#send-btn:hover,
+#upload-btn:hover {
+    transform: scale(1.12);
 }
 
-.send-btn:hover {
-  background: #0066d3;
+/* ===================== IMAGE LIGHTBOX ===================== */
+#lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+}
+
+#lightbox-image {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 12px;
+    animation: fadeIn .25s ease-in-out;
+}
+
+#lightbox-close {
+    position: fixed;
+    top: 18px;
+    right: 28px;
+    font-size: 45px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
 }
