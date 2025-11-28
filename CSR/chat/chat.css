@@ -1,3 +1,32 @@
+/* FULL CHAT LAYOUT FIX */
+#chat-container {
+  display: grid;
+  grid-template-columns: 300px auto 320px;
+  height: calc(100vh - 90px); /* adjust if needed for top navbar height */
+  overflow: hidden;
+}
+
+/* Left panel */
+.chat-left-panel {
+  background: #ffffff;
+  border-right: 1px solid #dcdcdc;
+  overflow-y: auto;
+}
+
+/* Middle chat panel */
+.chat-middle-panel {
+  display: flex;
+  flex-direction: column;
+  background: #f1f8f1;
+  overflow: hidden;
+}
+
+/* Right panel */
+.chat-right-panel {
+  background: #ffffff;
+  border-left: 1px solid #dcdcdc;
+  overflow-y: auto;
+}
 /* ============================
    CHAT AREA CONTAINER
    ============================ */
