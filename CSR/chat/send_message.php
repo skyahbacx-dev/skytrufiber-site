@@ -1,28 +1,21 @@
 <?php
-// DO NOT put any spaces or empty lines above this line!
-
-// Prevent PHP warnings from breaking JSON
-error_reporting(E_ERROR | E_PARSE);
-ini_set('display_errors', 0);
-
 if (!isset($_SESSION)) session_start();
-
-// MATCHES YOUR SERVER DIRECTORY STRUCTURE
 require "../../db_connect.php";
 
-header("Content-Type: application/json; charset=utf-8");
+header("Content-Type: application/json");
 
 $csrUser  = $_SESSION["csr_user"] ?? null;
 $clientID = $_POST["client_id"] ?? null;
 $message  = isset($_POST["message"]) ? trim($_POST["message"]) : "";
 
-// Validate fields
 if (!$csrUser || !$clientID || $message === "") {
-    echo json_encode(["status" => "error", "msg" => "Missing fields"]);
+    echo json_encode(["status" => "error", "msg" => "Missing data"]);
     exit;
 }
 
 try {
+
+    // INSERT CHAT MESSAGE
     $stmt = $conn->prepare("
         INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
         VALUES (?, 'csr', ?, 0, 0, NOW())
@@ -32,7 +25,7 @@ try {
     echo json_encode(["status" => "ok"]);
     exit;
 
-} catch (Throwable $e) {
+} catch (PDOException $e) {
     echo json_encode(["status" => "error", "msg" => $e->getMessage()]);
     exit;
 }
