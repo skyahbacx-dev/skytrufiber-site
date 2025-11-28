@@ -1,27 +1,15 @@
-/* ===================== GLOBAL ===================== */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: #f6faff;
-}
-
-/* ========== CHAT MESSAGES AREA ========== */
+/* === CHAT MESSAGES AREA === */
 #chat-messages {
   height: calc(100vh - 260px);
+  overflow-y: auto;
   padding: 24px 36px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  overflow-y: auto;
   background: #e8f2ff;
 }
 
-/* custom scrollbar thin */
+/* scrollbar styling */
 #chat-messages::-webkit-scrollbar {
   width: 6px;
 }
@@ -30,7 +18,7 @@ body {
   border-radius: 4px;
 }
 
-/* ========== MESSAGE BUBBLE BASE ========== */
+/* === MESSAGE BUBBLE BASE === */
 .message {
   max-width: 65%;
   padding: 12px 18px;
@@ -83,7 +71,7 @@ body {
   height: 0;
 }
 
-/* ========== TIMESTAMP ========== */
+/* === TIMESTAMP === */
 .msg-time {
   font-size: 11px;
   opacity: 0.6;
@@ -92,7 +80,7 @@ body {
 .msg-time.left  { text-align: left;  margin-left: 6px; }
 .msg-time.right { text-align: right; margin-right: 6px; }
 
-/* ========== FILE BUBBLE ========== */
+/* === FILE / IMAGE BUBBLE === */
 .file-bubble {
   padding: 10px 14px;
   background: #f1f0f0;
@@ -108,7 +96,6 @@ body {
   background: #e5e5e5;
 }
 
-/* ========== IMAGE THUMBNAIL ========== */
 .chat-image {
   max-width: 250px;
   border-radius: 16px;
@@ -119,7 +106,7 @@ body {
   transform: scale(1.03);
 }
 
-/* ========== INPUT BAR (rounded) ========== */
+/* === INPUT BAR === */
 .chat-input-area {
   width: 94%;
   background: white;
