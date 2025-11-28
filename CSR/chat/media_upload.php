@@ -12,82 +12,46 @@ if (!$client_id || !$csr) {
     exit;
 }
 
-if (!isset($_FILES["media"])) {
-    echo json_encode(["status" => "error", "msg" => "No file received"]);
+$file = $_FILES["media"] ?? null;
+if (!$file || $file["error"] !== 0) {
+    echo json_encode(["status" => "error", "msg" => "File upload error"]);
     exit;
 }
 
-$file = $_FILES["media"];
+$filename = time() . "_" . preg_replace("/\s+/", "_", $file["name"]);
+$tmpPath  = "/tmp/chat_media/";
 
-// ===============================
-// Validate and prepare file
-// ===============================
-$allowed = ["jpg", "jpeg", "png", "gif", "mp4", "mov", "avi", "pdf", "doc", "docx"];
-$fileExt = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
+if (!is_dir($tmpPath)) mkdir($tmpPath, 0777, true);
 
-if (!in_array($fileExt, $allowed)) {
-    echo json_encode(["status" => "error", "msg" => "Invalid file type"]);
+$localTmpFile = $tmpPath . $filename;
+
+if (!move_uploaded_file($file["tmp_name"], $localTmpFile)) {
+    echo json_encode(["status" => "error", "msg" => "Move failed"]);
     exit;
 }
 
-$uploadDirectory = "/tmp/chat_media/";
-if (!is_dir($uploadDirectory)) {
-    mkdir($uploadDirectory, 0777, true);
-}
+// PUBLIC ACCESS folder (in project)
+$publicPath = $_SERVER["DOCUMENT_ROOT"] . "/chat_media/";
+if (!is_dir($publicPath)) mkdir($publicPath, 0777, true);
 
-$fileName = time() . "_" . preg_replace("/\s+/", "_", $file["name"]);
-$targetPath = $uploadDirectory . $fileName;
+// Copy from /tmp -> /public/chat_media/
+copy($localTmpFile, $publicPath . $filename);
 
-// ===============================
-// Move file to /tmp
-// ===============================
-if (!move_uploaded_file($file["tmp_name"], $targetPath)) {
-    echo json_encode([
-        "status" => "error",
-        "msg" => "Upload failed",
-        "debug" => [
-            "target" => $targetPath,
-            "tmp" => $file["tmp_name"]
-        ]
-    ]);
-    exit;
-}
+// File path stored in DB for front-end display
+$dbPath = "chat_media/" . $filename;
 
-// Determine media type
-$mediaType = "file";
-if (in_array($fileExt, ["jpg", "jpeg", "png", "gif"])) $mediaType = "image";
-if (in_array($fileExt, ["mp4", "mov", "avi"])) $mediaType = "video";
+// Insert chat row
+$stmt = $conn->prepare("INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
+                        VALUES (?, 'csr', '', 1, 0, NOW())");
+$stmt->execute([$client_id]);
+$chatID = $conn->lastInsertId();
 
-// Path saved to DB (relative path)
-$mediaDbPath = "tmp/chat_media/" . $fileName;
+// Insert media row
+$mediaType = (strpos($file["type"], "image") !== false) ? "image" : "file";
+$stmt2 = $conn->prepare("INSERT INTO chat_media (chat_id, media_path, media_type)
+                         VALUES (?, ?, ?)");
+$stmt2->execute([$chatID, $dbPath, $mediaType]);
 
-// ===============================
-// Insert placeholder chat message
-// ===============================
-try {
-    $stmt = $conn->prepare("
-        INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
-        VALUES (?, 'csr', '', 1, 0, NOW())
-    ");
-    $stmt->execute([$client_id]);
-
-    $chatId = $conn->lastInsertId();
-
-    $mediaInsert = $conn->prepare("
-        INSERT INTO chat_media (chat_id, media_path, media_type)
-        VALUES (?, ?, ?)
-    ");
-    $mediaInsert->execute([$chatId, $mediaDbPath, $mediaType]);
-
-    echo json_encode([
-        "status" => "ok",
-        "path" => $mediaDbPath,
-        "type" => $mediaType
-    ]);
-    exit;
-
-} catch (Exception $e) {
-    echo json_encode(["status" => "error", "msg" => $e->getMessage()]);
-    exit;
-}
+echo json_encode(["status" => "ok"]);
+exit;
 ?>
