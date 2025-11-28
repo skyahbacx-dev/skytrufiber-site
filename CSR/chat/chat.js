@@ -128,18 +128,16 @@ function loadMessages(scrollBottom) {
         data: { client_id: currentClientID },
         dataType: "html",
         success: function (html) {
-            const chatBox = $("#chat-messages");
-            chatBox.html(html);
+            const box = $("#chat-messages");
+            box.html(html);
 
             if (scrollBottom) {
-                chatBox.scrollTop(chatBox[0].scrollHeight);
+                box.scrollTop(box[0].scrollHeight);
             }
-        },
-        error: function (err) {
-            console.error("Message load error:", err);
         }
     });
 }
+
 
 // ========================================
 // SEND TEXT MESSAGE (JSON RESPONSE)
