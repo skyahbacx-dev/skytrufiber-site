@@ -41,7 +41,7 @@ $csrUser = $_SESSION["csr_user"];
             <!-- INPUT AREA -->
             <div class="chat-input-area">
 
-                <input type="file" id="chat-upload-media" accept="image/*,video/*,application/pdf" hidden>
+                <input type="file" id="chat-upload-media" accept="image/*,video/*,application/pdf" hidden multiple>
 
                 <button id="upload-btn" class="upload-btn">
                     <i class="fa fa-paperclip"></i>
