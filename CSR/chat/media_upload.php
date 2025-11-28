@@ -45,6 +45,7 @@ if (!move_uploaded_file($file["tmp_name"], $targetPath)) {
 }
 
 try {
+    // CREATE CHAT ROW FIRST
     $stmt = $conn->prepare("
         INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
         VALUES (?, 'csr', NULL, false, false, NOW())
@@ -52,6 +53,7 @@ try {
     $stmt->execute([$client_id]);
     $chatId = $conn->lastInsertId();
 
+    // SAVE MEDIA RECORD
     $mediaInsert = $conn->prepare("
         INSERT INTO chat_media (chat_id, media_path, media_type)
         VALUES (?, ?, ?)
