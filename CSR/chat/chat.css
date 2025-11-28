@@ -4,7 +4,7 @@
 #chat-container {
   display: grid;
   grid-template-columns: 300px auto 320px;
-  height: calc(100vh - 55px);   /* Aligns with top navbar height */
+  height: calc(100vh - 55px);
   overflow: hidden;
   background: #f8fdfb;
 }
@@ -200,13 +200,14 @@
   border-radius: 20px 20px 4px 20px;
 }
 
-/* MEDIA / IMAGES */
+/* MEDIA IMAGES INSIDE CHAT */
 .message-bubble img {
   max-width: 240px;
+  max-height: 260px;
   border-radius: 12px;
   margin-top: 6px;
   cursor: pointer;
-  box-shadow: 0px 2px 10px rgba(0,0,0,0.2);
+  object-fit: cover;
 }
 
 /* Timestamp */
@@ -260,3 +261,99 @@
 
 .chat-send-btn {
   background: #0084ff;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+.chat-send-btn i {
+  color: white;
+  font-size: 20px;
+}
+
+/* ===========================================
+   PREVIEW MODAL FOR MULTIPLE FILES
+   =========================================== */
+.preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.preview-box {
+  background: white;
+  padding: 18px;
+  border-radius: 14px;
+  width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.preview-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.preview-thumb {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+.preview-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  gap: 10px;
+}
+
+.preview-btn {
+  flex: 1;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.preview-btn.cancel { background: #666; color: #fff; }
+.preview-btn.send { background: #05702e; color: #fff; }
+
+/* LIGHTBOX */
+#lightbox-overlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
+#lightbox-image {
+  max-width:90%;
+  max-height:90%;
+  border-radius:12px;
+}
+#lightbox-close {
+  position:absolute;
+  top:30px;
+  right:40px;
+  font-size:34px;
+  cursor:pointer;
+  color:white;
+}
+
+/* Animation */
+@keyframes fadeInUp {
+  from { opacity:0; transform:translateY(10px); }
+  to { opacity:1; transform:translateY(0); }
+}
