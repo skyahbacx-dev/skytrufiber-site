@@ -31,7 +31,8 @@ try {
 
         echo "<div class='message {$sender}'>
             <div class='message-avatar'>
-                <img src='../upload/default_avatar.png'>
+            <img src='../../CSR/upload/default_avatar.png'>
+
             </div>
             <div>
                 <div class='message-bubble'>";
