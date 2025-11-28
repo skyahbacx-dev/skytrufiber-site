@@ -26,34 +26,40 @@ try {
         $sender = ($row["sender_type"] === "csr") ? "sent" : "received";
 
         echo "<div class='message $sender'>";
-        echo "<div class='message-avatar'>
+
+        // Avatar
+        echo "
+            <div class='message-avatar'>
                 <img src='/upload/default_avatar.png' alt='avatar'>
-              </div>";
+            </div>
+        ";
 
-        echo "<div>";
+        echo "<div>"; // message wrapper
+        echo "<div class='message-bubble'>"; // bubble
 
-        echo "<div class='message-bubble'>";
-
+        // If media exists
         if (!empty($row["media_path"])) {
 
-            $filePath = "/".$row["media_path"];  
+            $filePath = "/" . $row["media_path"];
 
             if ($row["media_type"] === "image") {
-                echo "<img src='$filePath' class='media-thumb'>";
+                echo "<img src='$filePath' class='media-thumb' onclick='openLightbox(\"$filePath\")'>";
             } else {
                 echo "<a class='download-btn' href='$filePath' download>📎 Download File</a>";
             }
         }
 
+        // If message text exists
         if (!empty($row["message"])) {
             echo nl2br(htmlspecialchars($row["message"]));
         }
 
-        echo "</div>"; // bubble
+        echo "</div>"; // close bubble
 
         echo "<div class='message-time'>" . date("M j g:i A", strtotime($row["created_at"])) . "</div>";
 
-        echo "</div></div>";
+        echo "</div>"; // close wrapper
+        echo "</div>"; // close message container
     }
 
 } catch (Exception $e) {
