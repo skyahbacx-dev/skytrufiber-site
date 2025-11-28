@@ -2,12 +2,14 @@
 if (!isset($_SESSION)) session_start();
 require "../../db_connect.php";
 
+header("Content-Type: application/json");
+
 $csrUser  = $_SESSION["csr_user"] ?? null;
 $clientID = $_POST["client_id"] ?? null;
 $message  = trim($_POST["message"] ?? "");
 
 if (!$csrUser || !$clientID || !$message) {
-    echo "Invalid";
+    echo json_encode(["status" => "error", "msg" => "Missing data"]);
     exit;
 }
 
@@ -18,7 +20,7 @@ try {
     $locked = $check->fetch(PDO::FETCH_ASSOC)["is_locked"];
 
     if ($locked) {
-        echo "LOCKED";  // handled in chat.js
+        echo json_encode(["status" => "locked"]);
         exit;
     }
 
@@ -31,9 +33,10 @@ try {
         ":msg" => $message
     ]);
 
-    echo "OK";
+    echo json_encode(["status" => "ok"]);
+    exit;
 
 } catch (PDOException $e) {
-    echo "ERR: ".$e->getMessage();
+    echo json_encode(["status" => "error", "msg" => $e->getMessage()]);
+    exit;
 }
-?>
