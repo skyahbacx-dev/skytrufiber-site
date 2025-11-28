@@ -1,6 +1,7 @@
 <?php
 if (!isset($_SESSION)) session_start();
 header("Content-Type: application/json");
+
 require_once "../../db_connect.php";
 
 $client_id = $_POST["client_id"] ?? null;
@@ -11,41 +12,40 @@ if (!$client_id || !$csr) {
     exit;
 }
 
-if (!isset($_FILES["media"])) {
-    echo json_encode(["status" => "error", "msg" => "No files"]);
+if (empty($_FILES["media"]["name"])) {
+    echo json_encode(["status" => "error", "msg" => "No files received"]);
     exit;
 }
 
-$tmpFolder = "/tmp/chat_media/";
-$publicFolder = $_SERVER["DOCUMENT_ROOT"] . "/chat_media/";
+// create chat message entry (GROUP container)
+$stmt = $conn->prepare("INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
+                        VALUES (?, 'csr', '', TRUE, FALSE, NOW())");
+$stmt->execute([$client_id]);
+$chatId = $conn->lastInsertId();
 
-if (!is_dir($tmpFolder)) mkdir($tmpFolder, 0777, true);
-if (!is_dir($publicFolder)) mkdir($publicFolder, 0777, true);
+$uploadDirectory = "/tmp/chat_media/";
+if (!is_dir($uploadDirectory)) {
+    mkdir($uploadDirectory, 0777, true);
+}
 
-$files = $_FILES["media"];
-$fileCount = count($files["name"]);
+foreach ($_FILES["media"]["name"] as $index => $name) {
 
-for ($i = 0; $i < $fileCount; $i++) {
+    $tmpName = $_FILES["media"]["tmp_name"][$index];
+    $fileType = $_FILES["media"]["type"][$index];
+    
+    $fileName = time() . "_" . preg_replace("/\s+/", "_", $name);
+    $targetPath = $uploadDirectory . $fileName;
 
-    $name = time() . "_" . preg_replace("/\s+/", "_", $files["name"][$i]);
-    $tmpFile = $files["tmp_name"][$i];
-    $tmpPath = $tmpFolder . $name;
+    if (move_uploaded_file($tmpName, $targetPath)) {
+        $mediaDbPath = "tmp/chat_media/" . $fileName;
 
-    move_uploaded_file($tmpFile, $tmpPath);
-    copy($tmpPath, $publicFolder . $name);
+        $type = (strpos($fileType, "image") !== false) ? "image" :
+                (strpos($fileType, "video") !== false ? "video" : "file");
 
-    $mediaDbPath = "chat_media/" . $name;
-
-    $stmt = $conn->prepare("INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
-                            VALUES (?, 'csr', '', 1, 0, NOW())");
-    $stmt->execute([$client_id]);
-    $chatID = $conn->lastInsertId();
-
-    $mediaType = (strpos($files["type"][$i], "image") !== false) ? "image" : "file";
-
-    $stmt2 = $conn->prepare("INSERT INTO chat_media (chat_id, media_path, media_type)
-                                VALUES (?, ?, ?)");
-    $stmt2->execute([$chatID, $mediaDbPath, $mediaType]);
+        $mediaInsert = $conn->prepare("INSERT INTO chat_media (chat_id, media_path, media_type)
+                                       VALUES (?, ?, ?)");
+        $mediaInsert->execute([$chatId, $mediaDbPath, $type]);
+    }
 }
 
 echo json_encode(["status" => "ok"]);
