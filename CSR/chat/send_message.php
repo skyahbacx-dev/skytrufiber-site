@@ -1,18 +1,17 @@
 <?php
-// No whitespace above PHP tag!
+// DO NOT put any spaces or empty lines above this line!
 
-// Disable notice & warning output (protect JSON)
+// Prevent PHP warnings from breaking JSON
 error_reporting(E_ERROR | E_PARSE);
-ini_set("display_errors", 0);
+ini_set('display_errors', 0);
 
 if (!isset($_SESSION)) session_start();
 
-// Correct DB path as confirmed from structure
+// MATCHES YOUR SERVER DIRECTORY STRUCTURE
 require "../../db_connect.php";
 
-header("Content-Type: application/json");
+header("Content-Type: application/json; charset=utf-8");
 
-// Get POST data
 $csrUser  = $_SESSION["csr_user"] ?? null;
 $clientID = $_POST["client_id"] ?? null;
 $message  = isset($_POST["message"]) ? trim($_POST["message"]) : "";
