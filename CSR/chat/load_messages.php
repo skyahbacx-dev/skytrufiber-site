@@ -18,7 +18,7 @@ try {
         WHERE c.client_id = ?
         ORDER BY c.created_at ASC
     ");
-    
+
     $stmt->execute([$client_id]);
     $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
