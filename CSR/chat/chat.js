@@ -148,30 +148,30 @@ function sendMessage() {
     let msg = $("#chat-input").val().trim();
     if (!msg || !currentClientID) return;
 
-    $.ajax({
-        url: "../chat/send_message.php",
-        type: "POST",
-        data: {
-            client_id: currentClientID,
-            message: msg,
-            sender_type: "csr"
-        },
-        dataType: "json",
-        success: function (res) {
-            $("#chat-input").val("");
+   $.ajax({
+    url: "../chat/send_message.php",
+    type: "POST",
+    data: {
+        client_id: currentClientID,
+        message: msg,
+        sender_type: "csr"
+    },
+    dataType: "json",
+    xhrFields: { withCredentials: true },      // <-- REQUIRED FIX
+    success: function (res) {
+        $("#chat-input").val("");
 
-            if (res.status === "ok") {
-                loadMessages(true);
-            } else {
-                console.error("Message send failed:", res);
-                alert("Unable to send message.");
-            }
-        },
-        error: function (err) {
-            console.error("Message send error:", err);
+        if (res.status === "ok") {
+            loadMessages(true);
+        } else {
+            alert("Unable to send message.");
         }
-    });
-}
+    },
+    error: function (err) {
+        console.error(err);
+        alert("Send error.");
+    }
+});
 
 // ========================================
 // UPLOAD MEDIA (AJAX FormData)
