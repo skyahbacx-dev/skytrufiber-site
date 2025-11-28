@@ -117,7 +117,7 @@ function loadClientInfo(id) {
 }
 
 // ========================================
-// LOAD MESSAGES
+// LOAD MESSAGES (MESSENGER BUBBLES)
 // ========================================
 function loadMessages(scrollBottom) {
     if (!currentClientID) return;
@@ -126,18 +126,23 @@ function loadMessages(scrollBottom) {
         url: "../chat/load_messages.php",
         type: "POST",
         data: { client_id: currentClientID },
+        dataType: "html",
         success: function (html) {
-            $("#chat-messages").html(html);
+            const chatBox = $("#chat-messages");
+            chatBox.html(html);
 
             if (scrollBottom) {
-                $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
+                chatBox.scrollTop(chatBox[0].scrollHeight);
             }
+        },
+        error: function (err) {
+            console.error("Message load error:", err);
         }
     });
 }
 
 // ========================================
-// SEND TEXT MESSAGE
+// SEND TEXT MESSAGE (JSON RESPONSE)
 // ========================================
 function sendMessage() {
     let msg = $("#chat-input").val().trim();
@@ -151,24 +156,34 @@ function sendMessage() {
             message: msg,
             sender_type: "csr"
         },
-        success: function () {
+        dataType: "json",
+        success: function (res) {
             $("#chat-input").val("");
-            loadMessages(true);
+
+            if (res.status === "ok") {
+                loadMessages(true);
+            } else {
+                console.error("Message send failed:", res);
+                alert("Unable to send message.");
+            }
+        },
+        error: function (err) {
+            console.error("Message send error:", err);
         }
     });
 }
 
 // ========================================
-// UPLOAD MEDIA
+// UPLOAD MEDIA (AJAX FormData)
 // ========================================
 function uploadMedia() {
     const fileInput = $("#chat-upload-media")[0];
-    if (!fileInput.files.length) return;
+    if (!fileInput.files.length || !currentClientID) return;
 
     const formData = new FormData();
     formData.append("media", fileInput.files[0]);
     formData.append("client_id", currentClientID);
-    formData.append("csr", $("#csr-username").val());
+    formData.append("sender_type", "csr");
 
     $.ajax({
         url: "../chat/media_upload.php",
@@ -176,9 +191,19 @@ function uploadMedia() {
         data: formData,
         processData: false,
         contentType: false,
-        success: function () {
+        dataType: "json",
+        success: function (res) {
             $("#chat-upload-media").val("");
-            loadMessages(true);
+
+            if (res.status === "ok") {
+                loadMessages(true);
+            } else {
+                console.error("Upload failed:", res);
+                alert("Media upload failed.");
+            }
+        },
+        error: function (err) {
+            console.error("Media upload error:", err);
         }
     });
 }
@@ -204,6 +229,7 @@ function unassignClient(cid) {
         }
     });
 }
+
 // Lightbox Preview
 $(document).on("click", ".media-thumb", function () {
     const src = $(this).attr("src");
