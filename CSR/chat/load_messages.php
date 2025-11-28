@@ -21,29 +21,52 @@ try {
     $stmt->execute([$client_id]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    foreach ($rows as $row) {
+    foreach ($rows as $row):
 
-        $sender = ($row["sender_type"] === "csr") ? "csr" : "client";
+        // Determine bubble alignment
+        $isMine = ($row["sender_type"] === "csr");
+        $class = $isMine ? "sent" : "received";
 
-        echo "<div class='msg {$sender}'>";
+?>
+        <div class="message <?= $class ?>">
 
-        if (!empty($row["media_path"])) {
-            if ($row["media_type"] === "image") {
-                echo "<img src='../../{$row["media_path"]}' class='media-thumb' onclick='openLightbox(this.src)'>";
-            } else {
-                echo "<a class='download-btn' href='../../{$row["media_path"]}' download>📎 Download File</a>";
-            }
-        }
+            <div class="message-avatar">
+                <img src="<?= $isMine ? '/assets/csr.png' : '/assets/client.png' ?>" alt="avatar">
+            </div>
 
-        if (!empty($row["message"])) {
-            echo nl2br(htmlspecialchars($row["message"]));
-        }
+            <div>
+                <div class="message-bubble">
+                    <?php if (!empty($row["media_path"])): ?>
 
-        echo "</div>";
+                        <?php if ($row["media_type"] === "image"): ?>
+                            <img src="<?= "../../" . htmlspecialchars($row["media_path"]) ?>"
+                                 class="media-thumb"
+                                 onclick="openLightbox('<?= "../../" . htmlspecialchars($row["media_path"]) ?>')">
+                        <?php else: ?>
+                            <a href="<?= "../../" . htmlspecialchars($row["media_path"]) ?>" 
+                               class="download-btn" download>
+                                📎 Download File
+                            </a>
+                        <?php endif; ?>
 
-        echo "<div class='timestamp {$sender}'>" . date("M j g:i A", strtotime($row["created_at"])) . "</div>";
-    }
+                    <?php endif; ?>
+
+                    <?php if (!empty($row["message"])): ?>
+                        <?= nl2br(htmlspecialchars($row["message"])) ?>
+                    <?php endif; ?>
+                </div>
+
+                <div class="message-time">
+                    <?= date("M j g:i A", strtotime($row["created_at"])) ?>
+                </div>
+            </div>
+
+        </div>
+
+<?php
+    endforeach;
 
 } catch (Exception $e) {
     echo "DB Error: " . $e->getMessage();
 }
+?>
