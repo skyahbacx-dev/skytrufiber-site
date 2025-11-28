@@ -1,42 +1,41 @@
 <?php
+// Ensure clean output, disable warnings printing into JSON
+error_reporting(0);
 if (!isset($_SESSION)) session_start();
+
+// Correct db path (based on your server structure from error)
 require "../../db_connect.php";
 
-header("Content-Type: application/json");
+header("Content-Type: application/json; charset=utf-8");
 
+// Get data
 $csrUser  = $_SESSION["csr_user"] ?? null;
 $clientID = $_POST["client_id"] ?? null;
-$message  = trim($_POST["message"] ?? "");
+$message  = isset($_POST["message"]) ? trim($_POST["message"]) : "";
 
-if (!$csrUser || !$clientID || !$message) {
-    echo json_encode(["status" => "error", "msg" => "Missing data"]);
+// Basic validation
+if (!$csrUser || !$clientID || $message === "") {
+    echo json_encode([
+        "status" => "error",
+        "msg"    => "Missing required data"
+    ]);
     exit;
 }
 
 try {
-    // check lock state first
-    $check = $conn->prepare("SELECT is_locked FROM users WHERE id = ?");
-    $check->execute([$clientID]);
-    $locked = $check->fetch(PDO::FETCH_ASSOC)["is_locked"];
-
-    if ($locked) {
-        echo json_encode(["status" => "locked"]);
-        exit;
-    }
-
     $stmt = $conn->prepare("
         INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
-        VALUES (:cid, 'csr', :msg, 0, 0, NOW())
+        VALUES (?, 'csr', ?, 0, 0, NOW())
     ");
-    $stmt->execute([
-        ":cid" => $clientID,
-        ":msg" => $message
-    ]);
+    $stmt->execute([$clientID, $message]);
 
     echo json_encode(["status" => "ok"]);
     exit;
 
-} catch (PDOException $e) {
-    echo json_encode(["status" => "error", "msg" => $e->getMessage()]);
+} catch (Throwable $e) {
+    echo json_encode([
+        "status" => "error",
+        "msg"    => $e->getMessage()
+    ]);
     exit;
 }
