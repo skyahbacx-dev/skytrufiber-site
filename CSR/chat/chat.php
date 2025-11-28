@@ -18,19 +18,21 @@ $csrUser = $_SESSION["csr_user"];
         <div id="client-list" class="client-list"></div>
     </div>
 
-
-    <!-- MIDDLE PANEL -->
+    <!-- MIDDLE CHAT PANEL -->
     <div class="chat-middle-panel">
 
         <div class="chat-wrapper">
 
-            <!-- HEADER -->
+            <!-- CHAT HEADER -->
             <div class="chat-header">
                 <div class="chat-with">
                     <h3 id="chat-client-name">Select a Client</h3>
                     <span id="client-status" class="status-dot offline"></span>
                 </div>
-                <div id="typing-indicator" class="typing-indicator" style="display:none;">typing...</div>
+
+                <div id="typing-indicator" class="typing-indicator" style="display:none;">
+                    typing...
+                </div>
             </div>
 
             <!-- CHAT MESSAGES -->
@@ -38,6 +40,7 @@ $csrUser = $_SESSION["csr_user"];
 
             <!-- INPUT AREA -->
             <div class="chat-input-area">
+
                 <input type="file" id="chat-upload-media" accept="image/*,video/*,application/pdf" hidden>
 
                 <button id="upload-btn" class="upload-btn">
@@ -53,10 +56,8 @@ $csrUser = $_SESSION["csr_user"];
                 </button>
             </div>
 
-        </div> <!-- chat-wrapper end -->
-
-    </div> <!-- chat-middle-panel end -->
-
+        </div> <!-- chat-wrapper -->
+    </div> <!-- chat-middle-panel -->
 
     <!-- RIGHT PANEL -->
     <div class="chat-right-panel">
@@ -70,3 +71,20 @@ $csrUser = $_SESSION["csr_user"];
 </div> <!-- chat-container end -->
 
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
+
+<!-- LIGHTBOX VIEWER FOR CLICKED IMAGES -->
+<div id="lightbox-overlay">
+    <span id="lightbox-close">&times;</span>
+    <img id="lightbox-image">
+</div>
+
+<!-- DRAG & DROP / PREVIEW BEFORE SEND MODAL -->
+<div id="preview-overlay" class="preview-overlay">
+    <div class="preview-box">
+        <img id="preview-image" class="preview-img">
+        <div class="preview-actions">
+            <button id="cancel-preview" class="preview-btn cancel">Cancel</button>
+            <button id="send-preview" class="preview-btn send">Send</button>
+        </div>
+    </div>
+</div>
