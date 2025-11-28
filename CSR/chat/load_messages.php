@@ -2,7 +2,7 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$client_id = $_POST['client_id'] ?? null;
+$client_id = $_POST["client_id"] ?? null;
 
 if (!$client_id) {
     echo "Missing client ID";
@@ -21,48 +21,51 @@ try {
     $stmt->execute([$client_id]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    if (!$rows) {
+        echo "<p style='text-align:center;color:#777;padding:10px;'>No messages yet.</p>";
+        exit;
+    }
+
     foreach ($rows as $row) {
 
         $sender = ($row["sender_type"] === "csr") ? "sent" : "received";
+        $timestamp = date("M j g:i A", strtotime($row["created_at"]));
 
         echo "<div class='message $sender'>";
 
         // Avatar
-        echo "
-            <div class='message-avatar'>
+        echo "<div class='message-avatar'>
                 <img src='/upload/default_avatar.png' alt='avatar'>
-            </div>
-        ";
+              </div>";
 
-        echo "<div>"; // message wrapper
-        echo "<div class='message-bubble'>"; // bubble
+        echo "<div class='message-content'>";
+        echo "<div class='message-bubble'>";
 
-        // If media exists
+        // MEDIA HANDLING
         if (!empty($row["media_path"])) {
-
-            $filePath = "/" . $row["media_path"];
+            $file = urlencode($row["media_path"]);
+            $mediaUrl = "../chat/get_media.php?file=$file";
 
             if ($row["media_type"] === "image") {
-                echo "<img src='$filePath' class='media-thumb' onclick='openLightbox(\"$filePath\")'>";
+                echo "<img src='$mediaUrl' class='media-thumb'>";
             } else {
-                echo "<a class='download-btn' href='$filePath' download>📎 Download File</a>";
+                echo "<a href='$mediaUrl' download class='download-btn'>📎 Download File</a>";
             }
         }
 
-        // If message text exists
+        // TEXT MESSAGE
         if (!empty($row["message"])) {
             echo nl2br(htmlspecialchars($row["message"]));
         }
 
-        echo "</div>"; // close bubble
+        echo "</div>"; // message-bubble
 
-        echo "<div class='message-time'>" . date("M j g:i A", strtotime($row["created_at"])) . "</div>";
-
-        echo "</div>"; // close wrapper
-        echo "</div>"; // close message container
+        echo "<div class='message-time'>$timestamp</div>";
+        echo "</div>"; // message-content
+        echo "</div>"; // message wrapper
     }
 
 } catch (Exception $e) {
-    echo "DB Error: " . $e->getMessage();
+    echo "<p style='color:red;'>DB Error: " . htmlspecialchars($e->getMessage()) . "</p>";
 }
 ?>
