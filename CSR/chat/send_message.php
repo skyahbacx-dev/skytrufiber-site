@@ -1,29 +1,40 @@
 <?php
+ob_clean();
 if (!isset($_SESSION)) session_start();
 require "../../db_connect.php";
 
 header("Content-Type: application/json");
 
-$csrUser  = $_SESSION["csr_user"] ?? null;
-$clientID = $_POST["client_id"] ?? null;
-$message  = trim($_POST["message"] ?? "");
+$csrUser  = $_SESSION["csr_user"] ?? null;   // CSR username / ID
+$clientID = $_POST["client_id"] ?? null;     // Selected client ID
+$message  = trim($_POST["message"] ?? "");   // Typed message
 
+// Validate input
 if (!$csrUser || !$clientID || !$message) {
-    echo json_encode(["status" => "error", "msg" => "Missing data"]);
+    echo json_encode([
+        "status" => "error",
+        "msg" => "Required data missing"
+    ]);
     exit;
 }
 
 try {
-    // check lock state first
-    $check = $conn->prepare("SELECT is_locked FROM users WHERE id = ?");
-    $check->execute([$clientID]);
-    $locked = $check->fetch(PDO::FETCH_ASSOC)["is_locked"];
+    // 🔍 Check if the client is assigned to a CSR
+    $assignCheck = $conn->prepare("
+        SELECT assigned_to
+        FROM client_assignments
+        WHERE client_id = ?
+    ");
+    $assignCheck->execute([$clientID]);
+    $assignedCSR = $assignCheck->fetchColumn();
 
-    if ($locked) {
+    // 🔒 If assigned to another CSR, block
+    if ($assignedCSR && $assignedCSR !== $csrUser) {
         echo json_encode(["status" => "locked"]);
         exit;
     }
 
+    // 💬 Insert message
     $stmt = $conn->prepare("
         INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
         VALUES (:cid, 'csr', :msg, 0, 0, NOW())
@@ -33,10 +44,16 @@ try {
         ":msg" => $message
     ]);
 
+    // Return success JSON response
     echo json_encode(["status" => "ok"]);
     exit;
 
 } catch (PDOException $e) {
-    echo json_encode(["status" => "error", "msg" => $e->getMessage()]);
+
+    // Return detailed error
+    echo json_encode([
+        "status" => "error",
+        "msg" => $e->getMessage()
+    ]);
     exit;
 }
