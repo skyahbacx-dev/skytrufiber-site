@@ -41,19 +41,29 @@ try {
         echo "<div class='message-content'>";
         echo "<div class='message-bubble'>";
 
+        // ==========================
         // MEDIA HANDLING
+        // ==========================
         if (!empty($row["media_path"])) {
-            $file = urlencode($row["media_path"]);
-            $mediaUrl = "../chat/get_media.php?file=$file";
+            $filePath = "/" . $row["media_path"];  // access /tmp/chat_media in Render
 
             if ($row["media_type"] === "image") {
-                echo "<img src='$mediaUrl' class='media-thumb'>";
-            } else {
-                echo "<a href='$mediaUrl' download class='download-btn'>📎 Download File</a>";
+                echo "<img src='$filePath' class='media-thumb' />";
+            }
+            elseif ($row["media_type"] === "video") {
+                echo "<video controls class='media-video'>
+                        <source src='$filePath' type='video/mp4'>
+                        Your browser does not support videos.
+                      </video>";
+            }
+            else {
+                echo "<a class='download-btn' href='$filePath' download>📎 Download File</a>";
             }
         }
 
+        // ==========================
         // TEXT MESSAGE
+        // ==========================
         if (!empty($row["message"])) {
             echo nl2br(htmlspecialchars($row["message"]));
         }
