@@ -25,8 +25,8 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 
 <!-- GLOBAL JS VARIABLES -->
 <script>
-const csrUser     = "<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>";
-const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
+    const csrUser     = "<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>";
+    const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 </script>
 
 <!-- CHAT SCRIPT -->
@@ -70,10 +70,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 <!-- MAIN CONTENT WRAPPER -->
 <div class="dashboard-container">
-
-    <!-- CHAT UI INCLUDE -->
     <?php include "../chat/chat.php"; ?>
-
 </div>
 
 <script>
