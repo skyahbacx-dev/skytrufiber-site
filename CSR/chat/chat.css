@@ -61,6 +61,7 @@
   color: #888;
 }
 
+
 /* ===========================================
    MIDDLE PANEL — CHAT WINDOW
    =========================================== */
@@ -76,6 +77,7 @@
   flex-direction: column;
   height: 100%;
 }
+
 
 /* ===========================================
    CHAT HEADER
@@ -120,6 +122,7 @@
   font-style: italic;
 }
 
+
 /* ===========================================
    CHAT MESSAGE AREA
    =========================================== */
@@ -140,6 +143,7 @@
   background: #b9e1c7;
   border-radius: 8px;
 }
+
 
 /* ===========================================
    MESSAGE BUBBLES
@@ -169,6 +173,7 @@
   overflow: hidden;
   flex-shrink: 0;
 }
+
 .message-avatar img {
   width: 100%;
   height: 100%;
@@ -200,7 +205,36 @@
   border-radius: 20px 20px 4px 20px;
 }
 
-/* MEDIA IMAGES INSIDE CHAT */
+
+/* ===========================================
+   MULTIPLE MEDIA CAROUSEL VIEW
+   =========================================== */
+.carousel-container {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 6px 0;
+}
+
+.carousel-container::-webkit-scrollbar {
+  height: 6px;
+}
+.carousel-container::-webkit-scrollbar-thumb {
+  background: #b9e1c7;
+  border-radius: 6px;
+}
+
+.carousel-img,
+.carousel-video {
+  width: 140px;
+  height: 140px;
+  border-radius: 12px;
+  object-fit: cover;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Single media (legacy bubble support) */
 .message-bubble img {
   max-width: 240px;
   max-height: 260px;
@@ -210,6 +244,7 @@
   object-fit: cover;
 }
 
+
 /* Timestamp */
 .message-time {
   font-size: 11px;
@@ -217,6 +252,7 @@
   margin-top: 4px;
   text-align: right;
 }
+
 
 /* ===========================================
    INPUT BAR
@@ -272,8 +308,9 @@
   font-size: 20px;
 }
 
+
 /* ===========================================
-   PREVIEW MODAL FOR MULTIPLE FILES
+   MULTI FILE PREVIEW MODAL
    =========================================== */
 .preview-overlay {
   position: fixed;
@@ -324,11 +361,13 @@
   cursor: pointer;
   font-weight: 600;
 }
-
 .preview-btn.cancel { background: #666; color: #fff; }
 .preview-btn.send { background: #05702e; color: #fff; }
 
-/* LIGHTBOX */
+
+/* ===========================================
+   LIGHTBOX
+   =========================================== */
 #lightbox-overlay {
   display:none;
   position:fixed;
@@ -338,11 +377,13 @@
   align-items:center;
   z-index:9999;
 }
+
 #lightbox-image {
   max-width:90%;
   max-height:90%;
   border-radius:12px;
 }
+
 #lightbox-close {
   position:absolute;
   top:30px;
@@ -351,6 +392,7 @@
   cursor:pointer;
   color:white;
 }
+
 
 /* Animation */
 @keyframes fadeInUp {
