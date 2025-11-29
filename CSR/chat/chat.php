@@ -36,20 +36,15 @@ $csrUser = $_SESSION["csr_user"];
             <!-- CHAT MESSAGES -->
             <div id="chat-messages" class="chat-messages"></div>
 
-            <!-- INLINE MULTI-FILE PREVIEW BAR -->
+            <!-- INLINE MULTIPLE FILE PREVIEW BAR (Messenger Style) -->
             <div id="preview-inline" class="preview-inline">
                 <div id="preview-files" class="preview-files"></div>
-
-                <div class="preview-actions-bar">
-                    <button id="cancel-preview" class="preview-btn cancel">Cancel</button>
-                    <button id="send-preview" class="preview-btn send">Send</button>
-                </div>
             </div>
 
             <!-- INPUT AREA -->
             <div class="chat-input-area">
 
-                <!-- MULTIPLE MEDIA SUPPORT -->
+                <!-- MULTIPLE MEDIA FILE UPLOAD -->
                 <input type="file" id="chat-upload-media" accept="image/*,video/*,application/pdf" multiple hidden>
 
                 <button id="upload-btn" class="upload-btn">
@@ -65,7 +60,9 @@ $csrUser = $_SESSION["csr_user"];
                 </button>
 
             </div> <!-- chat-input-area -->
+
         </div> <!-- chat-wrapper -->
+
     </div> <!-- chat-middle-panel -->
 
     <!-- RIGHT PANEL -->
@@ -77,7 +74,7 @@ $csrUser = $_SESSION["csr_user"];
         </div>
     </div>
 
-</div> <!-- chat-container -->
+</div> <!-- chat-container end -->
 
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
 
@@ -87,5 +84,6 @@ $csrUser = $_SESSION["csr_user"];
     <img id="lightbox-image">
 </div>
 
-<!-- SORTABLE FOR DRAG-REORDER -->
+<!-- DRAG-SORT -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+s
