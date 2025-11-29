@@ -7,7 +7,7 @@ if (!$client_id) exit;
 
 try {
 
-    // Fetch chat messages WITHOUT duplicating from media rows
+    // Fetch core chat messages only once
     $stmt = $conn->prepare("
         SELECT id, sender_type, message, created_at
         FROM chat
@@ -24,23 +24,21 @@ try {
 
     foreach ($messages as $msg) {
 
-        $msgID = (int)$msg["id"];
-        $sender = ($msg["sender_type"] === "csr") ? "sent" : "received";
+        $msgID     = (int)$msg["id"];
+        $sender    = ($msg["sender_type"] === "csr") ? "sent" : "received";
         $timestamp = date("M j g:i A", strtotime($msg["created_at"]));
 
         echo "<div class='message $sender' data-msg-id='$msgID'>";
 
         // Avatar
         echo "<div class='message-avatar'>
-                <img src='/upload/default_avatar.png'>
+                <img src='/upload/default_avatar.png' alt='avatar'>
               </div>";
 
         echo "<div class='message-content'>";
         echo "<div class='message-bubble'>";
 
-        // ===========================
-        // FETCH MULTIPLE MEDIA FILES
-        // ===========================
+        // Fetch media for this chat container
         $mediaStmt = $conn->prepare("
             SELECT media_path, media_type
             FROM chat_media
@@ -49,48 +47,53 @@ try {
         $mediaStmt->execute([$msgID]);
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // MULTIPLE FILE DISPLAY
+        // ==========================
+        // MULTIPLE MEDIA CAROUSEL
+        // ==========================
         if ($mediaList && count($mediaList) > 1) {
             echo "<div class='carousel-container'>";
+
             foreach ($mediaList as $m) {
-                $file = "/" . ltrim($m["media_path"], "/");
+                $filePath = "/" . ltrim($m["media_path"], "/");
 
                 if ($m["media_type"] === "image") {
-                    echo "<img src='$file' class='carousel-img media-thumb'>";
+                    echo "<img src='$filePath' class='carousel-img media-thumb'>";
                 } elseif ($m["media_type"] === "video") {
                     echo "<video controls class='carousel-video'>
-                            <source src='$file' type='video/mp4'>
+                            <source src='$filePath' type='video/mp4'>
                           </video>";
                 } else {
-                    echo "<a href='$file' download class='download-btn'>📎 $file</a>";
+                    echo "<a href='$filePath' download class='download-btn'>📎 File</a>";
                 }
             }
+
             echo "</div>";
         }
 
-        // SINGLE FILE
+        // ==========================
+        // SINGLE MEDIA
+        // ==========================
         elseif ($mediaList && count($mediaList) === 1) {
-            $file = "/" . ltrim($mediaList[0]["media_path"], "/");
-            $type = $mediaList[0]["media_type"];
+            $filePath = "/" . ltrim($mediaList[0]["media_path"], "/");
+            $type     = $mediaList[0]["media_type"];
 
             if ($type === "image") {
-                echo "<img src='$file' class='media-thumb'>";
+                echo "<img src='$filePath' class='media-thumb'>";
             } elseif ($type === "video") {
                 echo "<video controls class='media-video'>
-                        <source src='$file' type='video/mp4'>
+                        <source src='$filePath' type='video/mp4'>
                       </video>";
             } else {
-                echo "<a href='$file' download class='download-btn'>📎 Download File</a>";
+                echo "<a href='$filePath' download class='download-btn'>📎 Download File</a>";
             }
         }
 
-        // TEXT MESSAGE CONTENT
+        // TEXT CONTENT
         if (!empty($msg["message"])) {
             echo nl2br(htmlspecialchars($msg["message"]));
         }
 
-        echo "</div>"; // bubble
-
+        echo "</div>"; // message-bubble
         echo "<div class='message-time'>$timestamp</div>";
         echo "</div>"; // content
         echo "</div>"; // wrapper
