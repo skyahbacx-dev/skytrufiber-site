@@ -56,7 +56,7 @@ try {
             foreach ($mediaList as $m) {
 
                 // Access through get_media.php (required for /tmp storage on Railway)
-                $filePath = "/CSR/chat/get_media.php?file=" . urlencode($m["media_path"]);
+                $filePath = "/chat/get_media.php?file=" . urlencode($m["media_path"]);
 
                 if ($m["media_type"] === "image") {
                     echo "<img src='$filePath' class='carousel-img media-thumb'>";
