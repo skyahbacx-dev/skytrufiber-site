@@ -7,7 +7,7 @@ if (!$client_id) exit;
 
 try {
 
-    // Fetch core chat messages only once
+    // Fetch chat messages ordered chronologically
     $stmt = $conn->prepare("
         SELECT id, sender_type, message, created_at
         FROM chat
@@ -38,7 +38,7 @@ try {
         echo "<div class='message-content'>";
         echo "<div class='message-bubble'>";
 
-        // Fetch media for this chat container
+        // Fetch associated media
         $mediaStmt = $conn->prepare("
             SELECT media_path, media_type
             FROM chat_media
@@ -48,7 +48,7 @@ try {
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
         // ==========================
-        // MULTIPLE MEDIA CAROUSEL
+        // MULTIPLE MEDIA (Carousel)
         // ==========================
         if ($mediaList && count($mediaList) > 1) {
             echo "<div class='carousel-container'>";
@@ -71,9 +71,10 @@ try {
         }
 
         // ==========================
-        // SINGLE MEDIA
+        // ONE MEDIA ITEM
         // ==========================
         elseif ($mediaList && count($mediaList) === 1) {
+
             $filePath = "/" . ltrim($mediaList[0]["media_path"], "/");
             $type     = $mediaList[0]["media_type"];
 
@@ -88,12 +89,12 @@ try {
             }
         }
 
-        // TEXT CONTENT
+        // Display message text if exists
         if (!empty($msg["message"])) {
             echo nl2br(htmlspecialchars($msg["message"]));
         }
 
-        echo "</div>"; // message-bubble
+        echo "</div>"; // bubble
         echo "<div class='message-time'>$timestamp</div>";
         echo "</div>"; // content
         echo "</div>"; // wrapper
