@@ -1,7 +1,7 @@
 // ========================================
 // SkyTruFiber CSR Chat System
 // chat.js — Full Upgrade Version
-// Supports: Inline Preview, Delete, Combined Media+Text, Carousel, Lightbox
+// Supports: Inline Preview, Delete, Combined Media+Text, Carousel, Lightbox, Thumbnails
 // ========================================
 
 let currentClientID = null;
@@ -23,7 +23,7 @@ $(document).ready(function () {
         });
     });
 
-    // SEND BUTTON ACTION
+    // SEND MESSAGE BUTTON
     $("#send-btn").click(sendMessage);
     $("#chat-input").keypress(function (e) {
         if (e.which === 13) {
@@ -32,17 +32,17 @@ $(document).ready(function () {
         }
     });
 
-    // OPEN FILE PICKER
+    // UPLOAD FILE BUTTON
     $("#upload-btn").click(() => $("#chat-upload-media").click());
 
-    // SELECT FILES
+    // FILE SELECTED
     $("#chat-upload-media").change(function () {
         if (!currentClientID) return;
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
-    // SELECT CLIENT
+    // SELECT CHAT CLIENT
     $(document).on("click", ".client-item", function () {
         currentClientID = $(this).data("id");
         $("#chat-client-name").text($(this).data("name"));
@@ -55,20 +55,21 @@ $(document).ready(function () {
         if (messageInterval) clearInterval(messageInterval);
         messageInterval = setInterval(() => {
             if (!$("#preview-inline").is(":visible")) loadMessages(false);
-        }, 1500);
+        }, 1200);
     });
 
-    // LIGHTBOX VIEWER
+    // LIGHTBOX — open full image
     $(document).on("click", ".media-thumb", function () {
-        $("#lightbox-image").attr("src", $(this).attr("src"));
+        const fullImg = $(this).data("full") || $(this).attr("src");
+        $("#lightbox-image").attr("src", fullImg);
         $("#lightbox-overlay").fadeIn(200);
     });
 
-    $("#lightbox-close, #lightbox-overlay").click(() =>
-        $("#lightbox-overlay").fadeOut(200)
-    );
+    $("#lightbox-close, #lightbox-overlay").click(() => {
+        $("#lightbox-overlay").fadeOut(200);
+    });
 
-    // REMOVE FILE FROM INLINE PREVIEW
+    // REMOVE FILE FROM PREVIEW
     $(document).on("click", ".preview-remove", function () {
         const index = $(this).data("index");
         selectedFiles.splice(index, 1);
@@ -91,7 +92,7 @@ function loadClients() {
 
 
 // ========================================
-// LOAD CLIENT INFO
+// LOAD CLIENT INFO (right panel)
 // ========================================
 function loadClientInfo(id) {
     $.post("../chat/load_client_info.php", { client_id: id }, function (html) {
@@ -125,18 +126,16 @@ function loadMessages(scrollBottom = false) {
 
 
 // ========================================
-// SEND MESSAGE
+// SEND MESSAGE OR MEDIA
 // ========================================
 function sendMessage() {
     const msg = $("#chat-input").val().trim();
 
-    // If media selected → upload them first
     if (selectedFiles.length > 0) {
         uploadMedia(selectedFiles, msg);
         return;
     }
 
-    // Send text only
     if (!msg || !currentClientID) return;
 
     $.post("../chat/send_message.php", {
@@ -153,13 +152,12 @@ function sendMessage() {
 
 
 // ========================================
-// PREVIEW MULTIPLE FILES INLINE BAR
+// INLINE PREVIEW BAR
 // ========================================
 function previewMultiple(files) {
     $("#preview-files").html("");
 
     files.forEach((file, index) => {
-
         const removeBtn = `<button class="preview-remove" data-index="${index}">&times;</button>`;
 
         if (file.type.startsWith("image")) {
@@ -187,7 +185,7 @@ function previewMultiple(files) {
 
 
 // ========================================
-// UPLOAD MEDIA + OPTIONAL TEXT
+// UPLOAD MEDIA + OPTIONAL MESSAGE
 // ========================================
 function uploadMedia(files, msg = "") {
 
@@ -210,7 +208,6 @@ function uploadMedia(files, msg = "") {
         processData: false,
         contentType: false,
         dataType: "json",
-
         success: res => loadMessages(true),
         error: err => console.error("Upload Error:", err.responseText)
     });
