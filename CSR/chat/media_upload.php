@@ -17,7 +17,6 @@ if (empty($_FILES["media"]["name"])) {
     exit;
 }
 
-// Create chat container row
 $stmt = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
     VALUES (?, 'csr', '', TRUE, FALSE, NOW())
@@ -25,37 +24,27 @@ $stmt = $conn->prepare("
 $stmt->execute([$client_id]);
 $chatId = $conn->lastInsertId();
 
-// Correct directory for Railway / GitHub deployment
-$uploadDir = $_SERVER["DOCUMENT_ROOT"] . "/CSR/upload/chat_media/";
+foreach ($_FILES["media"]["tmp_name"] as $i => $tmpName) {
 
-if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0777, true);
-}
-
-foreach ($_FILES["media"]["name"] as $i => $name) {
-
-    $tmpName  = $_FILES["media"]["tmp_name"][$i];
+    $fileName = $_FILES["media"]["name"][$i];
     $fileType = $_FILES["media"]["type"][$i];
-
-    $fileName = round(microtime(true) * 1000) . "_" . preg_replace("/\s+/", "_", $name);
-    $targetPath = $uploadDir . $fileName;
-
-    if (!move_uploaded_file($tmpName, $targetPath)) {
-        echo json_encode(["status" => "error", "msg" => "Upload failed"]);
-        exit;
-    }
+    $fileBlob = file_get_contents($tmpName);
 
     $type = "file";
     if (strpos($fileType, "image") !== false) $type = "image";
     elseif (strpos($fileType, "video") !== false) $type = "video";
 
-    $mediaInsert = $conn->prepare("
-        INSERT INTO chat_media (chat_id, media_path, media_type)
-        VALUES (?, ?, ?)
+    $insert = $conn->prepare("
+        INSERT INTO chat_media (chat_id, media_path, media_type, media_blob)
+        VALUES (?, ?, ?, ?)
     ");
-    $mediaInsert->execute([$chatId, $fileName, $type]);
+    $insert->bindParam(1, $chatId);
+    $insert->bindParam(2, $fileName);
+    $insert->bindParam(3, $type);
+    $insert->bindParam(4, $fileBlob, PDO::PARAM_LOB);
+    $insert->execute();
 }
 
-echo json_encode(["status" => "ok", "chat_id" => $chatId]);
+echo json_encode(["status" => "ok"]);
 exit;
 ?>
