@@ -1,7 +1,7 @@
 // ========================================
 // SkyTruFiber CSR Chat System
 // chat.js — Full Upgrade Version
-// Multi-File Preview, Delete, Carousel, SlideUp
+// Multi-File Preview, Delete, Carousel, SlideUp, Inline Preview
 // ========================================
 
 let currentClientID = null;
@@ -23,7 +23,7 @@ $(document).ready(function () {
         });
     });
 
-    // SEND MESSAGE OR MEDIA
+    // SEND TEXT OR MEDIA
     $("#send-btn").click(sendMessage);
     $("#chat-input").keypress(function (e) {
         if (e.which === 13) {
@@ -32,19 +32,20 @@ $(document).ready(function () {
         }
     });
 
-    // UPLOAD BUTTON -> PICK FILES
+    // UPLOAD BUTTON
     $("#upload-btn").click(() => $("#chat-upload-media").click());
 
-    // MULTIPLE FILE SELECTION PREVIEW
+    // CHOOSE FILES
     $("#chat-upload-media").change(function () {
         if (!currentClientID) return;
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
-    // SELECTING A CLIENT
+    // SELECT CLIENT
     $(document).on("click", ".client-item", function () {
         currentClientID = $(this).data("id");
+
         $("#chat-client-name").text($(this).data("name"));
         $("#chat-messages").html("");
         lastMessageID = 0;
@@ -54,11 +55,13 @@ $(document).ready(function () {
 
         if (messageInterval) clearInterval(messageInterval);
         messageInterval = setInterval(() => {
-            if (!$("#preview-inline").is(":visible")) loadMessages(false);
+            if (!$("#preview-inline").is(":visible")) {
+                loadMessages(false);
+            }
         }, 1500);
     });
 
-    // LIGHTBOX VIEW
+    // LIGHTBOX
     $(document).on("click", ".media-thumb", function () {
         $("#lightbox-image").attr("src", $(this).attr("src"));
         $("#lightbox-overlay").fadeIn(200);
@@ -68,7 +71,7 @@ $(document).ready(function () {
         $("#lightbox-overlay").fadeOut(200)
     );
 
-    // REMOVE SPECIFIC FILE FROM PREVIEW
+    // REMOVE SINGLE FILE FROM PREVIEW
     $(document).on("click", ".preview-remove", function () {
         const index = $(this).data("index");
         selectedFiles.splice(index, 1);
@@ -92,7 +95,7 @@ function loadClients() {
 
 
 // ========================================
-// CLIENT DETAILS
+// LOAD CLIENT INFO (right panel)
 function loadClientInfo(id) {
     $.post("../chat/load_client_info.php", { client_id: id }, function (html) {
         $("#client-info-content").html(html);
@@ -101,7 +104,7 @@ function loadClientInfo(id) {
 
 
 // ========================================
-// LOAD MESSAGES INCREMENTALLY
+// LOAD MESSAGES NO FLICKER
 function loadMessages(scrollBottom = false) {
     if (!currentClientID) return;
 
@@ -127,13 +130,13 @@ function loadMessages(scrollBottom = false) {
 // SEND MESSAGE OR MEDIA
 function sendMessage() {
 
-    // If images selected, send media first
+    // MEDIA first
     if (selectedFiles.length > 0) {
         uploadMedia(selectedFiles);
         return;
     }
 
-    // Otherwise send text
+    // TEXT second
     let msg = $("#chat-input").val().trim();
     if (!msg || !currentClientID) return;
 
@@ -151,12 +154,13 @@ function sendMessage() {
 
 
 // ========================================
-// INLINE PREVIEW MULTIPLE FILES
+// INLINE PREVIEW
 function previewMultiple(files) {
 
     $("#preview-files").html("");
 
     files.forEach((file, i) => {
+
         const deleteBtn = `<button class="preview-remove" data-index="${i}">&times;</button>`;
 
         if (file.type.startsWith("image")) {
@@ -170,7 +174,6 @@ function previewMultiple(files) {
                 `);
             };
             reader.readAsDataURL(file);
-
         } else {
             $("#preview-files").append(`
                 <div class="preview-item file-box">${file.name}
@@ -222,7 +225,7 @@ function uploadMedia(files) {
 
 
 // ========================================
-// ASSIGN / UNASSIGN CLIENT
+// ASSIGN & UNASSIGN
 function assignClient(id) {
     $.post("../chat/assign_client.php", { client_id: id }, () => {
         loadClients();
