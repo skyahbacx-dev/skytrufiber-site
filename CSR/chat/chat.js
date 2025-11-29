@@ -1,6 +1,7 @@
 // ========================================
-// SkyTruFiber CSR Chat System - chat.js
-// Optimized + Multi File Upload + Reply Bar + Carousel Support
+// SkyTruFiber CSR Chat System
+// chat.js — Full Upgrade Version
+// Multi-File Preview, Delete, Carousel, SlideUp
 // ========================================
 
 let currentClientID = null;
@@ -12,11 +13,9 @@ let lastMessageID = 0;
 $(document).ready(function () {
 
     loadClients();
-
-    // Auto-refresh client list
     clientRefreshInterval = setInterval(loadClients, 4000);
 
-    // Search
+    // SEARCH CLIENT
     $("#client-search").on("keyup", function () {
         const q = $(this).val().toLowerCase();
         $("#client-list .client-item").each(function () {
@@ -24,10 +23,8 @@ $(document).ready(function () {
         });
     });
 
-    // Send message button
+    // SEND MESSAGE
     $("#send-btn").click(sendMessage);
-
-    // Press enter to send
     $("#chat-input").keypress(function (e) {
         if (e.which === 13) {
             e.preventDefault();
@@ -35,20 +32,20 @@ $(document).ready(function () {
         }
     });
 
-    // Upload button open file picker
+    // UPLOAD BUTTON -> PICK FILES
     $("#upload-btn").click(() => $("#chat-upload-media").click());
 
-    // Multiple file selection
+    // MULTIPLE FILE SELECTION PREVIEW
     $("#chat-upload-media").change(function () {
         if (!currentClientID) return;
-
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
-    // Selecting a client
+    // SELECTING A CLIENT
     $(document).on("click", ".client-item", function () {
         currentClientID = $(this).data("id");
+
         $("#chat-client-name").text($(this).data("name"));
         $("#chat-messages").html("");
         lastMessageID = 0;
@@ -58,11 +55,11 @@ $(document).ready(function () {
 
         if (messageInterval) clearInterval(messageInterval);
         messageInterval = setInterval(() => {
-            if (!$("#preview-overlay").is(":visible")) loadMessages(false);
+            if (!$("#preview-inline").is(":visible")) loadMessages(false);
         }, 1500);
     });
 
-    // Lightbox image viewer
+    // LIGHTBOX VIEW
     $(document).on("click", ".media-thumb", function () {
         $("#lightbox-image").attr("src", $(this).attr("src"));
         $("#lightbox-overlay").fadeIn(200);
@@ -70,19 +67,27 @@ $(document).ready(function () {
 
     $("#lightbox-close, #lightbox-overlay").click(() => $("#lightbox-overlay").fadeOut(200));
 
-    // Cancel multiple file preview
-    $("#cancel-preview").click(function () {
+    // CANCEL PREVIEW INLINE
+    $(document).on("click", "#cancel-preview-inline", function () {
         selectedFiles = [];
+        $("#preview-inline").fadeOut(150);
         $("#preview-files").html("");
-        $("#preview-overlay").fadeOut(200);
+        $("#chat-upload-media").val("");
     });
 
-    // Send selected previewed files
-    $("#send-preview").click(() => {
+    // SEND FILES VIA PREVIEW
+    $("#send-preview-inline").click(() => {
         if (selectedFiles.length > 0) uploadMedia(selectedFiles);
     });
 
-}); // END DOCUMENT READY
+    // REMOVE SPECIFIC FILE FROM PREVIEW
+    $(document).on("click", ".preview-remove", function () {
+        const index = $(this).data("index");
+        selectedFiles.splice(index, 1);
+        previewMultiple(selectedFiles);
+    });
+
+});
 
 
 // ========================================
@@ -96,8 +101,7 @@ function loadClients() {
 
 
 // ========================================
-// LOAD RIGHT PANEL INFO
-// ========================================
+// CLIENT DETAILS (right)
 function loadClientInfo(id) {
     $.post("../chat/load_client_info.php", { client_id: id }, function (html) {
         $("#client-info-content").html(html);
@@ -106,16 +110,14 @@ function loadClientInfo(id) {
 
 
 // ========================================
-// LOAD MESSAGES INCREMENTALLY (NO FLICKER)
-// ========================================
+// LOAD MESSAGES (incrementally)
 function loadMessages(scrollBottom = false) {
     if (!currentClientID) return;
 
     $.post("../chat/load_messages.php", { client_id: currentClientID }, function (html) {
 
         const $incoming = $(html);
-        const $last = $incoming.last();
-        const newLastID = parseInt($last.attr("data-msg-id"));
+        const newLastID = parseInt($incoming.last().attr("data-msg-id"));
 
         if (newLastID > lastMessageID) {
             lastMessageID = newLastID;
@@ -132,7 +134,6 @@ function loadMessages(scrollBottom = false) {
 
 // ========================================
 // SEND TEXT MESSAGE
-// ========================================
 function sendMessage() {
     let msg = $("#chat-input").val().trim();
     if (!msg || !currentClientID) return;
@@ -151,39 +152,52 @@ function sendMessage() {
 
 
 // ========================================
-// PREVIEW MULTIPLE FILES
-// ========================================
+// PREVIEW MULTIPLE FILES (Messenger-style bar)
 function previewMultiple(files) {
+
     $("#preview-files").html("");
 
-    files.forEach(file => {
+    files.forEach((file, i) => {
+
+        const deleteBtn = `<button class="preview-remove" data-index="${i}">&times;</button>`;
+
         if (file.type.startsWith("image")) {
             const reader = new FileReader();
             reader.onload = e => {
-                $("#preview-files").append(`<img src="${e.target.result}" class="preview-thumb">`);
+                $("#preview-files").append(`
+                    <div class="preview-item">
+                        <img src="${e.target.result}" class="preview-thumb">
+                        ${deleteBtn}
+                    </div>
+                `);
             };
             reader.readAsDataURL(file);
+
         } else {
-            $("#preview-files").append(`<div class="file-box">${file.name}</div>`);
+            $("#preview-files").append(`
+                <div class="preview-item file-box">${file.name}
+                    ${deleteBtn}
+                </div>
+            `);
         }
     });
 
-    $("#preview-overlay").fadeIn(200);
+    $("#preview-inline").slideDown(200);
 }
 
 
 // ========================================
-// UPLOAD MULTIPLE MEDIA FILES
-// ========================================
+// UPLOAD FILES AS MEDIA GROUP
 function uploadMedia(files) {
+
     const fd = new FormData();
-    files.forEach((file, i) => fd.append("media[]", file));
+    files.forEach(f => fd.append("media[]", f));
 
     fd.append("client_id", currentClientID);
     fd.append("sender_type", "csr");
 
+    $("#preview-inline").slideUp(200);
     selectedFiles = [];
-    $("#preview-overlay").fadeOut(200);
     $("#chat-upload-media").val("");
 
     $.ajax({
@@ -193,14 +207,15 @@ function uploadMedia(files) {
         processData: false,
         contentType: false,
         dataType: "json",
-        success: function (res) {
+
+        success: res => {
             if (res.status === "ok") {
                 loadMessages(true);
             } else {
                 alert(res.msg || "Upload failed");
             }
         },
-        error: function (err) {
+        error: err => {
             console.error(err.responseText);
             alert("Upload error");
         }
@@ -210,17 +225,17 @@ function uploadMedia(files) {
 
 // ========================================
 // ASSIGN / UNASSIGN CLIENT
-// ========================================
 function assignClient(id) {
-    $.post("../chat/assign_client.php", { client_id: id }, function () {
+    $.post("../chat/assign_client.php", { client_id: id }, () => {
         loadClients();
         if (id == currentClientID) loadClientInfo(id);
     });
 }
 
 function unassignClient(id) {
-    $.post("../chat/unassign_client.php", { client_id: id }, function () {
+    $.post("../chat/unassign_client.php", { client_id: id }, () => {
         loadClients();
-        if (id == currentClientID) $("#client-info-content").html("<p>Select a client.</p>");
+        if (id == currentClientID)
+            $("#client-info-content").html("<p>Select a client.</p>");
     });
 }
