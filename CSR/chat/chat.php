@@ -36,6 +36,11 @@ $csrUser = $_SESSION["csr_user"];
             <!-- CHAT MESSAGES -->
             <div id="chat-messages" class="chat-messages"></div>
 
+            <!-- SCROLL TO BOTTOM BUTTON -->
+            <button id="scroll-bottom-btn" class="scroll-bottom-btn">
+                <i class="fa fa-arrow-down"></i>
+            </button>
+
             <!-- INLINE MULTIPLE FILE PREVIEW BAR (Messenger Style) -->
             <div id="preview-inline" class="preview-inline">
                 <div id="preview-files" class="preview-files"></div>
@@ -86,4 +91,3 @@ $csrUser = $_SESSION["csr_user"];
 
 <!-- DRAG-SORT -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-s
