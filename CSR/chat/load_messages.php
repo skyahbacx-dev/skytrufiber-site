@@ -30,7 +30,7 @@ try {
 
         echo "<div class='message $sender' data-msg-id='$msgID'>";
 
-        // Avatar icon
+        // Correct public avatar path
         echo "<div class='message-avatar'>
                 <img src='/upload/default-avatar.png' alt='avatar'>
               </div>";
@@ -38,7 +38,7 @@ try {
         echo "<div class='message-content'>";
         echo "<div class='message-bubble'>";
 
-        // Fetch associated media files
+        // Fetch media associated with this message
         $mediaStmt = $conn->prepare("
             SELECT media_path, media_type
             FROM chat_media
@@ -53,8 +53,7 @@ try {
 
             foreach ($mediaList as $m) {
 
-                // Public stored path in DB
-                $filePath = $m["media_path"];
+                $filePath = $m["media_path"]; // Already full path saved in DB
 
                 if ($m["media_type"] === "image") {
                     echo "<img src='$filePath' class='carousel-img media-thumb'>";
@@ -87,7 +86,7 @@ try {
             }
         }
 
-        // Display text content if exists
+        // Display text message if exists
         if (!empty($msg["message"])) {
             echo nl2br(htmlspecialchars($msg["message"]));
         }
