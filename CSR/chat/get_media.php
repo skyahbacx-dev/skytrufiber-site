@@ -4,30 +4,34 @@ require_once "../../db_connect.php";
 $id = $_GET["id"] ?? null;
 if (!$id) exit("Missing ID");
 
-$stmt = $conn->prepare("
-    SELECT media_blob, media_path
-    FROM chat_media
-    WHERE id = ?
-");
-$stmt->execute([$id]);
+$stmt = $conn->prepare("SELECT media_blob, media_path, media_type FROM chat_media WHERE id = ?");
+$stmt->bindValue(1, $id, PDO::PARAM_INT);
+$stmt->execute();
+
+$stmt->bindColumn("media_blob", $blob, PDO::PARAM_LOB);
 $file = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$file) exit("Not found");
 
-// Determine file MIME based on extension
-$ext = strtolower(pathinfo($file["media_path"], PATHINFO_EXTENSION));
-
-switch ($ext) {
-    case "png":  header("Content-Type: image/png"); break;
-    case "jpg":
-    case "jpeg": header("Content-Type: image/jpeg"); break;
-    case "gif":  header("Content-Type: image/gif"); break;
-    case "mp4":  header("Content-Type: video/mp4"); break;
-    default:     header("Content-Type: application/octet-stream");
+// Read blob into string if streaming resource
+if (is_resource($blob)) {
+    $binary = stream_get_contents($blob);
+} else {
+    $binary = $blob;
 }
 
-// Convert bytea hex → binary stream
-$binary = hex2bin(substr($file["media_blob"], 2));  // remove "\x"
+// Detect MIME type from binary header
+$finfo = finfo_open(FILEINFO_MIME_TYPE);
+$mimeType = finfo_buffer($finfo, $binary);
+finfo_close($finfo);
 
+// Default fallback
+if (!$mimeType) $mimeType = "application/octet-stream";
+
+// Send correct Content-Type
+header("Content-Type: $mimeType");
+header("Content-Length: " . strlen($binary));
+
+// Output binary directly
 echo $binary;
 exit;
