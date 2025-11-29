@@ -1,7 +1,7 @@
 // ========================================
 // SkyTruFiber CSR Chat System
 // chat.js — Full Upgrade Version
-// Supports: Inline Preview, Delete, Combined Media+Text, Carousel, Lightbox, Thumbnails
+// Supports: Inline Preview, Delete, Combined Media+Text, Carousel, Lightbox, Thumbnails, Scroll-To-Bottom Button
 // ========================================
 
 let currentClientID = null;
@@ -42,7 +42,7 @@ $(document).ready(function () {
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
-    // SELECT CHAT CLIENT
+    // SELECT CLIENT
     $(document).on("click", ".client-item", function () {
         currentClientID = $(this).data("id");
         $("#chat-client-name").text($(this).data("name"));
@@ -58,7 +58,7 @@ $(document).ready(function () {
         }, 1200);
     });
 
-    // LIGHTBOX — open full image
+    // LIGHTBOX VIEWER
     $(document).on("click", ".media-thumb", function () {
         const fullImg = $(this).data("full") || $(this).attr("src");
         $("#lightbox-image").attr("src", fullImg);
@@ -69,13 +69,32 @@ $(document).ready(function () {
         $("#lightbox-overlay").fadeOut(200);
     });
 
-    // REMOVE FILE FROM PREVIEW
+    // REMOVE FILE FROM INLINE PREVIEW
     $(document).on("click", ".preview-remove", function () {
         const index = $(this).data("index");
         selectedFiles.splice(index, 1);
         previewMultiple(selectedFiles);
 
         if (selectedFiles.length === 0) $("#preview-inline").slideUp(200);
+    });
+
+    // ==========================
+    // SCROLL-TO-BOTTOM BUTTON
+    // ==========================
+    const chatBox = $("#chat-messages");
+    const scrollBtn = $("#scroll-bottom-btn");
+
+    chatBox.on("scroll", function () {
+        const atBottom =
+            chatBox[0].scrollHeight - chatBox.scrollTop() - chatBox.outerHeight() < 50;
+
+        if (atBottom) scrollBtn.removeClass("show");
+        else scrollBtn.addClass("show");
+    });
+
+    scrollBtn.click(function () {
+        chatBox.animate({ scrollTop: chatBox[0].scrollHeight }, 300);
+        scrollBtn.removeClass("show");
     });
 
 });
@@ -92,7 +111,7 @@ function loadClients() {
 
 
 // ========================================
-// LOAD CLIENT INFO (right panel)
+// LOAD CLIENT INFO
 // ========================================
 function loadClientInfo(id) {
     $.post("../chat/load_client_info.php", { client_id: id }, function (html) {
