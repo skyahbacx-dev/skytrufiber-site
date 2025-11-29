@@ -29,7 +29,6 @@ $csrUser = $_SESSION["csr_user"];
                     <h3 id="chat-client-name">Select a Client</h3>
                     <span id="client-status" class="status-dot offline"></span>
                 </div>
-
                 <div id="typing-indicator" class="typing-indicator" style="display:none;">
                     typing...
                 </div>
@@ -38,10 +37,16 @@ $csrUser = $_SESSION["csr_user"];
             <!-- CHAT MESSAGES -->
             <div id="chat-messages" class="chat-messages"></div>
 
+            <!-- REPLY PREVIEW BAR (Messenger Style) -->
+            <div id="reply-bar" class="reply-bar">
+                <span id="reply-preview-text" class="reply-content"></span>
+                <button id="cancel-reply" class="cancel-reply">&times;</button>
+            </div>
+
             <!-- INPUT AREA -->
             <div class="chat-input-area">
 
-                <!-- MULTIPLE FILE UPLOAD SUPPORT -->
+                <!-- MULTIPLE MEDIA SUPPORT -->
                 <input type="file" id="chat-upload-media" accept="image/*,video/*,application/pdf" multiple hidden>
 
                 <button id="upload-btn" class="upload-btn">
@@ -59,7 +64,9 @@ $csrUser = $_SESSION["csr_user"];
             </div> <!-- chat-input-area -->
 
         </div> <!-- chat-wrapper -->
+
     </div> <!-- chat-middle-panel -->
+
 
     <!-- RIGHT PANEL -->
     <div class="chat-right-panel">
@@ -70,19 +77,21 @@ $csrUser = $_SESSION["csr_user"];
         </div>
     </div>
 
-</div> <!-- chat-container end -->
+</div> <!-- chat-container -->
 
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
 
-<!-- LIGHTBOX FULLSCREEN IMAGE VIEW -->
+<!-- LIGHTBOX VIEWER FOR IMAGES -->
 <div id="lightbox-overlay">
     <span id="lightbox-close">&times;</span>
     <img id="lightbox-image">
 </div>
 
 <!-- MULTIPLE FILE PREVIEW MODAL -->
-<div id="preview-overlay" class="preview-overlay" style="display:none;">
+<div id="preview-overlay" class="preview-overlay">
     <div class="preview-box">
+
+        <!-- The thumbnails are injected here -->
         <div id="preview-files" class="preview-files"></div>
 
         <div class="preview-actions">
