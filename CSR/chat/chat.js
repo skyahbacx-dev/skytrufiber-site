@@ -33,7 +33,7 @@ $(document).ready(function () {
         }
     });
 
-    // UPLOAD FILE BUTTON
+    // UPLOAD BUTTON
     $("#upload-btn").click(() => $("#chat-upload-media").click());
 
     // FILE SELECTED
@@ -61,7 +61,7 @@ $(document).ready(function () {
 
     // LIGHTBOX VIEWER
     $(document).on("click", ".media-thumb", function () {
-        const fullImg = $(this).data("full") || $(this).attr("src");
+        const fullImg = $(this).attr("src");
         $("#lightbox-image").attr("src", fullImg);
         $("#lightbox-overlay").fadeIn(200);
     });
@@ -70,22 +70,12 @@ $(document).ready(function () {
         $("#lightbox-overlay").fadeOut(200);
     });
 
-    // REMOVE FILE FROM PREVIEW
-    $(document).on("click", ".preview-remove", function () {
-        const index = $(this).data("index");
-        selectedFiles.splice(index, 1);
-        previewMultiple(selectedFiles);
-
-        if (selectedFiles.length === 0) $("#preview-inline").slideUp(200);
-    });
-
-    // Scroll-To-Bottom Visibility
+    // Scroll Button
     const chatBox = $("#chat-messages");
     const scrollBtn = $("#scroll-bottom-btn");
 
     chatBox.on("scroll", function () {
-        const atBottom =
-            chatBox[0].scrollHeight - chatBox.scrollTop() - chatBox.outerHeight() < 50;
+        const atBottom = chatBox[0].scrollHeight - chatBox.scrollTop() - chatBox.outerHeight() < 50;
 
         if (atBottom) scrollBtn.removeClass("show");
         else scrollBtn.addClass("show");
@@ -209,7 +199,6 @@ function previewMultiple(files) {
     $("#preview-files").html("");
 
     files.forEach((file, index) => {
-
         const removeBtn = `<button class="preview-remove" data-index="${index}">&times;</button>`;
 
         if (file.type.startsWith("image")) {
