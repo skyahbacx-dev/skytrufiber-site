@@ -26,7 +26,7 @@ $stmt->execute([$client_id]);
 $chatId = $conn->lastInsertId();
 
 // PUBLIC upload directory
-$uploadDir = $_SERVER["DOCUMENT_ROOT"] . "/CSR/upload/chat_media/";
+$uploadDir = $_SERVER["DOCUMENT_ROOT"] . "/upload/chat_media/";
 
 // Ensure folder exists
 if (!is_dir($uploadDir)) {
@@ -56,8 +56,8 @@ foreach ($_FILES["media"]["name"] as $i => $name) {
     }
 
     // Create the PUBLIC PATH to store in DB
-    // Example: https://ahbadevt.com/CSR/upload/chat_media/12345_photo.jpg
-    $publicPath = "/CSR/upload/chat_media/" . $fileName;
+    // Example: https://ahbadevt.com/upload/chat_media/12345_photo.jpg
+    $publicPath = "/upload/chat_media/" . $fileName;
 
     // Save to DB
     $mediaInsert = $conn->prepare("
