@@ -2,11 +2,10 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$client_id = $_SESSION["user_id"] ?? null;   // client session id
+$client_id = $_POST["client_id"] ?? null;
 if (!$client_id) exit;
 
 try {
-
     $stmt = $conn->prepare("
         SELECT id, sender_type, message, created_at
         FROM chat
@@ -24,14 +23,19 @@ try {
     foreach ($messages as $msg) {
 
         $msgID     = (int)$msg["id"];
-        $sender    = ($msg["sender_type"] === "csr") ? "received" : "sent";  // Flip for UI
-        $timestamp = date("g:i A", strtotime($msg["created_at"]));
+        $sender    = ($msg["sender_type"] === "csr") ? "received" : "sent";
+        $timestamp = date("M j g:i A", strtotime($msg["created_at"]));
 
         echo "<div class='message $sender' data-msg-id='$msgID'>";
 
         echo "<div class='message-bubble'>";
 
-        $mediaStmt = $conn->prepare("SELECT id, media_type FROM chat_media WHERE chat_id = ?");
+        // Load media
+        $mediaStmt = $conn->prepare("
+            SELECT id, media_type 
+            FROM chat_media
+            WHERE chat_id = ?
+        ");
         $mediaStmt->execute([$msgID]);
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -39,37 +43,47 @@ try {
             echo "<div class='carousel-container'>";
             foreach ($mediaList as $m) {
                 $mediaID = (int)$m["id"];
-                $filePath = "../chat/get_media_client.php?id=$mediaID";
+                $filePath = "../chat/get_media.php?id=$mediaID";
 
                 if ($m["media_type"] === "image") {
-                    echo "<img src='$filePath' class='carousel-img media-thumb'>";
+                    echo "<div class='media-wrapper'>
+                            <img src='$filePath' class='media-thumb carousel-img'>
+                            <button class='download-btn' onclick=\"window.open('$filePath')\">⬇</button>
+                          </div>";
                 } elseif ($m["media_type"] === "video") {
-                    echo "<video controls autoplay muted loop class='carousel-video'>
-                            <source src='$filePath' type='video/mp4'>
-                          </video>";
+                    echo "<div class='media-wrapper'>
+                            <video class='carousel-video media-thumb' autoplay muted loop controls>
+                                <source src='$filePath'>
+                            </video>
+                            <button class='download-btn' onclick=\"window.open('$filePath')\">⬇</button>
+                          </div>";
                 } else {
                     echo "<a href='$filePath' download class='download-btn'>📎 File</a>";
                 }
             }
             echo "</div>";
         }
-
         elseif ($mediaList && count($mediaList) === 1) {
             $media = $mediaList[0];
-            $filePath = "../chat/get_media_client.php?id=" . (int)$media["id"];
+            $filePath = "../chat/get_media.php?id=".(int)$media["id"];
 
+            echo "<div class='media-wrapper'>";
             if ($media["media_type"] === "image") {
                 echo "<img src='$filePath' class='media-thumb'>";
             } elseif ($media["media_type"] === "video") {
-                echo "<video controls autoplay muted loop class='media-video'>
-                        <source src='$filePath' type='video/mp4'>
+                echo "<video autoplay muted loop controls class='media-video'>
+                        <source src='$filePath'>
                       </video>";
             } else {
-                echo "<a href='$filePath' download class='download-btn'>📎 Download File</a>";
+                echo "<a href='$filePath' download class='download-btn'>📎 Download</a>";
             }
+            echo "<button class='download-btn' onclick=\"window.open('$filePath')\">⬇</button>";
+            echo "</div>";
         }
 
-        if (!empty($msg["message"])) echo nl2br(htmlspecialchars($msg["message"]));
+        if (!empty($msg["message"])) {
+            echo "<div class='msg-text'>" . nl2br(htmlspecialchars($msg["message"])) . "</div>";
+        }
 
         echo "</div>";
         echo "<div class='message-time'>$timestamp</div>";
