@@ -78,7 +78,7 @@ try {
         elseif ($mediaList && count($mediaList) === 1) {
 
             $media = $mediaList[0];
-            $filePath = "/CSR/chat/get_media.php?file=" . urlencode($media["media_path"]);
+            $filePath = "/chat/get_media.php?file=" . urlencode($media["media_path"]);
 
             if ($media["media_type"] === "image") {
                 echo "<img src='$filePath' class='media-thumb'>";
