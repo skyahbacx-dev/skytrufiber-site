@@ -7,6 +7,8 @@
 <title>SkyTruFiber Support</title>
 
 <link rel="stylesheet" href="chat_support.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="chat_support.js"></script>
 
@@ -27,27 +29,38 @@
             </div>
         </div>
 
-        <!-- MESSAGE WINDOW -->
-        <div id="chat-window" class="chat-window"></div>
+        <!-- CHAT MESSAGES -->
+        <div id="chat-messages" class="chat-messages"></div>
 
-        <!-- PREVIEW INLINE -->
+        <!-- INLINE PREVIEW -->
         <div id="preview-inline" class="preview-inline">
             <div id="preview-files" class="preview-files"></div>
         </div>
 
-        <!-- INPUT -->
-        <div class="chat-input-bar">
-            <input type="file" id="chat-upload-media" multiple hidden>
-            <button id="upload-btn" class="upload-btn">📎</button>
+        <!-- INPUT BAR -->
+        <div class="chat-input-area">
+            <input type="file" id="chat-upload-media" accept="image/*,video/*,application/pdf" multiple hidden>
 
-            <input type="text" id="message-input" placeholder="Write a message..." autocomplete="off">
+            <button id="upload-btn" class="upload-btn">
+                <i class="fa fa-paperclip"></i>
+            </button>
 
-            <button id="send-btn" class="send-btn">
+            <div class="chat-input-box">
+                <input type="text" id="message-input" placeholder="Write a message..." autocomplete="off">
+            </div>
+
+            <button id="send-btn" class="chat-send-btn">
                 <i class="fa fa-paper-plane"></i>
             </button>
         </div>
+
     </div>
 </div>
+
+<!-- SCROLL TO BOTTOM BUTTON -->
+<button id="scroll-bottom-btn" class="scroll-bottom-btn">
+    <i class="fa fa-arrow-down"></i>
+</button>
 
 <!-- LIGHTBOX -->
 <div id="lightbox-overlay">
