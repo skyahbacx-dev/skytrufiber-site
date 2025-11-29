@@ -38,7 +38,7 @@ try {
         echo "<div class='message-content'>";
         echo "<div class='message-bubble'>";
 
-        // Fetch media
+        // Fetch associated media
         $mediaStmt = $conn->prepare("
             SELECT media_path, media_type
             FROM chat_media
@@ -47,49 +47,51 @@ try {
         $mediaStmt->execute([$msgID]);
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // MULTIPLE FILES (Carousel)
+        // ==========================
+        // MULTIPLE MEDIA (Carousel)
+        // ==========================
         if ($mediaList && count($mediaList) > 1) {
             echo "<div class='carousel-container'>";
 
             foreach ($mediaList as $m) {
-                $fileThumb = "/upload/chat_media/thumbs/" . $m["media_path"];
-                $fileFull  = "/upload/chat_media/" . $m["media_path"];
+
+                // Access through get_media.php (required for /tmp storage on Railway)
+                $filePath = "/CSR/chat/get_media.php?file=" . urlencode($m["media_path"]);
 
                 if ($m["media_type"] === "image") {
-                    echo "<img src='$fileThumb' data-full='$fileFull'
-                           class='carousel-img media-thumb' loading='lazy'>";
+                    echo "<img src='$filePath' class='carousel-img media-thumb'>";
                 } elseif ($m["media_type"] === "video") {
                     echo "<video controls class='carousel-video'>
-                            <source src='$fileFull' type='video/mp4'>
+                            <source src='$filePath' type='video/mp4'>
                           </video>";
                 } else {
-                    echo "<a href='$fileFull' download class='download-btn'>📎 File</a>";
+                    echo "<a href='$filePath' download class='download-btn'>📎 File</a>";
                 }
             }
 
             echo "</div>";
         }
 
-        // SINGLE FILE
+        // ==========================
+        // ONE MEDIA ITEM
+        // ==========================
         elseif ($mediaList && count($mediaList) === 1) {
 
             $media = $mediaList[0];
-            $fileThumb = "/upload/chat_media/thumbs/" . $media["media_path"];
-            $fileFull  = "/upload/chat_media/" . $media["media_path"];
+            $filePath = "/CSR/chat/get_media.php?file=" . urlencode($media["media_path"]);
 
             if ($media["media_type"] === "image") {
-                echo "<img src='$fileThumb' data-full='$fileFull'
-                       class='media-thumb' loading='lazy'>";
+                echo "<img src='$filePath' class='media-thumb'>";
             } elseif ($media["media_type"] === "video") {
                 echo "<video controls class='media-video'>
-                        <source src='$fileFull' type='video/mp4'>
+                        <source src='$filePath' type='video/mp4'>
                       </video>";
             } else {
-                echo "<a href='$fileFull' download class='download-btn'>📎 Download File</a>";
+                echo "<a href='$filePath' download class='download-btn'>📎 Download File</a>";
             }
         }
 
-        // TEXT MESSAGE
+        // Display text content
         if (!empty($msg["message"])) {
             echo nl2br(htmlspecialchars($msg["message"]));
         }
