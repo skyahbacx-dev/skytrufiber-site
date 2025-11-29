@@ -17,12 +17,15 @@ if (empty($_FILES["media"]["name"])) {
     exit;
 }
 
-// create chat message entry (GROUP container)
-$stmt = $conn->prepare("INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
-                        VALUES (?, 'csr', '', TRUE, FALSE, NOW())");
+// Create group message entry (single wrapper for all files)
+$stmt = $conn->prepare("
+    INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
+    VALUES (?, 'csr', '', TRUE, FALSE, NOW())
+");
 $stmt->execute([$client_id]);
 $chatId = $conn->lastInsertId();
 
+// Upload directory in Render (must be writable)
 $uploadDirectory = "/tmp/chat_media/";
 if (!is_dir($uploadDirectory)) {
     mkdir($uploadDirectory, 0777, true);
@@ -30,24 +33,37 @@ if (!is_dir($uploadDirectory)) {
 
 foreach ($_FILES["media"]["name"] as $index => $name) {
 
-    $tmpName = $_FILES["media"]["tmp_name"][$index];
+    $tmpName  = $_FILES["media"]["tmp_name"][$index];
     $fileType = $_FILES["media"]["type"][$index];
-    
-    $fileName = time() . "_" . preg_replace("/\s+/", "_", $name);
+
+    // More unique filename using microtime
+    $fileName = round(microtime(true) * 1000) . "_" . preg_replace("/\s+/", "_", $name);
     $targetPath = $uploadDirectory . $fileName;
 
-    if (move_uploaded_file($tmpName, $targetPath)) {
-        $mediaDbPath = "tmp/chat_media/" . $fileName;
-
-        $type = (strpos($fileType, "image") !== false) ? "image" :
-                (strpos($fileType, "video") !== false ? "video" : "file");
-
-        $mediaInsert = $conn->prepare("INSERT INTO chat_media (chat_id, media_path, media_type)
-                                       VALUES (?, ?, ?)");
-        $mediaInsert->execute([$chatId, $mediaDbPath, $type]);
+    if (!move_uploaded_file($tmpName, $targetPath)) {
+        continue; // skip failed file but continue others
     }
+
+    // Normalize DB path for front-end
+    $mediaDbPath = "tmp/chat_media/" . $fileName;
+
+    // Determine file type
+    if (strpos($fileType, "image") !== false) {
+        $type = "image";
+    } elseif (strpos($fileType, "video") !== false) {
+        $type = "video";
+    } else {
+        $type = "file";
+    }
+
+    // Save reference in DB
+    $mediaInsert = $conn->prepare("
+        INSERT INTO chat_media (chat_id, media_path, media_type)
+        VALUES (?, ?, ?)
+    ");
+    $mediaInsert->execute([$chatId, $mediaDbPath, $type]);
 }
 
-echo json_encode(["status" => "ok"]);
+echo json_encode(["status" => "ok", "chat_id" => $chatId]);
 exit;
 ?>
