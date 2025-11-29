@@ -32,7 +32,7 @@ try {
 
         // Avatar
         echo "<div class='message-avatar'>
-                <img src='/chat/default_avatar.png' alt='avatar'>
+                <img src='/upload/default_avatar.png' alt='avatar'>
               </div>";
 
         echo "<div class='message-content'>";
