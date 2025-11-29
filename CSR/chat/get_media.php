@@ -11,8 +11,8 @@ if (!$file) {
 // Always load from Railway `/tmp/chat_media/`
 $storageDirectory = "/tmp/chat_media/";
 
-// Clean filename
-$cleanName = basename($file);        // Remove directory traversal
+// Clean filename and enforce local file read only
+$cleanName = basename($file);
 $fullPath  = $storageDirectory . $cleanName;
 
 if (!file_exists($fullPath)) {
@@ -20,21 +20,68 @@ if (!file_exists($fullPath)) {
     die("File not found");
 }
 
-// Detect file MIME
+// Detect file MIME type
 $mime = mime_content_type($fullPath);
+$size = filesize($fullPath);
+
 header("Content-Type: $mime");
-header("Content-Length: " . filesize($fullPath));
 
-// Support range streaming for video
+// ===============================
+// STREAM VIDEO WITH RANGE SUPPORT
+// ===============================
 if (strpos($mime, "video") !== false) {
+
     header("Accept-Ranges: bytes");
+    $range = $_SERVER['HTTP_RANGE'] ?? null;
+
+    if ($range) {
+        list(, $range) = explode("=", $range);
+        list($start, $end) = explode("-", $range);
+
+        $start = intval($start);
+        $end   = ($end === "") ? ($size - 1) : intval($end);
+        $length = ($end - $start) + 1;
+
+        header("HTTP/1.1 206 Partial Content");
+        header("Content-Length: $length");
+        header("Content-Range: bytes $start-$end/$size");
+
+        $handle = fopen($fullPath, "rb");
+        fseek($handle, $start);
+        echo fread($handle, $length);
+        fclose($handle);
+        exit;
+    }
+
+    // If no byte range requested, serve entire file
+    header("Content-Length: $size");
+    readfile($fullPath);
+    exit;
 }
 
-// For non-video/doc files, force download
-if (strpos($mime, "application") !== false && !strpos($mime, "pdf")) {
-    header("Content-Disposition: attachment; filename=\"" . $cleanName . "\"");
+// ===============================
+// PDFs inline and readable online
+// ===============================
+if ($mime === "application/pdf") {
+    header("Content-Length: $size");
+    readfile($fullPath);
+    exit;
 }
 
+// ===============================
+// Other application files -> download
+// ===============================
+if (strpos($mime, "application") !== false) {
+    header("Content-Disposition: attachment; filename=\"$cleanName\"");
+    header("Content-Length: $size");
+    readfile($fullPath);
+    exit;
+}
+
+// ===============================
+// IMAGES or Others => inline render
+// ===============================
+header("Content-Length: $size");
 readfile($fullPath);
 exit;
 ?>
