@@ -1,115 +1,149 @@
-// ================= GLOBAL VARIABLES =================
+// ========================================
+// SkyTruFiber Client Chat — Frontend
+// Full Media Support + Preview + BLOB Streaming
+// ========================================
+
+let selectedFiles = [];
 let lastMessageID = 0;
-let isTyping = false;
-let typingTimer;
 
-// Auto-refresh messages every second
-setInterval(loadMessages, 1000);
-setInterval(checkTypingStatus, 1000);
+$(document).ready(function () {
 
-// ======================================================
-// LOAD CHAT MESSAGES
-// ======================================================
-function loadMessages() {
-    $.post("load_messages_client.php", { client_id: clientID }, function(data) {
-        const container = $("#support-messages");
-        container.html(data);
+    loadMessages(true);
+    setInterval(() => { loadMessages(false); }, 1200);
 
-        if (data.trim() !== "") {
-            scrollToBottom();
+    $("#send-btn").click(sendMessage);
+    $("#message-input").keypress(function (e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            sendMessage();
         }
     });
-}
 
-// Auto scroll to bottom
-function scrollToBottom() {
-    const messages = document.getElementById("support-messages");
-    messages.scrollTop = messages.scrollHeight;
-}
+    $("#upload-btn").click(() => $("#chat-upload-media").click());
 
-// ======================================================
-// SEND MESSAGE
-// ======================================================
-function sendMessage() {
-    let message = $("#message-box").val().trim();
-    if (message === "") return;
-
-    $.post("send_message_client.php", {
-        client_id: clientID,
-        message: message,
-        sender_type: "CLIENT"
-    }, function() {
-        $("#message-box").val("");
-        loadMessages();
-        scrollToBottom();
-        updateTyping(false);
+    $("#chat-upload-media").change(function () {
+        selectedFiles = Array.from(this.files);
+        if (selectedFiles.length) previewMultiple(selectedFiles);
     });
-}
 
-// Enter key send
-$("#message-box").keyup(function(e) {
-    updateTyping(true);
-    clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => updateTyping(false), 1000);
+    $(document).on("click", ".media-thumb", function () {
+        $("#lightbox-image").attr("src", $(this).attr("src"));
+        $("#lightbox-overlay").fadeIn(200);
+    });
 
-    if (e.keyCode === 13) {
-        sendMessage();
-    }
+    $("#lightbox-overlay, #lightbox-close").click(() => {
+        $("#lightbox-overlay").fadeOut(200);
+    });
+
 });
 
-// ======================================================
-// UPLOAD MEDIA
-// ======================================================
-function triggerUpload() {
-    $("#media-upload").click();
+
+// ========================================
+// Load Messages
+// ========================================
+function loadMessages(forceBottom = false) {
+
+    $.post("../chat/load_messages_client.php", function (html) {
+
+        const $incoming = $(html);
+        const latestID = parseInt($incoming.last().attr("data-msg-id"));
+
+        if (latestID > lastMessageID) {
+            lastMessageID = latestID;
+            $("#chat-window").append($incoming);
+            if (forceBottom) scrollToBottom();
+        }
+
+    });
 }
 
-function uploadMedia() {
-    let file = $("#media-upload")[0].files[0];
-    if (!file) return;
+function scrollToBottom() {
+    $("#chat-window").stop().animate({ scrollTop: $("#chat-window")[0].scrollHeight }, 400);
+}
 
-    let formData = new FormData();
-    formData.append("media", file);
-    formData.append("client_id", clientID);
+
+// ========================================
+// Sending Text or Media
+// ========================================
+function sendMessage() {
+
+    const msg = $("#message-input").val().trim();
+
+    if (selectedFiles.length > 0) {
+        uploadMedia(selectedFiles, msg);
+        return;
+    }
+
+    if (!msg) return;
+
+    $.post("../chat/send_message_client.php", { message: msg }, function (res) {
+        if (res.status === "ok") {
+            $("#message-input").val("");
+            loadMessages(true);
+        }
+    }, "json");
+}
+
+
+// ========================================
+// Preview Selected Media Before Upload
+// ========================================
+function previewMultiple(files) {
+
+    $("#preview-files").html("");
+
+    files.forEach((file, index) => {
+
+        const removeBtn = `<button class="preview-remove" data-index="${index}">&times;</button>`;
+
+        if (file.type.startsWith("image")) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                $("#preview-files").append(`
+                    <div class="preview-item">
+                        <img src="${e.target.result}" class="preview-thumb">
+                        ${removeBtn}
+                    </div>
+                `);
+            };
+            reader.readAsDataURL(file);
+
+        } else {
+            $("#preview-files").append(`
+                <div class="preview-item file-box">
+                    ${file.name}
+                    ${removeBtn}
+                </div>
+            `);
+        }
+    });
+
+    $("#preview-inline").slideDown(200);
+}
+
+
+// ========================================
+// Upload Media (BLOB)
+// ========================================
+function uploadMedia(files, msg = "") {
+
+    const fd = new FormData();
+    files.forEach(f => fd.append("media[]", f));
+    fd.append("message", msg);
+
+    $("#preview-inline").slideUp(200);
+    selectedFiles = [];
+    $("#chat-upload-media").val("");
+    $("#message-input").val("");
 
     $.ajax({
-        url: "upload_media_client.php",
-        method: "POST",
-        data: formData,
+        url: "../chat/upload_media_client.php",
+        type: "POST",
+        data: fd,
         processData: false,
         contentType: false,
-        success: function() {
-            loadMessages();
-            scrollToBottom();
-        }
+        dataType: "json",
+        success: res => { loadMessages(true); },
+        error: err => { console.error(err.responseText); }
     });
 }
-
-// ======================================================
-// TYPING STATUS
-// ======================================================
-function updateTyping(status) {
-    $.post("typing_update_client.php", {
-        client_id: clientID,
-        typing: status
-    });
-}
-
-function checkTypingStatus() {
-    $.post("check_typing_client.php", { client_id: clientID }, function(data) {
-        if (data === "1") {
-            $("#typing-indicator").show();
-        } else {
-            $("#typing-indicator").hide();
-        }
-    });
-}
-
-// ======================================================
-// UPDATE SEEN STATUS
-// ======================================================
-function updateSeen() {
-    $.post("update_read.php", { client_id: clientID });
-}
-
-setInterval(updateSeen, 3000);
