@@ -23,7 +23,7 @@ $(document).ready(function () {
         });
     });
 
-    // SEND MESSAGE
+    // SEND MESSAGE OR MEDIA
     $("#send-btn").click(sendMessage);
     $("#chat-input").keypress(function (e) {
         if (e.which === 13) {
@@ -45,7 +45,6 @@ $(document).ready(function () {
     // SELECTING A CLIENT
     $(document).on("click", ".client-item", function () {
         currentClientID = $(this).data("id");
-
         $("#chat-client-name").text($(this).data("name"));
         $("#chat-messages").html("");
         lastMessageID = 0;
@@ -65,26 +64,19 @@ $(document).ready(function () {
         $("#lightbox-overlay").fadeIn(200);
     });
 
-    $("#lightbox-close, #lightbox-overlay").click(() => $("#lightbox-overlay").fadeOut(200));
-
-    // CANCEL PREVIEW INLINE
-    $(document).on("click", "#cancel-preview-inline", function () {
-        selectedFiles = [];
-        $("#preview-inline").fadeOut(150);
-        $("#preview-files").html("");
-        $("#chat-upload-media").val("");
-    });
-
-    // SEND FILES VIA PREVIEW
-    $("#send-preview-inline").click(() => {
-        if (selectedFiles.length > 0) uploadMedia(selectedFiles);
-    });
+    $("#lightbox-close, #lightbox-overlay").click(() =>
+        $("#lightbox-overlay").fadeOut(200)
+    );
 
     // REMOVE SPECIFIC FILE FROM PREVIEW
     $(document).on("click", ".preview-remove", function () {
         const index = $(this).data("index");
         selectedFiles.splice(index, 1);
         previewMultiple(selectedFiles);
+
+        if (selectedFiles.length === 0) {
+            $("#preview-inline").slideUp(200);
+        }
     });
 
 });
@@ -92,7 +84,6 @@ $(document).ready(function () {
 
 // ========================================
 // LOAD CLIENT LIST
-// ========================================
 function loadClients() {
     $.post("../chat/load_clients.php", function (html) {
         $("#client-list").html(html);
@@ -101,7 +92,7 @@ function loadClients() {
 
 
 // ========================================
-// CLIENT DETAILS (right)
+// CLIENT DETAILS
 function loadClientInfo(id) {
     $.post("../chat/load_client_info.php", { client_id: id }, function (html) {
         $("#client-info-content").html(html);
@@ -110,7 +101,7 @@ function loadClientInfo(id) {
 
 
 // ========================================
-// LOAD MESSAGES (incrementally)
+// LOAD MESSAGES INCREMENTALLY
 function loadMessages(scrollBottom = false) {
     if (!currentClientID) return;
 
@@ -133,8 +124,16 @@ function loadMessages(scrollBottom = false) {
 
 
 // ========================================
-// SEND TEXT MESSAGE
+// SEND MESSAGE OR MEDIA
 function sendMessage() {
+
+    // If images selected, send media first
+    if (selectedFiles.length > 0) {
+        uploadMedia(selectedFiles);
+        return;
+    }
+
+    // Otherwise send text
     let msg = $("#chat-input").val().trim();
     if (!msg || !currentClientID) return;
 
@@ -152,13 +151,12 @@ function sendMessage() {
 
 
 // ========================================
-// PREVIEW MULTIPLE FILES (Messenger-style bar)
+// INLINE PREVIEW MULTIPLE FILES
 function previewMultiple(files) {
 
     $("#preview-files").html("");
 
     files.forEach((file, i) => {
-
         const deleteBtn = `<button class="preview-remove" data-index="${i}">&times;</button>`;
 
         if (file.type.startsWith("image")) {
@@ -187,7 +185,7 @@ function previewMultiple(files) {
 
 
 // ========================================
-// UPLOAD FILES AS MEDIA GROUP
+// UPLOAD FILES
 function uploadMedia(files) {
 
     const fd = new FormData();
