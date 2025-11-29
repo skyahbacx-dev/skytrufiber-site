@@ -8,10 +8,15 @@ $stmt = $conn->prepare("SELECT media_blob, media_type FROM chat_media WHERE id =
 $stmt->execute([$id]);
 $file = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$file) exit("File missing");
+if (!$file) exit("Missing file");
 
-header("Content-Type: " . ($file["media_type"] === "image" ? "image/jpeg" :
-                           ($file["media_type"] === "video" ? "video/mp4" : "application/octet-stream")));
+if ($file["media_type"] === "image") {
+    header("Content-Type: image/jpeg");
+} elseif ($file["media_type"] === "video") {
+    header("Content-Type: video/mp4");
+} else {
+    header("Content-Type: application/octet-stream");
+}
+
 echo $file["media_blob"];
 exit;
-?>
