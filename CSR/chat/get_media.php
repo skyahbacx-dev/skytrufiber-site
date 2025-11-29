@@ -8,9 +8,12 @@ if (!$file) {
     die("Missing file reference");
 }
 
-$cleanPath = ltrim($file, "/"); // Remove leading slash if present
-$storageDirectory = $_SERVER["DOCUMENT_ROOT"] . "/tmp/chat_media/";
-$fullPath = $storageDirectory . basename($cleanPath);
+// Always load from Railway `/tmp/chat_media/`
+$storageDirectory = "/tmp/chat_media/";
+
+// Clean filename
+$cleanName = basename($file);        // Remove directory traversal
+$fullPath  = $storageDirectory . $cleanName;
 
 if (!file_exists($fullPath)) {
     http_response_code(404);
@@ -22,14 +25,14 @@ $mime = mime_content_type($fullPath);
 header("Content-Type: $mime");
 header("Content-Length: " . filesize($fullPath));
 
-// Support video playback streaming
+// Support range streaming for video
 if (strpos($mime, "video") !== false) {
     header("Accept-Ranges: bytes");
 }
 
-// Display or download
+// For non-video/doc files, force download
 if (strpos($mime, "application") !== false && !strpos($mime, "pdf")) {
-    header("Content-Disposition: attachment; filename=\"" . basename($fullPath) . "\"");
+    header("Content-Disposition: attachment; filename=\"" . $cleanName . "\"");
 }
 
 readfile($fullPath);
