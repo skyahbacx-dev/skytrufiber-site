@@ -17,6 +17,7 @@ if (empty($_FILES["media"]["name"])) {
     exit;
 }
 
+// Create message container row
 $stmt = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
     VALUES (?, 'csr', '', TRUE, FALSE, NOW())
@@ -24,27 +25,32 @@ $stmt = $conn->prepare("
 $stmt->execute([$client_id]);
 $chatId = $conn->lastInsertId();
 
-foreach ($_FILES["media"]["tmp_name"] as $i => $tmpName) {
+// Insert each file as binary blob
+foreach ($_FILES["media"]["name"] as $i => $name) {
 
-    $fileName = $_FILES["media"]["name"][$i];
+    $tmpName  = $_FILES["media"]["tmp_name"][$i];
     $fileType = $_FILES["media"]["type"][$i];
-    $fileBlob = file_get_contents($tmpName);
+    $fileData = file_get_contents($tmpName);
+
+    if ($fileData === false) {
+        echo json_encode(["status" => "error", "msg" => "Failed to read uploaded file"]);
+        exit;
+    }
 
     $type = "file";
     if (strpos($fileType, "image") !== false) $type = "image";
     elseif (strpos($fileType, "video") !== false) $type = "video";
 
-    $insert = $conn->prepare("
+    $mediaInsert = $conn->prepare("
         INSERT INTO chat_media (chat_id, media_path, media_type, media_blob)
         VALUES (?, ?, ?, ?)
     ");
-    $insert->bindParam(1, $chatId);
-    $insert->bindParam(2, $fileName);
-    $insert->bindParam(3, $type);
-    $insert->bindParam(4, $fileBlob, PDO::PARAM_LOB);
-    $insert->execute();
+    $mediaInsert->bindValue(1, $chatId, PDO::PARAM_INT);
+    $mediaInsert->bindValue(2, $name);
+    $mediaInsert->bindValue(3, $type);
+    $mediaInsert->bindValue(4, $fileData, PDO::PARAM_LOB);
+    $mediaInsert->execute();
 }
 
-echo json_encode(["status" => "ok"]);
+echo json_encode(["status" => "ok", "chat_id" => $chatId]);
 exit;
-?>
