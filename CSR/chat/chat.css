@@ -330,6 +330,7 @@
    SCROLL TO BOTTOM BUTTON
    =========================================== */
 .scroll-bottom-btn {
+  margin-left:20px;
   position: absolute;
   bottom: 90px;
   right: 40px;
