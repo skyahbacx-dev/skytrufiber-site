@@ -7,7 +7,6 @@ if (!$client_id) exit;
 
 try {
 
-    // Fetch chat messages ordered chronologically
     $stmt = $conn->prepare("
         SELECT id, sender_type, message, created_at
         FROM chat
@@ -30,7 +29,6 @@ try {
 
         echo "<div class='message $sender' data-msg-id='$msgID'>";
 
-        // Avatar icon (correct public path)
         echo "<div class='message-avatar'>
                 <img src='/upload/default-avatar.png' alt='avatar'>
               </div>";
@@ -38,19 +36,18 @@ try {
         echo "<div class='message-content'>";
         echo "<div class='message-bubble'>";
 
-        // Fetch associated media
+        // Load media IDs only
         $mediaStmt = $conn->prepare("
-            SELECT id, media_type
+            SELECT id, media_type 
             FROM chat_media
             WHERE chat_id = ?
         ");
         $mediaStmt->execute([$msgID]);
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // MULTIPLE MEDIA (Carousel)
+        // Multiple media
         if ($mediaList && count($mediaList) > 1) {
             echo "<div class='carousel-container'>";
-
             foreach ($mediaList as $m) {
                 $mediaID = (int)$m["id"];
                 $filePath = "../chat/get_media.php?id=$mediaID";
@@ -65,16 +62,12 @@ try {
                     echo "<a href='$filePath' download class='download-btn'>📎 File</a>";
                 }
             }
-
             echo "</div>";
         }
-
-        // ONE MEDIA FILE
+        // One media
         elseif ($mediaList && count($mediaList) === 1) {
-
-            $media    = $mediaList[0];
-            $mediaID  = (int)$media["id"];
-            $filePath = "../chat/get_media.php?id=$mediaID";
+            $media = $mediaList[0];
+            $filePath = "../chat/get_media.php?id=" . (int)$media["id"];
 
             if ($media["media_type"] === "image") {
                 echo "<img src='$filePath' class='media-thumb'>";
@@ -87,15 +80,14 @@ try {
             }
         }
 
-        // TEXT MESSAGE
         if (!empty($msg["message"])) {
             echo nl2br(htmlspecialchars($msg["message"]));
         }
 
-        echo "</div>"; // bubble
+        echo "</div>"; 
         echo "<div class='message-time'>$timestamp</div>";
-        echo "</div>"; // content
-        echo "</div>"; // wrapper
+        echo "</div>";
+        echo "</div>";
     }
 
 } catch (Exception $e) {
