@@ -366,3 +366,82 @@
   from { transform: translateY(15px); opacity:0; }
   to { transform: translateY(0); opacity:1; }
 }
+/* ===========================================
+   MEDIA CENTERING + VIDEO + DOWNLOAD BUTTON
+   =========================================== */
+
+.media-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+
+.media-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.media-thumb,
+.media-video {
+  max-width: 250px;
+  max-height: 250px;
+  border-radius: 14px;
+  object-fit: cover;
+  cursor: pointer;
+  background: #000;
+  display: block;
+  transition: 0.2s;
+}
+
+.media-thumb:hover,
+.media-video:hover {
+  transform: scale(1.03);
+}
+
+/* Hover Download Button */
+.download-btn {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  background: rgba(0,0,0,0.65);
+  padding: 5px 9px;
+  font-size: 15px;
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+
+.media-wrapper:hover .download-btn {
+  opacity: 1;
+}
+
+/* VIDEO styling */
+.media-video {
+  width: 250px;
+  height: 250px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: black;
+}
+
+/* Carousel improvements */
+.carousel-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+}
+
+.carousel-img,
+.carousel-video {
+  width: 180px;
+  height: 180px;
+  border-radius: 14px;
+  object-fit: cover;
+}
