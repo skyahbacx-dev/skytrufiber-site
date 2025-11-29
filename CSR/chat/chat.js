@@ -1,7 +1,8 @@
 // ========================================
 // SkyTruFiber CSR Chat System
 // chat.js — Full Upgrade Version
-// Supports: Inline Preview, Delete, Combined Media+Text, Carousel, Lightbox, Thumbnails, Scroll-To-Bottom Button
+// Supports: Inline Preview, Delete, Combined Media+Text, Carousel,
+// Lightbox, Thumbnails, Scroll-To-Bottom, Uploading Placeholder
 // ========================================
 
 let currentClientID = null;
@@ -69,7 +70,7 @@ $(document).ready(function () {
         $("#lightbox-overlay").fadeOut(200);
     });
 
-    // REMOVE FILE FROM INLINE PREVIEW
+    // REMOVE FILE FROM PREVIEW
     $(document).on("click", ".preview-remove", function () {
         const index = $(this).data("index");
         selectedFiles.splice(index, 1);
@@ -78,9 +79,7 @@ $(document).ready(function () {
         if (selectedFiles.length === 0) $("#preview-inline").slideUp(200);
     });
 
-    // ==========================
-    // SCROLL-TO-BOTTOM BUTTON
-    // ==========================
+    // Scroll-To-Bottom Visibility
     const chatBox = $("#chat-messages");
     const scrollBtn = $("#scroll-bottom-btn");
 
@@ -93,11 +92,47 @@ $(document).ready(function () {
     });
 
     scrollBtn.click(function () {
-        chatBox.animate({ scrollTop: chatBox[0].scrollHeight }, 300);
+        scrollToBottomSmooth();
         scrollBtn.removeClass("show");
     });
 
 });
+
+
+// ========================================
+// Smooth Scroll To Bottom
+// ========================================
+function scrollToBottomSmooth() {
+    const box = $("#chat-messages");
+    box.stop().animate({ scrollTop: box[0].scrollHeight }, 300);
+}
+
+
+// ========================================
+// Upload Placeholder Bubble
+// ========================================
+function addUploadingPlaceholder() {
+    const tempID = "uploading-" + Date.now();
+
+    $("#chat-messages").append(`
+        <div class="message sent" id="${tempID}">
+            <div class="message-avatar">
+                <img src="/CSR/images/default_avatar.png">
+            </div>
+            <div class="message-content">
+                <div class="message-bubble uploading-bubble">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+                <div class="message-time">Uploading...</div>
+            </div>
+        </div>
+    `);
+
+    scrollToBottomSmooth();
+    return tempID;
+}
 
 
 // ========================================
@@ -121,7 +156,7 @@ function loadClientInfo(id) {
 
 
 // ========================================
-// LOAD MESSAGES INCREMENTALLY
+// LOAD MESSAGES
 // ========================================
 function loadMessages(scrollBottom = false) {
     if (!currentClientID) return;
@@ -135,10 +170,7 @@ function loadMessages(scrollBottom = false) {
             lastMessageID = newLastID;
             $("#chat-messages").append($incoming);
 
-            if (scrollBottom) {
-                const box = $("#chat-messages");
-                box.scrollTop(box[0].scrollHeight);
-            }
+            if (scrollBottom) scrollToBottomSmooth();
         }
     });
 }
@@ -171,12 +203,13 @@ function sendMessage() {
 
 
 // ========================================
-// INLINE PREVIEW BAR
+// PREVIEW BAR
 // ========================================
 function previewMultiple(files) {
     $("#preview-files").html("");
 
     files.forEach((file, index) => {
+
         const removeBtn = `<button class="preview-remove" data-index="${index}">&times;</button>`;
 
         if (file.type.startsWith("image")) {
@@ -208,9 +241,10 @@ function previewMultiple(files) {
 // ========================================
 function uploadMedia(files, msg = "") {
 
+    const placeholderID = addUploadingPlaceholder();
+
     const fd = new FormData();
     files.forEach(f => fd.append("media[]", f));
-
     fd.append("client_id", currentClientID);
     fd.append("sender_type", "csr");
     fd.append("message", msg);
@@ -227,8 +261,15 @@ function uploadMedia(files, msg = "") {
         processData: false,
         contentType: false,
         dataType: "json",
-        success: res => loadMessages(true),
-        error: err => console.error("Upload Error:", err.responseText)
+
+        success: res => {
+            $("#" + placeholderID).remove();
+            loadMessages(true);
+        },
+        error: err => {
+            console.error("Upload Error:", err.responseText);
+            $("#" + placeholderID).remove();
+        }
     });
 }
 
