@@ -17,8 +17,7 @@ if (empty($_FILES["media"]["name"])) {
     exit;
 }
 
-
-// Create container message row
+// Create container message entry
 $stmt = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
     VALUES (?, 'csr', '', TRUE, FALSE, NOW())
@@ -26,10 +25,8 @@ $stmt = $conn->prepare("
 $stmt->execute([$client_id]);
 $chatId = $conn->lastInsertId();
 
-
-// PUBLIC upload directory
-$uploadDirectory = $_SERVER["DOCUMENT_ROOT"] . "/upload/chat_media/";
-if (!is_dir($uploadDirectory)) {
+$uploadDirectory = "/tmp/chat_media/";
+if (!file_exists($uploadDirectory)) {
     mkdir($uploadDirectory, 0777, true);
 }
 
@@ -37,23 +34,22 @@ foreach ($_FILES["media"]["name"] as $index => $name) {
 
     $tmpName  = $_FILES["media"]["tmp_name"][$index];
     $fileType = $_FILES["media"]["type"][$index];
-
     $fileName = round(microtime(true) * 1000) . "_" . preg_replace("/\s+/", "_", $name);
+
     $targetPath = $uploadDirectory . $fileName;
 
     if (!move_uploaded_file($tmpName, $targetPath)) {
-        continue;
+        echo json_encode(["status" => "error", "msg" => "Upload failed"]);
+        exit;
     }
 
-    // Relative path accessible by browser
-    $mediaDbPath = "upload/chat_media/" . $fileName;
+    // Serve via PHP since /tmp is not publicly accessible
+    $mediaDbPath = $fileName;
 
-    // Determine type
     $type = "file";
     if (strpos($fileType, "image") !== false) $type = "image";
     elseif (strpos($fileType, "video") !== false) $type = "video";
 
-    // Save to media table
     $mediaInsert = $conn->prepare("
         INSERT INTO chat_media (chat_id, media_path, media_type)
         VALUES (?, ?, ?)
@@ -61,8 +57,6 @@ foreach ($_FILES["media"]["name"] as $index => $name) {
     $mediaInsert->execute([$chatId, $mediaDbPath, $type]);
 }
 
-
-// success
-echo json_encode(["status" => "ok", "chat_id" => $chatId]);
+echo json_encode(["status" => "ok"]);
 exit;
 ?>
