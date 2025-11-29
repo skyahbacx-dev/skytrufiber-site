@@ -20,7 +20,6 @@ $csrUser = $_SESSION["csr_user"];
 
     <!-- MIDDLE CHAT PANEL -->
     <div class="chat-middle-panel">
-
         <div class="chat-wrapper">
 
             <!-- CHAT HEADER -->
@@ -37,14 +36,13 @@ $csrUser = $_SESSION["csr_user"];
             <!-- CHAT MESSAGES -->
             <div id="chat-messages" class="chat-messages"></div>
 
-            <!-- MULTIPLE FILE PREVIEW BAR (Messenger style) -->
-            <div id="preview-overlay" class="preview-overlay">
-                <div class="preview-box">
-                    <div id="preview-files" class="preview-files"></div>
-                    <div class="preview-actions">
-                        <button id="cancel-preview" class="preview-btn cancel">Cancel</button>
-                        <button id="send-preview" class="preview-btn send">Send</button>
-                    </div>
+            <!-- INLINE MULTI-FILE PREVIEW BAR -->
+            <div id="preview-inline" class="preview-inline">
+                <div id="preview-files" class="preview-files"></div>
+
+                <div class="preview-actions-bar">
+                    <button id="cancel-preview" class="preview-btn cancel">Cancel</button>
+                    <button id="send-preview" class="preview-btn send">Send</button>
                 </div>
             </div>
 
@@ -65,8 +63,8 @@ $csrUser = $_SESSION["csr_user"];
                 <button id="send-btn" class="chat-send-btn">
                     <i class="fa fa-paper-plane"></i>
                 </button>
-            </div> <!-- chat-input-area -->
 
+            </div> <!-- chat-input-area -->
         </div> <!-- chat-wrapper -->
     </div> <!-- chat-middle-panel -->
 
@@ -88,3 +86,6 @@ $csrUser = $_SESSION["csr_user"];
     <span id="lightbox-close">&times;</span>
     <img id="lightbox-image">
 </div>
+
+<!-- SORTABLE FOR DRAG-REORDER -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
