@@ -13,20 +13,21 @@
 </head>
 <body>
 
-<div class="chat-wrapper-outer">
-
-    <div class="chat-box">
+<div id="support-overlay">
+    <div class="chat-modal">
 
         <!-- HEADER -->
         <div class="chat-header">
-            <img src="/upload/AHBALOGO.png" class="chat-logo">
-            <div>
-                <h3>SkyTruFiber Support</h3>
-                <span class="chat-status">Support Team Active</span>
+            <div class="chat-header-left">
+                <img src="/upload/AHBALOGO.png" class="chat-header-logo">
+                <div>
+                    <h2>SkyTruFiber Support</h2>
+                    <span class="status active">Support Team Active</span>
+                </div>
             </div>
         </div>
 
-        <!-- MESSAGE AREA -->
+        <!-- MESSAGE WINDOW -->
         <div id="chat-window" class="chat-window"></div>
 
         <!-- PREVIEW INLINE -->
@@ -34,17 +35,18 @@
             <div id="preview-files" class="preview-files"></div>
         </div>
 
-        <!-- INPUT AREA -->
-        <div class="chat-input-area">
+        <!-- INPUT -->
+        <div class="chat-input-bar">
             <input type="file" id="chat-upload-media" multiple hidden>
             <button id="upload-btn" class="upload-btn">📎</button>
 
-            <input id="message-input" type="text" placeholder="Write a message..." autocomplete="off">
+            <input type="text" id="message-input" placeholder="Write a message..." autocomplete="off">
 
-            <button id="send-btn" class="send-btn">Send</button>
+            <button id="send-btn" class="send-btn">
+                <i class="fa fa-paper-plane"></i>
+            </button>
         </div>
     </div>
-
 </div>
 
 <!-- LIGHTBOX -->
