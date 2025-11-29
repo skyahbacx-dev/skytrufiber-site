@@ -445,3 +445,72 @@
   border-radius: 14px;
   object-fit: cover;
 }
+/* =========================
+   SWIPE / ARROWS / FULL VIEW
+   ========================= */
+
+.carousel-container {
+  display: flex;
+  gap: 10px;
+  overflow: hidden;
+  position: relative;
+  padding: 10px 0;
+  scroll-behavior: smooth;
+}
+
+.carousel-item {
+  flex: 0 0 auto;
+}
+
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: rgba(0,0,0,0.45);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+
+.carousel-container:hover .carousel-arrow {
+  opacity: 1;
+}
+
+.carousel-arrow.left { left: -5px; }
+.carousel-arrow.right { right: -5px; }
+
+/* FULLSCREEN MODAL */
+#fullview-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.9);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 20000;
+}
+#fullview-modal img,
+#fullview-modal video {
+  max-width: 92%;
+  max-height: 92%;
+  border-radius: 12px;
+}
+
+#fullview-close {
+  position: absolute;
+  top: 25px;
+  right: 35px;
+  font-size: 40px;
+  color: white;
+  cursor: pointer;
+}
