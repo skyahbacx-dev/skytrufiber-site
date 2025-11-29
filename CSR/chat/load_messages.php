@@ -38,7 +38,7 @@ try {
         echo "<div class='message-content'>";
         echo "<div class='message-bubble'>";
 
-        // Fetch associated media
+        // Fetch associated media files
         $mediaStmt = $conn->prepare("
             SELECT media_path, media_type
             FROM chat_media
@@ -52,8 +52,9 @@ try {
             echo "<div class='carousel-container'>";
 
             foreach ($mediaList as $m) {
-                // Correct path to get_media.php
-                $filePath = "../chat/get_media.php?file=" . urlencode($m['media_path']);
+
+                // Public stored path in DB
+                $filePath = $m["media_path"];
 
                 if ($m["media_type"] === "image") {
                     echo "<img src='$filePath' class='carousel-img media-thumb'>";
@@ -73,7 +74,7 @@ try {
         elseif ($mediaList && count($mediaList) === 1) {
 
             $media = $mediaList[0];
-            $filePath = "../chat/get_media.php?file=" . urlencode($media["media_path"]);
+            $filePath = $media["media_path"];
 
             if ($media["media_type"] === "image") {
                 echo "<img src='$filePath' class='media-thumb'>";
