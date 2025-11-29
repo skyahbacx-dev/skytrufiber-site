@@ -37,10 +37,15 @@ $csrUser = $_SESSION["csr_user"];
             <!-- CHAT MESSAGES -->
             <div id="chat-messages" class="chat-messages"></div>
 
-            <!-- REPLY PREVIEW BAR (Messenger Style) -->
-            <div id="reply-bar" class="reply-bar">
-                <span id="reply-preview-text" class="reply-content"></span>
-                <button id="cancel-reply" class="cancel-reply">&times;</button>
+            <!-- MULTIPLE FILE PREVIEW BAR (Messenger style) -->
+            <div id="preview-overlay" class="preview-overlay">
+                <div class="preview-box">
+                    <div id="preview-files" class="preview-files"></div>
+                    <div class="preview-actions">
+                        <button id="cancel-preview" class="preview-btn cancel">Cancel</button>
+                        <button id="send-preview" class="preview-btn send">Send</button>
+                    </div>
+                </div>
             </div>
 
             <!-- INPUT AREA -->
@@ -60,13 +65,10 @@ $csrUser = $_SESSION["csr_user"];
                 <button id="send-btn" class="chat-send-btn">
                     <i class="fa fa-paper-plane"></i>
                 </button>
-
             </div> <!-- chat-input-area -->
 
         </div> <!-- chat-wrapper -->
-
     </div> <!-- chat-middle-panel -->
-
 
     <!-- RIGHT PANEL -->
     <div class="chat-right-panel">
@@ -81,22 +83,8 @@ $csrUser = $_SESSION["csr_user"];
 
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
 
-<!-- LIGHTBOX VIEWER FOR IMAGES -->
+<!-- LIGHTBOX VIEWER -->
 <div id="lightbox-overlay">
     <span id="lightbox-close">&times;</span>
     <img id="lightbox-image">
-</div>
-
-<!-- MULTIPLE FILE PREVIEW MODAL -->
-<div id="preview-overlay" class="preview-overlay">
-    <div class="preview-box">
-
-        <!-- The thumbnails are injected here -->
-        <div id="preview-files" class="preview-files"></div>
-
-        <div class="preview-actions">
-            <button id="cancel-preview" class="preview-btn cancel">Cancel</button>
-            <button id="send-preview" class="preview-btn send">Send</button>
-        </div>
-    </div>
 </div>
