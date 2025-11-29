@@ -147,6 +147,16 @@
   border-radius: 20px 20px 4px 20px;
 }
 
+/* READ RECEIPTS */
+.msg-status {
+  font-size: 13px;
+  margin-left: 6px;
+}
+
+.msg-status.delivered { color: #c8c8c8; }   /* ✓ */
+.msg-status.seen { color: #0084ff; font-weight: bold; } /* ✓✓ */
+
+
 /* CAROUSEL MEDIA */
 .carousel-container {
   display: flex;
@@ -292,6 +302,39 @@
 #lightbox-close {
   position:absolute; top:30px; right:40px;
   font-size:34px; cursor:pointer; color:white;
+}
+
+
+/* ===========================================
+   SKELETON PLACEHOLDERS
+   =========================================== */
+.skeleton-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  max-width: 70%;
+}
+
+.skeleton-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #e3e3e3;
+  animation: pulse 1.3s infinite;
+}
+
+.skeleton-bubble {
+  width: 180px;
+  height: 60px;
+  border-radius: 16px;
+  background: #e1e1e1;
+  animation: pulse 1.3s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: .6; }
+  50% { opacity: 1; }
+  100% { opacity: .6; }
 }
 
 
