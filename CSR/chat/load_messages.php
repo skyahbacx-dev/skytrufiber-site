@@ -30,7 +30,7 @@ try {
 
         echo "<div class='message $sender' data-msg-id='$msgID'>";
 
-        // Avatar
+        // Avatar icon
         echo "<div class='message-avatar'>
                 <img src='/upload/default-avatar.png' alt='avatar'>
               </div>";
@@ -47,16 +47,13 @@ try {
         $mediaStmt->execute([$msgID]);
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // ==========================
         // MULTIPLE MEDIA (Carousel)
-        // ==========================
         if ($mediaList && count($mediaList) > 1) {
             echo "<div class='carousel-container'>";
 
             foreach ($mediaList as $m) {
-
-                // Access through get_media.php (required for /tmp storage on Railway)
-                $filePath = "/chat/get_media.php?file=" . urlencode($m["media_path"]);
+                // Correct path to get_media.php
+                $filePath = "../chat/get_media.php?file=" . urlencode($m['media_path']);
 
                 if ($m["media_type"] === "image") {
                     echo "<img src='$filePath' class='carousel-img media-thumb'>";
@@ -72,13 +69,11 @@ try {
             echo "</div>";
         }
 
-        // ==========================
         // ONE MEDIA ITEM
-        // ==========================
         elseif ($mediaList && count($mediaList) === 1) {
 
             $media = $mediaList[0];
-            $filePath = "/chat/get_media.php?file=" . urlencode($media["media_path"]);
+            $filePath = "../chat/get_media.php?file=" . urlencode($media["media_path"]);
 
             if ($media["media_type"] === "image") {
                 echo "<img src='$filePath' class='media-thumb'>";
@@ -91,7 +86,7 @@ try {
             }
         }
 
-        // Display text content
+        // Display text content if exists
         if (!empty($msg["message"])) {
             echo nl2br(htmlspecialchars($msg["message"]));
         }
