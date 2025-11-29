@@ -1,7 +1,6 @@
 // ========================================
 // SkyTruFiber CSR Chat System
-// chat.js — Full Upgrade Version
-// Multi-File Preview, Delete, Carousel, SlideUp, Inline Preview
+// chat.js — Combined Media + Text, Inline Preview, Carousel
 // ========================================
 
 let currentClientID = null;
@@ -23,7 +22,7 @@ $(document).ready(function () {
         });
     });
 
-    // SEND TEXT OR MEDIA
+    // SEND BUTTON ACTION
     $("#send-btn").click(sendMessage);
     $("#chat-input").keypress(function (e) {
         if (e.which === 13) {
@@ -32,10 +31,10 @@ $(document).ready(function () {
         }
     });
 
-    // UPLOAD BUTTON
+    // OPEN FILE PICKER
     $("#upload-btn").click(() => $("#chat-upload-media").click());
 
-    // CHOOSE FILES
+    // SELECT FILES
     $("#chat-upload-media").change(function () {
         if (!currentClientID) return;
         selectedFiles = Array.from(this.files);
@@ -45,7 +44,6 @@ $(document).ready(function () {
     // SELECT CLIENT
     $(document).on("click", ".client-item", function () {
         currentClientID = $(this).data("id");
-
         $("#chat-client-name").text($(this).data("name"));
         $("#chat-messages").html("");
         lastMessageID = 0;
@@ -55,9 +53,7 @@ $(document).ready(function () {
 
         if (messageInterval) clearInterval(messageInterval);
         messageInterval = setInterval(() => {
-            if (!$("#preview-inline").is(":visible")) {
-                loadMessages(false);
-            }
+            if (!$("#preview-inline").is(":visible")) loadMessages(false);
         }, 1500);
     });
 
@@ -71,15 +67,13 @@ $(document).ready(function () {
         $("#lightbox-overlay").fadeOut(200)
     );
 
-    // REMOVE SINGLE FILE FROM PREVIEW
+    // REMOVE SINGLE FILE
     $(document).on("click", ".preview-remove", function () {
         const index = $(this).data("index");
         selectedFiles.splice(index, 1);
         previewMultiple(selectedFiles);
 
-        if (selectedFiles.length === 0) {
-            $("#preview-inline").slideUp(200);
-        }
+        if (selectedFiles.length === 0) $("#preview-inline").slideUp(200);
     });
 
 });
@@ -95,7 +89,7 @@ function loadClients() {
 
 
 // ========================================
-// LOAD CLIENT INFO (right panel)
+// LOAD CLIENT INFO
 function loadClientInfo(id) {
     $.post("../chat/load_client_info.php", { client_id: id }, function (html) {
         $("#client-info-content").html(html);
@@ -104,7 +98,7 @@ function loadClientInfo(id) {
 
 
 // ========================================
-// LOAD MESSAGES NO FLICKER
+// LOAD NEW MESSAGES WITHOUT DUPLICATION
 function loadMessages(scrollBottom = false) {
     if (!currentClientID) return;
 
@@ -127,17 +121,17 @@ function loadMessages(scrollBottom = false) {
 
 
 // ========================================
-// SEND MESSAGE OR MEDIA
+// SEND TEXT OR MEDIA (combined)
 function sendMessage() {
+    const msg = $("#chat-input").val().trim();
 
-    // MEDIA first
+    // If media selected, send both
     if (selectedFiles.length > 0) {
-        uploadMedia(selectedFiles);
+        uploadMedia(selectedFiles, msg);
         return;
     }
 
-    // TEXT second
-    let msg = $("#chat-input").val().trim();
+    // If no media, send text only
     if (!msg || !currentClientID) return;
 
     $.post("../chat/send_message.php", {
@@ -154,14 +148,12 @@ function sendMessage() {
 
 
 // ========================================
-// INLINE PREVIEW
+// PREVIEW MULTIPLE FILES INLINE
 function previewMultiple(files) {
-
     $("#preview-files").html("");
 
-    files.forEach((file, i) => {
-
-        const deleteBtn = `<button class="preview-remove" data-index="${i}">&times;</button>`;
+    files.forEach((file, index) => {
+        const removeBtn = `<button class="preview-remove" data-index="${index}">&times;</button>`;
 
         if (file.type.startsWith("image")) {
             const reader = new FileReader();
@@ -169,7 +161,7 @@ function previewMultiple(files) {
                 $("#preview-files").append(`
                     <div class="preview-item">
                         <img src="${e.target.result}" class="preview-thumb">
-                        ${deleteBtn}
+                        ${removeBtn}
                     </div>
                 `);
             };
@@ -177,7 +169,7 @@ function previewMultiple(files) {
         } else {
             $("#preview-files").append(`
                 <div class="preview-item file-box">${file.name}
-                    ${deleteBtn}
+                    ${removeBtn}
                 </div>
             `);
         }
@@ -188,18 +180,20 @@ function previewMultiple(files) {
 
 
 // ========================================
-// UPLOAD FILES
-function uploadMedia(files) {
+// UPLOAD MEDIA + OPTIONAL TEXT
+function uploadMedia(files, msg = "") {
 
     const fd = new FormData();
-    files.forEach(f => fd.append("media[]", f));
+    files.forEach(file => fd.append("media[]", file));
 
     fd.append("client_id", currentClientID);
     fd.append("sender_type", "csr");
+    fd.append("message", msg);
 
     $("#preview-inline").slideUp(200);
     selectedFiles = [];
     $("#chat-upload-media").val("");
+    $("#chat-input").val("");
 
     $.ajax({
         url: "../chat/media_upload.php",
@@ -209,23 +203,14 @@ function uploadMedia(files) {
         contentType: false,
         dataType: "json",
 
-        success: res => {
-            if (res.status === "ok") {
-                loadMessages(true);
-            } else {
-                alert(res.msg || "Upload failed");
-            }
-        },
-        error: err => {
-            console.error(err.responseText);
-            alert("Upload error");
-        }
+        success: res => loadMessages(true),
+        error: err => console.error("Upload Error:", err.responseText)
     });
 }
 
 
 // ========================================
-// ASSIGN & UNASSIGN
+// ASSIGN / UNASSIGN CLIENT
 function assignClient(id) {
     $.post("../chat/assign_client.php", { client_id: id }, () => {
         loadClients();
@@ -236,7 +221,6 @@ function assignClient(id) {
 function unassignClient(id) {
     $.post("../chat/unassign_client.php", { client_id: id }, () => {
         loadClients();
-        if (id == currentClientID)
-            $("#client-info-content").html("<p>Select a client.</p>");
+        if (id == currentClientID) $("#client-info-content").html("<p>Select a client.</p>");
     });
 }
