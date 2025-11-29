@@ -54,7 +54,9 @@ try {
             echo "<div class='carousel-container'>";
 
             foreach ($mediaList as $m) {
-                $filePath = "/" . ltrim($m["media_path"], "/");
+
+                // Access through get_media.php (required for /tmp storage)
+                $filePath = "/CSR/chat/get_media.php?file=" . urlencode($m["media_path"]);
 
                 if ($m["media_type"] === "image") {
                     echo "<img src='$filePath' class='carousel-img media-thumb'>";
@@ -75,12 +77,12 @@ try {
         // ==========================
         elseif ($mediaList && count($mediaList) === 1) {
 
-            $filePath = "/" . ltrim($mediaList[0]["media_path"], "/");
-            $type     = $mediaList[0]["media_type"];
+            $media = $mediaList[0];
+            $filePath = "/CSR/chat/get_media.php?file=" . urlencode($media["media_path"]);
 
-            if ($type === "image") {
+            if ($media["media_type"] === "image") {
                 echo "<img src='$filePath' class='media-thumb'>";
-            } elseif ($type === "video") {
+            } elseif ($media["media_type"] === "video") {
                 echo "<video controls class='media-video'>
                         <source src='$filePath' type='video/mp4'>
                       </video>";
