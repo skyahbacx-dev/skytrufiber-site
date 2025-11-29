@@ -30,15 +30,15 @@ try {
 
         echo "<div class='message $sender' data-msg-id='$msgID'>";
 
-        // Avatar icon
+        // Avatar
         echo "<div class='message-avatar'>
-                <img src='/upload/default-avatar.png' alt='avatar'>
+                <img src='/CSR/images/default_avatar.png' alt='avatar'>
               </div>";
 
         echo "<div class='message-content'>";
         echo "<div class='message-bubble'>";
 
-        // Fetch associated media
+        // Fetch media
         $mediaStmt = $conn->prepare("
             SELECT id, media_type
             FROM chat_media
@@ -47,54 +47,58 @@ try {
         $mediaStmt->execute([$msgID]);
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Multiple Media (Carousel)
+        // MULTIPLE MEDIA (carousel)
         if ($mediaList && count($mediaList) > 1) {
             echo "<div class='carousel-container'>";
 
             foreach ($mediaList as $m) {
-                $mediaID = (int)$m["id"];
+                $mediaID  = (int)$m["id"];
                 $filePath = "../chat/get_media.php?id=" . urlencode($mediaID);
 
                 if ($m["media_type"] === "image") {
                     echo "<img src='$filePath' class='carousel-img media-thumb'>";
-                } elseif ($m["media_type"] === "video") {
+                }
+                elseif ($m["media_type"] === "video") {
                     echo "<video controls class='carousel-video'>
                             <source src='$filePath' type='video/mp4'>
                           </video>";
-                } else {
-                    echo "<a href='$filePath' download class='download-btn'>📎 File</a>";
+                }
+                else {
+                    echo "<a href='$filePath' download class='download-btn'>📄 Document</a>";
                 }
             }
 
             echo "</div>";
         }
 
-        // One media item
+        // ONE MEDIA ITEM
         elseif ($mediaList && count($mediaList) === 1) {
 
-            $media    = $mediaList[0];
-            $mediaID  = (int)$media["id"];
-            $filePath = "../chat/get_media.php?id=" . urlencode($mediaID);
+            $media     = $mediaList[0];
+            $mediaID   = (int)$media["id"];
+            $filePath  = "../chat/get_media.php?id=" . urlencode($mediaID);
 
             if ($media["media_type"] === "image") {
                 echo "<img src='$filePath' class='media-thumb'>";
-            } elseif ($media["media_type"] === "video") {
+            }
+            elseif ($media["media_type"] === "video") {
                 echo "<video controls class='media-video'>
                         <source src='$filePath' type='video/mp4'>
                       </video>";
-            } else {
-                echo "<a href='$filePath' download class='download-btn'>📎 Download File</a>";
+            }
+            else {
+                echo "<a href='$filePath' download class='download-btn'>📄 Download File</a>";
             }
         }
 
-        // Text message
+        // Display text message
         if (!empty($msg["message"])) {
             echo nl2br(htmlspecialchars($msg["message"]));
         }
 
         echo "</div>"; // bubble
         echo "<div class='message-time'>$timestamp</div>";
-        echo "</div>"; // content
+        echo "</div>"; // message-content
         echo "</div>"; // wrapper
     }
 
