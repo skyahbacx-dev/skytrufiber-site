@@ -37,9 +37,7 @@
   transition: 0.15s;
 }
 .client-item.active-client,
-.client-item:hover {
-  background: #dfffe0;
-}
+.client-item:hover { background: #dfffe0; }
 
 .client-info {
   display: flex;
@@ -108,8 +106,7 @@
 }
 .chat-messages::-webkit-scrollbar { width: 6px; }
 .chat-messages::-webkit-scrollbar-thumb {
-  background: #b9e1c7;
-  border-radius: 8px;
+  background: #b9e1c7; border-radius: 8px;
 }
 
 
@@ -170,7 +167,7 @@
   flex-shrink: 0;
 }
 
-/* Fallback Single Image */
+/* Single image fallback */
 .message-bubble img {
   max-width: 240px;
   max-height: 260px;
@@ -179,21 +176,20 @@
   cursor: pointer;
   object-fit: cover;
 }
-
 .message-time { font-size: 11px; opacity: .6; margin-top: 4px; text-align: right; }
 
 
 /* ===========================================
-   INLINE PREVIEW BAR ABOVE INPUT
+   INLINE PREVIEW BAR
    =========================================== */
 .preview-inline {
   display: none;
-  background: white;
+  background: #ffffff;
   border-top: 1px solid #ccc;
   padding: 10px 14px;
-  animation: slideUp .28s ease;
+  animation: slideUp .25s ease;
   box-shadow: 0 -2px 8px rgba(0,0,0,.15);
-  z-index: 20;
+  z-index: 15;
 }
 
 .preview-files {
@@ -203,17 +199,13 @@
 }
 .preview-files::-webkit-scrollbar { height: 4px; }
 .preview-files::-webkit-scrollbar-thumb {
-  background: #b9e1c7;
-  border-radius: 6px;
+  background: #b9e1c7; border-radius: 6px;
 }
 
-.preview-item {
-  position: relative;
-  animation: fadeInUp .25s ease;
-}
+.preview-item { position: relative; animation: fadeInUp .25s ease; }
+
 .preview-thumb {
-  width: 90px;
-  height: 90px;
+  width: 90px; height: 90px;
   border-radius: 10px;
   object-fit: cover;
   border: 1px solid #ccc;
@@ -236,25 +228,6 @@
   line-height: 22px;
 }
 
-/* PREVIEW ACTION BUTTONS */
-.preview-actions-bar {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-top: 8px;
-  gap: 10px;
-}
-
-.preview-btn {
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-}
-.preview-btn.cancel { background: #666; color: #fff; }
-.preview-btn.send { background: #05702e; color: #fff; }
-
 
 /* ===========================================
    INPUT BAR
@@ -267,8 +240,10 @@
   gap: 10px;
   align-items: center;
 }
+
 .upload-btn {
-  border: none; background: none; font-size: 22px; cursor: pointer; opacity: .7;
+  border: none; background: none;
+  font-size: 22px; cursor: pointer; opacity: .7;
 }
 .upload-btn:hover { opacity: 1; transform: scale(1.15); }
 
@@ -290,8 +265,7 @@
 
 .chat-send-btn {
   background: #0084ff;
-  width: 48px;
-  height: 48px;
+  width: 48px; height: 48px;
   border-radius: 50%;
   border: none;
   cursor: pointer;
@@ -320,11 +294,13 @@
   font-size:34px; cursor:pointer; color:white;
 }
 
+
 /* Animations */
 @keyframes fadeInUp {
   from { opacity:0; transform:translateY(10px); }
   to { opacity:1; transform:translateY(0); }
 }
+
 @keyframes slideUp {
   from { transform: translateY(15px); opacity:0; }
   to { transform: translateY(0); opacity:1; }
