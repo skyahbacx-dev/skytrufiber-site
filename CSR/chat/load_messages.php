@@ -30,7 +30,7 @@ try {
 
         echo "<div class='message $sender' data-msg-id='$msgID'>";
 
-        // Correct public avatar path
+        // Avatar icon
         echo "<div class='message-avatar'>
                 <img src='/upload/default-avatar.png' alt='avatar'>
               </div>";
@@ -38,22 +38,22 @@ try {
         echo "<div class='message-content'>";
         echo "<div class='message-bubble'>";
 
-        // Fetch media associated with this message
+        // Fetch associated media
         $mediaStmt = $conn->prepare("
-            SELECT media_path, media_type
+            SELECT id, media_type
             FROM chat_media
             WHERE chat_id = ?
         ");
         $mediaStmt->execute([$msgID]);
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // MULTIPLE MEDIA (Carousel)
+        // Multiple Media (Carousel)
         if ($mediaList && count($mediaList) > 1) {
             echo "<div class='carousel-container'>";
 
             foreach ($mediaList as $m) {
-
-                $filePath = $m["media_path"]; // Already full path saved in DB
+                $mediaID = (int)$m["id"];
+                $filePath = "../chat/get_media.php?id=" . urlencode($mediaID);
 
                 if ($m["media_type"] === "image") {
                     echo "<img src='$filePath' class='carousel-img media-thumb'>";
@@ -69,11 +69,12 @@ try {
             echo "</div>";
         }
 
-        // ONE MEDIA ITEM
+        // One media item
         elseif ($mediaList && count($mediaList) === 1) {
 
-            $media = $mediaList[0];
-            $filePath = $media["media_path"];
+            $media    = $mediaList[0];
+            $mediaID  = (int)$media["id"];
+            $filePath = "../chat/get_media.php?id=" . urlencode($mediaID);
 
             if ($media["media_type"] === "image") {
                 echo "<img src='$filePath' class='media-thumb'>";
@@ -86,7 +87,7 @@ try {
             }
         }
 
-        // Display text message if exists
+        // Text message
         if (!empty($msg["message"])) {
             echo nl2br(htmlspecialchars($msg["message"]));
         }
