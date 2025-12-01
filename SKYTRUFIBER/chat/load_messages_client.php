@@ -2,20 +2,19 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$username = $_GET["username"] ?? null;
+$username = $_POST["username"] ?? null;
 if (!$username) exit;
 
-$stmt = $conn->prepare("
-    SELECT id FROM users WHERE email = ?
-");
+// Get client ID
+$stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
 $stmt->execute([$username]);
-$clientRow = $stmt->fetch(PDO::FETCH_ASSOC);
+$client = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$clientRow) exit("User not found");
-
-$client_id = $clientRow["id"];
+if (!$client) exit;
+$client_id = (int)$client["id"];
 
 try {
+    // Load messages
     $stmt = $conn->prepare("
         SELECT id, sender_type, message, created_at
         FROM chat
@@ -25,9 +24,7 @@ try {
     $stmt->execute([$client_id]);
     $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    if (!$messages) {
-        exit; // return empty
-    }
+    if (!$messages) exit;
 
     foreach ($messages as $msg) {
 
@@ -37,26 +34,35 @@ try {
 
         echo "<div class='message $sender' data-msg-id='$msgID'>";
 
-        echo "<div class='message-content'><div class='message-bubble'>";
+        // Avatar aligned properly
+        echo "<div class='message-avatar'>
+                <img src=\"/upload/default-avatar.png\" alt='avatar'>
+              </div>";
 
-        // Load media
+        echo "<div class='message-content'>";
+        echo "<div class='message-bubble'>";
+
+        // Load media list
         $mediaStmt = $conn->prepare("
-            SELECT id, media_type
+            SELECT id, media_type 
             FROM chat_media
             WHERE chat_id = ?
         ");
         $mediaStmt->execute([$msgID]);
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
+        // Multiple media (carousel)
         if ($mediaList && count($mediaList) > 1) {
             echo "<div class='carousel-container'>";
             foreach ($mediaList as $m) {
-                $filePath = "get_media_client.php?id=" . (int)$m["id"];
+                $mediaID = (int)$m["id"];
+                $filePath = "get_media_client.php?id=$mediaID";
+
                 if ($m["media_type"] === "image") {
                     echo "<img src='$filePath' class='carousel-img media-thumb'>";
                 } elseif ($m["media_type"] === "video") {
                     echo "<video controls autoplay loop muted class='carousel-video'>
-                              <source src='$filePath' type='video/mp4'>
+                            <source src='$filePath' type='video/mp4'>
                           </video>";
                 } else {
                     echo "<a href='$filePath' download class='download-btn'>📎 File</a>";
@@ -64,13 +70,17 @@ try {
             }
             echo "</div>";
         }
-        elseif ($mediaList && count($mediaList) === 1) {
-            $media = $mediaList[0];
-            $filePath = "get_media_client.php?id=" . (int)$media["id"];
 
-            if ($media["media_type"] === "image") {
+        // One media file
+        elseif ($mediaList && count($mediaList) === 1) {
+
+            $m = $mediaList[0];
+            $mediaID = (int)$m["id"];
+            $filePath = "get_media_client.php?id=$mediaID";
+
+            if ($m["media_type"] === "image") {
                 echo "<img src='$filePath' class='media-thumb'>";
-            } elseif ($media["media_type"] === "video") {
+            } elseif ($m["media_type"] === "video") {
                 echo "<video controls autoplay loop muted class='media-video'>
                         <source src='$filePath' type='video/mp4'>
                       </video>";
@@ -79,16 +89,18 @@ try {
             }
         }
 
+        // Text
         if (!empty($msg["message"])) {
             echo nl2br(htmlspecialchars($msg["message"]));
         }
 
-        echo "</div>";
+        echo "</div>"; // bubble
         echo "<div class='message-time'>$timestamp</div>";
-        echo "</div></div>";
+        echo "</div>"; // content
+        echo "</div>"; // message wrapper
     }
 
 } catch (Exception $e) {
-    echo "<p style='color:red;'>Error: " . htmlspecialchars($e->getMessage()) . "</p>";
+    echo "<p style='color:red;'>DB Error: " . htmlspecialchars($e->getMessage()) . "</p>";
 }
 ?>
