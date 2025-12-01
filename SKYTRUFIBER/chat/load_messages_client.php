@@ -59,18 +59,20 @@ foreach ($messages as $msg) {
     if ($mediaList) {
         if (count($mediaList) > 1) echo "<div class='carousel-container'>";
 
-        foreach ($mediaList as $m) {
-            $filePath = "get_media_client.php?id=" . (int)$m["id"];
-            if ($m["media_type"] === "image") {
-             echo "<img src='$filePath' data-full='$filePath' class='media-thumb'>";
+foreach ($mediaList as $m) {
+    $filePath = "get_media_client.php?id=" . (int)$m["id"];
 
-            } elseif ($m["media_type"] === "video") {
-             echo "<video data-full='$filePath' class='media-video'><source src='$filePath'></video>";
+    if ($m["media_type"] === "image") {
+        echo "<img src='$filePath' data-full='$filePath' class='media-thumb'>";
+    } elseif ($m["media_type"] === "video") {
+        echo "<video controls autoplay loop muted data-full='$filePath' class='media-video'>
+                <source src='$filePath' type='video/mp4'>
+              </video>";
+    } else {
+        echo "<a href='$filePath' download>📎 Download File</a>";
+    }
+}
 
-            } else {
-                echo "<a href='$filePath' download>📎 Download File</a>";
-            }
-        }
 
         if (count($mediaList) > 1) echo "</div>";
     }
