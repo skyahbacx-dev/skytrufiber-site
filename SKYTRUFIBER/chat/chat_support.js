@@ -1,6 +1,6 @@
 // ========================================
 // SkyTruFiber Client Chat System
-// chat_support.js — Full CSR Mirror + Gallery + Fast Upload + Swipe
+// chat_support.js — Instant DOM + Gallery + Fast Upload + Swipe
 // ========================================
 
 let selectedFiles = [];
@@ -20,11 +20,12 @@ $(document).ready(function () {
 
     loadMessages(true);
 
+    // Auto Refresh CSR responses only
     loadInterval = setInterval(() => {
         if (!$("#preview-inline").is(":visible")) loadMessages(false);
     }, 1200);
 
-    // Input & Send
+    // Send handlers
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
         if (e.which === 13) {
@@ -40,9 +41,8 @@ $(document).ready(function () {
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
-    // ========= LIGHTBOX OPEN =========
+    // LIGHTBOX
     $(document).on("click", ".media-thumb, .media-video", function () {
-
         const group = $(this).closest(".message");
         const media = group.find(".media-thumb, .media-video");
 
@@ -59,28 +59,26 @@ $(document).ready(function () {
         openLightbox(currentIndex);
     });
 
-    $("#lightbox-next").click(() => nextLightbox());
-    $("#lightbox-prev").click(() => prevLightbox());
+    $("#lightbox-next").click(nextLightbox);
+    $("#lightbox-prev").click(prevLightbox);
 
     $("#lightbox-close, #lightbox-overlay").click(e => {
-        if (e.target.id === "lightbox-overlay" || e.target.id === "lightbox-close") {
+        if (e.target.id === "lightbox-overlay" || e.target.id === "lightbox-close")
             $("#lightbox-overlay").fadeOut(200);
-        }
     });
 
-    // TOUCH SWIPE
+    // Swipe navigation
     let startX = 0;
     document.getElementById("lightbox-overlay").addEventListener("touchstart", e => {
         startX = e.changedTouches[0].clientX;
     });
-
     document.getElementById("lightbox-overlay").addEventListener("touchend", e => {
         let endX = e.changedTouches[0].clientX;
         if (endX < startX - 50) nextLightbox();
         if (endX > startX + 50) prevLightbox();
     });
 
-    // SCROLL BUTTON
+    // Scroll button
     const box = $("#chat-messages");
     const btn = $("#scroll-bottom-btn");
 
@@ -98,24 +96,37 @@ $(document).ready(function () {
 });
 
 
-// ========= LIGHTBOX HANDLER =========
+// ===== INSTANT DOM APPEND (TEXT) =====
+function appendClientMessageInstant(msg) {
+    $("#chat-messages").append(`
+        <div class="message sent">
+            <div class="message-avatar"><img src="/upload/default-avatar.png"></div>
+            <div class="message-content">
+                <div class="message-bubble">${msg}</div>
+                <div class="message-time">now</div>
+            </div>
+        </div>
+    `);
+
+    scrollToBottom();
+}
+
+
+// ===== LIGHTBOX =====
 function openLightbox(index) {
     const item = galleryItems[index];
-
-    $("#lightbox-image").hide();
-    $("#lightbox-video").hide();
+    $("#lightbox-image, #lightbox-video").hide();
     $("#lightbox-overlay").fadeIn(200);
 
     if (item.type === "image") {
         $("#lightbox-image").attr("src", item.thumb).fadeIn(120);
 
-        const fullImg = new Image();
-        fullImg.onload = () => {
-            $("#lightbox-image").fadeOut(80, () => {
-                $("#lightbox-image").attr("src", item.full).fadeIn(180);
-            });
+        const full = new Image();
+        full.onload = () => {
+            $("#lightbox-image").fadeOut(80, () =>
+                $("#lightbox-image").attr("src", item.full).fadeIn(160));
         };
-        fullImg.src = item.full;
+        full.src = item.full;
 
         $("#lightbox-download").attr("href", item.full);
     } else {
@@ -124,25 +135,19 @@ function openLightbox(index) {
     }
 }
 
-function nextLightbox() {
-    currentIndex = (currentIndex + 1) % galleryItems.length;
-    openLightbox(currentIndex);
-}
-function prevLightbox() {
-    currentIndex = (currentIndex - 1 + galleryItems.length) % galleryItems.length;
-    openLightbox(currentIndex);
-}
+function nextLightbox() { currentIndex = (currentIndex + 1) % galleryItems.length; openLightbox(currentIndex); }
+function prevLightbox() { currentIndex = (currentIndex - 1 + galleryItems.length) % galleryItems.length; openLightbox(currentIndex); }
 
 
-// ========= SCROLL =========
+// ===== SCROLL =====
 function scrollToBottom() {
     const box = $("#chat-messages");
     if (!box.length) return;
-    box.stop().animate({ scrollTop: box[0].scrollHeight }, 300);
+    box.stop().animate({ scrollTop: box[0].scrollHeight }, 250);
 }
 
 
-// ========= UPLOADING PLACEHOLDER =========
+// ===== Placeholder while uploading =====
 function addUploadingPlaceholder() {
     const id = "upload-" + Date.now();
     $("#chat-messages").append(`
@@ -162,7 +167,7 @@ function addUploadingPlaceholder() {
 }
 
 
-// ========= LOAD MESSAGES =========
+// ===== LOAD NEW (CSR) MESSAGES =====
 function loadMessages(scrollBottom = false) {
     $.post("load_messages_client.php", { username }, function (html) {
         const incoming = $(html);
@@ -178,55 +183,47 @@ function loadMessages(scrollBottom = false) {
 }
 
 
-// ========= SEND MESSAGE =========
+// ===== SEND MESSAGE (INSTANT DOM) =====
 function sendMessage() {
     const msg = $("#message-input").val().trim();
     if (selectedFiles.length > 0) return uploadMedia(selectedFiles, msg);
     if (!msg) return;
 
+    appendClientMessageInstant(msg);
+
     $.post("send_message_client.php", { message: msg, username }, function () {
         $("#message-input").val("");
-        loadMessages(true);
     }, "json");
 }
 
 
-// ========= PREVIEW UPLOAD THUMBNAILS =========
+// ===== PREVIEW BAR =====
 function previewMultiple(files) {
     $("#preview-files").html("");
     $("#preview-inline").slideDown(200);
 
     files.forEach((file, index) => {
         const removeBtn = `<button class="preview-remove" data-i="${index}">&times;</button>`;
-        const preview = file.type.startsWith("image")
+        const item = file.type.startsWith("image")
             ? `<img src="${URL.createObjectURL(file)}" class="preview-thumb">`
             : `<div class="file-box">📎 ${file.name}</div>`;
 
         $("#preview-files").append(`
-            <div class="preview-item">
-                ${preview}
-                ${removeBtn}
-            </div>
+            <div class="preview-item">${item}${removeBtn}</div>
         `);
     });
 }
 
 
-// remove single preview & full reset
+// Remove preview item
 $(document).on("click", ".preview-remove", function () {
     selectedFiles.splice($(this).data("i"), 1);
     if (selectedFiles.length) previewMultiple(selectedFiles);
     else $("#preview-inline").slideUp(200);
 });
 
-$("#preview-close").on("click", () => {
-    selectedFiles = [];
-    $("#preview-files").html("");
-    $("#preview-inline").slideUp(200);
-});
 
-
-// ========= UPLOAD MEDIA =========
+// ===== UPLOAD MEDIA WITH PROGRESS + INSTANT DOM =====
 function uploadMedia(files, msg = "") {
     const placeholder = addUploadingPlaceholder();
     const bar = $("#" + placeholder).find(".upload-progress-fill");
@@ -248,11 +245,9 @@ function uploadMedia(files, msg = "") {
         processData: false,
         contentType: false,
         xhr: function () {
-            const xhr = new window.XMLHttpRequest();
+            let xhr = new XMLHttpRequest();
             xhr.upload.addEventListener("progress", e => {
-                if (e.lengthComputable) {
-                    bar.css("width", (e.loaded / e.total) * 100 + "%");
-                }
+                if (e.lengthComputable) bar.css("width", (e.loaded / e.total) * 100 + "%");
             });
             return xhr;
         },
