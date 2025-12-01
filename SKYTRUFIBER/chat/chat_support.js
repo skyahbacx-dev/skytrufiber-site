@@ -261,8 +261,8 @@ function uploadMedia(files, msg = "") {
         }
     });
 }
-<script>
+
 $("#logout-btn").click(() => {
    window.location.href = "logout.php";
 });
-</script>
+
