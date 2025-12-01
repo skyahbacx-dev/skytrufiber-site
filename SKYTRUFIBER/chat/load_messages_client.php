@@ -30,9 +30,7 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (!$messages) exit;
 
-// AVATAR paths
-$csrAvatar  = "/upload/default_avatar.png";
-$userAvatar = "/upload/default_avatar.png";
+
 
 foreach ($messages as $msg) {
 
@@ -43,10 +41,7 @@ foreach ($messages as $msg) {
 
     echo "<div class='message $sender' data-msg-id='$msgID'>";
 
-    // Avatar always included
-    echo "<div class='message-avatar'>
-            <img src='$avatar'>
-          </div>";
+echo "<div class='message-avatar'> <img src='/upload/default-avatar.png' alt='avatar'> </div>";
 
     echo "<div class='message-content'>
             <div class='message-bubble'>";
