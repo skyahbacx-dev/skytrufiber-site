@@ -1,6 +1,6 @@
 // ========================================
 // SkyTruFiber Client Chat System
-// chat_support.js — Full CSR Mirror + Gallery + Progress + Swipe
+// chat_support.js — Full CSR Mirror + Gallery + Fast Upload + Swipe
 // ========================================
 
 let selectedFiles = [];
@@ -24,16 +24,23 @@ $(document).ready(function () {
         if (!$("#preview-inline").is(":visible")) loadMessages(false);
     }, 1200);
 
+    // Input & Send
     $("#send-btn").click(sendMessage);
-    $("#message-input").keypress(e => { if (e.which === 13) { e.preventDefault(); sendMessage(); } });
+    $("#message-input").keypress(e => {
+        if (e.which === 13) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
 
+    // Upload
     $("#upload-btn").click(() => $("#chat-upload-media").click());
     $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
-    // ========= OPEN LIGHTBOX + GALLERY =========
+    // ========= LIGHTBOX OPEN =========
     $(document).on("click", ".media-thumb, .media-video", function () {
 
         const group = $(this).closest(".message");
@@ -61,7 +68,7 @@ $(document).ready(function () {
         }
     });
 
-    // ======= MOBILE SWIPE DETECTION =======
+    // TOUCH SWIPE
     let startX = 0;
     document.getElementById("lightbox-overlay").addEventListener("touchstart", e => {
         startX = e.changedTouches[0].clientX;
@@ -73,7 +80,7 @@ $(document).ready(function () {
         if (endX > startX + 50) prevLightbox();
     });
 
-    // ===== Scroll bottom floating button =====
+    // SCROLL BUTTON
     const box = $("#chat-messages");
     const btn = $("#scroll-bottom-btn");
 
@@ -91,7 +98,7 @@ $(document).ready(function () {
 });
 
 
-// ======= LIGHTBOX DISPLAY =======
+// ========= LIGHTBOX HANDLER =========
 function openLightbox(index) {
     const item = galleryItems[index];
 
@@ -127,7 +134,7 @@ function prevLightbox() {
 }
 
 
-// ===== Scroll =====
+// ========= SCROLL =========
 function scrollToBottom() {
     const box = $("#chat-messages");
     if (!box.length) return;
@@ -135,7 +142,7 @@ function scrollToBottom() {
 }
 
 
-// ===== Upload Placeholder & Progress =====
+// ========= UPLOADING PLACEHOLDER =========
 function addUploadingPlaceholder() {
     const id = "upload-" + Date.now();
     $("#chat-messages").append(`
@@ -155,7 +162,7 @@ function addUploadingPlaceholder() {
 }
 
 
-// ===== Load Messages =====
+// ========= LOAD MESSAGES =========
 function loadMessages(scrollBottom = false) {
     $.post("load_messages_client.php", { username }, function (html) {
         const incoming = $(html);
@@ -171,7 +178,7 @@ function loadMessages(scrollBottom = false) {
 }
 
 
-// ===== Send Message =====
+// ========= SEND MESSAGE =========
 function sendMessage() {
     const msg = $("#message-input").val().trim();
     if (selectedFiles.length > 0) return uploadMedia(selectedFiles, msg);
@@ -184,25 +191,28 @@ function sendMessage() {
 }
 
 
-// ===== Preview Upload Carousel =====
+// ========= PREVIEW UPLOAD THUMBNAILS =========
 function previewMultiple(files) {
     $("#preview-files").html("");
-    $("#preview-count").text(`${files.length} selected`);
+    $("#preview-inline").slideDown(200);
 
     files.forEach((file, index) => {
         const removeBtn = `<button class="preview-remove" data-i="${index}">&times;</button>`;
-        const itemThumb = file.type.startsWith("image")
+        const preview = file.type.startsWith("image")
             ? `<img src="${URL.createObjectURL(file)}" class="preview-thumb">`
             : `<div class="file-box">📎 ${file.name}</div>`;
 
         $("#preview-files").append(`
-            <div class="preview-item">${itemThumb}${removeBtn}</div>
+            <div class="preview-item">
+                ${preview}
+                ${removeBtn}
+            </div>
         `);
     });
-
-    $("#preview-inline").slideDown(200);
 }
 
+
+// remove single preview & full reset
 $(document).on("click", ".preview-remove", function () {
     selectedFiles.splice($(this).data("i"), 1);
     if (selectedFiles.length) previewMultiple(selectedFiles);
@@ -216,7 +226,7 @@ $("#preview-close").on("click", () => {
 });
 
 
-// ===== Upload Media w/ Progress =====
+// ========= UPLOAD MEDIA =========
 function uploadMedia(files, msg = "") {
     const placeholder = addUploadingPlaceholder();
     const bar = $("#" + placeholder).find(".upload-progress-fill");
