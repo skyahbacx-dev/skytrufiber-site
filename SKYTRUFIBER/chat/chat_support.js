@@ -1,6 +1,6 @@
 // ========================================
 // SkyTruFiber Client Chat System
-// chat_support.js — Full CSR Mirror + Gallery
+// chat_support.js — Full CSR Mirror + Gallery + Fast Preload
 // ========================================
 
 let selectedFiles = [];
@@ -20,36 +20,29 @@ $(document).ready(function () {
 
     loadMessages(true);
 
-    // Auto refresh
     loadInterval = setInterval(() => {
         if (!$("#preview-inline").is(":visible")) loadMessages(false);
     }, 1200);
 
-    // Send events
     $("#send-btn").click(sendMessage);
-    $("#message-input").keypress(e => {
-        if (e.which === 13) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
+    $("#message-input").keypress(e => { if (e.which === 13) { e.preventDefault(); sendMessage(); } });
 
-    // Upload
     $("#upload-btn").click(() => $("#chat-upload-media").click());
     $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
-    // Lightbox open click
+    // ========= OPEN LIGHTBOX (with thumbnail first) =========
     $(document).on("click", ".media-thumb, .media-video", function () {
         const group = $(this).closest(".message");
         const media = group.find(".media-thumb, .media-video");
-        galleryItems = [];
 
+        galleryItems = [];
         media.each(function () {
             galleryItems.push({
-                src: $(this).attr("data-full"),
+                thumb: $(this).attr("src"),
+                full: $(this).attr("data-full"),
                 type: $(this).is("img") ? "image" : "video"
             });
         });
@@ -58,7 +51,6 @@ $(document).ready(function () {
         openLightbox(currentIndex);
     });
 
-    // Lightbox controls
     $("#lightbox-next").click(() => {
         currentIndex = (currentIndex + 1) % galleryItems.length;
         openLightbox(currentIndex);
@@ -70,9 +62,8 @@ $(document).ready(function () {
     });
 
     $("#lightbox-close, #lightbox-overlay").click(e => {
-        if (e.target.id === "lightbox-overlay" || e.target.id === "lightbox-close") {
+        if (e.target.id === "lightbox-overlay" || e.target.id === "lightbox-close")
             $("#lightbox-overlay").fadeOut(200);
-        }
     });
 
     // Scroll button
@@ -80,44 +71,50 @@ $(document).ready(function () {
     const btn = $("#scroll-bottom-btn");
 
     box.on("scroll", () => {
-        if (!box[0]) return;
-
-        const atBottom =
-            box[0].scrollHeight - box.scrollTop() - box.outerHeight() < 50;
-
+        const atBottom = box[0].scrollHeight - box.scrollTop() - box.outerHeight() < 50;
         if (atBottom) btn.removeClass("show");
         else btn.addClass("show");
     });
 
-    btn.click(() => {
-        scrollToBottom();
-        btn.removeClass("show");
-    });
+    btn.click(() => { scrollToBottom(); btn.removeClass("show"); });
 
 });
 
+
+// ========= OPEN LIGHTBOX (thumbnail → full → fade swap) =========
 function openLightbox(index) {
     const item = galleryItems[index];
 
     $("#lightbox-image").hide();
     $("#lightbox-video").hide();
+    $("#lightbox-overlay").fadeIn(200);
 
     if (item.type === "image") {
-        $("#lightbox-image").attr("src", item.src).show();
-        $("#lightbox-download").attr("href", item.src);
-    } else {
-        $("#lightbox-video").attr("src", item.src).show();
-        $("#lightbox-download").attr("href", item.src);
+
+        $("#lightbox-image").attr("src", item.thumb).fadeIn(120);
+
+        const fullImg = new Image();
+        fullImg.onload = () => {
+            $("#lightbox-image").fadeOut(80, () => {
+                $("#lightbox-image").attr("src", item.full).fadeIn(180);
+            });
+        };
+        fullImg.src = item.full;
+
+        $("#lightbox-download").attr("href", item.full);
     }
 
-    $("#lightbox-overlay").fadeIn(200);
+    else { // VIDEO
+        $("#lightbox-video").attr("src", item.full).fadeIn(150);
+        $("#lightbox-download").attr("href", item.full);
+    }
 }
 
 
 // Scroll
 function scrollToBottom() {
     const box = $("#chat-messages");
-    if (!box.length || !box[0]) return;
+    if (!box.length) return;
     box.stop().animate({ scrollTop: box[0].scrollHeight }, 300);
 }
 
@@ -143,12 +140,10 @@ function addUploadingPlaceholder() {
 // Load server messages
 function loadMessages(scrollBottom = false) {
     $.post("load_messages_client.php", { username }, function (html) {
-
         const incoming = $(html);
         if (!incoming.length) return;
 
         const newID = parseInt(incoming.last().attr("data-msg-id")) || 0;
-
         if (newID > lastMessageID) {
             lastMessageID = newID;
             $("#chat-messages").append(incoming);
@@ -171,7 +166,7 @@ function sendMessage() {
 }
 
 
-// Preview
+// Preview upload thumbnails
 function previewMultiple(files) {
     $("#preview-files").html("");
 
@@ -179,8 +174,8 @@ function previewMultiple(files) {
         const removeBtn = `<button class="preview-remove" data-i="${index}">&times;</button>`;
 
         if (file.type.startsWith("image")) {
-            const reader = new FileReader();
-            reader.onload = e => {
+            const r = new FileReader();
+            r.onload = e => {
                 $("#preview-files").append(`
                     <div class="preview-item">
                         <img src="${e.target.result}" class="preview-thumb">
@@ -188,12 +183,10 @@ function previewMultiple(files) {
                     </div>
                 `);
             };
-            reader.readAsDataURL(file);
+            r.readAsDataURL(file);
         } else {
             $("#preview-files").append(`
-                <div class="preview-item file-box">📎 ${file.name}
-                    ${removeBtn}
-                </div>
+                <div class="preview-item file-box">📎 ${file.name} ${removeBtn}</div>
             `);
         }
     });
@@ -210,7 +203,7 @@ $(document).on("click", ".preview-remove", function () {
 });
 
 
-// Upload
+// Upload media
 function uploadMedia(files, msg = "") {
     const placeholder = addUploadingPlaceholder();
     const fd = new FormData();
