@@ -16,7 +16,7 @@
    CHAT MODAL CARD
    =========================================== */
 .chat-modal {
-  width: 420px;
+  width: 700px;
   height: 88vh;
   background: #ffffff;
   border-radius: 22px;
@@ -238,7 +238,7 @@
 }
 
 .chat-send-btn {
-  background: #0084ff;
+  background: black;
   width: 48px; height: 48px;
   border-radius: 50%;
   border: none;
@@ -262,7 +262,7 @@
   bottom: 90px;
   right: 25px;
   width: 45px; height: 45px;
-  background: #0084ff;
+  background: white;
   border-radius: 50%;
   border: none;
   cursor: pointer;
