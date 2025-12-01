@@ -7,6 +7,10 @@
 <title>SkyTruFiber Support</title>
 
 <link rel="stylesheet" href="chat_support.css">
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="chat_support.js"></script>
 </head>
@@ -29,28 +33,39 @@
         <!-- CHAT MESSAGES -->
         <div id="chat-messages" class="chat-messages"></div>
 
-        <!-- PREVIEW INLINE MEDIA -->
+        <!-- PREVIEW INLINE -->
         <div id="preview-inline" class="preview-inline">
+
+            <!-- close button for entire preview bar -->
+            <div id="preview-close" title="Remove all previews">&times;</div>
+
+            <!-- container for preview thumbnails -->
             <div id="preview-files" class="preview-files"></div>
+
         </div>
 
         <!-- INPUT BAR -->
         <div class="chat-input-area">
+
             <input type="file" id="chat-upload-media" multiple hidden>
 
-            <button id="upload-btn" class="upload-btn">📎</button>
+            <button id="upload-btn" class="upload-btn">
+                <i class="fa-solid fa-paperclip"></i>
+            </button>
 
             <div class="chat-input-box">
                 <input id="message-input" type="text" placeholder="Type a message...">
             </div>
 
             <button id="send-btn" class="chat-send-btn">
-                <i class="fa fa-paper-plane"></i>
+                <i class="fa-solid fa-paper-plane"></i>
             </button>
+
         </div>
 
+        <!-- SCROLL DOWN BUTTON -->
         <button id="scroll-bottom-btn" class="scroll-bottom-btn">
-            <i class="fa fa-arrow-down"></i>
+            <i class="fa-solid fa-arrow-down"></i>
         </button>
 
     </div>
@@ -58,17 +73,20 @@
 
 <!-- LIGHTBOX -->
 <div id="lightbox-overlay">
+
     <span id="lightbox-close">&times;</span>
 
     <img id="lightbox-image" style="display:none;">
-    <video id="lightbox-video" controls style="display:none; max-width:90%; max-height:90%; border-radius:14px;"></video>
+    <video id="lightbox-video" controls style="display:none; border-radius:14px;"></video>
 
     <button id="lightbox-prev" class="lightbox-nav">&#10094;</button>
     <button id="lightbox-next" class="lightbox-nav">&#10095;</button>
 
-    <a id="lightbox-download" href="#" download class="lightbox-download">⬇ Download</a>
-</div>
+    <a id="lightbox-download" href="#" download class="lightbox-download">
+        <i class="fa-solid fa-download"></i> Download
+    </a>
 
+</div>
 
 </body>
 </html>
