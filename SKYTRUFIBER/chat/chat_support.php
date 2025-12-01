@@ -18,7 +18,7 @@
         <!-- HEADER -->
         <div class="chat-header">
             <div class="chat-header-left">
-                <img src="../SKYTRUFIBER.png" class="chat-header-logo">
+                <img src="../../SKYTRUFIBER.png" class="chat-header-logo">
                 <div>
                     <h2>SkyTruFiber Support</h2>
                     <span class="status active">Support Team Active</span>
