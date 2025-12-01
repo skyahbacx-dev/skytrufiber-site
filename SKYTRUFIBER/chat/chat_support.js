@@ -20,12 +20,12 @@ $(document).ready(function () {
 
     loadMessages(true);
 
-    // Auto Refresh CSR responses only
+    // Auto refresh new CSR messages only
     loadInterval = setInterval(() => {
         if (!$("#preview-inline").is(":visible")) loadMessages(false);
     }, 1200);
 
-    // Send handlers
+    // Send events
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
         if (e.which === 13) {
@@ -34,7 +34,7 @@ $(document).ready(function () {
         }
     });
 
-    // Upload
+    // Upload button
     $("#upload-btn").click(() => $("#chat-upload-media").click());
     $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
@@ -67,18 +67,18 @@ $(document).ready(function () {
             $("#lightbox-overlay").fadeOut(200);
     });
 
-    // Swipe navigation
+    // Touch swipe
     let startX = 0;
     document.getElementById("lightbox-overlay").addEventListener("touchstart", e => {
         startX = e.changedTouches[0].clientX;
     });
     document.getElementById("lightbox-overlay").addEventListener("touchend", e => {
-        let endX = e.changedTouches[0].clientX;
+        const endX = e.changedTouches[0].clientX;
         if (endX < startX - 50) nextLightbox();
         if (endX > startX + 50) prevLightbox();
     });
 
-    // Scroll button
+    // Scroll bottom button
     const box = $("#chat-messages");
     const btn = $("#scroll-bottom-btn");
 
@@ -93,10 +93,15 @@ $(document).ready(function () {
         btn.removeClass("show");
     });
 
+    // Logout
+    $("#logout-btn").click(() => {
+        window.location.href = "logout.php";
+    });
+
 });
 
 
-// ===== INSTANT DOM APPEND (TEXT) =====
+// ===== Instant DOM for text messages =====
 function appendClientMessageInstant(msg) {
     $("#chat-messages").append(`
         <div class="message sent">
@@ -112,23 +117,23 @@ function appendClientMessageInstant(msg) {
 }
 
 
-// ===== LIGHTBOX =====
+// ===== Lightbox handlers =====
 function openLightbox(index) {
     const item = galleryItems[index];
+
     $("#lightbox-image, #lightbox-video").hide();
     $("#lightbox-overlay").fadeIn(200);
 
     if (item.type === "image") {
         $("#lightbox-image").attr("src", item.thumb).fadeIn(120);
-
         const full = new Image();
-        full.onload = () => {
+        full.onload = () =>
             $("#lightbox-image").fadeOut(80, () =>
                 $("#lightbox-image").attr("src", item.full).fadeIn(160));
-        };
-        full.src = item.full;
 
+        full.src = item.full;
         $("#lightbox-download").attr("href", item.full);
+
     } else {
         $("#lightbox-video").attr("src", item.full).fadeIn(180);
         $("#lightbox-download").attr("href", item.full);
@@ -139,7 +144,7 @@ function nextLightbox() { currentIndex = (currentIndex + 1) % galleryItems.lengt
 function prevLightbox() { currentIndex = (currentIndex - 1 + galleryItems.length) % galleryItems.length; openLightbox(currentIndex); }
 
 
-// ===== SCROLL =====
+// ===== Scroll =====
 function scrollToBottom() {
     const box = $("#chat-messages");
     if (!box.length) return;
@@ -147,7 +152,7 @@ function scrollToBottom() {
 }
 
 
-// ===== Placeholder while uploading =====
+// ===== Upload placeholder =====
 function addUploadingPlaceholder() {
     const id = "upload-" + Date.now();
     $("#chat-messages").append(`
@@ -167,7 +172,7 @@ function addUploadingPlaceholder() {
 }
 
 
-// ===== LOAD NEW (CSR) MESSAGES =====
+// ===== Load CSR server messages =====
 function loadMessages(scrollBottom = false) {
     $.post("load_messages_client.php", { username }, function (html) {
         const incoming = $(html);
@@ -183,7 +188,7 @@ function loadMessages(scrollBottom = false) {
 }
 
 
-// ===== SEND MESSAGE (INSTANT DOM) =====
+// ===== Send text message =====
 function sendMessage() {
     const msg = $("#message-input").val().trim();
     if (selectedFiles.length > 0) return uploadMedia(selectedFiles, msg);
@@ -191,31 +196,29 @@ function sendMessage() {
 
     appendClientMessageInstant(msg);
 
-    $.post("send_message_client.php", { message: msg, username }, function () {
+    $.post("send_message_client.php", { message: msg, username }, () => {
         $("#message-input").val("");
     }, "json");
 }
 
 
-// ===== PREVIEW BAR =====
+// ===== Preview upload =====
 function previewMultiple(files) {
     $("#preview-files").html("");
     $("#preview-inline").slideDown(200);
 
     files.forEach((file, index) => {
         const removeBtn = `<button class="preview-remove" data-i="${index}">&times;</button>`;
-        const item = file.type.startsWith("image")
+        const preview = file.type.startsWith("image")
             ? `<img src="${URL.createObjectURL(file)}" class="preview-thumb">`
             : `<div class="file-box">📎 ${file.name}</div>`;
 
-        $("#preview-files").append(`
-            <div class="preview-item">${item}${removeBtn}</div>
-        `);
+        $("#preview-files").append(`<div class="preview-item">${preview}${removeBtn}</div>`);
     });
 }
 
 
-// Remove preview item
+// Remove preview
 $(document).on("click", ".preview-remove", function () {
     selectedFiles.splice($(this).data("i"), 1);
     if (selectedFiles.length) previewMultiple(selectedFiles);
@@ -223,7 +226,7 @@ $(document).on("click", ".preview-remove", function () {
 });
 
 
-// ===== UPLOAD MEDIA WITH PROGRESS + INSTANT DOM =====
+// ===== Upload media + progress bar =====
 function uploadMedia(files, msg = "") {
     const placeholder = addUploadingPlaceholder();
     const bar = $("#" + placeholder).find(".upload-progress-fill");
@@ -245,7 +248,7 @@ function uploadMedia(files, msg = "") {
         processData: false,
         contentType: false,
         xhr: function () {
-            let xhr = new XMLHttpRequest();
+            const xhr = new XMLHttpRequest();
             xhr.upload.addEventListener("progress", e => {
                 if (e.lengthComputable) bar.css("width", (e.loaded / e.total) * 100 + "%");
             });
@@ -261,8 +264,3 @@ function uploadMedia(files, msg = "") {
         }
     });
 }
-
-$("#logout-btn").click(() => {
-   window.location.href = "logout.php";
-});
-
