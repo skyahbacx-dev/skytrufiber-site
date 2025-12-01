@@ -1,11 +1,14 @@
 // ========================================
 // SkyTruFiber Client Chat System
-// chat_support.js — Full CSR Mirror
+// chat_support.js — Full CSR Mirror + Gallery
 // ========================================
 
 let selectedFiles = [];
 let lastMessageID = 0;
 let loadInterval = null;
+let galleryItems = [];
+let currentIndex = 0;
+
 const username = new URLSearchParams(window.location.search).get("username");
 
 $(document).ready(function () {
@@ -17,12 +20,12 @@ $(document).ready(function () {
 
     loadMessages(true);
 
-    // Auto refresh every 1.2s
+    // Auto refresh
     loadInterval = setInterval(() => {
         if (!$("#preview-inline").is(":visible")) loadMessages(false);
     }, 1200);
 
-    // Message send buttons
+    // Send events
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
         if (e.which === 13) {
@@ -31,26 +34,48 @@ $(document).ready(function () {
         }
     });
 
-    // Upload media
+    // Upload
     $("#upload-btn").click(() => $("#chat-upload-media").click());
     $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
-    // Lightbox viewer
-    $(document).on("click", ".media-thumb", function () {
-    const fullSrc = $(this).attr("data-full");
-    $("#lightbox-image").attr("src", fullSrc);
-    $("#lightbox-overlay").fadeIn(200);
+    // Lightbox open click
+    $(document).on("click", ".media-thumb, .media-video", function () {
+        const group = $(this).closest(".message");
+        const media = group.find(".media-thumb, .media-video");
+        galleryItems = [];
+
+        media.each(function () {
+            galleryItems.push({
+                src: $(this).attr("data-full"),
+                type: $(this).is("img") ? "image" : "video"
+            });
+        });
+
+        currentIndex = media.index(this);
+        openLightbox(currentIndex);
     });
 
-
-    $("#lightbox-close, #lightbox-overlay").click(() => {
-        $("#lightbox-overlay").fadeOut(200);
+    // Lightbox controls
+    $("#lightbox-next").click(() => {
+        currentIndex = (currentIndex + 1) % galleryItems.length;
+        openLightbox(currentIndex);
     });
 
-    // Scroll bottom button
+    $("#lightbox-prev").click(() => {
+        currentIndex = (currentIndex - 1 + galleryItems.length) % galleryItems.length;
+        openLightbox(currentIndex);
+    });
+
+    $("#lightbox-close, #lightbox-overlay").click(e => {
+        if (e.target.id === "lightbox-overlay" || e.target.id === "lightbox-close") {
+            $("#lightbox-overlay").fadeOut(200);
+        }
+    });
+
+    // Scroll button
     const box = $("#chat-messages");
     const btn = $("#scroll-bottom-btn");
 
@@ -64,24 +89,39 @@ $(document).ready(function () {
         else btn.addClass("show");
     });
 
-    btn.click(function () {
+    btn.click(() => {
         scrollToBottom();
         btn.removeClass("show");
     });
 
 });
 
+// Lightbox loader
+function openLightbox(index) {
+    const item = galleryItems[index];
 
-// Safe scroll
+    $("#lightbox-image").hide();
+    $("#lightbox-video").hide();
+
+    if (item.type === "image") {
+        $("#lightbox-image").attr("src", item.src).show();
+    } else {
+        $("#lightbox-video").attr("src", item.src).show();
+    }
+
+    $("#lightbox-overlay").fadeIn(200);
+}
+
+
+// Scroll
 function scrollToBottom() {
     const box = $("#chat-messages");
     if (!box.length || !box[0]) return;
-
     box.stop().animate({ scrollTop: box[0].scrollHeight }, 300);
 }
 
 
-// Uploading placeholder bubble
+// Placeholder bubble
 function addUploadingPlaceholder() {
     const id = "upload-" + Date.now();
     $("#chat-messages").append(`
@@ -99,12 +139,9 @@ function addUploadingPlaceholder() {
 }
 
 
-// Load messages
+// Load server messages
 function loadMessages(scrollBottom = false) {
-
     $.post("load_messages_client.php", { username }, function (html) {
-
-        console.log("Load response:", html); // Debug
 
         const incoming = $(html);
         if (!incoming.length) return;
@@ -120,10 +157,9 @@ function loadMessages(scrollBottom = false) {
 }
 
 
-// Send Message
+// Send message
 function sendMessage() {
     const msg = $("#message-input").val().trim();
-
     if (selectedFiles.length > 0) return uploadMedia(selectedFiles, msg);
     if (!msg) return;
 
@@ -134,7 +170,7 @@ function sendMessage() {
 }
 
 
-// Preview upload bar
+// Preview
 function previewMultiple(files) {
     $("#preview-files").html("");
 
@@ -152,7 +188,6 @@ function previewMultiple(files) {
                 `);
             };
             reader.readAsDataURL(file);
-
         } else {
             $("#preview-files").append(`
                 <div class="preview-item file-box">📎 ${file.name}
@@ -166,18 +201,16 @@ function previewMultiple(files) {
 }
 
 
-// Remove previews
+// Remove preview item
 $(document).on("click", ".preview-remove", function () {
     selectedFiles.splice($(this).data("i"), 1);
-
     if (selectedFiles.length) previewMultiple(selectedFiles);
     else $("#preview-inline").slideUp(200);
 });
 
 
-// Upload media
+// Upload
 function uploadMedia(files, msg = "") {
-
     const placeholder = addUploadingPlaceholder();
     const fd = new FormData();
 
