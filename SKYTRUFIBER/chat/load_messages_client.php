@@ -19,6 +19,7 @@ if (!$clientRow) exit("User not found");
 
 $client_id = $clientRow["id"];
 
+// Load messages
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at
     FROM chat
@@ -30,36 +31,36 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (!$messages) exit;
 
-
+// Avatar paths
+$csrAvatar  = "/upload/default-avatar.png";   // CSR avatar
+$userAvatar = "/upload/default-avatar.png";   // client avatar
 
 foreach ($messages as $msg) {
 
-    $msgID = (int)$msg["id"];
-    $sender = ($msg["sender_type"] === "csr") ? "received" : "sent";
-    $avatar = ($sender === "received") ? $csrAvatar : $userAvatar;
+    $msgID     = (int)$msg["id"];
+    $sender    = ($msg["sender_type"] === "csr") ? "received" : "sent"; // CSR left on client side
+    $avatar    = ($sender === "received") ? $csrAvatar : $userAvatar;
     $timestamp = date("g:i A", strtotime($msg["created_at"]));
 
     echo "<div class='message $sender' data-msg-id='$msgID'>";
 
-echo "<div class='message-avatar'> <img src='/upload/default-avatar.png' alt='avatar'> </div>";
+    echo "<div class='message-avatar'>
+            <img src='$avatar' alt='avatar'>
+          </div>";
 
     echo "<div class='message-content'>
             <div class='message-bubble'>";
 
-    // MEDIA LOADING
+    // Load media files
     $mediaStmt = $conn->prepare("SELECT id, media_type FROM chat_media WHERE chat_id = ?");
     $mediaStmt->execute([$msgID]);
     $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
     if ($mediaList) {
-
-        if (count($mediaList) > 1) {
-            echo "<div class='carousel-container'>";
-        }
+        if (count($mediaList) > 1) echo "<div class='carousel-container'>";
 
         foreach ($mediaList as $m) {
             $filePath = "get_media_client.php?id=" . (int)$m["id"];
-
             if ($m["media_type"] === "image") {
                 echo "<img src='$filePath' class='media-thumb'>";
             } elseif ($m["media_type"] === "video") {
@@ -71,9 +72,7 @@ echo "<div class='message-avatar'> <img src='/upload/default-avatar.png' alt='av
             }
         }
 
-        if (count($mediaList) > 1) {
-            echo "</div>";
-        }
+        if (count($mediaList) > 1) echo "</div>";
     }
 
     if (!empty($msg["message"])) {
@@ -82,6 +81,6 @@ echo "<div class='message-avatar'> <img src='/upload/default-avatar.png' alt='av
 
     echo "</div>"; // bubble
     echo "<div class='message-time'>$timestamp</div>";
-    echo "</div></div>"; // content + message wrapper
+    echo "</div></div>"; // wrapper
 }
 ?>
