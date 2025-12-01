@@ -60,7 +60,7 @@ foreach ($messages as $msg) {
         if (count($mediaList) > 1) echo "<div class='carousel-container'>";
 
         foreach ($mediaList as $m) {
-            $filePath = "chat/get_media_client.php?id=" . (int)$m["id"];
+            $filePath = "get_media_client.php?id=" . (int)$m["id"];
             if ($m["media_type"] === "image") {
                 echo "<img src='$filePath' class='media-thumb'>";
             } elseif ($m["media_type"] === "video") {
