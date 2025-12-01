@@ -5,7 +5,7 @@ require_once "../../db_connect.php";
 $username = $_POST["username"] ?? null;
 if (!$username) exit("No username");
 
-// Find client by email or name
+// Find client by email or full name
 $stmt = $conn->prepare("
     SELECT id, full_name
     FROM users
@@ -19,7 +19,7 @@ if (!$clientRow) exit("User not found");
 
 $client_id = $clientRow["id"];
 
-// Load messages
+// Fetch chat messages
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at
     FROM chat
@@ -31,7 +31,7 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (!$messages) exit;
 
-// Avatar images
+// Avatar paths
 $csrAvatar  = "/upload/default-avatar.png";
 $userAvatar = "/upload/default-avatar.png";
 
@@ -51,26 +51,28 @@ foreach ($messages as $msg) {
     echo "<div class='message-content'>
             <div class='message-bubble'>";
 
-    // MEDIA BLOCK
+    // Load message media
     $mediaStmt = $conn->prepare("SELECT id, media_type FROM chat_media WHERE chat_id = ?");
     $mediaStmt->execute([$msgID]);
     $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
     if ($mediaList) {
 
-        if (count($mediaList) > 1) echo "<div class='carousel-container'>";
+        if (count($mediaList) > 1) {
+            echo "<div class='carousel-container'>";
+        }
 
         foreach ($mediaList as $m) {
-            $mediaID = (int)$m["id"];
-            $filePath = "get_media_client.php?id=$mediaID"; // full
-            $thumbPath = "get_media_client.php?id=$mediaID&thumb=1"; // lightweight preview
+            $mediaID   = (int)$m["id"];
+            $filePath  = "get_media_client.php?id=$mediaID";               // full asset
+            $thumbPath = "get_media_client.php?id=$mediaID&thumb=1";       // optimized preview
 
             if ($m["media_type"] === "image") {
                 echo "<img src='$thumbPath' data-full='$filePath' class='media-thumb'>";
             }
             elseif ($m["media_type"] === "video") {
                 echo "<video muted preload='metadata' data-full='$filePath' class='media-video'>
-                        <source src='$filePath' type='video/mp4'>
+                        <source src='$thumbPath' type='video/mp4'>
                       </video>";
             }
             else {
@@ -78,12 +80,16 @@ foreach ($messages as $msg) {
             }
         }
 
-        if (count($mediaList) > 1) echo "</div>";
+        if (count($mediaList) > 1) {
+            echo "</div>";
+        }
     }
 
-    if (!empty($msg["message"])) echo nl2br(htmlspecialchars($msg["message"]));
+    if (!empty($msg["message"])) {
+        echo nl2br(htmlspecialchars($msg["message"]));
+    }
 
-    echo "</div>";
+    echo "</div>"; // bubble
     echo "<div class='message-time'>$timestamp</div>";
     echo "</div></div>";
 }
