@@ -379,3 +379,25 @@
   from { opacity:0; transform:translateY(10px); }
   to { opacity:1; transform:translateY(0); }
 }
+.logout-btn {
+  margin-left: auto;
+  background: #ff4040;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.logout-btn:hover {
+  background: #e03030;
+}
+
+.logout-btn i {
+  font-size: 16px;
+}
