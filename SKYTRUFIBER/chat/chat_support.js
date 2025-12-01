@@ -96,7 +96,6 @@ $(document).ready(function () {
 
 });
 
-// Lightbox loader
 function openLightbox(index) {
     const item = galleryItems[index];
 
@@ -105,8 +104,10 @@ function openLightbox(index) {
 
     if (item.type === "image") {
         $("#lightbox-image").attr("src", item.src).show();
+        $("#lightbox-download").attr("href", item.src);
     } else {
         $("#lightbox-video").attr("src", item.src).show();
+        $("#lightbox-download").attr("href", item.src);
     }
 
     $("#lightbox-overlay").fadeIn(200);
