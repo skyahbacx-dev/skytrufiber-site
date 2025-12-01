@@ -66,7 +66,7 @@ foreach ($messages as $msg) {
             $filePath = "get_media_client.php?id=" . (int)$m["id"];
 
             if ($m["media_type"] === "image") {
-                echo "<img src='$filePath' data-full='$filePath' class='media-thumb'>";
+            echo "<img src='$filePath&thumb=1' data-full='$filePath' class='media-thumb'>";
             } elseif ($m["media_type"] === "video") {
                 echo "<video controls autoplay loop muted data-full='$filePath' class='media-video'>
                         <source src='$filePath' type='video/mp4'>
