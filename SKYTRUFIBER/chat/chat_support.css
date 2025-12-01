@@ -302,6 +302,33 @@
   color:white; font-size:40px;
   cursor:pointer;
 }
+.lightbox-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.25);
+  color: white;
+  border: none;
+  font-size: 40px;
+  padding: 10px 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.lightbox-arrow:hover {
+  background: rgba(255,255,255,0.45);
+}
+
+#lightbox-prev { left: 30px; }
+#lightbox-next { right: 30px; }
+
+#lightbox-image, #lightbox-video {
+  display: block;
+  margin: auto;
+  max-width: 95vw;
+  max-height: 95vh;
+}
 
 /* ===========================================
    ANIMATIONS
