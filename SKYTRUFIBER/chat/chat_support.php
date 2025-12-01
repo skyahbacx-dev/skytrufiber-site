@@ -60,10 +60,13 @@
 <div id="lightbox-overlay">
     <span id="lightbox-close">&times;</span>
 
-    <button id="lightbox-prev" class="lightbox-arrow">&#10094;</button>
-    <img id="lightbox-image">
-    <video id="lightbox-video" controls style="display:none; max-width:95vw; max-height:95vh;"></video>
-    <button id="lightbox-next" class="lightbox-arrow">&#10095;</button>
+    <img id="lightbox-image" style="display:none;">
+    <video id="lightbox-video" controls style="display:none; max-width:90%; max-height:90%; border-radius:14px;"></video>
+
+    <button id="lightbox-prev" class="lightbox-nav">&#10094;</button>
+    <button id="lightbox-next" class="lightbox-nav">&#10095;</button>
+
+    <a id="lightbox-download" href="#" download class="lightbox-download">⬇ Download</a>
 </div>
 
 
