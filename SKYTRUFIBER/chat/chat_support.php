@@ -18,17 +18,21 @@
 
 <div id="chat-overlay">
     <div class="chat-modal">
-
-        <!-- HEADER -->
-        <div class="chat-header">
-            <div class="chat-header-left">
-                <img src="../../SKYTRUFIBER.png" class="chat-header-logo">
-                <div>
-                    <h2>SkyTruFiber Support</h2>
-                    <span class="status active">Support Team Active</span>
-                </div>
-            </div>
+<div class="chat-header">
+    <div class="chat-header-left">
+        <img src="../../SKYTRUFIBER.png" class="chat-header-logo">
+        <div>
+            <h2>SkyTruFiber Support</h2>
+            <span class="status active">Support Team Active</span>
         </div>
+    </div>
+
+    <!-- LOGOUT BUTTON -->
+    <button id="logout-btn" class="logout-btn">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+    </button>
+</div>
+
 
         <!-- CHAT MESSAGES -->
         <div id="chat-messages" class="chat-messages"></div>
