@@ -261,3 +261,8 @@ function uploadMedia(files, msg = "") {
         }
     });
 }
+<script>
+$("#logout-btn").click(() => {
+    window.location.href = "skytrufiber.php";
+});
+</script>
