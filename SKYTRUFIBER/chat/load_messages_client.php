@@ -5,7 +5,9 @@ require_once "../../db_connect.php";
 $username = $_POST["username"] ?? null;
 if (!$username) exit;
 
-$stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+$stmt = $conn->prepare("
+    SELECT id FROM users WHERE email = ?
+");
 $stmt->execute([$username]);
 $clientRow = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -26,16 +28,14 @@ try {
     if (!$messages) exit;
 
     foreach ($messages as $msg) {
-
         $msgID     = (int)$msg["id"];
         $sender    = ($msg["sender_type"] === "csr") ? "received" : "sent";
         $timestamp = date("g:i A", strtotime($msg["created_at"]));
 
         echo "<div class='message $sender' data-msg-id='$msgID'>";
-
         echo "<div class='message-content'><div class='message-bubble'>";
 
-        // Load media
+        // MEDIA
         $mediaStmt = $conn->prepare("
             SELECT id, media_type
             FROM chat_media
@@ -51,7 +51,7 @@ try {
                 if ($m["media_type"] === "image") {
                     echo "<img src='$filePath' class='carousel-img media-thumb'>";
                 } elseif ($m["media_type"] === "video") {
-                    echo "<video controls autoplay loop muted class='carousel-video'>
+                    echo "<video autoplay loop muted controls class='carousel-video'>
                               <source src='$filePath' type='video/mp4'>
                           </video>";
                 } else {
@@ -67,7 +67,7 @@ try {
             if ($media["media_type"] === "image") {
                 echo "<img src='$filePath' class='media-thumb'>";
             } elseif ($media["media_type"] === "video") {
-                echo "<video controls autoplay loop muted class='media-video'>
+                echo "<video autoplay loop muted controls class='media-video'>
                         <source src='$filePath' type='video/mp4'>
                       </video>";
             } else {
@@ -75,9 +75,7 @@ try {
             }
         }
 
-        if (!empty($msg["message"])) {
-            echo nl2br(htmlspecialchars($msg["message"]));
-        }
+        if (!empty($msg["message"])) echo nl2br(htmlspecialchars($msg["message"]));
 
         echo "</div>";
         echo "<div class='message-time'>$timestamp</div>";
@@ -87,3 +85,4 @@ try {
 } catch (Exception $e) {
     echo "<p style='color:red;'>Error: " . htmlspecialchars($e->getMessage()) . "</p>";
 }
+?>
