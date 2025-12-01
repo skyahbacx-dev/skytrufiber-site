@@ -305,56 +305,98 @@
 }
 .chat-send-btn i { color: white; font-size: 20px; }
 
-/* ===========================================
-   LIGHTBOX
-   =========================================== */
 #lightbox-overlay {
   display:none;
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.75);
+  background:rgba(0,0,0,.85);
   justify-content:center;
   align-items:center;
-  z-index:9999;
+  z-index:999999;
 }
-#lightbox-image {
-  max-width:90%; max-height:90%;
-  border-radius:12px;
+
+#lightbox-image, #lightbox-video {
+  max-width: 95vw;
+  max-height: 95vh;
+  display: block;
+  margin: auto;
+  border-radius: 14px;
 }
+
 #lightbox-close {
-  position:absolute; top:30px; right:40px;
-  font-size:34px; cursor:pointer; color:white;
+  position:absolute;
+  top:30px; right:30px;
+  color:white; font-size:40px;
+  cursor:pointer;
+}
+
+#lightbox-prev, #lightbox-next {
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  background:rgba(255,255,255,0.25);
+  border:none;
+  font-size:44px;
+  padding:14px 18px;
+  color:white;
+  border-radius:50%;
+  cursor:pointer;
+  transition:0.25s;
+}
+
+#lightbox-prev:hover, #lightbox-next:hover {
+  background:rgba(255,255,255,0.4);
+}
+
+#lightbox-prev { left:40px; }
+#lightbox-next { right:40px; }
+
+.lightbox-download {
+  position:absolute;
+  bottom:40px; right:40px;
+  padding:12px 18px;
+  background:#0084ff;
+  color:white;
+  border-radius:12px;
+  text-decoration:none;
+  font-size:16px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* ===========================================
+   ANIMATIONS
+   =========================================== */
+@keyframes fadeIn {
+  from { opacity:0; transform:translateY(10px); }
+  to { opacity:1; transform:translateY(0); }
 }
 
 /* ===========================================
    SCROLL TO BOTTOM BUTTON
    =========================================== */
 .scroll-bottom-btn {
-  margin-left:50px;
+  display: none;
   position: absolute;
-  bottom: 90px;
-  right: 40px;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
+  bottom: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px; height: 48px;
   background: #0084ff;
+  border-radius: 50%;
   border: none;
-  justify-content: center;
-  align-items: center;
   cursor: pointer;
   z-index: 50;
-  display: none;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.25);
-  transition: opacity .25s ease;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
 }
+
 .scroll-bottom-btn i {
+  font-size: 22px;
   color: white;
-  font-size: 18px;
 }
-.scroll-bottom-btn.show {
-  display: flex;
-  opacity: 1;
-}
+
+.scroll-bottom-btn.show { display:flex; }
 
 /* ANIMATIONS */
 @keyframes fadeInUp {
