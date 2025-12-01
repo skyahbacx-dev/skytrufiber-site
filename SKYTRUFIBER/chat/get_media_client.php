@@ -8,30 +8,34 @@ $stmt = $conn->prepare("SELECT media_blob, media_path, media_type FROM chat_medi
 $stmt->bindValue(1, $id, PDO::PARAM_INT);
 $stmt->execute();
 
+// Bind BLOB column as stream
 $stmt->bindColumn("media_blob", $blob, PDO::PARAM_LOB);
 $file = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$file) exit("Not found");
 
-// Read blob into string if streaming resource
+// Convert BLOB resource into binary data
 if (is_resource($blob)) {
     $binary = stream_get_contents($blob);
 } else {
     $binary = $blob;
 }
 
-// Detect MIME type from binary header
+// Detect MIME type dynamically
 $finfo = finfo_open(FILEINFO_MIME_TYPE);
 $mimeType = finfo_buffer($finfo, $binary);
 finfo_close($finfo);
 
-// Default fallback
 if (!$mimeType) $mimeType = "application/octet-stream";
 
-// Send correct Content-Type
+// Correct headers
 header("Content-Type: $mimeType");
 header("Content-Length: " . strlen($binary));
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
 
-// Output binary directly
+// Output file
 echo $binary;
 exit;
+?>
