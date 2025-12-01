@@ -32,8 +32,8 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 if (!$messages) exit;
 
 // Avatar paths
-$csrAvatar  = "/upload/default_avatar.png";   // CSR avatar
-$userAvatar = "/upload/default_avatar.png";   // client avatar
+$csrAvatar  = "/upload/default-avatar.png";   // CSR avatar
+$userAvatar = "/upload/default-avatar.png";   // client avatar
 
 foreach ($messages as $msg) {
 
