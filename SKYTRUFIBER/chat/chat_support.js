@@ -74,6 +74,11 @@ $(document).ready(function () {
             $("#lightbox-overlay").fadeOut(200);
         }
     });
+$(document).on("click", "video.media-video", function () {
+    const fullSrc = $(this).attr("data-full");
+    $("#lightbox-image").attr("src", fullSrc);
+    $("#lightbox-overlay").fadeIn(200);
+});
 
     // Scroll button
     const box = $("#chat-messages");
