@@ -67,8 +67,6 @@ foreach ($messages as $msg) {
             } elseif ($m["media_type"] === "video") {
              echo "<video data-full='$filePath' class='media-video'><source src='$filePath'></video>";
 
-                        <source src='$filePath' type='video/mp4'>
-                      </video>";
             } else {
                 echo "<a href='$filePath' download>📎 Download File</a>";
             }
