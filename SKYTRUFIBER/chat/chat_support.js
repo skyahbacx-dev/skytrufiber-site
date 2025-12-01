@@ -1,6 +1,6 @@
 // ========================================
 // SkyTruFiber Client Chat System
-// chat_support.js — Mirror CSR UI
+// chat_support.js — Full CSR Mirror
 // ========================================
 
 let selectedFiles = [];
@@ -11,18 +11,19 @@ const username = new URLSearchParams(window.location.search).get("username");
 $(document).ready(function () {
 
     if (!username) {
-        $("#chat-messages").html("<p style='padding:20px;text-align:center;color:#888;'>Invalid user.</p>");
+        $("#chat-window").html("<p style='padding:20px;text-align:center;color:#888;'>Invalid user.</p>");
         return;
     }
 
     loadMessages(true);
 
+    // Real-time auto refresh
     loadInterval = setInterval(() => {
         if (!$("#preview-inline").is(":visible")) loadMessages(false);
     }, 1200);
 
+    // Send text
     $("#send-btn").click(sendMessage);
-
     $("#message-input").keypress(e => {
         if (e.which === 13) {
             e.preventDefault();
@@ -30,6 +31,7 @@ $(document).ready(function () {
         }
     });
 
+    // Upload button
     $("#upload-btn").click(() => $("#chat-upload-media").click());
 
     $("#chat-upload-media").change(function () {
@@ -37,6 +39,7 @@ $(document).ready(function () {
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
+    // Lightbox image preview
     $(document).on("click", ".media-thumb", function () {
         $("#lightbox-image").attr("src", $(this).attr("src"));
         $("#lightbox-overlay").fadeIn(200);
@@ -46,32 +49,34 @@ $(document).ready(function () {
         $("#lightbox-overlay").fadeOut(200);
     });
 
-    const chatBox = $("#chat-messages");
-    const scrollBtn = $("#scroll-bottom-btn");
+    // Scroll button
+    const box = $("#chat-window");
+    const btn = $("#scroll-bottom-btn");
 
-    chatBox.on("scroll", () => {
-        const atBottom = chatBox[0].scrollHeight - chatBox.scrollTop() - chatBox.outerHeight() < 50;
-        if (atBottom) scrollBtn.removeClass("show");
-        else scrollBtn.addClass("show");
+    box.on("scroll", () => {
+        const atBottom = box[0].scrollHeight - box.scrollTop() - box.outerHeight() < 50;
+        if (atBottom) btn.removeClass("show");
+        else btn.addClass("show");
     });
 
-    scrollBtn.click(function () {
+    btn.click(function () {
         scrollToBottom();
-        scrollBtn.removeClass("show");
+        btn.removeClass("show");
     });
 
 });
 
+// Scroll to bottom
 function scrollToBottom() {
-    const box = $("#chat-messages");
+    const box = $("#chat-window");
     box.stop().animate({ scrollTop: box[0].scrollHeight }, 300);
 }
 
+// Upload placeholder bubble
 function addUploadingPlaceholder() {
     const id = "upload-" + Date.now();
-    $("#chat-messages").append(`
+    $("#chat-window").append(`
         <div class="message sent" id="${id}">
-            <div class="message-avatar"><img src="/upload/default-avatar.png"></div>
             <div class="message-content">
                 <div class="message-bubble uploading-bubble">
                     <span class="dot"></span><span class="dot"></span><span class="dot"></span>
@@ -84,19 +89,23 @@ function addUploadingPlaceholder() {
     return id;
 }
 
+// LOAD MESSAGES from server
 function loadMessages(scrollBottom = false) {
+
     $.post("load_messages_client.php", { username }, function (html) {
+
         const incoming = $(html);
         const newID = parseInt(incoming.last().attr("data-msg-id"));
 
         if (newID > lastMessageID) {
             lastMessageID = newID;
-            $("#chat-messages").append(incoming);
+            $("#chat-window").append(incoming);
             if (scrollBottom) scrollToBottom();
         }
     });
 }
 
+// SEND MESSAGE
 function sendMessage() {
     const msg = $("#message-input").val().trim();
 
@@ -107,22 +116,21 @@ function sendMessage() {
 
     if (!msg) return;
 
-    $.post("send_message_client.php", {
-        message: msg,
-        username
-    }, function (res) {
+    $.post("send_message_client.php", { message: msg, username }, function (res) {
         $("#message-input").val("");
         loadMessages(true);
     }, "json");
 }
 
+// FILE PREVIEW BAR
 function previewMultiple(files) {
     $("#preview-files").html("");
 
-    files.forEach((f, index) => {
+    files.forEach((file, index) => {
+
         const removeBtn = `<button class="preview-remove" data-i="${index}">&times;</button>`;
 
-        if (f.type.startsWith("image")) {
+        if (file.type.startsWith("image")) {
             const reader = new FileReader();
             reader.onload = e => {
                 $("#preview-files").append(`
@@ -132,11 +140,16 @@ function previewMultiple(files) {
                     </div>
                 `);
             };
-            reader.readAsDataURL(f);
+            reader.readAsDataURL(file);
+        } else if (file.type.startsWith("video")) {
+            $("#preview-files").append(`
+                <div class="preview-item file-box">🎬 ${file.name}
+                    ${removeBtn}
+                </div>
+            `);
         } else {
             $("#preview-files").append(`
-                <div class="preview-item file-box">
-                    ${f.name}
+                <div class="preview-item file-box">📎 ${file.name}
                     ${removeBtn}
                 </div>
             `);
@@ -149,13 +162,12 @@ function previewMultiple(files) {
 $(document).on("click", ".preview-remove", function () {
     selectedFiles.splice($(this).data("i"), 1);
     if (selectedFiles.length) previewMultiple(selectedFiles);
-    else {
-        $("#preview-inline").slideUp(200);
-        $("#preview-files").html("");
-    }
+    else $("#preview-inline").slideUp(200);
 });
 
+// UPLOAD MEDIA FILES
 function uploadMedia(files, msg = "") {
+
     const placeholder = addUploadingPlaceholder();
 
     const fd = new FormData();
@@ -170,16 +182,16 @@ function uploadMedia(files, msg = "") {
 
     $.ajax({
         url: "upload_media_client.php",
-        type: "POST",
+        method: "POST",
         data: fd,
         processData: false,
         contentType: false,
-        success: res => {
+        success: () => {
             $("#" + placeholder).remove();
             loadMessages(true);
         },
         error: err => {
-            console.log("Upload error", err.responseText);
+            console.error("Upload error:", err.responseText);
             $("#" + placeholder).remove();
         }
     });
