@@ -10,8 +10,7 @@
       <link rel="stylesheet" href="chat_support.css">
 <link rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-      integrity="sha512-Tbw8xY39jJ24rD2pf4mm4i6o7vU9UUFq6T7Lx5Lqk7i9e3YxgqkPpQz7nJ0U1p6Yat1D1mJv4qrgQhFxzJ8Vw=="
-      crossorigin="anonymous" referrerpolicy="no-referrer" />
+      referrerpolicy="no-referrer" />
 
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
