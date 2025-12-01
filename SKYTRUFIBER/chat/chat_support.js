@@ -263,6 +263,6 @@ function uploadMedia(files, msg = "") {
 }
 <script>
 $("#logout-btn").click(() => {
-    window.location.href = "skytrufiber.php";
+   window.location.href = "logout.php";
 });
 </script>
