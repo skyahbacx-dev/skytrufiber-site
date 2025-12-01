@@ -11,18 +11,18 @@ const username = new URLSearchParams(window.location.search).get("username");
 $(document).ready(function () {
 
     if (!username) {
-        $("#chat-window").html("<p style='padding:20px;text-align:center;color:#888;'>Invalid user.</p>");
+        $("#chat-messages").html("<p style='padding:20px;text-align:center;color:#888;'>Invalid user.</p>");
         return;
     }
 
     loadMessages(true);
 
-    // Real-time auto refresh
+    // Auto refresh every 1.2s
     loadInterval = setInterval(() => {
         if (!$("#preview-inline").is(":visible")) loadMessages(false);
     }, 1200);
 
-    // Send text
+    // Message send buttons
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
         if (e.which === 13) {
@@ -31,15 +31,14 @@ $(document).ready(function () {
         }
     });
 
-    // Upload button
+    // Upload media
     $("#upload-btn").click(() => $("#chat-upload-media").click());
-
     $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
-    // Lightbox image preview
+    // Lightbox viewer
     $(document).on("click", ".media-thumb", function () {
         $("#lightbox-image").attr("src", $(this).attr("src"));
         $("#lightbox-overlay").fadeIn(200);
@@ -49,12 +48,16 @@ $(document).ready(function () {
         $("#lightbox-overlay").fadeOut(200);
     });
 
-    // Scroll button
-    const box = $("#chat-window");
+    // Scroll bottom button
+    const box = $("#chat-messages");
     const btn = $("#scroll-bottom-btn");
 
     box.on("scroll", () => {
-        const atBottom = box[0].scrollHeight - box.scrollTop() - box.outerHeight() < 50;
+        if (!box[0]) return;
+
+        const atBottom =
+            box[0].scrollHeight - box.scrollTop() - box.outerHeight() < 50;
+
         if (atBottom) btn.removeClass("show");
         else btn.addClass("show");
     });
@@ -66,16 +69,20 @@ $(document).ready(function () {
 
 });
 
-// Scroll to bottom
+
+// Safe scroll
 function scrollToBottom() {
-    const box = $("#chat-window");
+    const box = $("#chat-messages");
+    if (!box.length || !box[0]) return;
+
     box.stop().animate({ scrollTop: box[0].scrollHeight }, 300);
 }
 
-// Upload placeholder bubble
+
+// Uploading placeholder bubble
 function addUploadingPlaceholder() {
     const id = "upload-" + Date.now();
-    $("#chat-window").append(`
+    $("#chat-messages").append(`
         <div class="message sent" id="${id}">
             <div class="message-content">
                 <div class="message-bubble uploading-bubble">
@@ -89,45 +96,47 @@ function addUploadingPlaceholder() {
     return id;
 }
 
-// LOAD MESSAGES from server
+
+// Load messages
 function loadMessages(scrollBottom = false) {
 
     $.post("load_messages_client.php", { username }, function (html) {
 
+        console.log("Load response:", html); // Debug
+
         const incoming = $(html);
-        const newID = parseInt(incoming.last().attr("data-msg-id"));
+        if (!incoming.length) return;
+
+        const newID = parseInt(incoming.last().attr("data-msg-id")) || 0;
 
         if (newID > lastMessageID) {
             lastMessageID = newID;
-            $("#chat-window").append(incoming);
+            $("#chat-messages").append(incoming);
             if (scrollBottom) scrollToBottom();
         }
     });
 }
 
-// SEND MESSAGE
+
+// Send Message
 function sendMessage() {
     const msg = $("#message-input").val().trim();
 
-    if (selectedFiles.length > 0) {
-        uploadMedia(selectedFiles, msg);
-        return;
-    }
-
+    if (selectedFiles.length > 0) return uploadMedia(selectedFiles, msg);
     if (!msg) return;
 
-    $.post("send_message_client.php", { message: msg, username }, function (res) {
+    $.post("send_message_client.php", { message: msg, username }, function () {
         $("#message-input").val("");
         loadMessages(true);
     }, "json");
 }
 
-// FILE PREVIEW BAR
+
+// Preview upload bar
 function previewMultiple(files) {
     $("#preview-files").html("");
 
     files.forEach((file, index) => {
-
         const removeBtn = `<button class="preview-remove" data-i="${index}">&times;</button>`;
 
         if (file.type.startsWith("image")) {
@@ -141,12 +150,7 @@ function previewMultiple(files) {
                 `);
             };
             reader.readAsDataURL(file);
-        } else if (file.type.startsWith("video")) {
-            $("#preview-files").append(`
-                <div class="preview-item file-box">🎬 ${file.name}
-                    ${removeBtn}
-                </div>
-            `);
+
         } else {
             $("#preview-files").append(`
                 <div class="preview-item file-box">📎 ${file.name}
@@ -159,18 +163,22 @@ function previewMultiple(files) {
     $("#preview-inline").slideDown(200);
 }
 
+
+// Remove previews
 $(document).on("click", ".preview-remove", function () {
     selectedFiles.splice($(this).data("i"), 1);
+
     if (selectedFiles.length) previewMultiple(selectedFiles);
     else $("#preview-inline").slideUp(200);
 });
 
-// UPLOAD MEDIA FILES
+
+// Upload media
 function uploadMedia(files, msg = "") {
 
     const placeholder = addUploadingPlaceholder();
-
     const fd = new FormData();
+
     files.forEach(f => fd.append("media[]", f));
     fd.append("message", msg);
     fd.append("username", username);
