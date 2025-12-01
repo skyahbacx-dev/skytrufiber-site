@@ -290,8 +290,10 @@
 }
 
 #lightbox-image {
-  max-width:90%; max-height:90%;
-  border-radius:14px;
+  max-width: 95vw;
+  max-height: 95vh;
+  display: block;
+  margin: auto;
 }
 
 #lightbox-close {
