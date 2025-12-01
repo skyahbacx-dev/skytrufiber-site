@@ -58,33 +58,32 @@ foreach ($messages as $msg) {
 
     if ($mediaList) {
 
-        if (count($mediaList) > 1) {
-            echo "<div class='carousel-container'>";
-        }
+        if (count($mediaList) > 1) echo "<div class='carousel-container'>";
 
         foreach ($mediaList as $m) {
             $mediaID   = (int)$m["id"];
-            $filePath  = "get_media_client.php?id=$mediaID";               // full asset
-            $thumbPath = "get_media_client.php?id=$mediaID&thumb=1";       // optimized preview
+            $filePath  = "get_media_client.php?id=$mediaID";               // full file
+            $thumbPath = "get_media_client.php?id=$mediaID&thumb=1";       // thumbnail / preview
 
             if ($m["media_type"] === "image") {
                 echo "<img src='$thumbPath' data-full='$filePath' class='media-thumb'>";
             }
+
             elseif ($m["media_type"] === "video") {
                 echo "<video muted preload='metadata' data-full='$filePath' class='media-video'>
                         <source src='$thumbPath' type='video/mp4'>
                       </video>";
             }
+
             else {
                 echo "<a href='$filePath' download>📎 Download File</a>";
             }
         }
 
-        if (count($mediaList) > 1) {
-            echo "</div>";
-        }
+        if (count($mediaList) > 1) echo "</div>";
     }
 
+    // Message text
     if (!empty($msg["message"])) {
         echo nl2br(htmlspecialchars($msg["message"]));
     }
