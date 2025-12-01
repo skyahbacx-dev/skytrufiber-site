@@ -1,14 +1,30 @@
 <?php
+if (!isset($_SESSION)) session_start();
+header("Content-Type: application/json");
+
 require_once "../../db_connect.php";
 
-$client_id   = $_POST["client_id"] ?? null;
-$message     = $_POST["message"] ?? "";
-$sender_type = $_POST["sender_type"] ?? "CLIENT";
+$username = $_POST["username"] ?? null;
+$message  = $_POST["message"] ?? "";
 
-if (!$client_id || trim($message) === "") exit;
+if (!$username) {
+    echo json_encode(["status" => "error", "msg" => "Missing username"]);
+    exit;
+}
 
-$stmt = $conn->prepare("
-    INSERT INTO chat (client_id, sender_type, message, delivered, seen)
-    VALUES (?, ?, ?, TRUE, FALSE)
+$stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+$stmt->execute([$username]);
+$client = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$client) exit(json_encode(["status" => "error", "msg" => "Invalid user"]));
+
+$client_id = (int)$client["id"];
+
+$insert = $conn->prepare("
+    INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
+    VALUES (?, 'client', ?, TRUE, FALSE, NOW())
 ");
-$stmt->execute([$client_id, $sender_type, $message]);
+$insert->execute([$client_id, $message]);
+
+echo json_encode(["status" => "ok"]);
+exit;
+?>
