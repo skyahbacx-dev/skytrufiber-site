@@ -31,9 +31,9 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (!$messages) exit;
 
-// Avatar paths
-$csrAvatar  = "/upload/default-avatar.png";   // CSR avatar
-$userAvatar = "/upload/default-avatar.png";   // client avatar
+// Avatar images
+$csrAvatar  = "/upload/default-avatar.png";
+$userAvatar = "/upload/default-avatar.png";
 
 foreach ($messages as $msg) {
 
@@ -51,42 +51,40 @@ foreach ($messages as $msg) {
     echo "<div class='message-content'>
             <div class='message-bubble'>";
 
-    // Load media
+    // MEDIA BLOCK
     $mediaStmt = $conn->prepare("SELECT id, media_type FROM chat_media WHERE chat_id = ?");
     $mediaStmt->execute([$msgID]);
     $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
     if ($mediaList) {
 
-        if (count($mediaList) > 1) {
-            echo "<div class='carousel-container'>";
-        }
+        if (count($mediaList) > 1) echo "<div class='carousel-container'>";
 
         foreach ($mediaList as $m) {
-            $filePath = "get_media_client.php?id=" . (int)$m["id"];
+            $mediaID = (int)$m["id"];
+            $filePath = "get_media_client.php?id=$mediaID"; // full
+            $thumbPath = "get_media_client.php?id=$mediaID&thumb=1"; // lightweight preview
 
             if ($m["media_type"] === "image") {
-            echo "<img src='$filePath&thumb=1' data-full='$filePath' class='media-thumb'>";
-            } elseif ($m["media_type"] === "video") {
-                echo "<video controls autoplay loop muted data-full='$filePath' class='media-video'>
+                echo "<img src='$thumbPath' data-full='$filePath' class='media-thumb'>";
+            }
+            elseif ($m["media_type"] === "video") {
+                echo "<video muted preload='metadata' data-full='$filePath' class='media-video'>
                         <source src='$filePath' type='video/mp4'>
                       </video>";
-            } else {
+            }
+            else {
                 echo "<a href='$filePath' download>📎 Download File</a>";
             }
         }
 
-        if (count($mediaList) > 1) {
-            echo "</div>";
-        }
+        if (count($mediaList) > 1) echo "</div>";
     }
 
-    if (!empty($msg["message"])) {
-        echo nl2br(htmlspecialchars($msg["message"]));
-    }
+    if (!empty($msg["message"])) echo nl2br(htmlspecialchars($msg["message"]));
 
-    echo "</div>"; // bubble
+    echo "</div>";
     echo "<div class='message-time'>$timestamp</div>";
-    echo "</div></div>"; // wrapper
+    echo "</div></div>";
 }
 ?>
