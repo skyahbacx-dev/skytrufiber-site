@@ -2,91 +2,99 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$username = $_POST["username"] ?? null;
-if (!$username) exit("No username");
+$client_id = $_POST["client_id"] ?? null;
+if (!$client_id) exit;
 
-// Find client by email or name
-$stmt = $conn->prepare("
-    SELECT id, full_name
-    FROM users
-    WHERE email = ? OR full_name = ?
-    LIMIT 1
-");
-$stmt->execute([$username, $username]);
-$clientRow = $stmt->fetch(PDO::FETCH_ASSOC);
+try {
 
-if (!$clientRow) exit("User not found");
+    // Fetch messages sorted oldest → newest
+    $stmt = $conn->prepare("
+        SELECT id, sender_type, message, created_at
+        FROM chat
+        WHERE client_id = ?
+        ORDER BY created_at ASC
+    ");
+    $stmt->execute([$client_id]);
+    $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$client_id = $clientRow["id"];
+    if (!$messages) {
+        echo "<p style='text-align:center;color:#777;padding:10px;'>No messages yet.</p>";
+        exit;
+    }
 
-$stmt = $conn->prepare("
-    SELECT id, sender_type, message, created_at
-    FROM chat
-    WHERE client_id = ?
-    ORDER BY created_at ASC
-");
-$stmt->execute([$client_id]);
-$messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // Avatar sources
+    $csrAvatar  = "/upload/default-avatar.png";
+    $userAvatar = "/upload/default-avatar.png";
 
-if (!$messages) exit;
+    foreach ($messages as $msg) {
 
-// AVATAR paths
-$csrAvatar  = "/SKYTRUFIBER/chat/img/support_avatar.png";
-$userAvatar = "/SKYTRUFIBER/chat/img/user_default.png";
+        $msgID     = (int)$msg["id"];
+        $sender    = ($msg["sender_type"] === "csr") ? "sent" : "received"; // CSR = right bubble
+        $avatar    = ($msg["sender_type"] === "csr") ? $csrAvatar : $userAvatar;
+        $timestamp = date("g:i A", strtotime($msg["created_at"]));
 
-foreach ($messages as $msg) {
+        echo "<div class='message $sender' data-msg-id='$msgID'>";
 
-    $msgID = (int)$msg["id"];
-    $sender = ($msg["sender_type"] === "csr") ? "received" : "sent";
-    $avatar = ($sender === "received") ? $csrAvatar : $userAvatar;
-    $timestamp = date("g:i A", strtotime($msg["created_at"]));
+        // Avatar
+        echo "<div class='message-avatar'>
+                <img src='$avatar'>
+              </div>";
 
-    echo "<div class='message $sender' data-msg-id='$msgID'>";
+        echo "<div class='message-content'>";
+        echo "<div class='message-bubble'>";
 
-    // Avatar always included
-    echo "<div class='message-avatar'>
-            <img src='$avatar'>
-          </div>";
+        // MEDIA FETCH
+        $mediaStmt = $conn->prepare("SELECT id, media_type FROM chat_media WHERE chat_id = ?");
+        $mediaStmt->execute([$msgID]);
+        $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    echo "<div class='message-content'>
-            <div class='message-bubble'>";
-
-    // MEDIA LOADING
-    $mediaStmt = $conn->prepare("SELECT id, media_type FROM chat_media WHERE chat_id = ?");
-    $mediaStmt->execute([$msgID]);
-    $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
-
-    if ($mediaList) {
-
-        if (count($mediaList) > 1) {
+        // MULTIPLE MEDIA (carousel style)
+        if ($mediaList && count($mediaList) > 1) {
             echo "<div class='carousel-container'>";
+            foreach ($mediaList as $m) {
+                $filePath = "get_media_client.php?id=" . (int)$m["id"];
+
+                if ($m["media_type"] === "image") {
+                    echo "<img src='$filePath' class='carousel-img media-thumb'>";
+                } elseif ($m["media_type"] === "video") {
+                    echo "<video controls autoplay loop muted class='carousel-video'>
+                            <source src='$filePath' type='video/mp4'>
+                          </video>";
+                } else {
+                    echo "<a href='$filePath' download class='download-btn'>📎 File</a>";
+                }
+            }
+            echo "</div>";
         }
 
-        foreach ($mediaList as $m) {
-            $filePath = "get_media_client.php?id=" . (int)$m["id"];
+        // SINGLE MEDIA
+        elseif ($mediaList && count($mediaList) === 1) {
+            $media = $mediaList[0];
+            $filePath = "get_media_client.php?id=" . (int)$media["id"];
 
-            if ($m["media_type"] === "image") {
+            if ($media["media_type"] === "image") {
                 echo "<img src='$filePath' class='media-thumb'>";
-            } elseif ($m["media_type"] === "video") {
+            } elseif ($media["media_type"] === "video") {
                 echo "<video controls autoplay loop muted class='media-video'>
                         <source src='$filePath' type='video/mp4'>
                       </video>";
             } else {
-                echo "<a href='$filePath' download>📎 Download File</a>";
+                echo "<a href='$filePath' download class='download-btn'>📎 Download File</a>";
             }
         }
 
-        if (count($mediaList) > 1) {
-            echo "</div>";
+        // TEXT MESSAGE
+        if (!empty($msg["message"])) {
+            echo nl2br(htmlspecialchars($msg["message"]));
         }
+
+        echo "</div>";
+        echo "<div class='message-time'>$timestamp</div>";
+        echo "</div>";
+        echo "</div>";
     }
 
-    if (!empty($msg["message"])) {
-        echo nl2br(htmlspecialchars($msg["message"]));
-    }
-
-    echo "</div>"; // bubble
-    echo "<div class='message-time'>$timestamp</div>";
-    echo "</div></div>"; // content + message wrapper
+} catch (Exception $e) {
+    echo "<p style='color:red;'>DB Error: " . htmlspecialchars($e->getMessage()) . "</p>";
 }
 ?>
