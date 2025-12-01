@@ -59,8 +59,13 @@
 <!-- LIGHTBOX -->
 <div id="lightbox-overlay">
     <span id="lightbox-close">&times;</span>
+
+    <button id="lightbox-prev" class="lightbox-arrow">&#10094;</button>
     <img id="lightbox-image">
+    <video id="lightbox-video" controls style="display:none; max-width:95vw; max-height:95vh;"></video>
+    <button id="lightbox-next" class="lightbox-arrow">&#10095;</button>
 </div>
+
 
 </body>
 </html>
