@@ -40,9 +40,11 @@ $(document).ready(function () {
 
     // Lightbox viewer
     $(document).on("click", ".media-thumb", function () {
-        $("#lightbox-image").attr("src", $(this).attr("src"));
-        $("#lightbox-overlay").fadeIn(200);
+    const fullSrc = $(this).attr("data-full");
+    $("#lightbox-image").attr("src", fullSrc);
+    $("#lightbox-overlay").fadeIn(200);
     });
+
 
     $("#lightbox-close, #lightbox-overlay").click(() => {
         $("#lightbox-overlay").fadeOut(200);
