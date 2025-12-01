@@ -6,10 +6,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SkyTruFiber Support</title>
 
-<link rel="stylesheet" href="chat_support.css">
-
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      integrity="sha512-6mTfEtp+uWz+t0T1Ax7P0GDaXJ5mZLAFkmWg0ctV1LZC3L6kCixYJmTu9Ql73fX4zUPeCGD6qq9PzLSRGu6Y7g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="chat_support.js"></script>
