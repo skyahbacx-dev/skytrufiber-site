@@ -294,6 +294,7 @@
   max-height: 95vh;
   display: block;
   margin: auto;
+   margin-right:30px;
 }
 
 #lightbox-close {
