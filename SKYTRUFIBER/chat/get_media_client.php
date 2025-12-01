@@ -5,7 +5,7 @@ $id = $_GET["id"] ?? null;
 if (!$id) exit("Missing file ID");
 
 $stmt = $conn->prepare("
-    SELECT media_blob, media_type
+    SELECT media_blob, media_type, media_path
     FROM chat_media
     WHERE id = ?
 ");
@@ -16,27 +16,35 @@ if (!$file) exit("File not found");
 
 $binary = $file["media_blob"];
 $type = $file["media_type"];
+$path = $file["media_path"];
 
-// Set correct content headers
-switch ($type) {
-    case "image":
+// Detect MIME based on stored filename extension
+$ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+switch ($ext) {
+    case "jpg":
+    case "jpeg":
         header("Content-Type: image/jpeg");
-        header("Content-Disposition: inline");
         break;
-
-    case "video":
+    case "png":
+        header("Content-Type: image/png");
+        break;
+    case "gif":
+        header("Content-Type: image/gif");
+        break;
+    case "mp4":
         header("Content-Type: video/mp4");
-        header("Content-Disposition: inline");
         header("Accept-Ranges: bytes");
         break;
-
     default:
         header("Content-Type: application/octet-stream");
-        header("Content-Disposition: attachment");
-        break;
+        header("Content-Disposition: attachment; filename=\"$path\"");
 }
 
-// Output raw binary safely
+// required for binary response
+header("Content-Length: " . strlen($binary));
+
+// Output raw blob
 echo $binary;
 exit;
 ?>
