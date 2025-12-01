@@ -8,12 +8,12 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px);
   z-index: 9999;
 }
 
 /* ===========================================
-   CHAT MODAL CARD
+   CHAT MODAL
    =========================================== */
 .chat-modal {
   width: 700px;
@@ -28,7 +28,7 @@
 }
 
 /* ===========================================
-   HEADER STYLE
+   HEADER
    =========================================== */
 .chat-header {
   background: #0084ff;
@@ -82,7 +82,7 @@
 }
 
 /* ===========================================
-   MESSAGE BUBBLES
+   CHAT MESSAGE BUBBLES
    =========================================== */
 .message {
   display: flex;
@@ -95,7 +95,7 @@
 .message.received { align-self: flex-start; flex-direction: row; }
 .message.sent { align-self: flex-end; flex-direction: row-reverse; }
 
-/* Avatar */
+/* AVATAR */
 .message-avatar {
   width: 34px;
   height: 34px;
@@ -108,7 +108,7 @@
   width: 100%; height: 100%; object-fit: cover;
 }
 
-/* Bubble */
+/* BUBBLE */
 .message-bubble {
   padding: 12px 18px;
   border-radius: 20px;
@@ -129,7 +129,7 @@
   border-radius: 20px 20px 20px 4px;
 }
 
-/* Timestamp */
+/* TIMESTAMP */
 .message-time {
   font-size: 11px;
   opacity: .6;
@@ -138,7 +138,7 @@
 }
 
 /* ===========================================
-   MEDIA PREVIEW INSIDE BUBBLE
+   MEDIA INSIDE BUBBLE
    =========================================== */
 .message-bubble img,
 .message-bubble video {
@@ -150,7 +150,7 @@
   cursor: pointer;
 }
 
-/* Carousel */
+/* CAROUSEL */
 .carousel-container {
   display: flex;
   gap: 10px;
@@ -171,7 +171,7 @@
 }
 
 /* ===========================================
-   PREVIEW BAR FOR UPLOAD
+   UPLOAD PREVIEW BAR
    =========================================== */
 .preview-inline {
   display: none;
@@ -179,6 +179,19 @@
   padding: 10px;
   border-top: 1px solid #ccc;
   box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
+  position: relative;
+}
+
+#preview-close {
+  position: absolute;
+  top: 6px; right: 14px;
+  background: #ff4444;
+  border-radius: 50%;
+  width: 26px; height: 26px;
+  display: flex; justify-content: center; align-items: center;
+  color: white;
+  font-size: 18px; font-weight: bold;
+  cursor: pointer;
 }
 
 .preview-files {
@@ -187,9 +200,16 @@
   overflow-x: auto;
 }
 
+.preview-item {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .preview-thumb {
-  width: 90px; height: 90px;
-  border-radius: 10px;
+  width: 95px; height: 95px;
+  border-radius: 12px;
   object-fit: cover;
   border: 1px solid #ccc;
 }
@@ -207,7 +227,26 @@
 }
 
 /* ===========================================
-   INPUT BAR
+   MESSAGE UPLOAD PROGRESS BAR
+   =========================================== */
+.upload-progress-bar {
+  width: 200px;
+  height: 8px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.upload-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: #00e676;
+  transition: width .25s linear;
+}
+
+/* ===========================================
+   INPUT AREA
    =========================================== */
 .chat-input-area {
   padding: 14px;
@@ -238,7 +277,7 @@
 }
 
 .chat-send-btn {
-  background: black;
+  background: #0084ff;
   width: 48px; height: 48px;
   border-radius: 50%;
   border: none;
@@ -259,25 +298,29 @@
 .scroll-bottom-btn {
   display: none;
   position: absolute;
-  bottom: 90px;
-  right: 25px;
-  width: 45px; height: 45px;
-  background: white;
+  bottom: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px; height: 48px;
+  background: #0084ff;
   border-radius: 50%;
   border: none;
   cursor: pointer;
   z-index: 50;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
 }
 
-.scroll-bottom-btn i { color:white; font-size:18px; }
+.scroll-bottom-btn i {
+  font-size: 22px;
+  color: white;
+}
 
 .scroll-bottom-btn.show { display:flex; }
 
 /* ===========================================
-   LIGHTBOX VIEWER
+   LIGHTBOX
    =========================================== */
 #lightbox-overlay {
   display:none;
@@ -286,15 +329,14 @@
   background:rgba(0,0,0,.85);
   justify-content:center;
   align-items:center;
-  z-index:99999;
+  z-index:999999;
 }
 
-#lightbox-image {
+#lightbox-image, #lightbox-video {
   max-width: 95vw;
   max-height: 95vh;
   display: block;
   margin: auto;
-   margin-right:30px;
 }
 
 #lightbox-close {
@@ -303,64 +345,34 @@
   color:white; font-size:40px;
   cursor:pointer;
 }
-.lightbox-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(255,255,255,0.25);
-  color: white;
-  border: none;
-  font-size: 40px;
-  padding: 10px 16px;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: 0.25s;
+
+#lightbox-prev, #lightbox-next {
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  background:rgba(255,255,255,0.25);
+  border:none;
+  font-size:44px;
+  padding:14px 18px;
+  color:white;
+  border-radius:50%;
+  cursor:pointer;
 }
 
-.lightbox-arrow:hover {
-  background: rgba(255,255,255,0.45);
-}
+#lightbox-prev { left:40px; }
+#lightbox-next { right:40px; }
 
-#lightbox-prev { left: 30px; }
-#lightbox-next { right: 30px; }
-
-#lightbox-image, #lightbox-video {
-  display: block;
-  margin: auto;
-  max-width: 95vw;
-  max-height: 95vh;
-}
 .lightbox-download {
-  position: absolute;
-  bottom: 40px;
-  right: 40px;
-  padding: 10px 16px;
-  background: #0084ff;
-  color: white;
-  border-radius: 10px;
-  font-size: 16px;
-  text-decoration: none;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  z-index: 999999;
+  position:absolute;
+  bottom:40px; right:40px;
+  padding:12px 18px;
+  background:#0084ff;
+  color:white;
+  border-radius:12px;
+  text-decoration:none;
+  font-size:16px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
 }
-
-.lightbox-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 42px;
-  color: white;
-  background: rgba(0,0,0,0.4);
-  border: none;
-  padding: 10px 14px;
-  cursor: pointer;
-  border-radius: 10px;
-  z-index: 999999;
-}
-
-#lightbox-prev { left: 40px; }
-#lightbox-next { right: 100px; }
 
 /* ===========================================
    ANIMATIONS
