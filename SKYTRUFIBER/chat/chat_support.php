@@ -7,10 +7,12 @@
 <title>SkyTruFiber Support</title>
 
 <link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-      integrity="sha512-6mTfEtp+uWz+t0T1Ax7P0GDaXJ5mZLAFkmWg0ctV1LZC3L6kCixYJmTu9Ql73fX4zUPeCGD6qq9PzLSRGu6Y7g=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer" />
+      <link rel="stylesheet" href="chat_support.css">
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      integrity="sha512-Tbw8xY39jJ24rD2pf4mm4i6o7vU9UUFq6T7Lx5Lqk7i9e3YxgqkPpQz7nJ0U1p6Yat1D1mJv4qrgQhFxzJ8Vw=="
+      crossorigin="anonymous" referrerpolicy="no-referrer" />
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="chat_support.js"></script>
