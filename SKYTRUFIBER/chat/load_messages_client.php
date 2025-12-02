@@ -19,7 +19,7 @@ if (!$clientRow) exit("User not found");
 
 $client_id = (int)$clientRow["id"];
 
-// Fetch chat messages including soft delete flag
+// Fetch chat messages including delete flag
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted
     FROM chat
@@ -31,7 +31,6 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (!$messages) exit;
 
-// Avatar placeholders
 $csrAvatar  = "/upload/default-avatar.png";
 $userAvatar = "/upload/default-avatar.png";
 
@@ -48,22 +47,18 @@ foreach ($messages as $msg) {
             <img src='$avatar' alt='avatar'>
           </div>";
 
-    echo "<div class='message-content'>
-            <div class='message-bubble'>";
-            
+    echo "<div class='message-content'>";
 
-    // ===============================
-    // Deleted message placeholder
-    // ===============================
+    echo "<div class='message-bubble'>";
+
+    // =============== Deleted placeholder
     if ($msg["deleted"] == 1) {
 
         echo "<span class='removed-text'>Message removed</span>";
 
     } else {
 
-        // ===============================
-        // Load Media Attachments
-        // ===============================
+        // =============== Load media attachments
         $mediaStmt = $conn->prepare("
             SELECT id, media_type
             FROM chat_media
@@ -97,20 +92,16 @@ foreach ($messages as $msg) {
             if (count($mediaList) > 1) echo "</div>";
         }
 
-        // ===============================
-        // Text message
-        // ===============================
+        // =============== Text message
         if (!empty($msg["message"])) {
             echo nl2br(htmlspecialchars($msg["message"]));
         }
     }
 
-    echo "</div>"; // close bubble
+    echo "</div>"; // end message-bubble
 
 
-    // ===============================
-    // Reaction Bar (Emoji stack)
-    // ===============================
+    // =============== Reactions display bar
     $r = $conn->prepare("
         SELECT emoji, COUNT(*) AS total
         FROM chat_reactions
@@ -129,19 +120,19 @@ foreach ($messages as $msg) {
         echo "</div>";
     }
 
-    // Timestamp
+    // Time
     echo "<div class='message-time'>$timestamp</div>";
 
-    // Reaction trigger button
+    // =============== Reaction Button (must exist!)
     echo "<button class='react-btn' data-msg-id='$msgID'>😊</button>";
 
-    // Delete / Unsend button
+    // =============== Unsend / Delete only client side
     if ($sender === 'sent' && $msg['deleted'] == 0) {
         echo "<button class='delete-btn' title='Remove message' data-id='$msgID'>
                 <i class='fa-solid fa-trash'></i>
               </button>";
     }
 
-    echo "</div></div>";
+    echo "</div></div>"; // end content & message row
 }
 ?>
