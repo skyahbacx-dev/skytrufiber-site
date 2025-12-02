@@ -349,29 +349,32 @@
 .reaction-choice:hover { transform: scale(1.25); }
 
 /* ===========================================
-   SCROLL TO BOTTOM BUTTON
+   SCROLL DOWN BUTTON - FIXED
    =========================================== */
 #scroll-bottom-btn {
   position: absolute;
-  bottom: 110px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 48px;
-  height: 48px;
+  bottom: 90px;
+  right: 20px; /* better position under bubble */
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
   background: #0084ff;
   border: none;
-  display: none;
-  align-items: center;
+  display: none; /* hidden default */
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(0,0,0,.3);
-  z-index: 10050;
+  align-items: center;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 200;
 }
-#scroll-bottom-btn.show { display: flex; }
+#scroll-bottom-btn.show {
+  display: flex;
+}
 #scroll-bottom-btn i {
   color: #fff;
-  font-size: 22px;
+  font-size: 20px;
 }
+
 /* ===========================================
    INPUT & TOOLBAR
    =========================================== */
@@ -450,17 +453,27 @@
 .scroll-bottom-btn.show { display: flex; }
 
 /* ===========================================
-   LIGHTBOX
+   LIGHTBOX - FIXED
    =========================================== */
 #lightbox-overlay {
-  display: none;
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,.85);
+  display: none;
   justify-content: center;
   align-items: center;
-  z-index: 10010;
+  z-index: 999999; /* ensure on top */
 }
+
+/* Show when activated */
+#lightbox-overlay.show {
+  display: flex !important;
+}
+.media-thumb,
+.media-video {
+  pointer-events: auto;
+}
+
 
 /* ===========================================
    LOGOUT BUTTON
