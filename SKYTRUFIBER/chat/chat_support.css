@@ -89,8 +89,8 @@
   gap: 10px;
   align-items: flex-end;
   max-width: 75%;
-  animation: fadeIn .25s ease, fadeup .35s ease;
   position: relative;
+  animation: fadeup .35s ease;
 }
 
 .message.received { align-self: flex-start; flex-direction: row; }
@@ -138,12 +138,9 @@
   font-size: 14px;
 }
 
-.message.removed .message-bubble {
-  background: #d5d5d5 !important;
-  color: #555 !important;
-}
-
-/* TIMESTAMP */
+/* ===========================================
+   TIMESTAMP
+   =========================================== */
 .message-time {
   font-size: 11px;
   opacity: .6;
@@ -152,14 +149,14 @@
 }
 
 /* ===========================================
-   REACTION BAR (emoji counts under bubble)
+   REACTION BAR
    =========================================== */
 .reaction-bar {
   display: inline-flex;
   gap: 4px;
   margin-top: 4px;
   padding: 2px 6px;
-  background: rgba(255,255,255,0.95);
+  background: #fff;
   border-radius: 999px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   font-size: 13px;
@@ -178,32 +175,27 @@
 }
 
 /* ===========================================
-   REACT BUTTON (bubble reaction trigger)
+   REACT BUTTON
    =========================================== */
 .react-btn {
   position: absolute;
-  bottom: -10px;
+  bottom: -14px;
   width: 26px;
   height: 26px;
   border-radius: 50%;
   border: none;
-  background: #ffffff;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  background: #fff;
   display: none;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   font-size: 15px;
-  z-index: 5;
+  z-index: 100;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
 }
 
-.message.sent .react-btn {
-  right: 34px;     /* near right bubble edge for sent */
-}
-
-.message.received .react-btn {
-  left: 34px;      /* near left bubble edge for received */
-}
+.message.sent .react-btn { right: 34px; }
+.message.received .react-btn { left: 34px; }
 
 .message:hover .react-btn {
   display: flex;
@@ -214,7 +206,7 @@
 }
 
 /* ===========================================
-   DELETE / UNSEND BUTTON
+   DELETE / UNSEND
    =========================================== */
 .delete-btn {
   position: absolute;
@@ -231,147 +223,63 @@
   justify-content: center;
   align-items: center;
   font-size: 14px;
-  transition: .2s ease;
+  z-index: 101;
 }
 
 .message.sent:hover .delete-btn {
   display: flex;
 }
 
-.delete-btn:hover {
-  background: #d92f2f;
-}
-
 /* ===========================================
-   CANCEL UPLOAD BUTTON
+   REACTION PICKER (Messenger style)
    =========================================== */
-.cancel-upload-btn {
-  background: #ff4040;
-  color: white;
-  border: none;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
+.reaction-picker {
   position: absolute;
-  top: -8px;
-  right: -8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  z-index: 5;
-  font-size: 14px;
-  transition: .25s;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 6px 10px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  display: none;
+  z-index: 20000;
+  gap: 6px;
 }
 
-.cancel-upload-btn:hover {
-  background: #c92424;
+.reaction-picker.show {
+  display: flex;
+}
+
+.reaction-choice {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 4px 6px;
+  transition: transform 0.15s;
+}
+
+.reaction-choice:hover {
+  transform: scale(1.3);
 }
 
 /* ===========================================
-   MEDIA PREVIEW IN BUBBLES
+   MEDIA IN BUBBLES
    =========================================== */
 .message-bubble img,
 .message-bubble video {
   max-width: 240px;
   max-height: 260px;
   border-radius: 14px;
-  margin-top: 6px;
   object-fit: cover;
   cursor: pointer;
+  margin-top: 6px;
 }
 
-.media-thumb {
-  max-width: 240px;
-  max-height: 260px;
-  border-radius: 14px;
-  object-fit: cover;
-}
-
-/* CAROUSEL */
 .carousel-container {
   display: flex;
   gap: 10px;
   overflow-x: auto;
   padding: 6px 0;
-}
-
-.carousel-container::-webkit-scrollbar { height: 6px; }
-.carousel-container::-webkit-scrollbar-thumb {
-  background: #aad2ff; border-radius: 6px;
-}
-
-/* ===========================================
-   UPLOAD PREVIEW BAR
-   =========================================== */
-.preview-inline {
-  display: none;
-  background: #ffffff;
-  padding: 12px;
-  border-top: 1px solid #ccc;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
-  position: relative;
-}
-
-/* Close preview */
-#preview-close {
-  position: absolute;
-  top: 8px; right: 12px;
-  background: #ff4444;
-  border-radius: 50%;
-  width: 28px; height: 28px;
-  display: flex; justify-content: center; align-items: center;
-  color: white;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-/* Thumbnails */
-.preview-files {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding-right: 38px;
-}
-
-.preview-item { position: relative; }
-
-.preview-thumb {
-  width: 95px; height: 95px;
-  border-radius: 12px;
-  object-fit: cover;
-  border: 1px solid #ccc;
-}
-
-.preview-remove {
-  position: absolute;
-  top: -6px; right: -6px;
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
-  background: #ff4444;
-  color: white;
-}
-
-/* ===========================================
-   UPLOAD PROGRESS BAR
-   =========================================== */
-.upload-progress-bar {
-  width: 200px;
-  height: 8px;
-  background: rgba(255,255,255,0.3);
-  border-radius: 6px;
-  overflow: hidden;
-  margin-top: 5px;
-}
-
-.upload-progress-fill {
-  height: 100%;
-  width: 0%;
-  background: #00e676;
-  transition: width .25s linear;
 }
 
 /* ===========================================
@@ -386,65 +294,22 @@
   border-top: 1px solid #ccc;
 }
 
-/* Upload button */
-.upload-btn {
-  border: none; background: none;
-  font-size: 22px; cursor: pointer;
-  opacity: .7;
-}
-.upload-btn:hover { opacity: 1; }
-
-/* Text input */
-.chat-input-box {
-  flex: 1;
-  border: 1px solid #ccc;
-  border-radius: 22px;
-  padding: 10px 16px;
-}
-
-.chat-input-box input {
-  width: 100%; border: none; outline: none;
-  font-size: 15px;
-}
-
-/* Send button */
 .chat-send-btn {
   background: #0084ff;
-  width: 48px; height: 48px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: none;
   cursor: pointer;
-  display: flex; justify-content: center; align-items: center;
-}
-
-.chat-send-btn i { color: white; font-size: 20px; }
-
-/* ===========================================
-   SCROLL DOWN BUTTON
-   =========================================== */
-.scroll-bottom-btn {
-  display: none;
-  position: absolute;
-  bottom: 110px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 48px; height: 48px;
-  background: #0084ff;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  z-index: 50;
+  display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
 }
 
-.scroll-bottom-btn i {
-  font-size: 22px;
+.chat-send-btn i {
   color: white;
+  font-size: 20px;
 }
-
-.scroll-bottom-btn.show { display:flex; }
 
 /* ===========================================
    LIGHTBOX
@@ -459,52 +324,6 @@
   z-index:999999;
 }
 
-#lightbox-image, #lightbox-video {
-  max-width: 95vw;
-  max-height: 95vh;
-  display: block;
-  margin: auto;
-  border-radius: 14px;
-}
-
-#lightbox-close {
-  position:absolute;
-  top:30px; right:30px;
-  color:white; font-size:40px;
-  cursor:pointer;
-}
-
-#lightbox-prev, #lightbox-next {
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  background:rgba(255,255,255,0.25);
-  border:none;
-  font-size:44px;
-  padding:14px 18px;
-  color:white;
-  border-radius:50%;
-  cursor:pointer;
-  transition:0.25s;
-}
-#lightbox-prev:hover,
-#lightbox-next:hover { background:rgba(255,255,255,0.4); }
-
-#lightbox-prev { left:40px; }
-#lightbox-next { right:40px; }
-
-.lightbox-download {
-  position:absolute;
-  bottom:40px; right:40px;
-  padding:12px 18px;
-  background:#0084ff;
-  color:white;
-  border-radius:12px;
-  text-decoration:none;
-  font-size:16px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.3);
-}
-
 /* ===========================================
    LOGOUT BUTTON
    =========================================== */
@@ -516,56 +335,19 @@
   padding: 8px 14px;
   border-radius: 10px;
   font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
   cursor: pointer;
   transition: 0.25s;
 }
+
 .logout-btn:hover { background: #e03030; }
-.logout-btn i { font-size: 16px; }
 
 /* ===========================================
    ANIMATIONS
    =========================================== */
-@keyframes fadeIn {
-  from { opacity:0; }
-  to   { opacity:1; }
-}
-
 @keyframes fadeup {
   from { opacity:0; transform:translateY(22px); }
   to   { opacity:1; transform:translateY(0); }
 }
-
 .fadeup {
   animation: fadeup .35s ease forwards;
-}
-/* Reaction picker popup (appears near bubble) */
-.reaction-picker {
-  position: absolute;
-  background: #ffffff;
-  border-radius: 999px;
-  padding: 4px 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  display: none;
-  z-index: 10000;
-  gap: 4px;
-}
-
-.reaction-picker.show {
-  display: flex;
-}
-
-.reaction-choice {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
-  padding: 2px 4px;
-}
-
-.reaction-choice:hover {
-  transform: scale(1.2);
 }
