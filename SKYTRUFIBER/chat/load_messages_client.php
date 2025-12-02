@@ -19,7 +19,7 @@ if (!$clientRow) exit("User not found");
 
 $client_id = (int)$clientRow["id"];
 
-// Fetch chat messages
+// Fetch chat messages including soft delete flag
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted
     FROM chat
@@ -52,14 +52,18 @@ foreach ($messages as $msg) {
     echo "<div class='message-content'>
             <div class='message-bubble'>";
 
-    // =======================
-    // If deleted: show removed placeholder
-    // =======================
+    // ===========================
+    // Soft Deleted Message UI
+    // ===========================
     if ($msg["deleted"] == 1) {
+
         echo "<span class='removed-text'>Message removed</span>";
+
     } else {
 
-        // ===== Load media files =====
+        // ===========================
+        // Load Media Attachments
+        // ===========================
         $mediaStmt = $conn->prepare("
             SELECT id, media_type
             FROM chat_media
@@ -68,13 +72,16 @@ foreach ($messages as $msg) {
         $mediaStmt->execute([$msgID]);
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($mediaList) {
+        if (!empty($mediaList)) {
 
-            if (count($mediaList) > 1) echo "<div class='carousel-container'>";
+            if (count($mediaList) > 1) {
+                echo "<div class='carousel-container'>";
+            }
 
             foreach ($mediaList as $m) {
-
                 $mediaID   = (int)$m["id"];
+
+                // blob + thumb link
                 $filePath  = "get_media_client.php?id=$mediaID";
                 $thumbPath = "get_media_client.php?id=$mediaID&thumb=1";
 
@@ -91,24 +98,30 @@ foreach ($messages as $msg) {
                 }
             }
 
-            if (count($mediaList) > 1) echo "</div>";
+            if (count($mediaList) > 1) {
+                echo "</div>";
+            }
         }
 
-        // ===== Text =====
+        // ===========================
+        // Text Message
+        // ===========================
         if (!empty($msg["message"])) {
             echo nl2br(htmlspecialchars($msg["message"]));
         }
     }
 
-    // Close bubble
-    echo "</div>";
+    echo "</div>"; // end bubble
 
     // Timestamp
     echo "<div class='message-time'>$timestamp</div>";
 
-    // Unsend button (CLIENT ONLY & not deleted)
+    // ===========================
+    // DELETE / UNSEND button
+    // Only for client-sent, not deleted yet
+    // ===========================
     if ($sender === "sent" && $msg["deleted"] == 0) {
-        echo "<button class='delete-btn' data-id='$msgID'>
+        echo "<button class='delete-btn' title='Remove message' data-id='$msgID'>
                 <i class='fa-solid fa-trash'></i>
               </button>";
     }
