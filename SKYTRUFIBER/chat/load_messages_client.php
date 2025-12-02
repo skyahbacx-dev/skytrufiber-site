@@ -2,6 +2,8 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
+ini_set("display_errors", 0);
+
 $username = $_POST["username"] ?? null;
 if (!$username) exit("No username");
 
@@ -15,7 +17,7 @@ $stmt = $conn->prepare("
 $stmt->execute([$username, $username]);
 $clientRow = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$clientRow) exit("User not found");
+if (!$clientRow) exit(""); // return empty instead of text
 
 $client_id = (int)$clientRow["id"];
 
@@ -29,7 +31,9 @@ $stmt = $conn->prepare("
 $stmt->execute([$client_id]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-if (!$messages) exit;
+
+if (!$messages) exit(""); 
+
 
 // avatars
 $csrAvatar  = "/upload/default-avatar.png";
