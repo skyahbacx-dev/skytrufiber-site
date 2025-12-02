@@ -139,6 +139,11 @@
 
 .edit-save { background: #0084ff; color: white; }
 .edit-cancel { background: #ccc; }
+.edited-label {
+  font-size: 10px;
+  opacity: .65;
+  margin-left: 4px;
+}
 
 /* ===========================================
    REACTIONS
