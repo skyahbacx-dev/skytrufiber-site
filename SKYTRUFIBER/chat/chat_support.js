@@ -1,7 +1,7 @@
 // ========================================
 // SkyTruFiber Client Chat System
 // chat_support.js — Instant DOM + Thumb Blob + Fast Upload + Gallery + Swipe
-// + Emoji + Cancel Upload + Unsend + Bubble Reactions
+// + Emoji + Cancel Upload + Unsend + Bubble Reactions + Edit Message
 // ========================================
 
 let selectedFiles = [];
@@ -9,8 +9,8 @@ let lastMessageID = 0;
 let loadInterval = null;
 let galleryItems = [];
 let currentIndex = 0;
-let currentUploadXHR = null;          // for cancel upload
-let reactingToMsgId = null;           // for bubble reactions
+let currentUploadXHR = null;
+let reactingToMsgId = null;
 const reactionChoices = ["👍", "❤️", "😂", "😮", "😢", "😡"];
 
 const username = new URLSearchParams(window.location.search).get("username");
@@ -22,7 +22,7 @@ $(document).ready(function () {
         return;
     }
 
-    // Fade intro
+    // Intro animation
     $("#chat-messages").css({ opacity: 0, transform: "translateY(20px)" });
     setTimeout(() => {
         $("#chat-messages").css({
@@ -34,30 +34,25 @@ $(document).ready(function () {
 
     loadMessages(true);
 
-    // Refresh CSR messages only
     loadInterval = setInterval(() => {
         if (!$("#preview-inline").is(":visible")) loadMessages(false);
     }, 1200);
 
-    // Send text
+    // ---------------- SEND TEXT ----------------
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
-        if (e.which === 13) {
-            e.preventDefault();
-            sendMessage();
-        }
+        if (e.which === 13) { e.preventDefault(); sendMessage(); }
     });
 
-    // Upload picker
+    // ---------------- FILE UPLOAD ----------------
     $("#upload-btn").click(() => $("#chat-upload-media").click());
     $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
-    // Lightbox media opening
+    // ---------------- LIGHTBOX ----------------
     $(document).on("click", ".media-thumb, .media-video", function () {
-
         const group = $(this).closest(".message");
         const media = group.find(".media-thumb, .media-video");
 
@@ -93,7 +88,7 @@ $(document).ready(function () {
         if (endX > startX + 50) prevLightbox();
     });
 
-    // Scroll down button
+    // ---------------- SCROLL BUTTON ----------------
     const box = $("#chat-messages");
     const btn = $("#scroll-bottom-btn");
 
@@ -103,47 +98,45 @@ $(document).ready(function () {
         else btn.addClass("show");
     });
 
-    btn.click(() => {
-        scrollToBottom();
-        btn.removeClass("show");
-    });
+    btn.click(() => { scrollToBottom(); btn.removeClass("show"); });
 
-    // Logout
+    // ---------------- LOGOUT ----------------
     $(document).on("click", "#logout-btn", () => window.location.href = "logout.php");
 
-    // ===== EMOJI POPUP FOR TEXT INPUT (optional) =====
-    $("#emoji-btn").click(() => {
-        $("#emoji-popup").toggleClass("show");
-    });
-
-    $(document).on("click", ".emoji-option", function () {
-        const emoji = $(this).text();
-        const input = $("#message-input");
-        const cursor = input.prop("selectionStart");
-        const text = input.val();
-        input.val(text.substring(0, cursor) + emoji + text.substring(cursor));
-        input.focus();
-    });
-
-    $(document).on("click", function (e) {
-        if (!$(e.target).closest("#emoji-popup, #emoji-btn").length) {
-            $("#emoji-popup").removeClass("show");
-        }
-    });
-
-    // ===== DELETE MESSAGE (UNSEND) =====
+    // ---------------- DELETE / UNSEND ----------------
     $(document).on("click", ".delete-btn", function () {
         const msgID = $(this).data("id");
-        $.post("delete_message_client.php", { id: msgID }, () => {
-            loadMessages(true);
-        });
+        $.post("delete_message_client.php", { id: msgID }, () => loadMessages(true));
     });
 
-    // ===== BUBBLE REACTIONS =====
-    // Show picker when clicking react button on bubble
+    // ---------------- EDIT MESSAGE ----------------
+    $(document).on("click", ".edit-btn", function () {
+        const msgID = $(this).data("id");
+        const bubble = $(this).closest(".message").find(".message-bubble");
+        const currentText = bubble.text();
+
+        bubble.html(`
+            <textarea class="edit-textarea">${currentText}</textarea>
+            <div class="edit-actions">
+                <button class="edit-save" data-id="${msgID}">Save</button>
+                <button class="edit-cancel">Cancel</button>
+            </div>
+        `);
+    });
+
+    $(document).on("click", ".edit-save", function () {
+        const msgID = $(this).data("id");
+        const newText = $(this).closest(".message-bubble").find(".edit-textarea").val().trim();
+        $.post("edit_message_client.php", { id: msgID, message: newText }, () => loadMessages(true));
+    });
+
+    $(document).on("click", ".edit-cancel", function () {
+        loadMessages(false);
+    });
+
+    // ---------------- REACTIONS ----------------
     $(document).on("click", ".react-btn", function (e) {
         e.stopPropagation();
-
         reactingToMsgId = $(this).data("msg-id");
 
         const $picker = ensureReactionPicker();
@@ -154,30 +147,22 @@ $(document).ready(function () {
 
         $picker
             .css({
-                top: btnOffset.top - pickerHeight - 8,
+                top: btnOffset.top - pickerHeight - 12,
                 left: btnOffset.left - (pickerWidth / 2) + (btnWidth / 2)
             })
             .addClass("show");
     });
 
-    // Click on reaction choice
     $(document).on("click", ".reaction-choice", function (e) {
         e.stopPropagation();
         const emoji = $(this).data("emoji");
         if (!reactingToMsgId) return;
 
-        $.post("react_message_client.php", {
-            chat_id: reactingToMsgId,
-            emoji: emoji
-        }, () => {
-            loadMessages(false);
-        });
-
+        $.post("react_message_client.php", { chat_id: reactingToMsgId, emoji }, () => loadMessages(false));
         $("#reaction-picker").removeClass("show");
         reactingToMsgId = null;
     });
 
-    // Hide picker when clicking outside
     $(document).on("click", function (e) {
         if (!$(e.target).closest("#reaction-picker, .react-btn").length) {
             $("#reaction-picker").removeClass("show");
@@ -186,26 +171,20 @@ $(document).ready(function () {
 
 });
 
-
-// Create reaction picker lazily (once)
+// ---------------- REACTION PICKER ----------------
 function ensureReactionPicker() {
     let $picker = $("#reaction-picker");
     if ($picker.length) return $picker;
 
-    const html = `
+    $("body").append(`
         <div id="reaction-picker" class="reaction-picker">
-            ${reactionChoices.map(e =>
-                `<button type="button" class="reaction-choice" data-emoji="${e}">${e}</button>`
-            ).join("")}
+            ${reactionChoices.map(e => `<button class='reaction-choice' data-emoji='${e}'>${e}</button>`).join("")}
         </div>
-    `;
-    $("body").append(html);
-    $picker = $("#reaction-picker");
-    return $picker;
+    `);
+    return $("#reaction-picker");
 }
 
-
-// ---------------- Instant DOM append ----------------
+// ---------------- INSTANT DOM ----------------
 function appendClientMessageInstant(msg) {
     $("#chat-messages").append(`
         <div class="message sent fadeup">
@@ -219,8 +198,7 @@ function appendClientMessageInstant(msg) {
     scrollToBottom();
 }
 
-
-// ---------------- Load messages ----------------
+// ---------------- LOAD MESSAGES ----------------
 function loadMessages(scrollBottom = false) {
     $.post("load_messages_client.php", { username }, html => {
         const incoming = $(html);
@@ -235,8 +213,7 @@ function loadMessages(scrollBottom = false) {
     });
 }
 
-
-// ---------------- Send message ----------------
+// ---------------- SEND MESSAGE ----------------
 function sendMessage() {
     const msg = $("#message-input").val().trim();
     if (selectedFiles.length > 0) return uploadMedia(selectedFiles, msg);
@@ -249,37 +226,36 @@ function sendMessage() {
     }, "json");
 }
 
-
-// ---------------- Preview thumbnails ----------------
+// ---------------- PREVIEW FILES ----------------
 function previewMultiple(files) {
     $("#preview-files").html("");
     $("#preview-inline").slideDown(200);
 
     files.forEach((file, index) => {
-        const remove = `<button class="preview-remove" data-i="${index}">&times;</button>`;
         const thumb = file.type.startsWith("image")
             ? `<img src="${URL.createObjectURL(file)}" class="preview-thumb">`
             : `<div class="file-box">📎 ${file.name}</div>`;
 
-        $("#preview-files").append(`<div class="preview-item">${thumb}${remove}</div>`);
+        $("#preview-files").append(`
+            <div class="preview-item">
+                ${thumb}
+                <button class="preview-remove" data-i="${index}">&times;</button>
+            </div>
+        `);
     });
 }
 
-
-// Remove preview
 $(document).on("click", ".preview-remove", function () {
     selectedFiles.splice($(this).data("i"), 1);
     if (selectedFiles.length) previewMultiple(selectedFiles);
     else $("#preview-inline").slideUp(200);
 });
 
-
-// ---------------- Upload with Cancel Support ----------------
+// ---------------- UPLOAD ----------------
 function uploadMedia(files, msg = "") {
     const placeholder = addUploadingPlaceholder();
     const bar = $("#" + placeholder).find(".upload-progress-fill");
 
-    // Add cancel upload button
     $("#" + placeholder).append(`
         <button class="cancel-upload-btn" data-target="${placeholder}">
             <i class="fa-solid fa-xmark"></i>
@@ -319,11 +295,8 @@ function uploadMedia(files, msg = "") {
     });
 }
 
-
-// Cancel upload event
 $(document).on("click", ".cancel-upload-btn", function () {
     const id = $(this).data("target");
-
     if (currentUploadXHR) currentUploadXHR.abort();
 
     $("#" + id).fadeOut(200, function () {
@@ -334,8 +307,7 @@ $(document).on("click", ".cancel-upload-btn", function () {
     $("#chat-upload-media").val("");
 });
 
-
-// ---------------- Upload placeholder ----------------
+// ---------------- PLACEHOLDER BUBBLE ----------------
 function addUploadingPlaceholder() {
     const id = "upload-" + Date.now();
     $("#chat-messages").append(`
@@ -354,8 +326,7 @@ function addUploadingPlaceholder() {
     return id;
 }
 
-
-// ---------------- Lightbox helpers ----------------
+// ---------------- LIGHTBOX ----------------
 function openLightbox(index) {
     const item = galleryItems[index];
     $("#lightbox-image, #lightbox-video").hide();
@@ -369,7 +340,6 @@ function openLightbox(index) {
             $("#lightbox-image").fadeOut(80, () =>
                 $("#lightbox-image").attr("src", item.full).fadeIn(160)
             );
-
         full.src = item.full;
         $("#lightbox-download").attr("href", item.full);
 
@@ -389,8 +359,7 @@ function prevLightbox() {
     openLightbox(currentIndex);
 }
 
-
-// ---------------- Scroll ----------------
+// ---------------- SCROLL ----------------
 function scrollToBottom() {
     const box = $("#chat-messages");
     box.stop().animate({ scrollTop: box[0].scrollHeight }, 250);
