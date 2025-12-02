@@ -31,6 +31,7 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (!$messages) exit;
 
+// avatars
 $csrAvatar  = "/upload/default-avatar.png";
 $userAvatar = "/upload/default-avatar.png";
 
@@ -40,7 +41,7 @@ foreach ($messages as $msg) {
     $sender    = ($msg["sender_type"] === "csr") ? "received" : "sent";
     $avatar    = ($sender === "received") ? $csrAvatar : $userAvatar;
     $timestamp = date("g:i A", strtotime($msg["created_at"]));
-    $isEdited  = ($msg["edited"] == 1); // Edited flag
+    $isEdited  = ($msg["edited"] == 1);
 
     echo "<div class='message $sender fadeup' data-msg-id='$msgID'>";
 
@@ -53,34 +54,34 @@ foreach ($messages as $msg) {
     echo "<div class='message-bubble'>";
 
     // Deleted placeholder
-    if ($msg["deleted"] == 1) {
+    if ($msg['deleted'] == 1) {
 
         echo "<span class='removed-text'>Message removed</span>";
 
     } else {
 
         // Load media attachments
-        $mediaStmt = $conn->prepare("
+        $mQuery = $conn->prepare("
             SELECT id, media_type
             FROM chat_media
             WHERE chat_id = ?
         ");
-        $mediaStmt->execute([$msgID]);
-        $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
+        $mQuery->execute([$msgID]);
+        $mediaList = $mQuery->fetchAll(PDO::FETCH_ASSOC);
 
         if (!empty($mediaList)) {
 
             if (count($mediaList) > 1) echo "<div class='carousel-container'>";
 
             foreach ($mediaList as $m) {
-                $mediaID   = (int)$m["id"];
+                $mediaID   = (int)$m['id'];
                 $filePath  = "get_media_client.php?id=$mediaID";
                 $thumbPath = "get_media_client.php?id=$mediaID&thumb=1";
 
-                if ($m["media_type"] === "image") {
+                if ($m['media_type'] === "image") {
                     echo "<img src='$thumbPath' data-full='$filePath' class='media-thumb'>";
                 }
-                elseif ($m["media_type"] === "video") {
+                elseif ($m['media_type'] === "video") {
                     echo "<video muted preload='metadata' data-full='$filePath' class='media-video'>
                             <source src='$thumbPath' type='video/mp4'>
                           </video>";
@@ -93,9 +94,9 @@ foreach ($messages as $msg) {
             if (count($mediaList) > 1) echo "</div>";
         }
 
-        // Actual Text
-        if (!empty($msg["message"])) {
-            echo nl2br(htmlspecialchars($msg["message"]));
+        // Actual text
+        if (!empty($msg['message'])) {
+            echo nl2br(htmlspecialchars($msg['message']));
         }
     }
 
@@ -120,21 +121,22 @@ foreach ($messages as $msg) {
         echo "</div>";
     }
 
-    // Timestamp + Edited label
+    // Timestamp + edited label
     echo "<div class='message-time'>$timestamp";
     if ($isEdited) echo " <span class='edited-label'>(edited)</span>";
     echo "</div>";
 
-    // Reaction button
-    echo "<button class='react-btn' data-msg-id='$msgID'>😊</button>";
+    // Actions toolbar (Reaction + More)
+    echo "<div class='action-toolbar'>
+            <button class='react-btn' data-msg-id='$msgID'>😊</button>";
 
-    // Delete (unsend) button only for client
-    if ($sender === 'sent' && $msg['deleted'] == 0) {
-        echo "<button class='delete-btn' title='Remove message' data-id='$msgID'>
-                <i class='fa-solid fa-trash'></i>
-              </button>";
+    // show menu button only for client's messages that are not deleted
+    if ($sender === "sent" && $msg['deleted'] == 0) {
+        echo "<button class='more-btn' data-id='$msgID'>⋯</button>";
     }
 
-    echo "</div></div>"; // content + message
+    echo "</div>"; // end action-toolbar
+
+    echo "</div></div>"; // content + message container
 }
 ?>
