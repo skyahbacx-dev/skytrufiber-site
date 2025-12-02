@@ -50,19 +50,20 @@ foreach ($messages as $msg) {
 
     echo "<div class='message-content'>
             <div class='message-bubble'>";
+            
 
-    // ==========================
-    // If message deleted
-    // ==========================
+    // ===============================
+    // Deleted message placeholder
+    // ===============================
     if ($msg["deleted"] == 1) {
 
         echo "<span class='removed-text'>Message removed</span>";
 
     } else {
 
-        // ==========================
-        // Media attachments
-        // ==========================
+        // ===============================
+        // Load Media Attachments
+        // ===============================
         $mediaStmt = $conn->prepare("
             SELECT id, media_type
             FROM chat_media
@@ -72,6 +73,7 @@ foreach ($messages as $msg) {
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
         if (!empty($mediaList)) {
+
             if (count($mediaList) > 1) echo "<div class='carousel-container'>";
 
             foreach ($mediaList as $m) {
@@ -95,16 +97,20 @@ foreach ($messages as $msg) {
             if (count($mediaList) > 1) echo "</div>";
         }
 
+        // ===============================
+        // Text message
+        // ===============================
         if (!empty($msg["message"])) {
             echo nl2br(htmlspecialchars($msg["message"]));
         }
     }
 
-    echo "</div>"; // bubble
+    echo "</div>"; // close bubble
 
-    // ==========================
-    // REACTIONS
-    // ==========================
+
+    // ===============================
+    // Reaction Bar (Emoji stack)
+    // ===============================
     $r = $conn->prepare("
         SELECT emoji, COUNT(*) AS total
         FROM chat_reactions
@@ -123,14 +129,14 @@ foreach ($messages as $msg) {
         echo "</div>";
     }
 
-    // Time
+    // Timestamp
     echo "<div class='message-time'>$timestamp</div>";
 
-    // Reaction button
+    // Reaction trigger button
     echo "<button class='react-btn' data-msg-id='$msgID'>😊</button>";
 
-    // Unsend button (Client only)
-    if ($sender === "sent" && $msg["deleted"] == 0) {
+    // Delete / Unsend button
+    if ($sender === 'sent' && $msg['deleted'] == 0) {
         echo "<button class='delete-btn' title='Remove message' data-id='$msgID'>
                 <i class='fa-solid fa-trash'></i>
               </button>";
