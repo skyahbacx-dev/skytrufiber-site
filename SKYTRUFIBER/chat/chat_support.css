@@ -149,6 +149,12 @@
   object-fit: cover;
   cursor: pointer;
 }
+.media-thumb {
+  max-width: 240px;
+  max-height: 260px;
+  border-radius: 14px;
+  object-fit: cover;
+}
 
 /* CAROUSEL */
 .carousel-container {
