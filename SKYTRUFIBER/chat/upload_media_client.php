@@ -41,7 +41,6 @@ $insert = $conn->prepare("
     VALUES (?, 'client', ?, TRUE, FALSE, NOW())
 ");
 $insert->execute([$client_id, $message]);
-
 $chatId = $conn->lastInsertId();
 
 // ============================
@@ -65,15 +64,31 @@ if (!empty($_FILES["media"]["name"])) {
         if (strpos($type, "image") !== false) $mediaType = "image";
         elseif (strpos($type, "video") !== false) $mediaType = "video";
 
-        // Store to DB
+        // Generate thumbnail for images only
+        $thumbBlob = null;
+        if ($mediaType === "image") {
+            $img = @imagecreatefromstring($blob);
+            if ($img) {
+                $maxWidth = 250;
+                $thumb = imagescale($img, $maxWidth);
+                ob_start();
+                imagejpeg($thumb, null, 70); // fast compressed thumbnail
+                $thumbBlob = ob_get_clean();
+                imagedestroy($img);
+                imagedestroy($thumb);
+            }
+        }
+
+        // Store full media + thumbnail in DB
         $m = $conn->prepare("
-            INSERT INTO chat_media (chat_id, media_path, media_type, media_blob, created_at)
-            VALUES (?, ?, ?, ?, NOW())
+            INSERT INTO chat_media (chat_id, media_path, media_type, media_blob, thumb_blob, created_at)
+            VALUES (?, ?, ?, ?, ?, NOW())
         ");
         $m->bindValue(1, $chatId, PDO::PARAM_INT);
         $m->bindValue(2, $name, PDO::PARAM_STR);
         $m->bindValue(3, $mediaType, PDO::PARAM_STR);
         $m->bindValue(4, $blob, PDO::PARAM_LOB);
+        $m->bindValue(5, $thumbBlob, PDO::PARAM_LOB);
         $m->execute();
     }
 }
