@@ -1,6 +1,6 @@
 // ========================================
 // SkyTruFiber Client Chat System
-// chat_support.js — Instant DOM + Thumb Blob + Fast Upload + Gallery + Swipe + Emoji Popup
+// chat_support.js — Instant DOM + Thumb Blob + Fast Upload + Gallery + Swipe + Emoji + Cancel Upload + Unsend
 // ========================================
 
 let selectedFiles = [];
@@ -8,6 +8,7 @@ let lastMessageID = 0;
 let loadInterval = null;
 let galleryItems = [];
 let currentIndex = 0;
+let currentUploadXHR = null;   // <--- support cancel upload
 
 const username = new URLSearchParams(window.location.search).get("username");
 
@@ -18,7 +19,7 @@ $(document).ready(function () {
         return;
     }
 
-    // Fade animation for first load
+    // Fade intro
     $("#chat-messages").css({ opacity: 0, transform: "translateY(20px)" });
     setTimeout(() => {
         $("#chat-messages").css({
@@ -35,21 +36,22 @@ $(document).ready(function () {
         if (!$("#preview-inline").is(":visible")) loadMessages(false);
     }, 1200);
 
-    // Send message
+    // Send text
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
         if (e.which === 13) { e.preventDefault(); sendMessage(); }
     });
 
-    // Upload select
+    // Upload picker
     $("#upload-btn").click(() => $("#chat-upload-media").click());
     $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
-    // Lightbox
+    // Lightbox media opening
     $(document).on("click", ".media-thumb, .media-video", function () {
+
         const group = $(this).closest(".message");
         const media = group.find(".media-thumb, .media-video");
 
@@ -74,19 +76,18 @@ $(document).ready(function () {
             $("#lightbox-overlay").fadeOut(200);
     });
 
-    // Swipe support
+    // Swipe gestures
     let startX = 0;
-    document.getElementById("lightbox-overlay").addEventListener("touchstart", e => {
-        startX = e.changedTouches[0].clientX;
-    });
-
+    document.getElementById("lightbox-overlay").addEventListener("touchstart", e =>
+        startX = e.changedTouches[0].clientX
+    );
     document.getElementById("lightbox-overlay").addEventListener("touchend", e => {
         const endX = e.changedTouches[0].clientX;
         if (endX < startX - 50) nextLightbox();
         if (endX > startX + 50) prevLightbox();
     });
 
-    // Auto-scroll button
+    // Scroll down button
     const box = $("#chat-messages");
     const btn = $("#scroll-bottom-btn");
 
@@ -104,12 +105,12 @@ $(document).ready(function () {
     // Logout
     $(document).on("click", "#logout-btn", () => window.location.href = "logout.php");
 
-    // ===== EMOJI POPUP =====
+    // Emoji open
     $("#emoji-btn").click(() => {
         $("#emoji-popup").toggleClass("show");
     });
 
-    // Insert emoji
+    // Emoji click
     $(document).on("click", ".emoji-option", function () {
         const emoji = $(this).text();
         const input = $("#message-input");
@@ -119,17 +120,25 @@ $(document).ready(function () {
         input.focus();
     });
 
-    // Close when clicking outside
+    // Click-away emoji hide
     $(document).on("click", function (e) {
         if (!$(e.target).closest("#emoji-popup, #emoji-btn").length) {
             $("#emoji-popup").removeClass("show");
         }
     });
 
+    // DELETE MESSAGE (UNSEND)
+    $(document).on("click", ".delete-btn", function () {
+        const msgID = $(this).data("id");
+        $.post("delete_message_client.php", { id: msgID }, () => {
+            loadMessages(true);
+        });
+    });
+
 });
 
 
-// ===== INSTANT DOM MESSAGE =====
+// ---------------- Instant DOM append ----------------
 function appendClientMessageInstant(msg) {
     $("#chat-messages").append(`
         <div class="message sent fadeup">
@@ -140,12 +149,11 @@ function appendClientMessageInstant(msg) {
             </div>
         </div>
     `);
-
     scrollToBottom();
 }
 
 
-// ===== LOAD MESSAGES =====
+// ---------------- Load messages ----------------
 function loadMessages(scrollBottom = false) {
     $.post("load_messages_client.php", { username }, html => {
         const incoming = $(html);
@@ -161,20 +169,21 @@ function loadMessages(scrollBottom = false) {
 }
 
 
-// ===== SEND =====
+// ---------------- Send message ----------------
 function sendMessage() {
     const msg = $("#message-input").val().trim();
     if (selectedFiles.length > 0) return uploadMedia(selectedFiles, msg);
     if (!msg) return;
 
     appendClientMessageInstant(msg);
+
     $.post("send_message_client.php", { message: msg, username }, () => {
         $("#message-input").val("");
     }, "json");
 }
 
 
-// ===== PREVIEW UPLOAD =====
+// ---------------- Preview thumbnails ----------------
 function previewMultiple(files) {
     $("#preview-files").html("");
     $("#preview-inline").slideDown(200);
@@ -198,10 +207,17 @@ $(document).on("click", ".preview-remove", function () {
 });
 
 
-// UPLOAD
+// ---------------- Upload with Cancel Support ----------------
 function uploadMedia(files, msg = "") {
     const placeholder = addUploadingPlaceholder();
     const bar = $("#" + placeholder).find(".upload-progress-fill");
+
+    // Add cancel upload button
+    $("#" + placeholder).append(`
+        <button class="cancel-upload-btn" data-target="${placeholder}">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    `);
 
     const fd = new FormData();
     files.forEach(f => fd.append("media[]", f));
@@ -213,7 +229,7 @@ function uploadMedia(files, msg = "") {
     $("#chat-upload-media").val("");
     $("#message-input").val("");
 
-    $.ajax({
+    currentUploadXHR = $.ajax({
         url: "upload_media_client.php",
         method: "POST",
         data: fd,
@@ -230,9 +246,30 @@ function uploadMedia(files, msg = "") {
             $("#" + placeholder).remove();
             loadMessages(true);
         },
-        error: err => {
-            console.error("Upload error:", err.responseText);
+        error: () => {
             $("#" + placeholder).remove();
         }
     });
+}
+
+
+// Cancel upload event
+$(document).on("click", ".cancel-upload-btn", function () {
+    const id = $(this).data("target");
+
+    if (currentUploadXHR) currentUploadXHR.abort();
+
+    $("#" + id).fadeOut(200, function () {
+        $(this).remove();
+    });
+
+    selectedFiles = [];
+    $("#chat-upload-media").val("");
+});
+
+
+// ---------------- Scroll ----------------
+function scrollToBottom() {
+    const box = $("#chat-messages");
+    box.stop().animate({ scrollTop: box[0].scrollHeight }, 250);
 }
