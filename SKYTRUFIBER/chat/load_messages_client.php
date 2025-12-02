@@ -66,7 +66,7 @@ foreach ($messages as $msg) {
             $thumbPath = "get_media_client.php?id=$mediaID&thumb=1";       // thumbnail / preview
 
             if ($m["media_type"] === "image") {
-                echo "<img src='$thumbPath' data-full='$filePath' class='media-thumb'>";
+             <img src='$filePath' class='media-thumb'>
             }
 
             elseif ($m["media_type"] === "video") {
