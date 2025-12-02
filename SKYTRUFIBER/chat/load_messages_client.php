@@ -35,7 +35,6 @@ if (!$messages) exit;
 $csrAvatar  = "/upload/default-avatar.png";
 $userAvatar = "/upload/default-avatar.png";
 
-// Render messages
 foreach ($messages as $msg) {
 
     $msgID     = (int)$msg["id"];
@@ -52,18 +51,18 @@ foreach ($messages as $msg) {
     echo "<div class='message-content'>
             <div class='message-bubble'>";
 
-    // ===========================
-    // Soft Deleted Message UI
-    // ===========================
+    // ==========================
+    // If message deleted
+    // ==========================
     if ($msg["deleted"] == 1) {
 
         echo "<span class='removed-text'>Message removed</span>";
 
     } else {
 
-        // ===========================
-        // Load Media Attachments
-        // ===========================
+        // ==========================
+        // Media attachments
+        // ==========================
         $mediaStmt = $conn->prepare("
             SELECT id, media_type
             FROM chat_media
@@ -73,15 +72,10 @@ foreach ($messages as $msg) {
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
         if (!empty($mediaList)) {
-
-            if (count($mediaList) > 1) {
-                echo "<div class='carousel-container'>";
-            }
+            if (count($mediaList) > 1) echo "<div class='carousel-container'>";
 
             foreach ($mediaList as $m) {
                 $mediaID   = (int)$m["id"];
-
-                // blob + thumb link
                 $filePath  = "get_media_client.php?id=$mediaID";
                 $thumbPath = "get_media_client.php?id=$mediaID&thumb=1";
 
@@ -98,28 +92,44 @@ foreach ($messages as $msg) {
                 }
             }
 
-            if (count($mediaList) > 1) {
-                echo "</div>";
-            }
+            if (count($mediaList) > 1) echo "</div>";
         }
 
-        // ===========================
-        // Text Message
-        // ===========================
         if (!empty($msg["message"])) {
             echo nl2br(htmlspecialchars($msg["message"]));
         }
     }
 
-    echo "</div>"; // end bubble
+    echo "</div>"; // bubble
 
-    // Timestamp
+    // ==========================
+    // REACTIONS
+    // ==========================
+    $r = $conn->prepare("
+        SELECT emoji, COUNT(*) AS total
+        FROM chat_reactions
+        WHERE chat_id = ?
+        GROUP BY emoji
+        ORDER BY total DESC
+    ");
+    $r->execute([$msgID]);
+    $reactions = $r->fetchAll(PDO::FETCH_ASSOC);
+
+    if (!empty($reactions)) {
+        echo "<div class='reaction-bar'>";
+        foreach ($reactions as $rc) {
+            echo "<span class='reaction-item'>{$rc['emoji']} <span class='reaction-count'>{$rc['total']}</span></span>";
+        }
+        echo "</div>";
+    }
+
+    // Time
     echo "<div class='message-time'>$timestamp</div>";
 
-    // ===========================
-    // DELETE / UNSEND button
-    // Only for client-sent, not deleted yet
-    // ===========================
+    // Reaction button
+    echo "<button class='react-btn' data-msg-id='$msgID'>😊</button>";
+
+    // Unsend button (Client only)
     if ($sender === "sent" && $msg["deleted"] == 0) {
         echo "<button class='delete-btn' title='Remove message' data-id='$msgID'>
                 <i class='fa-solid fa-trash'></i>
