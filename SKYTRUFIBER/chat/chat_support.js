@@ -1,6 +1,6 @@
 // ========================================
 // SkyTruFiber Client Chat System
-// chat_support.js — Instant DOM + Thumb Blob + Fast Upload + Gallery + Swipe
+// chat_support.js — Instant DOM + Thumb Blob + Fast Upload + Gallery + Swipe + Emoji Popup
 // ========================================
 
 let selectedFiles = [];
@@ -18,9 +18,19 @@ $(document).ready(function () {
         return;
     }
 
+    // Fade animation for first load
+    $("#chat-messages").css({ opacity: 0, transform: "translateY(20px)" });
+    setTimeout(() => {
+        $("#chat-messages").css({
+            opacity: 1,
+            transform: "translateY(0)",
+            transition: "all .45s ease"
+        });
+    }, 150);
+
     loadMessages(true);
 
-    // Refresh server CSR messages only (not client instant)
+    // Refresh CSR messages only
     loadInterval = setInterval(() => {
         if (!$("#preview-inline").is(":visible")) loadMessages(false);
     }, 1200);
@@ -31,16 +41,15 @@ $(document).ready(function () {
         if (e.which === 13) { e.preventDefault(); sendMessage(); }
     });
 
-    // Upload handler
+    // Upload select
     $("#upload-btn").click(() => $("#chat-upload-media").click());
     $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
-    // LIGHTBOX (opens gallery from bubble thumbnails)
+    // Lightbox
     $(document).on("click", ".media-thumb, .media-video", function () {
-
         const group = $(this).closest(".message");
         const media = group.find(".media-thumb, .media-video");
 
@@ -65,18 +74,19 @@ $(document).ready(function () {
             $("#lightbox-overlay").fadeOut(200);
     });
 
-    // Swipe gallery
+    // Swipe support
     let startX = 0;
     document.getElementById("lightbox-overlay").addEventListener("touchstart", e => {
         startX = e.changedTouches[0].clientX;
     });
+
     document.getElementById("lightbox-overlay").addEventListener("touchend", e => {
         const endX = e.changedTouches[0].clientX;
         if (endX < startX - 50) nextLightbox();
         if (endX > startX + 50) prevLightbox();
     });
 
-    // Scroll button display logic
+    // Auto-scroll button
     const box = $("#chat-messages");
     const btn = $("#scroll-bottom-btn");
 
@@ -91,15 +101,38 @@ $(document).ready(function () {
         btn.removeClass("show");
     });
 
-    // Logout button support
+    // Logout
     $(document).on("click", "#logout-btn", () => window.location.href = "logout.php");
+
+    // ===== EMOJI POPUP =====
+    $("#emoji-btn").click(() => {
+        $("#emoji-popup").toggleClass("show");
+    });
+
+    // Insert emoji
+    $(document).on("click", ".emoji-option", function () {
+        const emoji = $(this).text();
+        const input = $("#message-input");
+        const cursor = input.prop("selectionStart");
+        const text = input.val();
+        input.val(text.substring(0, cursor) + emoji + text.substring(cursor));
+        input.focus();
+    });
+
+    // Close when clicking outside
+    $(document).on("click", function (e) {
+        if (!$(e.target).closest("#emoji-popup, #emoji-btn").length) {
+            $("#emoji-popup").removeClass("show");
+        }
+    });
+
 });
 
 
-// ===== INSTANT TEXT DOM INSERT =====
+// ===== INSTANT DOM MESSAGE =====
 function appendClientMessageInstant(msg) {
     $("#chat-messages").append(`
-        <div class="message sent">
+        <div class="message sent fadeup">
             <div class="message-avatar"><img src="/upload/default-avatar.png"></div>
             <div class="message-content">
                 <div class="message-bubble">${msg}</div>
@@ -107,96 +140,41 @@ function appendClientMessageInstant(msg) {
             </div>
         </div>
     `);
+
     scrollToBottom();
 }
 
 
-// ===== LIGHTBOX DISPLAY =====
-function openLightbox(index) {
-    const item = galleryItems[index];
-    $("#lightbox-image, #lightbox-video").hide();
-    $("#lightbox-overlay").fadeIn(200);
-
-    if (item.type === "image") {
-        $("#lightbox-image").attr("src", item.thumb).fadeIn(120);
-
-        const full = new Image();
-        full.onload = () =>
-            $("#lightbox-image").fadeOut(80, () =>
-                $("#lightbox-image").attr("src", item.full).fadeIn(160));
-
-        full.src = item.full;
-        $("#lightbox-download").attr("href", item.full);
-
-    } else {
-        $("#lightbox-video").attr("src", item.full).fadeIn(180);
-        $("#lightbox-download").attr("href", item.full);
-    }
-}
-
-function nextLightbox() { currentIndex = (currentIndex + 1) % galleryItems.length; openLightbox(currentIndex); }
-function prevLightbox() { currentIndex = (currentIndex - 1 + galleryItems.length) % galleryItems.length; openLightbox(currentIndex); }
-
-
-// ===== SCROLL TO BOTTOM =====
-function scrollToBottom() {
-    const box = $("#chat-messages");
-    box.stop().animate({ scrollTop: box[0].scrollHeight }, 250);
-}
-
-
-// ===== UPLOAD PLACEHOLDER =====
-function addUploadingPlaceholder() {
-    const id = "upload-" + Date.now();
-    $("#chat-messages").append(`
-        <div class="message sent" id="${id}">
-            <div class="message-content">
-                <div class="message-bubble">
-                    <div class="upload-progress-bar">
-                        <div class="upload-progress-fill"></div>
-                    </div>
-                </div>
-                <div class="message-time">Uploading...</div>
-            </div>
-        </div>
-    `);
-    scrollToBottom();
-    return id;
-}
-
-
-// ===== LOAD SERVER CHAT DATA =====
+// ===== LOAD MESSAGES =====
 function loadMessages(scrollBottom = false) {
     $.post("load_messages_client.php", { username }, html => {
-
         const incoming = $(html);
         if (!incoming.length) return;
 
         const newID = parseInt(incoming.last().attr("data-msg-id")) || 0;
         if (newID > lastMessageID) {
             lastMessageID = newID;
-            $("#chat-messages").append(incoming);
+            $("#chat-messages").append(incoming.addClass("fadeup"));
             if (scrollBottom) scrollToBottom();
         }
     });
 }
 
 
-// ===== SEND TEXT =====
+// ===== SEND =====
 function sendMessage() {
     const msg = $("#message-input").val().trim();
     if (selectedFiles.length > 0) return uploadMedia(selectedFiles, msg);
     if (!msg) return;
 
-    appendClientMessageInstant(msg); // Instant DOM
-
+    appendClientMessageInstant(msg);
     $.post("send_message_client.php", { message: msg, username }, () => {
         $("#message-input").val("");
     }, "json");
 }
 
 
-// ===== PREVIEW UPLOAD BAR =====
+// ===== PREVIEW UPLOAD =====
 function previewMultiple(files) {
     $("#preview-files").html("");
     $("#preview-inline").slideDown(200);
@@ -212,7 +190,7 @@ function previewMultiple(files) {
 }
 
 
-// Remove preview item
+// Remove preview
 $(document).on("click", ".preview-remove", function () {
     selectedFiles.splice($(this).data("i"), 1);
     if (selectedFiles.length) previewMultiple(selectedFiles);
@@ -220,7 +198,7 @@ $(document).on("click", ".preview-remove", function () {
 });
 
 
-// ===== UPLOAD MEDIA =====
+// UPLOAD
 function uploadMedia(files, msg = "") {
     const placeholder = addUploadingPlaceholder();
     const bar = $("#" + placeholder).find(".upload-progress-fill");
