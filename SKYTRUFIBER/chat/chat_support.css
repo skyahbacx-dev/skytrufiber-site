@@ -89,7 +89,8 @@
   gap: 10px;
   align-items: flex-end;
   max-width: 75%;
-  animation: fadeIn .25s ease;
+  animation: fadeIn .25s ease, fadeup .35s ease;
+  position: relative;
 }
 
 .message.received { align-self: flex-start; flex-direction: row; }
@@ -129,6 +130,19 @@
   border-radius: 20px 20px 20px 4px;
 }
 
+/* REMOVED MESSAGE */
+.removed-text {
+  font-style: italic;
+  color: #777;
+  opacity: .85;
+  font-size: 14px;
+}
+
+.message.removed .message-bubble {
+  background: #d5d5d5 !important;
+  color: #555 !important;
+}
+
 /* TIMESTAMP */
 .message-time {
   font-size: 11px;
@@ -138,7 +152,60 @@
 }
 
 /* ===========================================
-   MEDIA IN BUBBLE
+   DELETE / UNSEND BUTTON
+   =========================================== */
+.delete-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #ff4040;
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  transition: .2s ease;
+}
+.message.sent:hover .delete-btn {
+  display: flex;
+}
+.delete-btn:hover {
+  background: #d92f2f;
+}
+
+/* ===========================================
+   CANCEL UPLOAD BUTTON
+   =========================================== */
+.cancel-upload-btn {
+  background: #ff4040;
+  color: white;
+  border: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 5;
+  font-size: 14px;
+  transition: .25s;
+}
+
+.cancel-upload-btn:hover {
+  background: #c92424;
+}
+
+/* ===========================================
+   MEDIA PREVIEW
    =========================================== */
 .message-bubble img,
 .message-bubble video {
@@ -149,6 +216,7 @@
   object-fit: cover;
   cursor: pointer;
 }
+
 .media-thumb {
   max-width: 240px;
   max-height: 260px;
@@ -181,6 +249,7 @@
   position: relative;
 }
 
+/* Close preview */
 #preview-close {
   position: absolute;
   top: 8px; right: 12px;
@@ -193,6 +262,7 @@
   cursor: pointer;
 }
 
+/* Thumbnails */
 .preview-files {
   display: flex;
   gap: 12px;
@@ -200,9 +270,7 @@
   padding-right: 38px;
 }
 
-.preview-item {
-  position: relative;
-}
+.preview-item { position: relative; }
 
 .preview-thumb {
   width: 95px; height: 95px;
@@ -254,14 +322,15 @@
   border-top: 1px solid #ccc;
 }
 
+/* Upload button */
 .upload-btn {
   border: none; background: none;
   font-size: 22px; cursor: pointer;
   opacity: .7;
 }
-
 .upload-btn:hover { opacity: 1; }
 
+/* Text input */
 .chat-input-box {
   flex: 1;
   border: 1px solid #ccc;
@@ -274,21 +343,17 @@
   font-size: 15px;
 }
 
+/* Send button */
 .chat-send-btn {
   background: #0084ff;
   width: 48px; height: 48px;
   border-radius: 50%;
   border: none;
   cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: flex; justify-content: center; align-items: center;
 }
 
-.chat-send-btn i {
-  font-size: 20px;
-  color: white;
-}
+.chat-send-btn i { color: white; font-size: 20px; }
 
 /* ===========================================
    SCROLL DOWN BUTTON
@@ -358,10 +423,8 @@
   cursor:pointer;
   transition:0.25s;
 }
-
-#lightbox-prev:hover, #lightbox-next:hover {
-  background:rgba(255,255,255,0.4);
-}
+#lightbox-prev:hover,
+#lightbox-next:hover { background:rgba(255,255,255,0.4); }
 
 #lightbox-prev { left:40px; }
 #lightbox-next { right:40px; }
@@ -379,12 +442,8 @@
 }
 
 /* ===========================================
-   ANIMATIONS
+   LOGOUT BUTTON
    =========================================== */
-@keyframes fadeIn {
-  from { opacity:0; transform:translateY(10px); }
-  to { opacity:1; transform:translateY(0); }
-}
 .logout-btn {
   margin-left: auto;
   background: #ff4040;
@@ -399,11 +458,16 @@
   cursor: pointer;
   transition: 0.25s;
 }
+.logout-btn:hover { background: #e03030; }
+.logout-btn i { font-size: 16px; }
 
-.logout-btn:hover {
-  background: #e03030;
+/* ===========================================
+   ANIMATIONS
+   =========================================== */
+@keyframes fadeup {
+  from { opacity:0; transform:translateY(22px); }
+  to { opacity: 1; transform:translateY(0); }
 }
-
-.logout-btn i {
-  font-size: 16px;
+.fadeup {
+  animation: fadeup .35s ease forwards;
 }
