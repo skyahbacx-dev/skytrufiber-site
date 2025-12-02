@@ -1,9 +1,9 @@
 /* ===========================================
-   OVERLAY BACKDROP
+   OVERLAY
    =========================================== */
 #chat-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   background: rgba(0,0,0,0.65);
   display: flex;
   justify-content: center;
@@ -27,6 +27,7 @@
   position: relative;
   overflow: hidden;
   z-index: 10000;
+  animation: fadeup .45s ease forwards;
 }
 
 /* ===========================================
@@ -38,7 +39,7 @@
   display: flex;
   align-items: center;
   border-bottom: 1px solid rgba(255,255,255,.2);
-  z-index: 10010;
+  z-index: 10020;
 }
 
 /* ===========================================
@@ -52,13 +53,16 @@
   gap: 16px;
   overflow-y: auto;
   background: #edf3f8;
-  overflow-x: visible;
-  position: relative;
   z-index: 10;
+}
+.chat-messages::-webkit-scrollbar { width: 6px; }
+.chat-messages::-webkit-scrollbar-thumb {
+  background: #aad2ff;
+  border-radius: 10px;
 }
 
 /* ===========================================
-   MESSAGE STRUCTURE
+   CHAT MESSAGE
    =========================================== */
 .message {
   display: flex;
@@ -67,9 +71,8 @@
   max-width: 75%;
   position: relative;
 }
-
 .message.received { align-self: flex-start; }
-.message.sent     { align-self: flex-end; flex-direction: row-reverse; }
+.message.sent { align-self: flex-end; flex-direction: row-reverse; }
 
 /* Avatar */
 .message-avatar {
@@ -78,14 +81,10 @@
   border-radius: 50%;
   overflow: hidden;
 }
+.message-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-/* ===========================================
-   BUBBLES
-   =========================================== */
-.message-content {
-  position: relative;
-}
-
+/* Bubble */
+.message-content { position: relative; }
 .message-bubble {
   padding: 12px 18px;
   font-size: 15px;
@@ -94,18 +93,15 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   background: #e6e6e6;
   color: #111;
-  max-width: 100%;
   overflow-wrap: break-word;
 }
-
 .message.sent .message-bubble {
   background: #0084ff;
-  color: #fff;
-  border-radius: 20px 20px 4px 20px;
+  color: white;
+  border-radius: 20px 20px 6px 20px;
 }
-
 .message.received .message-bubble {
-  border-radius: 20px 20px 20px 4px;
+  border-radius: 20px 20px 20px 6px;
 }
 
 /* ===========================================
@@ -113,36 +109,95 @@
    =========================================== */
 .edit-textarea {
   width: 100%;
-  min-height: 60px;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid #bbb;
-  padding: 8px 12px;
-  font-size: 14px;
-  outline: none;
+  padding: 10px;
+  font-size: 15px;
   resize: none;
+  outline: none;
 }
-
 .edit-actions {
   display: flex;
   gap: 8px;
   margin-top: 6px;
 }
-
 .edit-save,
 .edit-cancel {
-  font-size: 13px;
   padding: 5px 12px;
   border-radius: 12px;
-  cursor: pointer;
   border: none;
+  font-size: 13px;
+  cursor: pointer;
 }
-
 .edit-save { background: #0084ff; color: white; }
 .edit-cancel { background: #ccc; }
-.edited-label {
-  font-size: 10px;
-  opacity: .65;
-  margin-left: 4px;
+
+/* ===========================================
+   HOVER ACTION BUTTONS
+   =========================================== */
+.action-toolbar {
+  display: flex;
+  gap: 6px;
+  position: absolute;
+  bottom: -16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: .2s;
+  z-index: 50000;
+}
+.message.sent:hover .action-toolbar,
+.message.received:hover .action-toolbar {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.react-btn, .more-btn {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: #ffffff;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.25);
+  display: flex; justify-content:center; align-items:center;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform .18s;
+}
+
+.react-btn:hover, .more-btn:hover { transform: scale(1.14); }
+
+/* Position per side */
+.message.sent .action-toolbar { right: 40px; }
+.message.received .action-toolbar { left: 40px; }
+
+/* ===========================================
+   POPUP MENU (Edit/Unsend/Delete)
+   =========================================== */
+.msg-action-popup {
+  position: fixed;
+  background: white;
+  padding: 8px 0;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  width: 160px;
+  display: none;
+  flex-direction: column;
+  z-index: 60000;
+  transform-origin: top;
+  animation: popupFade .25s ease;
+}
+.msg-action-popup button {
+  background: none;
+  border: none;
+  padding: 10px 14px;
+  text-align:left;
+  cursor:pointer;
+  width:100%;
+  font-size:14px;
+  display:flex;
+  gap:10px;
+}
+.msg-action-popup button:hover {
+  background:#f2f2f2;
 }
 
 /* ===========================================
@@ -152,157 +207,49 @@
   display: inline-flex;
   gap: 4px;
   margin-top: 4px;
-  padding: 2px 6px;
-  background: rgba(255,255,255,0.95);
+  background: rgba(255,255,255,0.92);
+  padding: 3px 6px;
   border-radius: 999px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   font-size: 13px;
-}
-
-/* Reaction button */
-.react-btn {
-  position: absolute;
-  bottom: -12px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: none;
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  transition: .18s;
-  z-index: 20000;
-}
-
-.message.sent   .react-btn { right: 34px; }
-.message.received .react-btn { left: 34px; }
-
-.message:hover .react-btn {
-  opacity: 1;
-  pointer-events: auto;
+  box-shadow:0 2px 6px rgba(0,0,0,0.12);
 }
 
 /* Reaction Picker */
 .reaction-picker {
   position: fixed;
-  background: #ffffff;
+  background: white;
+  padding: 8px;
   border-radius: 999px;
-  padding: 6px 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
   display: none;
+  gap: 6px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  z-index: 61000;
+  transform: translateY(12px);
   opacity: 0;
-  transform: translateY(10px);
-  transition: all .25s ease;
-  z-index: 30000;
-  gap: 4px;
+  transition: .25s ease;
 }
-
 .reaction-picker.show {
   display: flex;
   opacity: 1;
   transform: translateY(0);
 }
-
-/* ===========================================
-   DELETE BUTTON
-   =========================================== */
-.delete-btn {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: #ff4040;
+.reaction-choice {
+  font-size: 20px;
+  background: none;
   border: none;
-  color: white;
-  font-size: 13px;
-  display: none;
-  z-index: 20000;
+  cursor: pointer;
 }
-
-.message.sent:hover .delete-btn { display: flex; }
+.reaction-choice:hover { transform: scale(1.25); }
 
 /* ===========================================
-   UPLOAD / PROGRESS
+   ANIMATIONS
    =========================================== */
-.upload-progress-bar {
-  width: 200px;
-  height: 8px;
-  background: rgba(255,255,255,0.4);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.upload-progress-fill {
-  height: 100%;
-  width: 0%;
-  background: #00e676;
-  transition: width .2s linear;
-}
-
-/* ===========================================
-   PREVIEW UPLOAD BAR
-   =========================================== */
-.preview-inline {
-  background: #ffffff;
-  padding: 12px;
-  border-top: 1px solid #ccc;
-  display: none;
-}
-
-/* ===========================================
-   SCROLL DOWN BUTTON
-   =========================================== */
-.scroll-bottom-btn {
-  position: absolute;
-  bottom: 110px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #0084ff;
-  border: none;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 14px rgba(0,0,0,.3);
-  z-index: 10050;
-}
-
-.scroll-bottom-btn i {
-  color: #fff;
-  font-size: 22px;
-}
-
-.scroll-bottom-btn.show {
-  display: flex;
-}
-
-/* ===========================================
-   LIGHTBOX
-   =========================================== */
-#lightbox-overlay {
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.85);
-  justify-content:center;
-  align-items:center;
-  z-index: 50000;
-}
-
-/* Animations */
 @keyframes fadeup {
-  from { opacity: 0; transform: translateY(26px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity:0; transform:translateY(30px); }
+  to   { opacity:1; transform:translateY(0); }
 }
-
+@keyframes popupFade {
+  from { opacity:0; transform:scale(.7); }
+  to   { opacity:1; transform:scale(1); }
+}
 .fadeup { animation: fadeup .35s ease forwards; }
