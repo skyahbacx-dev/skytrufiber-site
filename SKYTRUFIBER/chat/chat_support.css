@@ -541,3 +541,31 @@
 .fadeup {
   animation: fadeup .35s ease forwards;
 }
+/* Reaction picker popup (appears near bubble) */
+.reaction-picker {
+  position: absolute;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 4px 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  display: none;
+  z-index: 10000;
+  gap: 4px;
+}
+
+.reaction-picker.show {
+  display: flex;
+}
+
+.reaction-choice {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.reaction-choice:hover {
+  transform: scale(1.2);
+}
