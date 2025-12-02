@@ -92,7 +92,7 @@ $(document).ready(function () {
     });
 
     // Logout button support
-    $(document).on("click", "#logout-btn", () => window.location.href = "skytrufiber.php");
+    $(document).on("click", "#logout-btn", () => window.location.href = "logout.php");
 });
 
 
