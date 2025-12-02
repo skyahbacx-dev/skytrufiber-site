@@ -147,6 +147,31 @@
 }
 
 /* ===========================================
+   MEDIA INSIDE BUBBLES
+   =========================================== */
+.message-bubble img,
+.message-bubble video {
+  max-width: 240px;
+  max-height: 260px;
+  border-radius: 14px;
+  object-fit: cover;
+  margin-top: 6px;
+  cursor: pointer;
+}
+/* Carousel */
+.carousel-container {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 6px 0;
+}
+.carousel-container::-webkit-scrollbar { height: 6px; }
+.carousel-container::-webkit-scrollbar-thumb {
+  background: #aad2ff;
+  border-radius: 6px;
+}
+
+/* ===========================================
    EDIT MODE
    =========================================== */
 .edit-textarea {
