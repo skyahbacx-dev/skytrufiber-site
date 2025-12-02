@@ -10,7 +10,7 @@ let galleryItems = [];
 let currentIndex = 0;
 let currentUploadXHR = null;
 let reactingToMsgId = null;
-let activePopup = null;        // track popup visibility
+let activePopup = null;
 let editing = false;
 
 const reactionChoices = ["👍", "❤️", "😂", "😮", "😢", "😡"];
@@ -25,18 +25,18 @@ $(document).ready(function () {
 
     loadMessages(true);
 
-    // Auto refresh
+    // Auto-refresh
     loadInterval = setInterval(() => {
         if (!$("#preview-inline").is(":visible") && !editing) loadMessages(false);
     }, 1200);
 
-    // Send button
+    // Send
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
         if (e.which === 13) { e.preventDefault(); sendMessage(); }
     });
 
-    // Upload files
+    // Upload media
     $("#upload-btn").click(() => $("#chat-upload-media").click());
     $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
@@ -44,7 +44,7 @@ $(document).ready(function () {
     });
 
     // ==========================
-    // MORE (…) POPUP OPTIONS
+    // MENU POPUP (…)
     // ==========================
     $(document).on("click", ".more-btn", function (e) {
         e.stopPropagation();
@@ -54,12 +54,11 @@ $(document).ready(function () {
 
         const btnOffset = $(this).offset();
         const popup = buildPopup(msgID);
-
         $("body").append(popup);
 
         const $popup = $("#msg-action-popup");
         $popup.css({
-            top: btnOffset.top - $popup.outerHeight() - 5,
+            top: btnOffset.top - $popup.outerHeight() - 6,
             left: btnOffset.left - ($popup.outerWidth() / 2) + 13
         }).fadeIn(120);
 
@@ -67,37 +66,32 @@ $(document).ready(function () {
     });
 
     $(document).on("click", ".popup-edit", function () {
-        const msgID = $(this).data("id");
-        startEdit(msgID);
+        startEdit($(this).data("id"));
         closePopup();
     });
 
     $(document).on("click", ".popup-unsend", function () {
-        const msgID = $(this).data("id");
-        $.post("delete_message_client.php", { id: msgID }, () => loadMessages(true));
+        $.post("delete_message_client.php", { id: $(this).data("id"), username }, () => loadMessages(true));
         closePopup();
     });
 
     $(document).on("click", ".popup-delete", function () {
-        const msgID = $(this).data("id");
-        $.post("delete_message_client.php", { id: msgID }, () => loadMessages(true));
+        $.post("delete_message_client.php", { id: $(this).data("id"), username }, () => loadMessages(true));
         closePopup();
     });
 
-    // close popup anywhere
+    $(document).on("click", ".popup-cancel", closePopup);
+
     $(document).on("click", function (e) {
-        if (!$(e.target).closest("#msg-action-popup, .more-btn").length) {
-            closePopup();
-        }
+        if (!$(e.target).closest("#msg-action-popup, .more-btn").length) closePopup();
     });
 
     // ==========================
-    // EDIT MESSAGE MODE
+    // EDIT MODE
     // ==========================
     function startEdit(msgID) {
         editing = true;
-        const messageDiv = $(`.message[data-msg-id='${msgID}']`);
-        const bubble = messageDiv.find(".message-bubble");
+        const bubble = $(`.message[data-msg-id='${msgID}'] .message-bubble`);
         const original = bubble.text();
 
         bubble.html(`
@@ -111,8 +105,9 @@ $(document).ready(function () {
 
     $(document).on("click", ".edit-save", function () {
         const msgID = $(this).data("id");
-        const val = $(this).closest(".message-bubble").find(".edit-textarea").val().trim();
-        $.post("edit_message_client.php", { id: msgID, message: val }, () => {
+        const newText = $(this).closest(".message-bubble").find(".edit-textarea").val().trim();
+
+        $.post("edit_message_client.php", { id: msgID, message: newText }, () => {
             editing = false;
             loadMessages(true);
         });
@@ -131,36 +126,28 @@ $(document).ready(function () {
         reactingToMsgId = $(this).data("msg-id");
 
         const $picker = ensureReactionPicker();
-        const btnOffset = $(this).offset();
-        const pickerWidth = $picker.outerWidth();
-        const pickerHeight = $picker.outerHeight();
-        const btnWidth = $(this).outerWidth();
+        const off = $(this).offset();
 
         $picker.css({
-            top: btnOffset.top - pickerHeight - 10,
-            left: btnOffset.left - (pickerWidth / 2) + (btnWidth / 2)
+            top: off.top - $picker.outerHeight() - 10,
+            left: off.left - ($picker.outerWidth() / 2) + 13
         }).addClass("show");
     });
 
     $(document).on("click", ".reaction-choice", function () {
-        $.post("react_message_client.php", {
-            chat_id: reactingToMsgId,
-            emoji: $(this).data("emoji")
-        }, () => loadMessages(false));
-
+        $.post("react_message_client.php", { chat_id: reactingToMsgId, emoji: $(this).data("emoji") },
+            () => loadMessages(false)
+        );
         $("#reaction-picker").removeClass("show");
     });
 
     $(document).on("click", function (e) {
-        if (!$(e.target).closest("#reaction-picker,.react-btn").length) {
+        if (!$(e.target).closest("#reaction-picker,.react-btn").length)
             $("#reaction-picker").removeClass("show");
-        }
     });
 
 });
 
-// ==========================
-// POPUP BUILDER
 // ==========================
 function buildPopup(id) {
     return `
@@ -174,14 +161,10 @@ function buildPopup(id) {
 }
 
 function closePopup() {
-    if (activePopup) {
-        activePopup.fadeOut(120, () => activePopup.remove());
-        activePopup = null;
-    }
+    if (activePopup) activePopup.fadeOut(120, () => activePopup.remove());
+    activePopup = null;
 }
 
-// ==========================
-// REACTION PICKER
 // ==========================
 function ensureReactionPicker() {
     let $picker = $("#reaction-picker");
@@ -192,16 +175,19 @@ function ensureReactionPicker() {
             ${reactionChoices.map(e => `<button class="reaction-choice" data-emoji="${e}">${e}</button>`).join("")}
         </div>
     `);
-
     return $("#reaction-picker");
 }
 
 // ==========================
-// MESSAGE LOADING
+// LOAD ALL MESSAGES EVERY TIME
 // ==========================
 function loadMessages(scrollBottom = false) {
     $.post("load_messages_client.php", { username }, html => {
-        $("#chat-messages").html(html);    // full rerender
+
+        if (html.startsWith("Fatal") || html.toLowerCase().includes("error")) return;
+
+        $("#chat-messages").html(html);
+
         const msgs = $("#chat-messages .message");
         if (!msgs.length) return;
 
@@ -211,21 +197,18 @@ function loadMessages(scrollBottom = false) {
 }
 
 // ==========================
-// SEND MESSAGE
-// ==========================
 function sendMessage() {
     const msg = $("#message-input").val().trim();
     if (selectedFiles.length > 0) return uploadMedia(selectedFiles, msg);
     if (!msg) return;
 
     appendClientMessageInstant(msg);
+
     $.post("send_message_client.php", { message: msg, username }, () => {
         $("#message-input").val("");
     }, "json");
 }
 
-// ==========================
-// INSTANT DOM
 // ==========================
 function appendClientMessageInstant(msg) {
     $("#chat-messages").append(`
@@ -241,19 +224,17 @@ function appendClientMessageInstant(msg) {
 }
 
 // ==========================
-// MEDIA UPLOAD + PREVIEW + CANCEL
-// ==========================
 function previewMultiple(files) {
     $("#preview-files").html("");
     $("#preview-inline").slideDown(200);
 
-    files.forEach((file, index) => {
+    files.forEach((file, idx) => {
         $("#preview-files").append(`
             <div class="preview-item">
                 ${file.type.startsWith("image")
                 ? `<img src="${URL.createObjectURL(file)}" class="preview-thumb">`
                 : `<div class="file-box">📎 ${file.name}</div>`}
-                <button class="preview-remove" data-i="${index}">&times;</button>
+                <button class="preview-remove" data-i="${idx}">&times;</button>
             </div>
         `);
     });
@@ -265,10 +246,6 @@ $(document).on("click", ".preview-remove", function () {
     else $("#preview-inline").slideUp(200);
 });
 
-// Upload system omitted (remains same from your latest version)
-
-// ==========================
-// SCROLL
 // ==========================
 function scrollToBottom() {
     const box = $("#chat-messages");
