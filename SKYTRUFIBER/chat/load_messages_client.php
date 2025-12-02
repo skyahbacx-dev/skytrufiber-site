@@ -21,7 +21,7 @@ $client_id = (int)$clientRow["id"];
 
 // Fetch chat messages
 $stmt = $conn->prepare("
-    SELECT id, sender_type, message, created_at
+    SELECT id, sender_type, message, created_at, deleted
     FROM chat
     WHERE client_id = ?
     ORDER BY created_at ASC
@@ -35,6 +35,7 @@ if (!$messages) exit;
 $csrAvatar  = "/upload/default-avatar.png";
 $userAvatar = "/upload/default-avatar.png";
 
+// Render messages
 foreach ($messages as $msg) {
 
     $msgID     = (int)$msg["id"];
@@ -42,7 +43,7 @@ foreach ($messages as $msg) {
     $avatar    = ($sender === "received") ? $csrAvatar : $userAvatar;
     $timestamp = date("g:i A", strtotime($msg["created_at"]));
 
-    echo "<div class='message $sender' data-msg-id='$msgID'>";
+    echo "<div class='message $sender fadeup' data-msg-id='$msgID'>";
 
     echo "<div class='message-avatar'>
             <img src='$avatar' alt='avatar'>
@@ -51,48 +52,67 @@ foreach ($messages as $msg) {
     echo "<div class='message-content'>
             <div class='message-bubble'>";
 
-    // ===== Load media files =====
-    $mediaStmt = $conn->prepare("
-        SELECT id, media_type
-        FROM chat_media
-        WHERE chat_id = ?
-    ");
-    $mediaStmt->execute([$msgID]);
-    $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
+    // =======================
+    // If deleted: show removed placeholder
+    // =======================
+    if ($msg["deleted"] == 1) {
+        echo "<span class='removed-text'>Message removed</span>";
+    } else {
 
-    if ($mediaList) {
+        // ===== Load media files =====
+        $mediaStmt = $conn->prepare("
+            SELECT id, media_type
+            FROM chat_media
+            WHERE chat_id = ?
+        ");
+        $mediaStmt->execute([$msgID]);
+        $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if (count($mediaList) > 1) echo "<div class='carousel-container'>";
+        if ($mediaList) {
 
-        foreach ($mediaList as $m) {
+            if (count($mediaList) > 1) echo "<div class='carousel-container'>";
 
-            $mediaID   = (int)$m["id"];
-            $filePath  = "get_media_client.php?id=$mediaID";               // full media
-            $thumbPath = "get_media_client.php?id=$mediaID&thumb=1";       // thumbnail preview
+            foreach ($mediaList as $m) {
 
-            if ($m["media_type"] === "image") {
-                echo "<img src='$thumbPath' data-full='$filePath' class='media-thumb'>";
+                $mediaID   = (int)$m["id"];
+                $filePath  = "get_media_client.php?id=$mediaID";
+                $thumbPath = "get_media_client.php?id=$mediaID&thumb=1";
+
+                if ($m["media_type"] === "image") {
+                    echo "<img src='$thumbPath' data-full='$filePath' class='media-thumb'>";
+                }
+                elseif ($m["media_type"] === "video") {
+                    echo "<video muted preload='metadata' data-full='$filePath' class='media-video'>
+                            <source src='$thumbPath' type='video/mp4'>
+                          </video>";
+                }
+                else {
+                    echo "<a href='$filePath' download class='file-link'>📎 Download File</a>";
+                }
             }
-            elseif ($m["media_type"] === "video") {
-                echo "<video muted preload='metadata' data-full='$filePath' class='media-video'>
-                        <source src='$thumbPath' type='video/mp4'>
-                      </video>";
-            }
-            else {
-                echo "<a href='$filePath' download class='file-link'>📎 Download File</a>";
-            }
+
+            if (count($mediaList) > 1) echo "</div>";
         }
 
-        if (count($mediaList) > 1) echo "</div>";
+        // ===== Text =====
+        if (!empty($msg["message"])) {
+            echo nl2br(htmlspecialchars($msg["message"]));
+        }
     }
 
-    // ===== Text Message =====
-    if (!empty($msg["message"])) {
-        echo nl2br(htmlspecialchars($msg["message"]));
-    }
+    // Close bubble
+    echo "</div>";
 
-    echo "</div>"; // close bubble
+    // Timestamp
     echo "<div class='message-time'>$timestamp</div>";
+
+    // Unsend button (CLIENT ONLY & not deleted)
+    if ($sender === "sent" && $msg["deleted"] == 0) {
+        echo "<button class='delete-btn' data-id='$msgID'>
+                <i class='fa-solid fa-trash'></i>
+              </button>";
+    }
+
     echo "</div></div>";
 }
 ?>
