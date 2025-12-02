@@ -16,8 +16,9 @@
 <body>
 
 <div id="chat-overlay">
-    <div class="chat-modal">
+    <div class="chat-modal fadeup">
 
+        <!-- HEADER -->
         <div class="chat-header">
             <div class="chat-header-left">
                 <img src="../../SKYTRUFIBER.png" class="chat-header-logo">
@@ -32,14 +33,18 @@
             </button>
         </div>
 
+        <!-- CHAT MESSAGES -->
         <div id="chat-messages" class="chat-messages"></div>
 
+        <!-- INLINE PREVIEW BAR -->
         <div id="preview-inline" class="preview-inline">
             <div id="preview-close" title="Remove all previews">&times;</div>
             <div id="preview-files" class="preview-files"></div>
         </div>
 
+        <!-- INPUT AREA -->
         <div class="chat-input-area">
+
             <input type="file" id="chat-upload-media" multiple hidden>
 
             <button id="upload-btn" class="upload-btn">
@@ -53,8 +58,10 @@
             <button id="send-btn" class="chat-send-btn">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
+
         </div>
 
+        <!-- SCROLL DOWN BUTTON -->
         <button id="scroll-bottom-btn" class="scroll-bottom-btn">
             <i class="fa-solid fa-arrow-down"></i>
         </button>
@@ -62,25 +69,32 @@
     </div>
 </div>
 
+
+<!-- LIGHTBOX -->
 <div id="lightbox-overlay">
     <span id="lightbox-close">&times;</span>
+
     <img id="lightbox-image" style="display:none;">
     <video id="lightbox-video" controls style="display:none; border-radius:14px;"></video>
+
     <button id="lightbox-prev" class="lightbox-nav">&#10094;</button>
     <button id="lightbox-next" class="lightbox-nav">&#10095;</button>
+
     <a id="lightbox-download" href="#" download class="lightbox-download">
         <i class="fa-solid fa-download"></i> Download
     </a>
 </div>
 
-<!-- EMOJI POPUP -->
-<div id="emoji-popup" class="emoji-popup">
-    <span class="emoji-option">👍</span>
-    <span class="emoji-option">❤️</span>
-    <span class="emoji-option">😂</span>
-    <span class="emoji-option">😮</span>
-    <span class="emoji-option">😢</span>
-    <span class="emoji-option">😡</span>
+
+<!-- REACTION PICKER -->
+<div id="reaction-picker" class="reaction-picker"></div>
+
+<!-- MESSAGE ACTION POPUP (Edit / Unsend / Delete) -->
+<div id="msg-action-popup" class="msg-action-popup">
+    <button class="action-edit"><i class="fa-solid fa-pen"></i> Edit</button>
+    <button class="action-unsend"><i class="fa-solid fa-ban"></i> Unsend</button>
+    <button class="action-delete"><i class="fa-solid fa-trash"></i> Delete</button>
+    <button class="action-cancel">Cancel</button>
 </div>
 
 </body>
