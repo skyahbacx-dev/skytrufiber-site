@@ -19,9 +19,9 @@ if (!$clientRow) exit("User not found");
 
 $client_id = (int)$clientRow["id"];
 
-// Fetch chat messages including delete flag
+// Fetch chat messages including delete + edited flags
 $stmt = $conn->prepare("
-    SELECT id, sender_type, message, created_at, deleted
+    SELECT id, sender_type, message, created_at, deleted, edited
     FROM chat
     WHERE client_id = ?
     ORDER BY created_at ASC
@@ -40,6 +40,7 @@ foreach ($messages as $msg) {
     $sender    = ($msg["sender_type"] === "csr") ? "received" : "sent";
     $avatar    = ($sender === "received") ? $csrAvatar : $userAvatar;
     $timestamp = date("g:i A", strtotime($msg["created_at"]));
+    $isEdited  = ($msg["edited"] == 1); // Edited flag
 
     echo "<div class='message $sender fadeup' data-msg-id='$msgID'>";
 
@@ -51,14 +52,14 @@ foreach ($messages as $msg) {
 
     echo "<div class='message-bubble'>";
 
-    // =============== Deleted placeholder
+    // Deleted placeholder
     if ($msg["deleted"] == 1) {
 
         echo "<span class='removed-text'>Message removed</span>";
 
     } else {
 
-        // =============== Load media attachments
+        // Load media attachments
         $mediaStmt = $conn->prepare("
             SELECT id, media_type
             FROM chat_media
@@ -92,16 +93,15 @@ foreach ($messages as $msg) {
             if (count($mediaList) > 1) echo "</div>";
         }
 
-        // =============== Text message
+        // Actual Text
         if (!empty($msg["message"])) {
             echo nl2br(htmlspecialchars($msg["message"]));
         }
     }
 
-    echo "</div>"; // end message-bubble
+    echo "</div>"; // end bubble
 
-
-    // =============== Reactions display bar
+    // Reactions bar
     $r = $conn->prepare("
         SELECT emoji, COUNT(*) AS total
         FROM chat_reactions
@@ -120,19 +120,21 @@ foreach ($messages as $msg) {
         echo "</div>";
     }
 
-    // Time
-    echo "<div class='message-time'>$timestamp</div>";
+    // Timestamp + Edited label
+    echo "<div class='message-time'>$timestamp";
+    if ($isEdited) echo " <span class='edited-label'>(edited)</span>";
+    echo "</div>";
 
-    // =============== Reaction Button (must exist!)
+    // Reaction button
     echo "<button class='react-btn' data-msg-id='$msgID'>😊</button>";
 
-    // =============== Unsend / Delete only client side
+    // Delete (unsend) button only for client
     if ($sender === 'sent' && $msg['deleted'] == 0) {
         echo "<button class='delete-btn' title='Remove message' data-id='$msgID'>
                 <i class='fa-solid fa-trash'></i>
               </button>";
     }
 
-    echo "</div></div>"; // end content & message row
+    echo "</div></div>"; // content + message
 }
 ?>
