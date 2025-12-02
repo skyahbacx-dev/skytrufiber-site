@@ -220,27 +220,41 @@
 }
 
 /* React Button */
+/* Reaction trigger button (Messenger style hover) */
 .react-btn {
   position: absolute;
-  bottom: -13px;
+  bottom: -10px;
   width: 26px;
   height: 26px;
-  border: none;
   border-radius: 50%;
-  display: none;
-  justify-content: center;
+  border: none;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  display: flex;
   align-items: center;
-  font-size: 14px;
+  justify-content: center;
   cursor: pointer;
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  font-size: 15px;
+  z-index: 5;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
 }
 
-.message.sent .react-btn { right: 35px; }
-.message.received .react-btn { left: 35px; }
+.message.sent .react-btn {
+  right: 34px;
+}
 
-.message:hover .react-btn { display: flex; }
-.react-btn:hover { background: #ffeaa7; }
+.message.received .react-btn {
+  left: 34px;
+}
+
+/* Show on hover */
+.message:hover .react-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
 
 /* Reaction Picker */
 .reaction-picker {
