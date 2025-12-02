@@ -52,7 +52,6 @@ if (!empty($_FILES["media"]["name"])) {
 
         $tmp  = $_FILES["media"]["tmp_name"][$i];
         $type = $_FILES["media"]["type"][$i];
-        $size = $_FILES["media"]["size"][$i];
 
         if (!file_exists($tmp)) continue;
 
@@ -64,22 +63,24 @@ if (!empty($_FILES["media"]["name"])) {
         if (strpos($type, "image") !== false) $mediaType = "image";
         elseif (strpos($type, "video") !== false) $mediaType = "video";
 
-        // Generate thumbnail for images only
+        // Generate thumbnail (image only)
         $thumbBlob = null;
         if ($mediaType === "image") {
-            $img = @imagecreatefromstring($blob);
-            if ($img) {
-                $maxWidth = 250;
-                $thumb = imagescale($img, $maxWidth);
-                ob_start();
-                imagejpeg($thumb, null, 70); // fast compressed thumbnail
-                $thumbBlob = ob_get_clean();
-                imagedestroy($img);
-                imagedestroy($thumb);
+            try {
+                if (class_exists("Imagick")) {
+                    $img = new Imagick();
+                    $img->readImageBlob($blob);
+                    $img->thumbnailImage(250, 250, true);
+                    $thumbBlob = $img->getImageBlob();
+                    $img->clear();
+                    $img->destroy();
+                }
+            } catch (Exception $e) {
+                $thumbBlob = null; // fails safely
             }
         }
 
-        // Store full media + thumbnail in DB
+        // Store media & thumbnail
         $m = $conn->prepare("
             INSERT INTO chat_media (chat_id, media_path, media_type, media_blob, thumb_blob, created_at)
             VALUES (?, ?, ?, ?, ?, NOW())
