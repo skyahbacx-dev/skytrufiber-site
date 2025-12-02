@@ -1,6 +1,6 @@
 // ========================================
 // SkyTruFiber Client Chat System
-// chat_support.js — Instant DOM + Thumb Blob + Fast Upload + Gallery + Swipe + Emoji + Cancel Upload + Unsend
+// chat_support.js — + Reactions + Cancel Upload + Unsend + Animation
 // ========================================
 
 let selectedFiles = [];
@@ -8,7 +8,9 @@ let lastMessageID = 0;
 let loadInterval = null;
 let galleryItems = [];
 let currentIndex = 0;
-let currentUploadXHR = null;   // <--- support cancel upload
+let currentUploadXHR = null;
+let reactionPopupVisible = false;
+let activeReactionMsg = null;
 
 const username = new URLSearchParams(window.location.search).get("username");
 
@@ -36,20 +38,50 @@ $(document).ready(function () {
         if (!$("#preview-inline").is(":visible")) loadMessages(false);
     }, 1200);
 
-    // Send text
+    // Send
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
         if (e.which === 13) { e.preventDefault(); sendMessage(); }
     });
 
-    // Upload picker
+    // Upload input
     $("#upload-btn").click(() => $("#chat-upload-media").click());
     $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
-    // Lightbox media opening
+    // ================= Reaction button click =================
+    $(document).on("click", ".react-btn", function (e) {
+        e.stopPropagation();
+        const msg = $(this).closest(".message");
+        activeReactionMsg = msg.data("msg-id");
+        showReactionPopup(msg);
+    });
+
+    // Reaction selected
+    $(document).on("click", ".reaction-popup span", function () {
+        const emoji = $(this).text();
+        sendReaction(activeReactionMsg, emoji);
+        hideReactionPopup();
+    });
+
+    // Close when clicking outside
+    $(document).on("click", function (e) {
+        if (!$(e.target).closest(".reaction-popup, .react-btn").length) {
+            hideReactionPopup();
+        }
+    });
+
+    // DELETE UNSEND
+    $(document).on("click", ".delete-btn", function () {
+        const msgID = $(this).data("id");
+        $.post("delete_message_client.php", { id: msgID }, () => {
+            loadMessages(true);
+        });
+    });
+
+    // Lightbox + swipe
     $(document).on("click", ".media-thumb, .media-video", function () {
 
         const group = $(this).closest(".message");
@@ -70,13 +102,11 @@ $(document).ready(function () {
 
     $("#lightbox-next").click(nextLightbox);
     $("#lightbox-prev").click(prevLightbox);
-
     $("#lightbox-close, #lightbox-overlay").click(e => {
         if (e.target.id === "lightbox-overlay" || e.target.id === "lightbox-close")
             $("#lightbox-overlay").fadeOut(200);
     });
 
-    // Swipe gestures
     let startX = 0;
     document.getElementById("lightbox-overlay").addEventListener("touchstart", e =>
         startX = e.changedTouches[0].clientX
@@ -87,16 +117,14 @@ $(document).ready(function () {
         if (endX > startX + 50) prevLightbox();
     });
 
-    // Scroll down button
+    // Scroll button
     const box = $("#chat-messages");
     const btn = $("#scroll-bottom-btn");
-
     box.on("scroll", () => {
         const atBottom = box[0].scrollHeight - box.scrollTop() - box.outerHeight() < 50;
         if (atBottom) btn.removeClass("show");
         else btn.addClass("show");
     });
-
     btn.click(() => {
         scrollToBottom();
         btn.removeClass("show");
@@ -104,41 +132,60 @@ $(document).ready(function () {
 
     // Logout
     $(document).on("click", "#logout-btn", () => window.location.href = "logout.php");
-
-    // Emoji open
-    $("#emoji-btn").click(() => {
-        $("#emoji-popup").toggleClass("show");
-    });
-
-    // Emoji click
-    $(document).on("click", ".emoji-option", function () {
-        const emoji = $(this).text();
-        const input = $("#message-input");
-        const cursor = input.prop("selectionStart");
-        const text = input.val();
-        input.val(text.substring(0, cursor) + emoji + text.substring(cursor));
-        input.focus();
-    });
-
-    // Click-away emoji hide
-    $(document).on("click", function (e) {
-        if (!$(e.target).closest("#emoji-popup, #emoji-btn").length) {
-            $("#emoji-popup").removeClass("show");
-        }
-    });
-
-    // DELETE MESSAGE (UNSEND)
-    $(document).on("click", ".delete-btn", function () {
-        const msgID = $(this).data("id");
-        $.post("delete_message_client.php", { id: msgID }, () => {
-            loadMessages(true);
-        });
-    });
-
 });
 
 
-// ---------------- Instant DOM append ----------------
+// ================= Reaction Popup ==================
+function showReactionPopup(msg) {
+    hideReactionPopup();
+
+    const popup = $(`
+        <div class="reaction-popup">
+            <span>❤️</span>
+            <span>😂</span>
+            <span>👍</span>
+            <span>😢</span>
+            <span>😡</span>
+        </div>
+    `);
+
+    $("body").append(popup);
+
+    const offset = msg.offset();
+    const bubble = msg.find(".message-bubble");
+    popup.css({
+        top: offset.top - popup.outerHeight() - 10,
+        left: offset.left + bubble.outerWidth() / 2 - popup.outerWidth() / 2
+    });
+
+    reactionPopupVisible = true;
+}
+
+function hideReactionPopup() {
+    $(".reaction-popup").remove();
+    reactionPopupVisible = false;
+}
+
+
+// ================= Reaction AJAX ==================
+function sendReaction(msgID, emoji) {
+    $.post("add_reaction.php", { id: msgID, emoji, username }, () => {
+        updateReactionDisplay(msgID);
+    });
+}
+
+// Refresh only reactions (not messages)
+function updateReactionDisplay(msgID) {
+    $.post("load_reactions.php", { id: msgID }, html => {
+        $(`.message[data-msg-id="${msgID}"] .reaction-bar`).remove();
+        if (html.trim() !== "") {
+            $(`.message[data-msg-id="${msgID}"] .message-content`).append(html);
+        }
+    });
+}
+
+
+// Instant Add Text Bubble
 function appendClientMessageInstant(msg) {
     $("#chat-messages").append(`
         <div class="message sent fadeup">
@@ -146,6 +193,7 @@ function appendClientMessageInstant(msg) {
             <div class="message-content">
                 <div class="message-bubble">${msg}</div>
                 <div class="message-time">now</div>
+                <button class="react-btn">😊</button>
             </div>
         </div>
     `);
@@ -153,9 +201,10 @@ function appendClientMessageInstant(msg) {
 }
 
 
-// ---------------- Load messages ----------------
+// Load messages
 function loadMessages(scrollBottom = false) {
     $.post("load_messages_client.php", { username }, html => {
+
         const incoming = $(html);
         if (!incoming.length) return;
 
@@ -169,7 +218,7 @@ function loadMessages(scrollBottom = false) {
 }
 
 
-// ---------------- Send message ----------------
+// Send Message
 function sendMessage() {
     const msg = $("#message-input").val().trim();
     if (selectedFiles.length > 0) return uploadMedia(selectedFiles, msg);
@@ -183,7 +232,7 @@ function sendMessage() {
 }
 
 
-// ---------------- Preview thumbnails ----------------
+// Preview files
 function previewMultiple(files) {
     $("#preview-files").html("");
     $("#preview-inline").slideDown(200);
@@ -193,13 +242,12 @@ function previewMultiple(files) {
         const thumb = file.type.startsWith("image")
             ? `<img src="${URL.createObjectURL(file)}" class="preview-thumb">`
             : `<div class="file-box">📎 ${file.name}</div>`;
-
         $("#preview-files").append(`<div class="preview-item">${thumb}${remove}</div>`);
     });
 }
 
 
-// Remove preview
+// Cancel Upload
 $(document).on("click", ".preview-remove", function () {
     selectedFiles.splice($(this).data("i"), 1);
     if (selectedFiles.length) previewMultiple(selectedFiles);
@@ -207,12 +255,10 @@ $(document).on("click", ".preview-remove", function () {
 });
 
 
-// ---------------- Upload with Cancel Support ----------------
 function uploadMedia(files, msg = "") {
     const placeholder = addUploadingPlaceholder();
     const bar = $("#" + placeholder).find(".upload-progress-fill");
 
-    // Add cancel upload button
     $("#" + placeholder).append(`
         <button class="cancel-upload-btn" data-target="${placeholder}">
             <i class="fa-solid fa-xmark"></i>
@@ -253,22 +299,18 @@ function uploadMedia(files, msg = "") {
 }
 
 
-// Cancel upload event
 $(document).on("click", ".cancel-upload-btn", function () {
     const id = $(this).data("target");
-
     if (currentUploadXHR) currentUploadXHR.abort();
 
-    $("#" + id).fadeOut(200, function () {
-        $(this).remove();
-    });
+    $("#" + id).fadeOut(200, function () { $(this).remove(); });
 
     selectedFiles = [];
     $("#chat-upload-media").val("");
 });
 
 
-// ---------------- Scroll ----------------
+// Scroll
 function scrollToBottom() {
     const box = $("#chat-messages");
     box.stop().animate({ scrollTop: box[0].scrollHeight }, 250);
