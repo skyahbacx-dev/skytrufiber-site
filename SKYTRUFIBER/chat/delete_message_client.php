@@ -2,44 +2,70 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$msgID = $_POST["id"] ?? 0;
+$msgID    = $_POST["id"] ?? 0;
 $username = $_POST["username"] ?? null;
 
 if (!$msgID || !$username) {
-    echo json_encode(["status" => "error", "msg" => "Bad request"]);
+    echo json_encode(["status" => "error", "msg" => "Invalid request"]);
     exit;
 }
 
-// Get user ID
+// Get client account
 $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? OR full_name = ? LIMIT 1");
 $stmt->execute([$username, $username]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$user) exit(json_encode(["status" => "error", "msg" => "User not found"]));
+if (!$user) {
+    echo json_encode(["status" => "error", "msg" => "User not found"]);
+    exit;
+}
 
 $clientID = (int)$user["id"];
 
-// Get message details
-$msg = $conn->prepare("SELECT sender_type, created_at FROM chat WHERE id = ? AND client_id = ?");
-$msg->execute([$msgID, $clientID]);
-$row = $msg->fetch(PDO::FETCH_ASSOC);
+// Get message info
+$stmt = $conn->prepare("
+    SELECT sender_type, created_at, deleted
+    FROM chat
+    WHERE id = ? AND client_id = ?
+    LIMIT 1
+");
+$stmt->execute([$msgID, $clientID]);
+$msgData = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$row) exit(json_encode(["status" => "error", "msg" => "Message not found"]));
+if (!$msgData) {
+    echo json_encode(["status" => "error", "msg" => "Message not found"]);
+    exit;
+}
 
-$isClient = ($row["sender_type"] == "client");
-$messageAgeMinutes = (time() - strtotime($row["created_at"])) / 60;
+// Already deleted? prevent repeated action on UI
+if ($msgData["deleted"] == 1) {
+    echo json_encode(["status" => "ok", "type" => "already-deleted"]);
+    exit;
+}
 
-// UNSEND RULES
-if ($isClient && $messageAgeMinutes < 10) {
-    // Remove for both
-    $update = $conn->prepare("UPDATE chat SET deleted = TRUE, deleted_at = NOW(), message = '' WHERE id = ?");
+$isClientSender = ($msgData["sender_type"] === "client");
+$messageAgeMinutes = (time() - strtotime($msgData["created_at"])) / 60;
+
+// ===== UNSEND RULE (10 min limit, sender only) =====
+if ($isClientSender && $messageAgeMinutes <= 10) {
+
+    // Mark soft delete + remove content + reactions
+    $update = $conn->prepare("
+        UPDATE chat
+        SET deleted = 1, deleted_at = NOW(), message = '', edited = 0
+        WHERE id = ?
+    ");
     $update->execute([$msgID]);
+
+    // Remove reactions from others
+    $removeReacts = $conn->prepare("DELETE FROM chat_reactions WHERE chat_id = ?");
+    $removeReacts->execute([$msgID]);
 
     echo json_encode(["status" => "ok", "type" => "unsent"]);
     exit;
 }
 
-// Delete only for client UI (CSR still sees original)
+// ===== SELF DELETE (client hides but CSR still sees original) =====
 echo json_encode(["status" => "ok", "type" => "self-delete"]);
 exit;
 ?>
