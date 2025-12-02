@@ -6,49 +6,51 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SkyTruFiber Support</title>
 
-<link rel="stylesheet"
-      <link rel="stylesheet" href="chat_support.css">
+<!-- CSS -->
+<link rel="stylesheet" href="chat_support.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-
+<!-- JS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="chat_support.js"></script>
+
 </head>
 <body>
 
 <div id="chat-overlay">
-    <div class="chat-modal">
-<div class="chat-header">
-    <div class="chat-header-left">
-        <img src="../../SKYTRUFIBER.png" class="chat-header-logo">
-        <div>
-            <h2>SkyTruFiber Support</h2>
-            <span class="status active">Support Team Active</span>
+    <div class="chat-modal fadeup">
+
+        <!-- HEADER -->
+        <div class="chat-header">
+            <div class="chat-header-left">
+                <img src="../../SKYTRUFIBER.png" class="chat-header-logo">
+                <div>
+                    <h2>SkyTruFiber Support</h2>
+                    <span class="status active">Support Team Active</span>
+                </div>
+            </div>
+
+            <!-- LOGOUT BUTTON -->
+            <button id="logout-btn" class="logout-btn">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Logout
+            </button>
         </div>
-    </div>
-
-    <!-- LOGOUT BUTTON -->
-    <button id="logout-btn" class="logout-btn">
-        <i class="fa-solid fa-right-from-bracket"></i> Logout
-    </button>
-</div>
-
 
         <!-- CHAT MESSAGES -->
         <div id="chat-messages" class="chat-messages"></div>
 
-        <!-- PREVIEW INLINE -->
+        <!-- INLINE PREVIEW BAR -->
         <div id="preview-inline" class="preview-inline">
-
-            <!-- close button for entire preview bar -->
             <div id="preview-close" title="Remove all previews">&times;</div>
-
-            <!-- container for preview thumbnails -->
             <div id="preview-files" class="preview-files"></div>
-
+            <button id="cancel-upload" class="cancel-upload-btn">
+                <i class="fa-solid fa-ban"></i>
+                Cancel Upload
+            </button>
         </div>
 
-        <!-- INPUT BAR -->
+        <!-- INPUT AREA -->
         <div class="chat-input-area">
 
             <input type="file" id="chat-upload-media" multiple hidden>
@@ -77,7 +79,6 @@
 
 <!-- LIGHTBOX -->
 <div id="lightbox-overlay">
-
     <span id="lightbox-close">&times;</span>
 
     <img id="lightbox-image" style="display:none;">
@@ -89,7 +90,13 @@
     <a id="lightbox-download" href="#" download class="lightbox-download">
         <i class="fa-solid fa-download"></i> Download
     </a>
+</div>
 
+<!-- ACTION MENU (FOR UNSEND / DELETE) -->
+<div id="msg-action-menu" class="msg-action-menu">
+    <button class="action-delete"><i class="fa-solid fa-trash"></i> Delete</button>
+    <button class="action-unsend"><i class="fa-solid fa-rotate-left"></i> Unsend</button>
+    <button class="action-cancel">Cancel</button>
 </div>
 
 </body>
