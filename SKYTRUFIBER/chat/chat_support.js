@@ -1,6 +1,5 @@
 // ========================================
-// SkyTruFiber Client Chat System
-// Chat UI + Edit + Unsend + Reactions + Popup Menu + Media + Upload Progress
+// SkyTruFiber Client Chat System (Improved & Stabilized)
 // ========================================
 
 let selectedFiles = [];
@@ -25,9 +24,13 @@ $(document).ready(function () {
 
     loadMessages(true);
 
-    // Auto-refresh
+    // Auto-refresh (now safe)
     loadInterval = setInterval(() => {
-        if (!$("#preview-inline").is(":visible") && !editing) loadMessages(false);
+        if (activePopup) return;       // NEW — prevents popup crash
+        if ($("#preview-inline").is(":visible")) return;
+        if (editing) return;
+
+        loadMessages(false);
     }, 1200);
 
     // Send
@@ -50,21 +53,22 @@ $(document).ready(function () {
         e.stopPropagation();
         const msgID = $(this).data("id");
 
-        closePopup();
+        closePopup(); // close any existing popup first
 
         const btnOffset = $(this).offset();
         const popup = buildPopup(msgID);
         $("body").append(popup);
 
         const $popup = $("#msg-action-popup");
+        activePopup = $popup;
+
         $popup.css({
             top: btnOffset.top - $popup.outerHeight() - 6,
             left: btnOffset.left - ($popup.outerWidth() / 2) + 13
         }).fadeIn(120);
-
-        activePopup = $popup;
     });
 
+    // popup actions
     $(document).on("click", ".popup-edit", function () {
         startEdit($(this).data("id"));
         closePopup();
@@ -83,7 +87,8 @@ $(document).ready(function () {
     $(document).on("click", ".popup-cancel", closePopup);
 
     $(document).on("click", function (e) {
-        if (!$(e.target).closest("#msg-action-popup, .more-btn").length) closePopup();
+        if (!$(e.target).closest("#msg-action-popup, .more-btn").length)
+            closePopup();
     });
 
     // ==========================
@@ -146,8 +151,12 @@ $(document).ready(function () {
             $("#reaction-picker").removeClass("show");
     });
 
-});
+}); // end document.ready
 
+
+
+// ==========================
+// SAFE POPUP BUILDER
 // ==========================
 function buildPopup(id) {
     return `
@@ -159,19 +168,24 @@ function buildPopup(id) {
         </div>
     `;
 }
-if (activePopup) return; // prevent refresh while menu open
 
+
+
+// ==========================
+// **FIXED** SAFE POPUP CLOSE
+// ==========================
 function closePopup() {
     if (activePopup) {
         const $popup = activePopup;
-        activePopup = null; // clear immediately to avoid race-condition
+        activePopup = null; // prevent race-condition before callback fires
 
         $popup.fadeOut(120, function () {
-            // Only remove if still in DOM
-            if ($(this).length) $(this).remove();
+            if ($(this).length) $(this).remove(); // avoid null.remove()
         });
     }
 }
+
+
 
 // ==========================
 function ensureReactionPicker() {
@@ -183,16 +197,22 @@ function ensureReactionPicker() {
             ${reactionChoices.map(e => `<button class="reaction-choice" data-emoji="${e}">${e}</button>`).join("")}
         </div>
     `);
+
     return $("#reaction-picker");
 }
 
+
+
 // ==========================
-// LOAD ALL MESSAGES EVERY TIME
+// LOAD ALL MESSAGES
 // ==========================
 function loadMessages(scrollBottom = false) {
     $.post("load_messages_client.php", { username }, html => {
 
-        if (html.startsWith("Fatal") || html.toLowerCase().includes("error")) return;
+        if (!html || html.startsWith("Fatal") || html.toLowerCase().includes("error")) {
+            console.error("Load message error:", html);
+            return;
+        }
 
         $("#chat-messages").html(html);
 
@@ -203,6 +223,8 @@ function loadMessages(scrollBottom = false) {
         if (scrollBottom) scrollToBottom();
     });
 }
+
+
 
 // ==========================
 function sendMessage() {
@@ -217,6 +239,8 @@ function sendMessage() {
     }, "json");
 }
 
+
+
 // ==========================
 function appendClientMessageInstant(msg) {
     $("#chat-messages").append(`
@@ -230,6 +254,8 @@ function appendClientMessageInstant(msg) {
     `);
     scrollToBottom();
 }
+
+
 
 // ==========================
 function previewMultiple(files) {
@@ -253,6 +279,8 @@ $(document).on("click", ".preview-remove", function () {
     if (selectedFiles.length) previewMultiple(selectedFiles);
     else $("#preview-inline").slideUp(200);
 });
+
+
 
 // ==========================
 function scrollToBottom() {
