@@ -63,6 +63,22 @@ function bindReactionButtons() {
         }).addClass("show");
     });
 }
+function showReactionPicker(btn) {
+    const picker = ensureReactionPicker();
+    const rect = btn.getBoundingClientRect();
+
+    picker.css({
+        top: rect.top - picker.outerHeight() - 12 + window.scrollY,
+        left: rect.left + rect.width / 2 - picker.outerWidth() / 2 + window.scrollX,
+        zIndex: 30000
+    }).addClass("show");
+}
+
+$(document).on("click", ".react-btn", function (e) {
+    e.stopPropagation();
+    reactingToMsgId = $(this).data("msg-id");
+    showReactionPicker(this);
+});
 
 // ========================================
 // UPLOAD MEDIA BUTTON
@@ -495,35 +511,41 @@ let isPanning = false;
 
 
 const imgEl = document.getElementById("lightbox-image");
-
 // ========================================
-// ATTACH MEDIA EVENTS
-// (Called every time messages load)
+// MEDIA EVENTS — FINAL FULL VERSION
 // ========================================
 function attachMediaEvents() {
 
-    // IMAGE CLICK → OPEN LIGHTBOX
-    $(".media-thumb").off("click").on("click", function () {
+    // --------------------------------------------
+    // IMAGE (Grid / Single) → OPEN LIGHTBOX
+    // --------------------------------------------
+    $(".media-grid img, .media-thumb").off("click").on("click", function () {
 
         const full = $(this).data("full");
+        if (!full) return;
 
-        // Build gallery group
-        const container = $(this).closest(".carousel-container");
+        // Build gallery from siblings inside same grid
+        const grid = $(this).closest(".media-grid");
+        const items = grid.find("img");
+
         galleryItems = [];
         currentIndex = 0;
 
-        container.find(".media-thumb").each(function (i) {
+        items.each(function (i) {
             galleryItems.push($(this).data("full"));
             if ($(this).data("full") === full) currentIndex = i;
         });
 
-        openImage(full);
+        showLightboxImage(full);
     });
 
-    // VIDEO CLICK → SIMPLE LIGHTBOX (no zoom)
-    $(".media-video").off("click").on("click", function () {
+    // --------------------------------------------
+    // VIDEO CLICK (Grid or single video)
+    // --------------------------------------------
+    $(".media-grid video, .media-video").off("click").on("click", function () {
 
         const full = $(this).data("full");
+        if (!full) return;
 
         resetLightboxTransform();
         $("#lightbox-image").hide();
@@ -533,34 +555,49 @@ function attachMediaEvents() {
         updateLightboxIndex();
     });
 
-    // NAVIGATION BUTTONS
+    // --------------------------------------------
+    // LIGHTBOX CONTROLS
+    // --------------------------------------------
     $("#lightbox-prev").off("click").on("click", () => navigateGallery(-1));
     $("#lightbox-next").off("click").on("click", () => navigateGallery(1));
-
-    // CLOSE
     $("#lightbox-close").off("click").on("click", closeLightbox);
 
-    // BACKGROUND CLICK CLOSE
+    // --------------------------------------------
+    // LIGHTBOX BACKGROUND CLICK (Smart Close)
+    // --------------------------------------------
     $("#lightbox-overlay").off("click").on("click", function (e) {
 
-        const isImage = $("#lightbox-image").is(":visible");
+        const isImg = $("#lightbox-image").is(":visible");
 
-        if (isImage) {
-            const rect = imgEl.getBoundingClientRect();
+        if (isImg) {
+            const img = document.getElementById("lightbox-image");
+            const rect = img.getBoundingClientRect();
+
+            // If clicking ON image → don't close
             const inside =
                 e.clientX >= rect.left &&
                 e.clientX <= rect.right &&
                 e.clientY >= rect.top &&
                 e.clientY <= rect.bottom;
 
-            if (inside) return; // do not close if tapping the image
+            if (inside) return;
         }
 
-        if (lightboxScale > 1.02) return; // do not close if zoomed
+        // Do NOT close if zoomed in
+        if (lightboxScale > 1.02) return;
 
         closeLightbox();
     });
+
+    // --------------------------------------------
+    // ENSURE ACTION TOOLBAR POSITIONING
+    // --------------------------------------------
+    $(".message").each(function () {
+        $(this).css("position", "relative");
+    });
+
 }
+
 
 // ========================================
 // OPEN IMAGE
