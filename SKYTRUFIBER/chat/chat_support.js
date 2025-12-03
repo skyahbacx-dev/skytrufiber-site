@@ -48,6 +48,21 @@ $(document).ready(function () {
             sendMessage();
         }
     });
+function bindReactionButtons() {
+    $(".react-btn").off("click").on("click", function (e) {
+        e.stopPropagation();
+
+        reactingToMsgId = $(this).data("msg-id");
+
+        const picker = ensureReactionPicker();
+        const pos = $(this).offset();
+
+        picker.css({
+            top: pos.top - picker.outerHeight() - 10,
+            left: pos.left - (picker.outerWidth() / 2) + 15
+        }).addClass("show");
+    });
+}
 
 // ========================================
 // UPLOAD MEDIA BUTTON
@@ -196,7 +211,8 @@ function loadMessages(scrollBottom = false) {
 
         $("#chat-messages").html(html);
 
-        attachMediaEvents(); // prepare thumbnails/images
+        attachMediaEvents();
+        bindReactionButtons();   // <— FIXED
 
         const last = $("#chat-messages .message:last").data("msg-id");
         if (last) lastMessageID = last;
@@ -205,20 +221,20 @@ function loadMessages(scrollBottom = false) {
     });
 }
 
+
 // ========================================
 // FETCH NEW MESSAGES (DOM DIFF) — FIXED AUTO-SCROLL
 // ========================================
 function fetchNewMessages() {
 
-    // Do NOT update while editing or preview is open
     if (editing || activePopup || $("#preview-inline").is(":visible")) return;
 
     $.post("load_messages_client.php", { username }, html => {
 
         const temp = $("<div>").html(html);
         const newMsgs = temp.find(".message");
-
         const container = $("#chat-messages");
+
         const currentLast = container.find(".message:last").data("msg-id") || 0;
 
         newMsgs.each(function () {
@@ -227,17 +243,15 @@ function fetchNewMessages() {
         });
 
         attachMediaEvents();
+        bindReactionButtons();   // <— FIXED
 
-        // ---- FIX: Detect if user is near bottom ----
         const box = container[0];
         const distanceFromBottom = box.scrollHeight - box.scrollTop - box.clientHeight;
 
-        // Only auto-scroll if user is already near bottom
-        if (distanceFromBottom < 120) {
-            scrollToBottom();
-        }
+        if (distanceFromBottom < 120) scrollToBottom();
     });
 }
+
 
 
 // ========================================
