@@ -15,10 +15,6 @@ let reactingToMsgId = null;
 let galleryItems = [];
 let currentIndex = 0;
 
-let lightboxScale = 1;
-let lightboxTranslateX = 0;
-let lightboxTranslateY = 0;
-let isPanning = false;
 
 const reactionChoices = ["👍", "❤️", "😂", "😮", "😢", "😡"];
 const username = new URLSearchParams(window.location.search).get("username");
