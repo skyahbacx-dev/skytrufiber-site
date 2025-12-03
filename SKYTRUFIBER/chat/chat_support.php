@@ -1,26 +1,33 @@
 <?php if (!isset($_SESSION)) session_start(); ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkyTruFiber Support</title>
+
+<!-- Prevent caching -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
 
-<title>SkyTruFiber Support</title>
-
-<link rel="stylesheet" href="chat_support.css">
+<!-- ICONS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
+<!-- CSS -->
+<link rel="stylesheet" href="chat_support.css">
+
+<!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="chat_support.js"></script>
+
+<!-- JS -->
+<script src="chat_support.js" defer></script>
 
 </head>
 <body>
 
 <div id="chat-overlay">
-    <div class="chat-modal fadeup">
+    <div class="chat-modal">
 
         <!-- HEADER -->
         <div class="chat-header">
@@ -32,21 +39,28 @@
                 </div>
             </div>
 
+            <!-- THEME TOGGLE -->
+            <button id="theme-toggle" class="theme-toggle">
+                <i class="fa-solid fa-moon theme-icon moon-icon"></i>
+                <i class="fa-solid fa-sun theme-icon sun-icon"></i>
+            </button>
+
+            <!-- LOGOUT -->
             <button id="logout-btn" class="logout-btn">
                 <i class="fa-solid fa-right-from-bracket"></i> Logout
             </button>
         </div>
 
-        <!-- CHAT MESSAGES -->
+        <!-- MESSAGES WINDOW -->
         <div id="chat-messages" class="chat-messages"></div>
 
-        <!-- INLINE PREVIEW BAR -->
+        <!-- PREVIEW BAR -->
         <div id="preview-inline" class="preview-inline">
             <div id="preview-close" title="Remove all previews">&times;</div>
             <div id="preview-files" class="preview-files"></div>
         </div>
 
-        <!-- INPUT AREA -->
+        <!-- INPUT -->
         <div class="chat-input-area">
 
             <input type="file" id="chat-upload-media" multiple hidden>
@@ -65,35 +79,31 @@
 
         </div>
 
-        <!-- SCROLL DOWN BUTTON -->
-        <button id="scroll-bottom-btn" class="scroll-bottom-btn">
-            <i class="fa-solid fa-arrow-down"></i>
-        </button>
-
     </div>
 </div>
 
+<!-- FULLSCREEN MEDIA VIEWER -->
+<div id="lightbox-overlay" class="lightbox-overlay">
 
-<!-- LIGHTBOX -->
-<div id="lightbox-overlay">
-    <span id="lightbox-close">&times;</span>
+    <span id="lightbox-close" class="lightbox-close">&times;</span>
 
-    <img id="lightbox-image" style="display:none;">
-    <video id="lightbox-video" controls style="display:none; border-radius:14px;"></video>
+    <img id="lightbox-image" class="lightbox-image" draggable="false">
+    <video id="lightbox-video" class="lightbox-video" controls></video>
 
-    <button id="lightbox-prev" class="lightbox-nav">&#10094;</button>
-    <button id="lightbox-next" class="lightbox-nav">&#10095;</button>
+    <button id="lightbox-prev" class="lightbox-nav prev">&#10094;</button>
+    <button id="lightbox-next" class="lightbox-nav next">&#10095;</button>
 
-    <a id="lightbox-download" href="#" download class="lightbox-download">
-        <i class="fa-solid fa-download"></i> Download
+    <div id="lightbox-index" class="lightbox-index"></div>
+
+    <a id="lightbox-download" class="lightbox-download" download>
+        <i class="fa-solid fa-download"></i>
     </a>
 </div>
-
 
 <!-- REACTION PICKER -->
 <div id="reaction-picker" class="reaction-picker"></div>
 
-<!-- MESSAGE ACTION POPUP (Edit / Unsend / Delete) -->
+<!-- MESSAGE ACTION POPUP -->
 <div id="msg-action-popup" class="msg-action-popup">
     <button class="action-edit"><i class="fa-solid fa-pen"></i> Edit</button>
     <button class="action-unsend"><i class="fa-solid fa-ban"></i> Unsend</button>
