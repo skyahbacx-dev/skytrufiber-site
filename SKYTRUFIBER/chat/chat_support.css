@@ -1,184 +1,288 @@
-/* ===========================================
-   OVERLAY BACKDROP
-   =========================================== */
+/* ============================================================
+   ROOT THEME VARIABLES
+   Light + Dark Mode
+============================================================ */
+:root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f7fa;
+    --text: #111;
+    --text-light: #555;
+
+    --bubble-sent: #0084ff;
+    --bubble-sent-text: #ffffff;
+
+    --bubble-received: #e6e6e6;
+    --bubble-received-text: #111;
+
+    --header-bg: #0084ff;
+    --header-text: #ffffff;
+
+    --input-bg: #ffffff;
+    --input-border: #ccc;
+
+    --preview-bg: #ffffff;
+
+    --lightbox-bg: rgba(0, 0, 0, 0.92);
+    --lightbox-icon: #ffffff;
+
+    --scroll-btn-bg: #0084ff;
+
+    --theme-icon-light: #fff;
+    --theme-icon-dark: #ffce54;
+
+    --transition-speed: .28s;
+}
+
+:root[data-theme="dark"] {
+    --bg: #0f0f0f;
+    --bg-secondary: #141414;
+    --text: #f1f1f1;
+    --text-light: #bbb;
+
+    --bubble-sent: #1a73e8;
+    --bubble-sent-text: #fff;
+
+    --bubble-received: #262626;
+    --bubble-received-text: #f1f1f1;
+
+    --header-bg: #111;
+    --header-text: #f1f1f1;
+
+    --input-bg: #1a1a1a;
+    --input-border: #333;
+
+    --preview-bg: #1b1b1b;
+
+    --lightbox-bg: rgba(0, 0, 0, 0.95);
+    --lightbox-icon: #fff;
+
+    --scroll-btn-bg: #1a73e8;
+
+    --theme-icon-light: #fff;
+    --theme-icon-dark: #ffd369;
+}
+
+/* ============================================================
+   BODY + GLOBAL
+============================================================ */
+body {
+    margin: 0;
+    background: var(--bg);
+    font-family: Arial, sans-serif;
+    color: var(--text);
+    overflow: hidden;
+}
+
+/* Overlay */
 #chat-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.65);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  backdrop-filter: blur(3px);
-  z-index: 9999;
-  overflow: hidden;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.60);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
 }
 
-/* ===========================================
-   CHAT MODAL
-   =========================================== */
+/* ============================================================
+   CHAT MODAL (Desktop)
+============================================================ */
 .chat-modal {
-  width: 700px;
-  height: 88vh;
-  background: #ffffff;
-  border-radius: 22px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
+    width: 760px;
+    height: 88vh;
+    background: var(--bg);
+    border-radius: 22px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: background var(--transition-speed);
 }
 
-/* ===========================================
+/* ============================================================
+   MOBILE MODE — FULLSCREEN
+============================================================ */
+@media(max-width: 768px) {
+    .chat-modal {
+        width: 100vw !important;
+        height: 100vh !important;
+        border-radius: 0 !important;
+    }
+}
+
+/* ============================================================
    HEADER
-   =========================================== */
+============================================================ */
 .chat-header {
-  background: #0084ff;
-  padding: 16px 18px;
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid rgba(255,255,255,.2);
+    background: var(--header-bg);
+    color: var(--header-text);
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
 }
 
 .chat-header-left {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+    display: flex;
+    gap: 12px;
+    align-items: center;
 }
 
 .chat-header-logo {
-  width: 46px;
-  height: 46px;
-  object-fit: contain;
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
 }
 
 .chat-header h2 {
-  font-size: 18px;
-  font-weight: 700;
-  color: white;
-  margin: 0;
+    font-size: 18px;
+    margin: 0;
 }
 
 .status {
-  font-size: 12px;
-  color: white;
-  opacity: .8;
+    font-size: 12px;
+    opacity: .8;
 }
 
-/* ===========================================
+/* Logout + theme toggle container */
+.logout-btn {
+    margin-left: 14px;
+    background: #ff4040;
+    padding: 8px 14px;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.theme-toggle {
+    margin-left: auto;
+    margin-right: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Moon / Sun stacked */
+.theme-icon {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(0deg);
+    transition: opacity .28s ease, transform .35s ease;
+    font-size: 20px;
+}
+
+/* Default light mode icon visibility */
+.moon-icon { opacity: 1; transform: translate(-50%, -50%) rotate(0deg); }
+.sun-icon { opacity: 0; transform: translate(-50%, -50%) rotate(-180deg); }
+
+/* Dark mode swapped */
+:root[data-theme="dark"] .moon-icon {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(180deg);
+}
+
+:root[data-theme="dark"] .sun-icon {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg);
+}
+
+/* ============================================================
    MESSAGES WINDOW
-   =========================================== */
+============================================================ */
 .chat-messages {
-  flex: 1;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-  background: #edf3f8;
-  overflow-x: visible;
-  position: relative;
+    flex: 1;
+    padding: 22px;
+    overflow-y: auto;
+    background: var(--bg-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-behavior: smooth;
 }
 
-.chat-messages::-webkit-scrollbar {
-  width: 6px;
-}
+/* Scrollbar */
+.chat-messages::-webkit-scrollbar { width: 6px; }
 .chat-messages::-webkit-scrollbar-thumb {
-  background: #aad2ff;
-  border-radius: 10px;
+    background: #90befe;
+    border-radius: 4px;
 }
 
-/* ===========================================
+/* ============================================================
    MESSAGE STRUCTURE
-   =========================================== */
+============================================================ */
 .message {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
-  max-width: 75%;
-  position: relative;
-  animation: fadeup .35s ease forwards;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    max-width: 75%;
+    animation: fadeup .3s ease;
 }
 
-.message.received { align-self: flex-start; }
 .message.sent { align-self: flex-end; flex-direction: row-reverse; }
+.message.received { align-self: flex-start; }
 
 /* Avatar */
-.message-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
 .message-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
-/* ===========================================
-   BUBBLES
-   =========================================== */
-.message-content {
-  position: relative;
-}
-
+/* Bubble */
 .message-bubble {
-  padding: 12px 18px;
-  font-size: 15px;
-  line-height: 1.4;
-  border-radius: 20px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  background: #e6e6e6;
-  color: #111;
-  max-width: 100%;
-  overflow-wrap: break-word;
+    padding: 12px 18px;
+    border-radius: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.10);
+    max-width: 100%;
+    color: var(--bubble-received-text);
+    background: var(--bubble-received);
 }
 
 .message.sent .message-bubble {
-  background: #0084ff;
-  color: white;
-  border-radius: 20px 20px 4px 20px;
+    background: var(--bubble-sent);
+    color: var(--bubble-sent-text);
+    border-radius: 20px 20px 4px 20px;
 }
 
 .message.received .message-bubble {
-  border-radius: 20px 20px 20px 4px;
+    border-radius: 20px 20px 20px 4px;
 }
 
-/* ===========================================
-   MEDIA INSIDE BUBBLES
-   =========================================== */
-.message-bubble img,
-.message-bubble video {
-  max-width: 240px;
-  max-height: 260px;
-  border-radius: 14px;
-  object-fit: cover;
-  margin-top: 6px;
-  cursor: pointer;
+/* ============================================================
+   MEDIA IN CHAT
+============================================================ */
+.media-thumb, .media-video {
+    max-width: 240px;
+    max-height: 280px;
+    border-radius: 14px;
+    cursor: pointer;
+    object-fit: cover;
 }
-/* Carousel */
+
 .carousel-container {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 6px 0;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 6px 0;
 }
-.carousel-container::-webkit-scrollbar { height: 6px; }
-.carousel-container::-webkit-scrollbar-thumb {
-  background: #aad2ff;
-  border-radius: 6px;
-}
-/* ===========================================
-   PREVIEW UPLOAD BAR
-   =========================================== */
+
+/* ============================================================
+   PREVIEW BAR
+============================================================ */
 .preview-inline {
+    background: var(--preview-bg);
+    padding: 10px;
+    border-top: 1px solid var(--input-border);
     display: none;
-    background: #fff;
-    padding: 12px;
-    border-top: 1px solid #ccc;
-    max-height: 140px;
+    max-height: 160px;
     overflow-y: auto;
 }
 
@@ -190,323 +294,145 @@
 
 .preview-item {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
 .preview-thumb {
     width: 110px;
     height: 110px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
     object-fit: cover;
-    border-radius: 12px;
-    border: 1px solid #ddd;
 }
 
 .preview-remove {
     position: absolute;
     top: -6px;
     right: -6px;
-    background: red;
-    color: white;
-    border: none;
-    border-radius: 50%;
     width: 22px;
     height: 22px;
+    background: red;
+    color: white;
+    border-radius: 50%;
+    border: none;
     cursor: pointer;
 }
-/* ===========================================
-   EDIT MODE
-   =========================================== */
-.edit-textarea {
-  width: 100%;
-  border-radius: 12px;
-  border: 1px solid #bbb;
-  padding: 10px;
-  font-size: 15px;
-  resize: none;
-  outline: none;
-}
-.edit-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 6px;
-}
-.edit-save,
-.edit-cancel {
-  padding: 5px 12px;
-  border-radius: 12px;
-  border: none;
-  font-size: 13px;
-  cursor: pointer;
-}
-.edit-save { background: #0084ff; color: white; }
-.edit-cancel { background: #ccc; }
 
-.edited-label {
-  font-size: 11px;
-  opacity: .6;
-  margin-left: 6px;
-}
-
-/* ===========================================
-   HOVER ACTION TOOLBAR (Reaction + More)
-   =========================================== */
-.action-toolbar {
-  display: flex;
-  gap: 6px;
-  position: absolute;
-  bottom: -20px;
-  opacity: 0;
-  pointer-events: none;
-  transition: .2s;
-  z-index: 50000;
-}
-.message.sent:hover .action-toolbar,
-.message.received:hover .action-toolbar {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.react-btn, .more-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: none;
-  background: #ffffff;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.25);
-  display: flex;
-  justify-content:center;
-  align-items:center;
-  font-size: 16px;
-  cursor: pointer;
-  transition: transform .18s;
-}
-.react-btn:hover, .more-btn:hover { transform: scale(1.15); }
-
-/* Position */
-.message.sent .action-toolbar { right: 40px; }
-.message.received .action-toolbar { left: 40px; }
-
-/* ===========================================
-   POPUP MENU
-   =========================================== */
-.msg-action-popup {
-  position: fixed;
-  background: white;
-  padding: 8px 0;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-  width: 160px;
-  display: none;
-  flex-direction: column;
-  z-index: 60000;
-  animation: popupFade .25s ease;
-}
-.msg-action-popup button {
-  background: none;
-  border: none;
-  padding: 10px 14px;
-  cursor:pointer;
-  width:100%;
-  font-size:14px;
-  display:flex;
-  gap:10px;
-}
-.msg-action-popup button:hover { background:#f2f2f2; }
-
-/* ===========================================
-   REACTIONS
-   =========================================== */
-.reaction-bar {
-  display: inline-flex;
-  gap: 4px;
-  margin-top: 4px;
-  background: rgba(255,255,255,0.92);
-  padding: 3px 6px;
-  border-radius: 999px;
-  font-size: 13px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-}
-
-/* Reaction Picker */
-.reaction-picker {
-  position: fixed;
-  background: white;
-  padding: 8px;
-  border-radius: 999px;
-  display: none;
-  gap: 6px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-  z-index: 61000;
-  transform: translateY(12px);
-  opacity: 0;
-  transition: .25s ease;
-}
-.reaction-picker.show {
-  display: flex;
-  opacity: 1;
-  transform: translateY(0);
-}
-.reaction-choice {
-  font-size: 20px;
-  background: none;
-  border: none;
-  cursor:pointer;
-}
-.reaction-choice:hover { transform: scale(1.25); }
-
-/* ===========================================
-   SCROLL DOWN BUTTON - FIXED
-   =========================================== */
-#scroll-bottom-btn {
-  position: absolute;
-  bottom: 90px;
-  right: 20px; /* better position under bubble */
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  background: #0084ff;
-  border: none;
-  display: none; /* hidden default */
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
-  cursor: pointer;
-  z-index: 200;
-}
-#scroll-bottom-btn.show {
-  display: flex;
-}
-#scroll-bottom-btn i {
-  color: #fff;
-  font-size: 20px;
-}
-
-/* ===========================================
-   INPUT & TOOLBAR
-   =========================================== */
+/* ============================================================
+   INPUT AREA
+============================================================ */
 .chat-input-area {
-  padding: 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-top: 1px solid #ccc;
-  background: white;
+    padding: 14px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border-top: 1px solid var(--input-border);
+    background: var(--input-bg);
 }
-
-.upload-btn {
-  background: none;
-  border: none;
-  font-size: 22px;
-  cursor: pointer;
-  opacity: .7;
-}
-.upload-btn:hover { opacity: 1; }
 
 .chat-input-box {
-  flex: 1;
-  border: 1px solid #ccc;
-  border-radius: 22px;
-  padding: 10px 16px;
+    flex: 1;
+    border: 1px solid var(--input-border);
+    border-radius: 22px;
+    padding: 10px 16px;
+    background: var(--input-bg);
 }
+
 .chat-input-box input {
-  width: 100%;
-  border: none;
-  outline: none;
-  font-size: 15px;
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    background: transparent;
+    color: var(--text);
 }
 
 .chat-send-btn {
-  width: 48px;
-  height: 48px;
-  background: #0084ff;
-  border-radius: 50%;
-  border: none;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
+    width: 48px;
+    height: 48px;
+    background: var(--bubble-sent);
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
+
 .chat-send-btn i {
-  color: white;
-  font-size: 20px;
+    color: white;
+    font-size: 20px;
 }
 
-/* ===========================================
-   SCROLL DOWN BUTTON
-   =========================================== */
-.scroll-bottom-btn {
-  display: none;
-  position: absolute;
-  bottom: 110px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 48px;
-  height: 48px;
-  background: #0084ff;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  z-index: 50;
-  display: none;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
-}
-.scroll-bottom-btn i {
-  color: white;
-  font-size: 22px;
-}
-.scroll-bottom-btn.show { display: flex; }
-
-/* ===========================================
-   LIGHTBOX - FIXED
-   =========================================== */
+/* ============================================================
+   LIGHTBOX (FULLSCREEN VIEWER)
+============================================================ */
 #lightbox-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.85);
-  display: flex !important;
-  justify-content: center;
-  align-items: center;
-  z-index: 999999; /* ensure on top */
+    position: fixed;
+    inset: 0;
+    background: var(--lightbox-bg);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 20000;
 }
 
-/* Show when activated */
 #lightbox-overlay.show {
-  display: flex !important;
+    display: flex !important;
 }
-.media-thumb {
+
+.lightbox-image, .lightbox-video {
+    max-width: 92vw;
+    max-height: 82vh;
+    object-fit: contain;
+    border-radius: 10px;
+    transition: transform .2s ease;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 38px;
+    color: var(--lightbox-icon);
     cursor: pointer;
-    border-radius: 14px;
-    max-width: 240px;
-    max-height: 280px;
 }
 
-
-/* ===========================================
-   LOGOUT BUTTON
-   =========================================== */
-.logout-btn {
-  margin-left: auto;
-  background: #ff4040;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 10px;
-  cursor: pointer;
+.lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 46px;
+    background: none;
+    border: none;
+    color: var(--lightbox-icon);
+    cursor: pointer;
+    padding: 5px 20px;
 }
 
-/* ===========================================
+.prev { left: 10px; }
+.next { right: 10px; }
+
+.lightbox-download {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-size: 22px;
+    color: var(--lightbox-icon);
+}
+
+/* Index label */
+.lightbox-index {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    color: var(--lightbox-icon);
+    font-size: 16px;
+}
+
+/* ============================================================
    ANIMATIONS
-   =========================================== */
+============================================================ */
 @keyframes fadeup {
-  from { opacity:0; transform:translateY(30px); }
-  to   { opacity:1; transform:translateY(0); }
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
 }
-@keyframes popupFade {
-  from { opacity:0; transform:scale(.7); }
-  to   { opacity:1; transform:scale(1); }
-}
-.fadeup { animation: fadeup .35s ease forwards; }
