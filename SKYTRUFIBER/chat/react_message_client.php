@@ -7,15 +7,16 @@ $emoji = $_POST["emoji"] ?? "";
 
 if (!$msgID || !$emoji) exit("bad");
 
+// Only client reacts here
 $userType = "client";
 
-// PostgreSQL UPSERT
+// Postgres UPSERT
 $stmt = $conn->prepare("
-    INSERT INTO chat_reactions (chat_id, emoji, user_type)
+    INSERT INTO chat_reactions (chat_id, user_type, emoji)
     VALUES (?, ?, ?)
     ON CONFLICT (chat_id, user_type)
     DO UPDATE SET emoji = EXCLUDED.emoji
 ");
-$stmt->execute([$msgID, $emoji, $userType]);
+$stmt->execute([$msgID, $userType, $emoji]);
 
 echo "ok";
