@@ -7,14 +7,14 @@ $emoji = $_POST["emoji"] ?? "";
 
 if (!$msgID || !$emoji) exit("bad");
 
-// Always client in this panel
 $userType = "client";
 
-// Upsert reaction (SQLite & MySQL compatible)
+// PostgreSQL UPSERT
 $stmt = $conn->prepare("
     INSERT INTO chat_reactions (chat_id, emoji, user_type)
     VALUES (?, ?, ?)
-    ON DUPLICATE KEY UPDATE emoji = VALUES(emoji)
+    ON CONFLICT (chat_id, user_type)
+    DO UPDATE SET emoji = EXCLUDED.emoji
 ");
 $stmt->execute([$msgID, $emoji, $userType]);
 
