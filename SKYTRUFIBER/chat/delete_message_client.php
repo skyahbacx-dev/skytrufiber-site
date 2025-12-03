@@ -1,70 +1,61 @@
 <?php
 if (!isset($_SESSION)) session_start();
-header("Content-Type: application/json");
 require_once "../../db_connect.php";
 
-ini_set("display_errors",1);
-error_reporting(E_ALL);
+$msgID = (int)($_POST["id"] ?? 0);
+$username = $_POST["username"] ?? "";
 
-$msgID    = $_POST["id"] ?? 0;
-$username = $_POST["username"] ?? null;
+if (!$msgID || !$username)
+    exit(json_encode(["status"=>"error","msg"=>"invalid"]));
 
-if (!$msgID || !$username) {
-    echo json_encode(["status"=>"error","msg"=>"Invalid request"]);
-    exit;
-}
-
-// get user
-$stmt = $conn->prepare("SELECT id FROM users WHERE email=? OR full_name=? LIMIT 1");
-$stmt->execute([$username,$username]);
+$stmt = $conn->prepare("
+    SELECT id FROM users
+    WHERE email = ? COLLATE utf8mb4_general_ci
+       OR full_name = ? COLLATE utf8mb4_general_ci
+    LIMIT 1
+");
+$stmt->execute([$username, $username]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$user) {
-    echo json_encode(["status"=>"error","msg"=>"User not found"]);
-    exit;
-}
+if (!$user)
+    exit(json_encode(["status"=>"error","msg"=>"no user"]));
 
-$clientID = (int)$user["id"];
+$client_id = $user["id"];
 
-// get message
+// Fetch message
 $stmt = $conn->prepare("
-    SELECT sender_type, created_at, deleted 
-    FROM chat 
-    WHERE id=? AND client_id=?
+    SELECT sender_type, created_at, deleted
+    FROM chat
+    WHERE id = ? AND client_id = ?
+    LIMIT 1
 ");
-$stmt->execute([$msgID,$clientID]);
-$msgData = $stmt->fetch(PDO::FETCH_ASSOC);
+$stmt->execute([$msgID, $client_id]);
+$msg = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$msgData) {
-    echo json_encode(["status"=>"error","msg"=>"Message not found"]);
-    exit;
-}
+if (!$msg)
+    exit(json_encode(["status"=>"error","msg"=>"missing msg"]));
 
-if ($msgData["deleted"] == 1) {
-    echo json_encode(["status"=>"ok","type"=>"already"]);
-    exit;
-}
+if ($msg["deleted"] == 1)
+    exit(json_encode(["status"=>"ok","type"=>"already-deleted"]));
 
-$isClient = ($msgData["sender_type"] === "client");
+$isClientSender = ($msg["sender_type"] === "client");
+$age = (time() - strtotime($msg["created_at"])) / 60;
 
-$ageMin = (time() - strtotime($msgData["created_at"])) / 60;
+// UNSEND (<10 min)
+if ($isClientSender && $age <= 10) {
 
-// Unsend (<10 min)
-if ($isClient && $ageMin <= 10) {
-
-    $del = $conn->prepare("
-        UPDATE chat 
-        SET deleted=1, deleted_at=NOW(), message='', edited=0
-        WHERE id=?
+    $update = $conn->prepare("
+        UPDATE chat
+        SET deleted = 1, deleted_at = NOW(), message = '', edited = 0
+        WHERE id = ?
     ");
-    $del->execute([$msgID]);
+    $update->execute([$msgID]);
 
-    $rm = $conn->prepare("DELETE FROM chat_reactions WHERE chat_id=?");
+    $rm = $conn->prepare("DELETE FROM chat_reactions WHERE chat_id = ?");
     $rm->execute([$msgID]);
 
-    echo json_encode(["status"=>"ok","type"=>"unsent"]);
-    exit;
+    exit(json_encode(["status"=>"ok","type"=>"unsent"]));
 }
 
-echo json_encode(["status"=>"ok","type"=>"self-delete"]);
-exit;
+// SELF DELETE (client hides only)
+exit(json_encode(["status"=>"ok","type"=>"self-delete"]));
