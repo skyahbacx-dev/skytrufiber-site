@@ -206,9 +206,12 @@ function loadMessages(scrollBottom = false) {
 }
 
 // ========================================
-// FETCH ONLY NEW MESSAGES (append only)
+// FETCH NEW MESSAGES (DOM DIFF) — FIXED AUTO-SCROLL
 // ========================================
 function fetchNewMessages() {
+
+    // Do NOT update while editing or preview is open
+    if (editing || activePopup || $("#preview-inline").is(":visible")) return;
 
     $.post("load_messages_client.php", { username }, html => {
 
@@ -224,9 +227,18 @@ function fetchNewMessages() {
         });
 
         attachMediaEvents();
-        scrollToBottom();
+
+        // ---- FIX: Detect if user is near bottom ----
+        const box = container[0];
+        const distanceFromBottom = box.scrollHeight - box.scrollTop - box.clientHeight;
+
+        // Only auto-scroll if user is already near bottom
+        if (distanceFromBottom < 120) {
+            scrollToBottom();
+        }
     });
 }
+
 
 // ========================================
 // SCROLL TO BOTTOM
