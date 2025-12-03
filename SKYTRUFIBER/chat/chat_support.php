@@ -68,9 +68,10 @@
 
             <input type="file" id="chat-upload-media" multiple hidden>
 
-            <button id="upload-btn" class="upload-btn">
-                <i class="fa-solid fa-paperclip"></i>
+            <button id="upload-btn">
+                <img src="upload_icon.svg">
             </button>
+
 
             <div class="chat-input-box">
                 <input id="message-input" type="text" placeholder="Type a message...">
