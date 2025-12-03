@@ -3,21 +3,21 @@ ini_set("log_errors", 1);
 ini_set("error_log", __DIR__ . "/php_errors.log");
 error_reporting(E_ALL);
 
-
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
+// hide errors from browser
 ini_set("display_errors", 0);
 
 $username = $_POST["username"] ?? null;
 if (!$username) exit("");
 
-// Lookup user (email OR full name)
+// 🔥 FIX: PostgreSQL does NOT support MySQL collations
 $stmt = $conn->prepare("
     SELECT id, full_name 
     FROM users
-    WHERE email = ? COLLATE utf8mb4_general_ci
-       OR full_name = ? COLLATE utf8mb4_general_ci
+    WHERE email = ?
+       OR full_name = ?
     LIMIT 1
 ");
 $stmt->execute([$username, $username]);
@@ -27,7 +27,7 @@ if (!$client) exit("");
 
 $client_id = (int)$client["id"];
 
-// Fetch ALL messages sorted correctly
+// Load messages
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted, edited
     FROM chat
@@ -39,7 +39,7 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (!$messages) exit("");
 
-// Preload media (optimization)
+// Preload media (optimized)
 $media_stmt = $conn->prepare("
     SELECT id, chat_id, media_type
     FROM chat_media
@@ -65,7 +65,7 @@ foreach ($messages as $msg) {
         echo "<span class='removed-text'>Message removed</span>";
     } else {
 
-        // Load media
+        // MEDIA
         $media_stmt->execute([$msgID]);
         $media = $media_stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -79,11 +79,13 @@ foreach ($messages as $msg) {
 
                 if ($m["media_type"] === "image") {
                     echo "<img src='$thumb' data-full='$file' class='media-thumb'>";
-                } elseif ($m["media_type"] === "video") {
+                }
+                elseif ($m["media_type"] === "video") {
                     echo "<video muted preload='metadata' data-full='$file' class='media-video'>
                             <source src='$thumb' type='video/mp4'>
                           </video>";
-                } else {
+                }
+                else {
                     echo "<a href='$file' download class='file-link'>📎 Download</a>";
                 }
             }
@@ -91,7 +93,7 @@ foreach ($messages as $msg) {
             if (count($media) > 1) echo "</div>";
         }
 
-        // Actual text
+        // TEXT
         if (trim($msg["message"]) !== "")
             echo nl2br(htmlspecialchars($msg["message"]));
     }
@@ -102,7 +104,7 @@ foreach ($messages as $msg) {
     if ($msg["edited"]) echo " <span class='edited-label'>(edited)</span>";
     echo "</div>";
 
-    // Reactions
+    // REACTIONS
     $r = $conn->prepare("
         SELECT emoji, COUNT(*) AS total
         FROM chat_reactions
@@ -121,7 +123,7 @@ foreach ($messages as $msg) {
         echo "</div>";
     }
 
-    // Action toolbar (Edit/Unsend/Delete)
+    // TOOLBAR
     echo "<div class='action-toolbar'>
             <button class='react-btn' data-msg-id='$msgID'>😊</button>";
 
@@ -129,8 +131,6 @@ foreach ($messages as $msg) {
         echo "<button class='more-btn' data-id='$msgID'>⋯</button>";
     }
 
-    echo "</div>";
-
-    echo "</div></div>";
+    echo "</div>"; // toolbar
+    echo "</div></div>"; // content + message
 }
-?>
