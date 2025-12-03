@@ -10,14 +10,15 @@ $message  = trim($_POST["message"] ?? "");
 if (!$username)
     exit(json_encode(["status"=>"error", "msg"=>"missing username"]));
 
-// Find user
+// --- USER LOOKUP (PostgreSQL-SAFE) ---
 $stmt = $conn->prepare("
-    SELECT id FROM users
-    WHERE email = $1
-       OR full_name = $1
+    SELECT id 
+    FROM users
+    WHERE email ILIKE ?
+       OR full_name ILIKE ?
     LIMIT 1
 ");
-$stmt->execute([$username]);
+$stmt->execute([$username, $username]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user)
@@ -25,22 +26,18 @@ if (!$user)
 
 $client_id = (int)$user["id"];
 
-// Insert the chat row first
+// INSERT MAIN CHAT ROW
 $insert = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
-    VALUES ($1, 'client', $2, TRUE, FALSE, NOW())
-    RETURNING id
+    VALUES (?, 'client', ?, TRUE, FALSE, NOW())
 ");
 $insert->execute([$client_id, $message]);
-$chatId = $insert->fetchColumn();
 
-// If no files → return success
-if (!isset($_FILES["media"]["tmp_name"]) || count($_FILES["media"]["tmp_name"]) === 0) {
-    echo json_encode(["status"=>"ok", "msg"=>"no media", "chat_id"=>$chatId]);
-    exit;
-}
+$chatId = $conn->lastInsertId();
 
-// Loop media
+// --------------------------------------------
+// UPLOAD AND STORE MEDIA
+// --------------------------------------------
 foreach ($_FILES["media"]["tmp_name"] as $i => $tmp) {
 
     if (!file_exists($tmp)) continue;
@@ -48,47 +45,43 @@ foreach ($_FILES["media"]["tmp_name"] as $i => $tmp) {
     $blob = file_get_contents($tmp);
     if (!$blob) continue;
 
-    $origName = $_FILES["media"]["name"][$i];
-    $mime = $_FILES["media"]["type"][$i];
+    $type = $_FILES["media"]["type"][$i];
+    $name = $_FILES["media"]["name"][$i];
 
     // Detect media type
     $mediaType = "file";
-    if (strpos($mime, "image") !== false) $mediaType = "image";
-    if (strpos($mime, "video") !== false) $mediaType = "video";
+    if (strpos($type, "image") !== false) $mediaType = "image";
+    if (strpos($type, "video") !== false) $mediaType = "video";
 
-    // Process thumbnails for images only
-    $thumbBlob = null;
+    // Generate thumbnail (only for images)
+    $thumb = null;
 
     if ($mediaType === "image" && extension_loaded("imagick")) {
-
         try {
-            $img = new Imagick();
-            $img->readImageBlob($blob);
-            $img->setImageFormat("jpeg");
-            $img->thumbnailImage(350, 350, true);
-            $thumbBlob = $img->getImageBlob();
-            $img->destroy();
+            $im = new Imagick();
+            $im->readImageBlob($blob);
+
+            // Smart thumbnail: keep aspect ratio
+            $im->thumbnailImage(450, 450, true);
+
+            $thumb = $im->getImageBlob();
+            $im->destroy();
         } catch (Exception $e) {
-            $thumbBlob = null;
+            // Thumbnail failed — safe fallback
+            $thumb = null;
         }
     }
 
-    // Insert into chat_media (BYTEA)
-    $save = $conn->prepare("
+    // Store in DB
+    $m = $conn->prepare("
         INSERT INTO chat_media (chat_id, media_path, media_type, media_blob, thumb_blob, created_at)
-        VALUES ($1, $2, $3, $4, $5, NOW())
+        VALUES (?, ?, ?, ?, ?, NOW())
     ");
-    $save->bindValue(1, $chatId, PDO::PARAM_INT);
-    $save->bindValue(2, $origName, PDO::PARAM_STR);
-    $save->bindValue(3, $mediaType, PDO::PARAM_STR);
-    $save->bindValue(4, $blob, PDO::PARAM_LOB);
-    $save->bindValue(5, $thumbBlob, PDO::PARAM_LOB);
-
-    $save->execute();
+    $m->execute([$chatId, $name, $mediaType, $blob, $thumb]);
 }
 
 echo json_encode([
     "status" => "ok",
-    "msg"    => "media uploaded",
+    "msg" => "media uploaded",
     "chat_id" => $chatId
 ]);
