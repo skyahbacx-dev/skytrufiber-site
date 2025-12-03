@@ -53,6 +53,9 @@
 
         <!-- MESSAGES WINDOW -->
         <div id="chat-messages" class="chat-messages"></div>
+        <button id="scroll-bottom-btn" class="scroll-bottom-btn">
+            <i class="fa-solid fa-arrow-down"></i>
+        </button>
 
         <!-- PREVIEW BAR -->
         <div id="preview-inline" class="preview-inline">
