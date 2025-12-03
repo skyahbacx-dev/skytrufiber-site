@@ -134,20 +134,14 @@ function previewMultiple(files) {
 
     files.forEach((file, i) => {
         const isImage = file.type.startsWith("image");
-        const url = URL.createObjectURL(file);
-
+      const url = URL.createObjectURL(file);
         $("#preview-files").append(`
-            <div class="preview-item">
-                ${
-                    isImage
-                    ? `<img src="${url}" class="preview-thumb">`
-                    : `<div class="file-box">📎 ${file.name}</div>`
-                }
-                <button class="preview-remove" data-i="${i}">&times;</button>
-            </div>
-        `);
-    });
-}
+    <div class="preview-item">
+        <img src="${url}" class="preview-thumb">
+        <button class="preview-remove" data-i="${i}">&times;</button>
+    </div>
+`);
+
 
 // ========================================
 // UPLOAD MEDIA TO SERVER
