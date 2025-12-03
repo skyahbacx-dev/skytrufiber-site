@@ -4,6 +4,9 @@ header("Content-Type: application/json");
 
 require_once "../../db_connect.php";
 
+ini_set("display_errors", 1);
+error_reporting(E_ALL);
+
 $username = $_POST["username"] ?? null;
 $message  = trim($_POST["message"] ?? "");
 
@@ -12,43 +15,40 @@ if (!$username) {
     exit;
 }
 
-// Allow login via email OR full name
 $stmt = $conn->prepare("
-    SELECT id
-    FROM users
+    SELECT id FROM users
     WHERE email = ? OR full_name = ?
     LIMIT 1
 ");
 $stmt->execute([$username, $username]);
-$client = $stmt->fetch(PDO::FETCH_ASSOC);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$client) {
-    echo json_encode(["status" => "error", "msg" => "Invalid user"]);
+if (!$user) {
+    echo json_encode(["status" => "error", "msg" => "User not found"]);
     exit;
 }
 
-$client_id = (int)$client["id"];
+$client_id = (int)$user["id"];
 
-// If no text and no media, stop safely
+// Empty message (allowed only if media attached)
 if ($message === "") {
-    echo json_encode(["status" => "ok", "msg" => "Empty text skipped"]);
+    echo json_encode(["status" => "skip", "msg" => "Empty text skipped"]);
     exit;
 }
 
-// Insert basic chat row
-$insert = $conn->prepare("
+$ins = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
     VALUES (?, 'client', ?, TRUE, FALSE, NOW())
 ");
-$insert->execute([$client_id, $message]);
+$ok = $ins->execute([$client_id, $message]);
 
-$chatId = $conn->lastInsertId();
+if (!$ok) {
+    echo json_encode(["status" => "error", "msg" => "Database error"]);
+    exit;
+}
 
-// Respond with success + message ID
 echo json_encode([
     "status" => "ok",
-    "chat_id" => $chatId,
-    "msg" => "Message sent"
+    "chat_id" => $conn->lastInsertId()
 ]);
 exit;
-?>
