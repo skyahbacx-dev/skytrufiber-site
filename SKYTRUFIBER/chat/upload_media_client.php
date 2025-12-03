@@ -9,11 +9,9 @@ $message  = trim($_POST["message"] ?? "");
 if (!$username)
     exit(json_encode(["status"=>"error", "msg"=>"missing username"]));
 
-// PostgreSQL user lookup
 $stmt = $conn->prepare("
     SELECT id FROM users
-    WHERE email = ?
-       OR full_name = ?
+    WHERE email ILIKE ? OR full_name ILIKE ?
     LIMIT 1
 ");
 $stmt->execute([$username, $username]);
@@ -24,31 +22,28 @@ if (!$user)
 
 $client_id = (int)$user["id"];
 
-// Create chat row
+// Insert message row
 $insert = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
     VALUES (?, 'client', ?, 1, 0, NOW())
+    RETURNING id
 ");
 $insert->execute([$client_id, $message]);
+$chatId = $insert->fetchColumn();
 
-// PostgreSQL last insert id
-$chatId = $conn->lastInsertId("chat_id_seq");
-
-// Handle uploads
 foreach ($_FILES["media"]["tmp_name"] as $i => $tmp) {
 
     if (!file_exists($tmp)) continue;
 
-    $blob = file_get_contents($tmp);
-    if (!$blob) continue;
-
-    $type = $_FILES["media"]["type"][$i];
-    $name = $_FILES["media"]["name"][$i];
+    $blob  = file_get_contents($tmp);
+    $type  = $_FILES["media"]["type"][$i];
+    $name  = $_FILES["media"]["name"][$i];
 
     $mediaType = "file";
     if (strpos($type, "image") !== false) $mediaType = "image";
     if (strpos($type, "video") !== false) $mediaType = "video";
 
+    // Thumbnail
     $thumb = null;
 
     if ($mediaType === "image" && extension_loaded("imagick")) {
@@ -66,8 +61,4 @@ foreach ($_FILES["media"]["tmp_name"] as $i => $tmp) {
     $m->execute([$chatId, $name, $mediaType, $blob, $thumb]);
 }
 
-echo json_encode([
-    "status" => "ok",
-    "msg" => "media uploaded",
-    "chat_id" => $chatId
-]);
+echo json_encode(["status" => "ok", "msg" => "media uploaded", "chat_id" => $chatId]);
