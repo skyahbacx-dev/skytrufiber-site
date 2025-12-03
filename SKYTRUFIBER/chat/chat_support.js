@@ -1,6 +1,6 @@
 // ========================================
 // SkyTruFiber — Modernized Client Chat System
-// Version: Ultra-Stable + Modern Viewer + Pinch Zoom
+// FINAL FIXED VERSION — PART 1
 // ========================================
 
 // GLOBAL STATE
@@ -33,9 +33,10 @@ $(document).ready(function () {
         return;
     }
 
+    // Initial Load
     loadMessages(true);
 
-    // POLLING (4 seconds)
+    // POLLING — runs ONLY when NOT editing and NOT previewing
     setInterval(() => {
         if (!editing && !activePopup && !$("#preview-inline").is(":visible")) {
             fetchNewMessages();
@@ -45,11 +46,15 @@ $(document).ready(function () {
     // SEND MESSAGE
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
-        if (e.which === 13) { e.preventDefault(); sendMessage(); }
+        if (e.which === 13) {
+            e.preventDefault();
+            sendMessage();
+        }
     });
 
     // UPLOAD MEDIA
     $("#upload-btn").click(() => $("#chat-upload-media").click());
+
     $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple(selectedFiles);
@@ -64,12 +69,12 @@ $(document).ready(function () {
             $("#reaction-picker").removeClass("show");
     });
 
-    // OPEN MESSAGE MENU
+    // OPEN MESSAGE MENU (3 dots)
     $(document).on("click", ".more-btn", function (e) {
         e.stopPropagation();
-        const msgID = $(this).data("id");
 
-        closePopup();
+        const msgID = $(this).data("id");
+        closePopup(); // remove any old popup
 
         $("body").append(buildPopup(msgID));
         activePopup = $("#msg-action-popup");
@@ -77,7 +82,7 @@ $(document).ready(function () {
         const pos = $(this).offset();
 
         activePopup.css({
-            top: pos.top - activePopup.outerHeight() - 8,
+            top: pos.top - activePopup.outerHeight() - 6,
             left: pos.left - (activePopup.outerWidth() / 2) + 15
         }).fadeIn(120);
     });
@@ -106,44 +111,41 @@ $(document).ready(function () {
 
     $(document).on("click", ".popup-cancel", closePopup);
 
-    // REACTIONS
+    // REACTION PICKER BTN
     $(document).on("click", ".react-btn", function (e) {
         e.stopPropagation();
         reactingToMsgId = $(this).data("msg-id");
 
         const picker = ensureReactionPicker();
-        const rec = $(this).offset();
+        const pos = $(this).offset();
 
         picker.css({
-            top: rec.top - picker.outerHeight() - 8,
-            left: rec.left - (picker.outerWidth() / 2) + 15
+            top: pos.top - picker.outerHeight() - 10,
+            left: pos.left - (picker.outerWidth() / 2) + 15
         }).addClass("show");
     });
 
+    // PICK EMOJI
     $(document).on("click", ".reaction-choice", function () {
         $.post("react_message_client.php", {
             chat_id: reactingToMsgId,
             emoji: $(this).data("emoji")
         }, fetchNewMessages);
+
         $("#reaction-picker").removeClass("show");
     });
 
     // THEME TOGGLE
     $("#theme-toggle").on("click", toggleTheme);
-
 });
-
 // ========================================
 // THEME ENGINE
 // ========================================
 function toggleTheme() {
     const root = document.documentElement;
-
-    if (root.getAttribute("data-theme") === "dark") {
-        root.setAttribute("data-theme", "light");
-    } else {
-        root.setAttribute("data-theme", "dark");
-    }
+    root.setAttribute("data-theme",
+        root.getAttribute("data-theme") === "dark" ? "light" : "dark"
+    );
 }
 
 // ========================================
@@ -191,7 +193,9 @@ function fetchNewMessages() {
 function sendMessage() {
     const msg = $("#message-input").val().trim();
 
+    // If media selected → upload
     if (selectedFiles.length > 0) return uploadMedia(selectedFiles, msg);
+
     if (!msg) return;
 
     appendClientMessageInstant(msg);
@@ -202,7 +206,7 @@ function sendMessage() {
     });
 }
 
-// Instant preview before upload
+// Instant self-message bubble
 function appendClientMessageInstant(msg) {
     $("#chat-messages").append(`
         <div class="message sent fadeup">
@@ -261,80 +265,10 @@ $(document).on("click", ".preview-remove", function () {
 });
 
 // ========================================
-// POPUP MENU
-// ========================================
-function buildPopup(id) {
-    return `
-        <div id="msg-action-popup" class="msg-action-popup">
-            <button class="popup-edit" data-id="${id}"><i class="fa-solid fa-pen"></i> Edit</button>
-            <button class="popup-unsend" data-id="${id}"><i class="fa-solid fa-rotate-left"></i> Unsend</button>
-            <button class="popup-delete" data-id="${id}"><i class="fa-solid fa-trash"></i> Delete</button>
-            <button class="popup-cancel"><i class="fa-solid fa-xmark"></i> Cancel</button>
-        </div>
-    `;
-}
-
-function closePopup() {
-    if (activePopup) {
-        const p = activePopup;
-        activePopup = null;
-        p.fadeOut(120, function () {
-            $(this).remove();
-        });
-    }
-}
-
-// ========================================
-// REACTION PICKER
-// ========================================
-function ensureReactionPicker() {
-    let picker = $("#reaction-picker");
-
-    if (picker.length) return picker;
-
-    $("body").append(`
-        <div id="reaction-picker" class="reaction-picker">
-            ${reactionChoices.map(e => `<button class="reaction-choice" data-emoji="${e}">${e}</button>`).join("")}
-        </div>
-    `);
-
-    return $("#reaction-picker");
-}
-
-// ========================================
-function scrollToBottom() {
-    const box = $("#chat-messages");
-    box.stop().animate({ scrollTop: box[0].scrollHeight }, 200);
-}
-// ========================================
-// SCROLL-TO-BOTTOM BUTTON LOGIC
-// ========================================
-const scrollBtn = document.getElementById("scroll-bottom-btn");
-
-$("#chat-messages").on("scroll", function () {
-
-    const box = this;
-
-    const distanceFromBottom = box.scrollHeight - box.scrollTop - box.clientHeight;
-
-    // Show if user is 70px or more above bottom
-    if (distanceFromBottom > 70) {
-        scrollBtn.classList.add("show");
-    } else {
-        scrollBtn.classList.remove("show");
-    }
-});
-
-// Button click → scroll to bottom
-scrollBtn.addEventListener("click", () => {
-    const box = $("#chat-messages");
-    box.stop().animate({ scrollTop: box[0].scrollHeight }, 250);
-});
-
-// ========================================
-// MEDIA PREVIEW (before upload)
+// PREVIEW BAR (before upload)
 // ========================================
 function previewMultiple(files) {
+
     $("#preview-files").html("");
     $("#preview-inline").slideDown(150);
 
@@ -380,6 +314,77 @@ function uploadMedia(files, msg) {
 }
 
 // ========================================
+// SCROLL-TO-BOTTOM BUTTON
+// ========================================
+const scrollBtn = document.getElementById("scroll-bottom-btn");
+
+$("#chat-messages").on("scroll", function () {
+
+    const box = this;
+    const distanceFromBottom = box.scrollHeight - box.scrollTop - box.clientHeight;
+
+    if (distanceFromBottom > 70) {
+        scrollBtn.classList.add("show");
+    } else {
+        scrollBtn.classList.remove("show");
+    }
+});
+
+// Button click → scroll
+scrollBtn.addEventListener("click", () => {
+    const box = $("#chat-messages");
+    box.stop().animate({ scrollTop: box[0].scrollHeight }, 250);
+});
+
+// ========================================
+// POPUP MENU
+// ========================================
+function buildPopup(id) {
+    return `
+        <div id="msg-action-popup" class="msg-action-popup">
+            <button class="popup-edit" data-id="${id}">
+                <i class="fa-solid fa-pen"></i> Edit
+            </button>
+            <button class="popup-unsend" data-id="${id}">
+                <i class="fa-solid fa-rotate-left"></i> Unsend
+            </button>
+            <button class="popup-delete" data-id="${id}">
+                <i class="fa-solid fa-trash"></i> Delete
+            </button>
+            <button class="popup-cancel">
+                <i class="fa-solid fa-xmark"></i> Cancel
+            </button>
+        </div>
+    `;
+}
+
+function closePopup() {
+    if (activePopup) {
+        const p = activePopup;
+        activePopup = null;
+        p.fadeOut(120, () => p.remove());
+    }
+}
+
+// ========================================
+// REACTION PICKER
+// ========================================
+function ensureReactionPicker() {
+    let picker = $("#reaction-picker");
+
+    if (picker.length) return picker;
+
+    $("body").append(`
+        <div id="reaction-picker" class="reaction-picker">
+            ${reactionChoices.map(e => 
+                `<button class="reaction-choice" data-emoji="${e}">${e}</button>`
+            ).join("")}
+        </div>
+    `);
+
+    return $("#reaction-picker");
+}
+// ========================================
 // MEDIA EVENTS (image click → open viewer)
 // ========================================
 function attachMediaEvents() {
@@ -395,7 +400,7 @@ function attachMediaEvents() {
         galleryItems = [];
         currentIndex = 0;
 
-        // Build gallery
+        // Build gallery array
         const items = container.find(".media-thumb");
         items.each(function (i) {
             galleryItems.push($(this).data("full"));
@@ -403,11 +408,10 @@ function attachMediaEvents() {
         });
 
         showLightboxImage(full);
-
     });
 
     // ------------------------------------
-    // VIDEO CLICK
+    // VIDEO CLICK (no zoom system)
     // ------------------------------------
     $(".media-video").off("click").on("click", function () {
         const full = $(this).data("full");
@@ -432,20 +436,19 @@ function attachMediaEvents() {
     });
 
     // ------------------------------------
-    // CLOSE LIGHTBOX (X BUTTON)
+    // CLOSE LIGHTBOX (X button)
     // ------------------------------------
     $("#lightbox-close").off("click").on("click", function () {
         closeLightbox();
     });
 
     // ------------------------------------
-    // BACKGROUND TAP CLOSE (smart)
+    // BACKGROUND CLICK CLOSE (smart logic)
     // ------------------------------------
     $("#lightbox-overlay").off("click").on("click", function (e) {
 
         const isImage = $("#lightbox-image").is(":visible");
 
-        // If clicking directly ON image, prevent closing
         if (isImage) {
             const img = document.getElementById("lightbox-image");
             const rect = img.getBoundingClientRect();
@@ -455,7 +458,7 @@ function attachMediaEvents() {
                 e.clientY >= rect.top &&
                 e.clientY <= rect.bottom;
 
-            if (inside) return; // do NOT close if image tapped
+            if (inside) return; // clicking image → DO NOT close
         }
 
         // Do not close if zoomed in
@@ -479,7 +482,7 @@ function showLightboxImage(src) {
 }
 
 // ========================================
-// GALLERY NAVIGATION (Prev / Next)
+// GALLERY NAVIGATION
 // ========================================
 function navigateGallery(step) {
     if (galleryItems.length <= 1) return;
@@ -492,7 +495,9 @@ function navigateGallery(step) {
     updateLightboxIndex();
 }
 
-// Update "1/4" indicator
+// ========================================
+// Update "1 / 5" indicator + download URL
+// ========================================
 function updateLightboxIndex() {
     if (galleryItems.length > 1) {
         $("#lightbox-index").text(`${currentIndex + 1} / ${galleryItems.length}`).show();
@@ -515,7 +520,7 @@ function closeLightbox() {
 }
 
 // ========================================
-// LIGHTBOX TRANSFORM RESET
+// RESET TRANSFORMS
 // ========================================
 function resetLightboxTransform() {
     lightboxScale = 1;
@@ -527,7 +532,7 @@ function resetLightboxTransform() {
     });
 }
 // ========================================
-// PART 3 — FULL GESTURE SYSTEM
+// PART 4 — FULL GESTURE SYSTEM
 // ========================================
 
 // DOM ELEMENT
@@ -542,15 +547,15 @@ let lastTouchY = 0;
 let swipeStartX = 0;
 let swipeEndX = 0;
 
-// Flag to prevent background scroll
+// Prevent background scroll during viewer mode
 document.addEventListener("touchmove", function (e) {
     if ($("#lightbox-overlay").hasClass("show")) {
-        e.preventDefault(); 
+        e.preventDefault();
     }
 }, { passive: false });
 
 // ========================================
-// HELPER — DISTANCE BETWEEN 2 TOUCHES
+// Helper: Distance between two touches
 // ========================================
 function getTouchDistance(ev) {
     const dx = ev.touches[0].clientX - ev.touches[1].clientX;
@@ -559,7 +564,7 @@ function getTouchDistance(ev) {
 }
 
 // ========================================
-// APPLY TRANSFORM
+// Apply transform
 // ========================================
 function updateTransform() {
     imgEl.style.transform =
@@ -572,16 +577,15 @@ function updateTransform() {
 imgEl.addEventListener("touchstart", function (ev) {
 
     if (ev.touches.length === 1) {
-        // Single finger → pan
+        // Single finger → PAN
         isPanning = true;
         lastTouchX = ev.touches[0].clientX;
         lastTouchY = ev.touches[0].clientY;
 
-        // Swipe beginning
         swipeStartX = lastTouchX;
 
     } else if (ev.touches.length === 2) {
-        // Two fingers → pinch
+        // PINCH
         isPanning = false;
         touchStartDistance = getTouchDistance(ev);
     }
@@ -593,8 +597,9 @@ imgEl.addEventListener("touchstart", function (ev) {
 // ========================================
 imgEl.addEventListener("touchmove", function (ev) {
 
+    // PAN (dragging image)
     if (ev.touches.length === 1 && isPanning && lightboxScale > 1.02) {
-        // Drag / Pan
+
         let x = ev.touches[0].clientX;
         let y = ev.touches[0].clientY;
 
@@ -607,14 +612,14 @@ imgEl.addEventListener("touchmove", function (ev) {
         updateTransform();
     }
 
+    // PINCH ZOOM
     if (ev.touches.length === 2) {
-        // Pinch zoom
         let newDist = getTouchDistance(ev);
         let ratio = newDist / touchStartDistance;
 
         let newScale = lightboxScale * ratio;
 
-        // Scale boundaries
+        // Clamp
         if (newScale < 1) newScale = 1;
         if (newScale > 4) newScale = 4;
 
@@ -631,22 +636,19 @@ imgEl.addEventListener("touchmove", function (ev) {
 // ========================================
 imgEl.addEventListener("touchend", function (ev) {
 
-    // SWIPE DETECTION (only when scale == 1)
+    // SWIPE LEFT/RIGHT → change image
     if (ev.touches.length === 0 && !isPanning && lightboxScale <= 1.02) {
 
         swipeEndX = lastTouchX;
         const diff = swipeEndX - swipeStartX;
 
         if (Math.abs(diff) > 60) {
-            // Swipe left → next
-            if (diff < 0) navigateGallery(1);
-
-            // Swipe right → previous
-            if (diff > 0) navigateGallery(-1);
+            if (diff < 0) navigateGallery(1);  // Swipe ← next
+            if (diff > 0) navigateGallery(-1); // Swipe → previous
         }
     }
 
-    // Reset if fingers removed
+    // Reset when zoomed out
     if (lightboxScale <= 1.02) {
         lightboxScale = 1;
         lightboxTranslateX = 0;
@@ -655,6 +657,7 @@ imgEl.addEventListener("touchend", function (ev) {
     }
 
     isPanning = false;
+
 }, { passive: false });
 
 // ========================================
@@ -664,17 +667,14 @@ let lastTap = 0;
 
 imgEl.addEventListener("touchend", function (ev) {
     let now = Date.now();
-    let tapTime = now - lastTap;
 
-    if (tapTime < 250) {
-        // Double-tap center zoom
+    if (now - lastTap < 250) {
+        // Double tap toggles zoom
         if (lightboxScale > 1.05) {
-            // Reset zoom
             lightboxScale = 1;
             lightboxTranslateX = 0;
             lightboxTranslateY = 0;
         } else {
-            // Zoom in
             lightboxScale = 2;
         }
         updateTransform();
@@ -684,25 +684,22 @@ imgEl.addEventListener("touchend", function (ev) {
 });
 
 // ========================================
-// DESKTOP: WHEEL ZOOM
+// DESKTOP — WHEEL ZOOM
 // ========================================
 imgEl.addEventListener("wheel", function (ev) {
     ev.preventDefault();
 
-    let delta = ev.deltaY;
-    let zoomAmount = -delta * 0.001;
-
-    lightboxScale += zoomAmount;
+    let zoom = -ev.deltaY * 0.001;
+    lightboxScale += zoom;
 
     if (lightboxScale < 1) lightboxScale = 1;
     if (lightboxScale > 4) lightboxScale = 4;
 
     updateTransform();
-
 }, { passive: false });
 
 // ========================================
-// DESKTOP: DRAG (mouse)
+// DESKTOP — DRAG TO PAN
 // ========================================
 let mouseDown = false;
 let lastMouseX = 0;
@@ -732,7 +729,6 @@ document.addEventListener("mouseup", function () {
     mouseDown = false;
 });
 
-
 // ========================================
-// END OF PART 3 — COMPLETE
+// END OF PART 4 — COMPLETE GESTURE ENGINE
 // ========================================
