@@ -258,40 +258,46 @@ body {
 /* ============================================================
    ACTION BUTTONS ON HOVER (☺︎ + ⋯)
 ============================================================ */
+/* ============================================
+   ACTION BUTTONS (HIDDEN UNTIL HOVER)
+============================================ */
 .action-toolbar {
     position: absolute;
-    top: -8px;
     right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
     display: flex;
     gap: 6px;
     opacity: 0;
-    transition: opacity .2s;
+    pointer-events: none;
+    transition: opacity .22s ease;
 }
 
 .message:hover .action-toolbar {
     opacity: 1;
+    pointer-events: auto;
 }
 
 .react-btn,
 .more-btn {
-    width: 26px;
-    height: 26px;
+    background: rgba(0,0,0,0.10);
     border: none;
-    cursor: pointer;
+    padding: 6px 8px;
     border-radius: 50%;
-    background: var(--reaction-bg);
-    color: var(--reaction-text);
+    cursor: pointer;
     font-size: 14px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
-/* ☺︎ icon style */
-.react-btn {
-    font-size: 15px;
-    font-weight: bold;
+.message.sent .react-btn,
+.message.sent .more-btn {
+    background: rgba(255,255,255,0.25);
 }
+
+.react-btn:hover,
+.more-btn:hover {
+    background: rgba(0,0,0,0.20);
+}
+
 
 /* ============================================================
    REACTION BAR (Messenger Style)
@@ -550,4 +556,81 @@ body {
 
 #upload-btn:hover img {
     opacity: 1;
+}
+/* ============================================
+   MEDIA GRID LAYOUT (Messenger-like)
+============================================ */
+.media-grid {
+    display: grid;
+    gap: 6px;
+}
+
+.media-grid.cols-1 {
+    grid-template-columns: 1fr;
+}
+
+.media-grid.cols-2 {
+    grid-template-columns: 1fr 1fr;
+}
+
+.media-grid.cols-3 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+}
+.media-grid.cols-3 > :nth-child(3) {
+    grid-column: span 2;
+}
+
+.media-grid.cols-4 {
+    grid-template-columns: 1fr 1fr;
+}
+
+.media-grid img,
+.media-grid video {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+/* Optional: overlay for +X more */
+.media-more-overlay {
+    position: relative;
+}
+
+.media-more-overlay::after {
+    content: attr(data-more);
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    color: #fff;
+    font-size: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 12px;
+}
+/* ============================================
+   REACTION PICKER (Z-index FIX)
+============================================ */
+#reaction-picker {
+    position: absolute;
+    background: var(--preview-bg);
+    padding: 6px 10px;
+    border-radius: 20px;
+    display: flex;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    z-index: 30000 !important; /* ABOVE chat */
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: .18s ease;
+}
+
+#reaction-picker.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
 }
