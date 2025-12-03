@@ -49,10 +49,14 @@ $(document).ready(function () {
         }
     });
 
-    // Upload media
-    $("#upload-btn").click(() => $("#chat-upload-media").click());
+// ========================================
+// UPLOAD MEDIA BUTTON
+// ========================================
+        $("#upload-btn").click(() => {
+        $("#chat-upload-media").click();
+    });
 
-    $("#chat-upload-media").change(function () {
+        $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
@@ -119,36 +123,40 @@ function appendClientMessageInstant(msg) {
 }
 
 // ========================================
-// PREVIEW FILES BEFORE UPLOAD
+// REMOVE ITEM FROM PREVIEW LIST
 // ========================================
 $(document).on("click", ".preview-remove", function () {
-    selectedFiles.splice($(this).data("i"), 1);
+    const index = $(this).data("i");
+    selectedFiles.splice(index, 1);
 
-    if (selectedFiles.length) previewMultiple(selectedFiles);
-    else $("#preview-inline").slideUp(200);
+    if (selectedFiles.length) {
+        previewMultiple(selectedFiles);
+    } else {
+        $("#preview-inline").slideUp(200);
+    }
 });
 
+
+// ========================================
+// PREVIEW BAR (before upload) — FIXED SIZE
+// ========================================
 function previewMultiple(files) {
 
     $("#preview-files").html("");
     $("#preview-inline").slideDown(150);
 
     files.forEach((file, i) => {
-        const isImage = file.type.startsWith("image");
         const url = URL.createObjectURL(file);
 
         $("#preview-files").append(`
             <div class="preview-item">
-                ${
-                    isImage
-                    ? `<img src="${url}" class="preview-thumb">`
-                    : `<div class="file-box">📎 ${file.name}</div>`
-                }
+                <img src="${url}" class="preview-thumb">
                 <button class="preview-remove" data-i="${i}">&times;</button>
             </div>
         `);
     });
 }
+
 
 // ========================================
 // UPLOAD MEDIA TO SERVER
