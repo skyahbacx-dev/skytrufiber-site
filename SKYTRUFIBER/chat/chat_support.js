@@ -159,10 +159,18 @@ function buildPopup(id) {
         </div>
     `;
 }
+if (activePopup) return; // prevent refresh while menu open
 
 function closePopup() {
-    if (activePopup) activePopup.fadeOut(120, () => activePopup.remove());
-    activePopup = null;
+    if (activePopup) {
+        const $popup = activePopup;
+        activePopup = null; // clear immediately to avoid race-condition
+
+        $popup.fadeOut(120, function () {
+            // Only remove if still in DOM
+            if ($(this).length) $(this).remove();
+        });
+    }
 }
 
 // ==========================
