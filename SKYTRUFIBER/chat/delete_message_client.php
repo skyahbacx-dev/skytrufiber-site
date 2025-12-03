@@ -3,15 +3,16 @@ if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
 $msgID = (int)($_POST["id"] ?? 0);
-$username = $_POST["username"] ?? "";
+$username = trim($_POST["username"] ?? "");
 
 if (!$msgID || !$username)
     exit(json_encode(["status"=>"error","msg"=>"invalid"]));
 
+// PostgreSQL-safe lookup
 $stmt = $conn->prepare("
     SELECT id FROM users
-    WHERE email = ? COLLATE utf8mb4_general_ci
-       OR full_name = ? COLLATE utf8mb4_general_ci
+    WHERE email = ?
+       OR full_name = ?
     LIMIT 1
 ");
 $stmt->execute([$username, $username]);
@@ -57,5 +58,5 @@ if ($isClientSender && $age <= 10) {
     exit(json_encode(["status"=>"ok","type"=>"unsent"]));
 }
 
-// SELF DELETE (client hides only)
+// SELF DELETE
 exit(json_encode(["status"=>"ok","type"=>"self-delete"]));
