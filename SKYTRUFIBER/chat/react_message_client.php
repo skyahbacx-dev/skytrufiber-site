@@ -2,26 +2,20 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-header("Content-Type: application/json");
+$msgID = (int)($_POST["chat_id"] ?? 0);
+$emoji = $_POST["emoji"] ?? "";
 
-ini_set("display_errors",1);
-error_reporting(E_ALL);
+if (!$msgID || !$emoji) exit("bad");
 
-$chat_id = $_POST["chat_id"] ?? null;
-$emoji   = $_POST["emoji"] ?? null;
+// Always client in this panel
+$userType = "client";
 
-if (!$chat_id || !$emoji) {
-    echo json_encode(["status"=>"error","msg"=>"Bad data"]);
-    exit;
-}
-
-$userType = isset($_SESSION["csr_id"]) ? "csr" : "client";
-
+// Upsert reaction (SQLite & MySQL compatible)
 $stmt = $conn->prepare("
     INSERT INTO chat_reactions (chat_id, emoji, user_type)
     VALUES (?, ?, ?)
+    ON DUPLICATE KEY UPDATE emoji = VALUES(emoji)
 ");
-$stmt->execute([$chat_id, $emoji, $userType]);
+$stmt->execute([$msgID, $emoji, $userType]);
 
-echo json_encode(["status"=>"ok"]);
-exit;
+echo "ok";
