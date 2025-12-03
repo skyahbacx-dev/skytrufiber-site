@@ -63,7 +63,7 @@
 }
 
 /* ============================================================
-   BODY + GLOBAL
+   GLOBAL
 ============================================================ */
 body {
     margin: 0;
@@ -86,7 +86,7 @@ body {
 }
 
 /* ============================================================
-   CHAT MODAL (Desktop)
+   CHAT MODAL
 ============================================================ */
 .chat-modal {
     width: 760px;
@@ -97,12 +97,11 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    position: relative !important; /* FIXED */
     transition: background var(--transition-speed);
 }
 
-/* ============================================================
-   MOBILE MODE — FULLSCREEN
-============================================================ */
+/* MOBILE */
 @media(max-width: 768px) {
     .chat-modal {
         width: 100vw !important;
@@ -144,7 +143,7 @@ body {
     opacity: .8;
 }
 
-/* Logout + theme toggle container */
+/* Logout */
 .logout-btn {
     margin-left: 14px;
     background: #ff4040;
@@ -155,6 +154,7 @@ body {
     cursor: pointer;
 }
 
+/* Theme toggle */
 .theme-toggle {
     margin-left: auto;
     margin-right: 10px;
@@ -169,7 +169,7 @@ body {
     overflow: hidden;
 }
 
-/* Moon / Sun stacked */
+/* Animated sun/moon */
 .theme-icon {
     position: absolute;
     top: 50%; left: 50%;
@@ -178,23 +178,20 @@ body {
     font-size: 20px;
 }
 
-/* Default light mode icon visibility */
-.moon-icon { opacity: 1; transform: translate(-50%, -50%) rotate(0deg); }
-.sun-icon { opacity: 0; transform: translate(-50%, -50%) rotate(-180deg); }
+.moon-icon { opacity: 1; transform: translate(-50%,-50%) rotate(0deg); }
+.sun-icon  { opacity: 0; transform: translate(-50%,-50%) rotate(-180deg); }
 
-/* Dark mode swapped */
 :root[data-theme="dark"] .moon-icon {
     opacity: 0;
-    transform: translate(-50%, -50%) rotate(180deg);
+    transform: translate(-50%,-50%) rotate(180deg);
 }
-
 :root[data-theme="dark"] .sun-icon {
     opacity: 1;
-    transform: translate(-50%, -50%) rotate(0deg);
+    transform: translate(-50%,-50%) rotate(0deg);
 }
 
 /* ============================================================
-   MESSAGES WINDOW
+   CHAT MESSAGES
 ============================================================ */
 .chat-messages {
     flex: 1;
@@ -215,7 +212,7 @@ body {
 }
 
 /* ============================================================
-   MESSAGE STRUCTURE
+   MESSAGE
 ============================================================ */
 .message {
     display: flex;
@@ -257,7 +254,7 @@ body {
 }
 
 /* ============================================================
-   MEDIA IN CHAT
+   MEDIA
 ============================================================ */
 .media-thumb, .media-video {
     max-width: 240px;
@@ -275,13 +272,14 @@ body {
 }
 
 /* ============================================================
-   PREVIEW BAR
+   PREVIEW BAR (FIXED)
 ============================================================ */
 .preview-inline {
     background: var(--preview-bg);
     padding: 10px;
     border-top: 1px solid var(--input-border);
-    display: none;
+    display: none !important; /* FIX */
+    height: auto !important;  /* FIX */
     max-height: 160px;
     overflow-y: auto;
 }
@@ -292,9 +290,7 @@ body {
     overflow-x: auto;
 }
 
-.preview-item {
-    position: relative;
-}
+.preview-item { position: relative; }
 
 .preview-thumb {
     width: 110px;
@@ -363,7 +359,7 @@ body {
 }
 
 /* ============================================================
-   LIGHTBOX (FULLSCREEN VIEWER)
+   LIGHTBOX
 ============================================================ */
 #lightbox-overlay {
     position: fixed;
@@ -376,16 +372,14 @@ body {
     z-index: 20000;
 }
 
-#lightbox-overlay.show {
-    display: flex !important;
-}
+#lightbox-overlay.show { display: flex !important; }
 
-.lightbox-image, .lightbox-video {
+.lightbox-image,
+.lightbox-video {
     max-width: 92vw;
     max-height: 82vh;
     object-fit: contain;
     border-radius: 10px;
-    transition: transform .2s ease;
 }
 
 .lightbox-close {
@@ -406,7 +400,6 @@ body {
     border: none;
     color: var(--lightbox-icon);
     cursor: pointer;
-    padding: 5px 20px;
 }
 
 .prev { left: 10px; }
@@ -420,13 +413,11 @@ body {
     color: var(--lightbox-icon);
 }
 
-/* Index label */
 .lightbox-index {
     position: absolute;
     bottom: 20px;
     left: 20px;
     color: var(--lightbox-icon);
-    font-size: 16px;
 }
 
 /* ============================================================
@@ -436,9 +427,10 @@ body {
     from { opacity: 0; transform: translateY(18px); }
     to { opacity: 1; transform: translateY(0); }
 }
-/* ============================================
+
+/* ============================================================
    SCROLL-TO-BOTTOM BUTTON (Messenger Style)
-============================================ */
+============================================================ */
 .scroll-bottom-btn {
     position: absolute;
     right: 18px;
@@ -455,7 +447,7 @@ body {
     font-size: 20px;
     box-shadow: 0 4px 14px rgba(0,0,0,0.35);
     cursor: pointer;
-    z-index: 50;
+    z-index: 2000;
 
     opacity: 0;
     pointer-events: none;
@@ -469,7 +461,7 @@ body {
     transform: translateY(0);
 }
 
-/* Reposition for mobile */
+/* Mobile adjustment */
 @media (max-width: 768px) {
     .scroll-bottom-btn {
         bottom: 100px;
