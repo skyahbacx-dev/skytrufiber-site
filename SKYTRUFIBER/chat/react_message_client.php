@@ -2,22 +2,26 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
+header("Content-Type: application/json");
+
+ini_set("display_errors",1);
+error_reporting(E_ALL);
+
 $chat_id = $_POST["chat_id"] ?? null;
 $emoji   = $_POST["emoji"] ?? null;
 
-if (!$chat_id || !$emoji) exit("Invalid data");
+if (!$chat_id || !$emoji) {
+    echo json_encode(["status"=>"error","msg"=>"Bad data"]);
+    exit;
+}
 
-// Determine sender type
-$sender = isset($_SESSION["csr_id"]) ? "csr" : "client";
+$userType = isset($_SESSION["csr_id"]) ? "csr" : "client";
 
-// Insert or update reaction (toggle support)
 $stmt = $conn->prepare("
     INSERT INTO chat_reactions (chat_id, emoji, user_type)
     VALUES (?, ?, ?)
-    ON CONFLICT (chat_id, emoji, user_type) DO UPDATE SET
-        emoji = EXCLUDED.emoji
 ");
-$stmt->execute([$chat_id, $emoji, $sender]);
+$stmt->execute([$chat_id, $emoji, $userType]);
 
-echo "ok";
-?>
+echo json_encode(["status"=>"ok"]);
+exit;
