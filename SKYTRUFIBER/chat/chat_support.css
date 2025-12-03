@@ -436,3 +436,43 @@ body {
     from { opacity: 0; transform: translateY(18px); }
     to { opacity: 1; transform: translateY(0); }
 }
+/* ============================================
+   SCROLL-TO-BOTTOM BUTTON (Messenger Style)
+============================================ */
+.scroll-bottom-btn {
+    position: absolute;
+    right: 18px;
+    bottom: 94px;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: none;
+    background: var(--scroll-btn-bg);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    cursor: pointer;
+    z-index: 50;
+
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px);
+    transition: opacity .25s ease, transform .25s ease;
+}
+
+.scroll-bottom-btn.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+/* Reposition for mobile */
+@media (max-width: 768px) {
+    .scroll-bottom-btn {
+        bottom: 100px;
+        right: 16px;
+    }
+}
