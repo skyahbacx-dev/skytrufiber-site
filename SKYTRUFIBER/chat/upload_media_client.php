@@ -1,89 +1,73 @@
 <?php
 if (!isset($_SESSION)) session_start();
 header("Content-Type: application/json");
-
 require_once "../../db_connect.php";
 
-ini_set("display_errors",1);
-error_reporting(E_ALL);
-
-$username = $_POST["username"] ?? null;
+$username = trim($_POST["username"] ?? "");
 $message  = trim($_POST["message"] ?? "");
 
-if (!$username) {
-    echo json_encode(["status" => "error", "msg" => "Missing username"]);
-    exit;
-}
+if (!$username)
+    exit(json_encode(["status"=>"error", "msg"=>"missing username"]));
 
-// Identify user
 $stmt = $conn->prepare("
     SELECT id FROM users
-    WHERE email = ? OR full_name = ?
+    WHERE email = ? COLLATE utf8mb4_general_ci
+       OR full_name = ? COLLATE utf8mb4_general_ci
     LIMIT 1
 ");
 $stmt->execute([$username, $username]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$user) {
-    echo json_encode(["status"=>"error","msg"=>"User not found"]);
-    exit;
-}
+if (!$user)
+    exit(json_encode(["status"=>"error", "msg"=>"invalid user"]));
 
 $client_id = (int)$user["id"];
 
-// Insert empty or text message
-$ins = $conn->prepare("
+// Insert message row
+$insert = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
-    VALUES (?, 'client', ?, TRUE, FALSE, NOW())
+    VALUES (?, 'client', ?, 1, 0, NOW())
 ");
-$ins->execute([$client_id, $message]);
+$insert->execute([$client_id, $message]);
+$chatId = $conn->lastInsertId();
 
-$chatID = $conn->lastInsertId();
+// Upload files
+foreach ($_FILES["media"]["tmp_name"] as $i => $tmp) {
 
-// ============================
-// PROCESS FILES
-// ============================
-if (!empty($_FILES["media"]["name"])) {
+    if (!file_exists($tmp)) continue;
 
-    foreach ($_FILES["media"]["name"] as $i => $name) {
-        $tmp  = $_FILES["media"]["tmp_name"][$i];
-        $type = $_FILES["media"]["type"][$i];
+    $blob = file_get_contents($tmp);
+    if (!$blob) continue;
 
-        if (!file_exists($tmp)) continue;
+    $type = $_FILES["media"]["type"][$i];
+    $name = $_FILES["media"]["name"][$i];
 
-        $blob = file_get_contents($tmp);
-        if (!$blob) continue;
+    // Detect type
+    $mediaType = "file";
+    if (strpos($type, "image") !== false) $mediaType = "image";
+    if (strpos($type, "video") !== false) $mediaType = "video";
 
-        // Media type
-        $mediaType = "file";
-        if (strpos($type, "image") !== false) $mediaType = "image";
-        if (strpos($type, "video") !== false) $mediaType = "video";
+    // Thumbnail
+    $thumb = null;
 
-        $thumbBlob = null;
-
-        // Generate thumbnail for images
-        if ($mediaType === "image" && class_exists("Imagick")) {
-            try {
-                $img = new Imagick();
-                $img->readImageBlob($blob);
-                $img->thumbnailImage(250, 250, true);
-                $thumbBlob = $img->getImageBlob();
-                $img->clear();
-                $img->destroy();
-            } catch (Exception $e) {}
-        }
-
-        $m = $conn->prepare("
-            INSERT INTO chat_media (chat_id, media_path, media_type, media_blob, thumb_blob, created_at)
-            VALUES (?, ?, ?, ?, ?, NOW())
-        ");
-        $m->execute([$chatID, $name, $mediaType, $blob, $thumbBlob]);
+    if ($mediaType === "image" && extension_loaded("imagick")) {
+        $im = new Imagick();
+        $im->readImageBlob($blob);
+        $im->thumbnailImage(250, 250, true);
+        $thumb = $im->getImageBlob();
+        $im->destroy();
     }
+
+    // Store
+    $m = $conn->prepare("
+        INSERT INTO chat_media (chat_id, media_path, media_type, media_blob, thumb_blob, created_at)
+        VALUES (?, ?, ?, ?, ?, NOW())
+    ");
+    $m->execute([$chatId, $name, $mediaType, $blob, $thumb]);
 }
 
 echo json_encode([
     "status" => "ok",
-    "chat_id" => $chatID,
-    "msg" => "Uploaded"
+    "msg" => "media uploaded",
+    "chat_id" => $chatId
 ]);
-exit;
