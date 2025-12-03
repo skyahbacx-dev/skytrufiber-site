@@ -6,19 +6,20 @@ error_reporting(E_ALL);
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$username = trim($_POST["username"] ?? "");
+$username = $_POST["username"] ?? null;
 if (!$username) exit("");
 
-// Find client by email OR full name (PostgreSQL → NO COLLATION)
+// PostgreSQL case-insensitive lookup
 $stmt = $conn->prepare("
-    SELECT id, full_name 
+    SELECT id, full_name
     FROM users
-    WHERE email = $1
-       OR full_name = $1
+    WHERE email ILIKE ?
+       OR full_name ILIKE ?
     LIMIT 1
 ");
-$stmt->execute([$username]);
+$stmt->execute([$username, $username]);
 $client = $stmt->fetch(PDO::FETCH_ASSOC);
+
 if (!$client) exit("");
 
 $client_id = (int)$client["id"];
@@ -27,18 +28,19 @@ $client_id = (int)$client["id"];
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted, edited
     FROM chat
-    WHERE client_id = $1
+    WHERE client_id = ?
     ORDER BY id ASC
 ");
 $stmt->execute([$client_id]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 if (!$messages) exit("");
 
-// Prepare media query
+// Preload media
 $media_stmt = $conn->prepare("
-    SELECT id, media_type
+    SELECT id, chat_id, media_type
     FROM chat_media
-    WHERE chat_id = $1
+    WHERE chat_id = ?
 ");
 
 foreach ($messages as $msg) {
@@ -47,82 +49,77 @@ foreach ($messages as $msg) {
     $sender = ($msg["sender_type"] === "csr") ? "received" : "sent";
     $time = date("g:i A", strtotime($msg["created_at"]));
 
-    // Bubble Wrapper
     echo "<div class='message $sender' data-msg-id='$msgID'>";
-    echo "<div class='message-avatar'><img src='/upload/default-avatar.png'></div>";
-    echo "<div class='message-content'>";
-    echo "<div class='message-bubble'>";
 
-    // Deleted message
-    if ($msg["deleted"]) {
+    echo "<div class='message-avatar'>
+            <img src='/upload/default-avatar.png'>
+          </div>";
+
+    echo "<div class='message-content'>
+            <div class='message-bubble'>";
+
+    if ($msg["deleted"] == 1) {
         echo "<span class='removed-text'>Message removed</span>";
     } else {
 
-        // Load media
         $media_stmt->execute([$msgID]);
         $media = $media_stmt->fetchAll(PDO::FETCH_ASSOC);
 
         if ($media) {
-
-            $multi = count($media) > 1;
-            if ($multi) echo "<div class='carousel-container'>";
+            if (count($media) > 1) echo "<div class='carousel-container'>";
 
             foreach ($media as $m) {
-
-                $mid = $m["id"];
-                $full = "get_media_client.php?id=$mid";
-                $thumb = "get_media_client.php?id=$mid&thumb=1";
+                $id = $m["id"];
+                $file = "get_media_client.php?id=$id";
+                $thumb = "get_media_client.php?id=$id&thumb=1";
 
                 if ($m["media_type"] === "image") {
-                    echo "<img src='$thumb' data-full='$full' class='media-thumb'>";
+                    echo "<img src='$thumb' data-full='$file' class='media-thumb'>";
                 } elseif ($m["media_type"] === "video") {
-                    echo "<video muted preload='metadata' data-full='$full' class='media-video'>
+                    echo "<video muted preload='metadata' data-full='$file' class='media-video'>
                             <source src='$thumb' type='video/mp4'>
                           </video>";
                 } else {
-                    echo "<a href='$full' download>📎 File</a>";
+                    echo "<a href='$file' download class='file-link'>📎 File</a>";
                 }
             }
 
-            if ($multi) echo "</div>";
+            if (count($media) > 1) echo "</div>";
         }
 
-        // Text
         if (trim($msg["message"]) !== "")
             echo nl2br(htmlspecialchars($msg["message"]));
     }
 
-    echo "</div>"; // bubble
+    echo "</div>";
 
-    // Time + edited
     echo "<div class='message-time'>$time";
     if ($msg["edited"]) echo " <span class='edited-label'>(edited)</span>";
     echo "</div>";
 
-    // Reaction BAR
+    // Messenger-style reactions (grouped)
     $r = $conn->prepare("
         SELECT emoji, COUNT(*) AS total
         FROM chat_reactions
-        WHERE chat_id = $1
+        WHERE chat_id = ?
         GROUP BY emoji
         ORDER BY total DESC
     ");
     $r->execute([$msgID]);
-    $reacts = $r->fetchAll(PDO::FETCH_ASSOC);
+    $reactions = $r->fetchAll(PDO::FETCH_ASSOC);
 
-    if ($reacts) {
+    if ($reactions) {
         echo "<div class='reaction-bar'>";
-        foreach ($reacts as $rc) {
+        foreach ($reactions as $rc) {
             echo "<span class='reaction-item'>{$rc['emoji']} <span class='reaction-count'>{$rc['total']}</span></span>";
         }
         echo "</div>";
     }
 
-    // Toolbar
     echo "<div class='action-toolbar'>
             <button class='react-btn' data-msg-id='$msgID'>☺︎</button>";
 
-    if ($sender === "sent" && !$msg["deleted"]) {
+    if ($sender === "sent" && $msg["deleted"] == 0) {
         echo "<button class='more-btn' data-id='$msgID'>⋯</button>";
     }
 
@@ -130,4 +127,5 @@ foreach ($messages as $msg) {
 
     echo "</div></div>";
 }
+
 ?>
