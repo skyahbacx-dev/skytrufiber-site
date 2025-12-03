@@ -241,14 +241,52 @@ function uploadMedia(files, msg) {
 // MEDIA LIGHTBOX
 // ==========================
 function attachMediaEvents() {
+    // IMAGE CLICK → OPEN LIGHTBOX
     $(".media-thumb").off("click").on("click", function () {
-        $("#lightbox-image").attr("src", $(this).data("full")).show();
+        const full = $(this).data("full");
+        const container = $(this).closest(".carousel-container");
+
+        // Build gallery list for carousel navigation
+        const imgs = container.find(".media-thumb");
+        galleryItems = [];
+        currentIndex = 0;
+
+        imgs.each(function (i) {
+            galleryItems.push($(this).data("full"));
+            if ($(this).data("full") === full) currentIndex = i;
+        });
+
+        $("#lightbox-image").attr("src", full).show();
+        $("#lightbox-video").hide();
         $("#lightbox-overlay").addClass("show");
     });
 
+    // VIDEO CLICK
+    $(".media-video").off("click").on("click", function () {
+        const full = $(this).data("full");
+        $("#lightbox-video").attr("src", full).show();
+        $("#lightbox-image").hide();
+        $("#lightbox-overlay").addClass("show");
+    });
+
+    // LIGHTBOX NAVIGATION (Prev / Next)
+    $("#lightbox-prev").off("click").on("click", function () {
+        if (galleryItems.length === 0) return;
+        currentIndex = (currentIndex - 1 + galleryItems.length) % galleryItems.length;
+        $("#lightbox-image").attr("src", galleryItems[currentIndex]);
+    });
+
+    $("#lightbox-next").off("click").on("click", function () {
+        if (galleryItems.length === 0) return;
+        currentIndex = (currentIndex + 1) % galleryItems.length;
+        $("#lightbox-image").attr("src", galleryItems[currentIndex]);
+    });
+
+    // CLOSE
     $("#lightbox-close").off("click").on("click", function () {
         $("#lightbox-overlay").removeClass("show");
         $("#lightbox-image").hide();
+        $("#lightbox-video").hide();
     });
 }
 
