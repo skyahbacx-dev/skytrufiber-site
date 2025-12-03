@@ -307,6 +307,31 @@ function scrollToBottom() {
     box.stop().animate({ scrollTop: box[0].scrollHeight }, 200);
 }
 // ========================================
+// SCROLL-TO-BOTTOM BUTTON LOGIC
+// ========================================
+const scrollBtn = document.getElementById("scroll-bottom-btn");
+
+$("#chat-messages").on("scroll", function () {
+
+    const box = this;
+
+    const distanceFromBottom = box.scrollHeight - box.scrollTop - box.clientHeight;
+
+    // Show if user is 70px or more above bottom
+    if (distanceFromBottom > 70) {
+        scrollBtn.classList.add("show");
+    } else {
+        scrollBtn.classList.remove("show");
+    }
+});
+
+// Button click → scroll to bottom
+scrollBtn.addEventListener("click", () => {
+    const box = $("#chat-messages");
+    box.stop().animate({ scrollTop: box[0].scrollHeight }, 250);
+});
+
+// ========================================
 // MEDIA PREVIEW (before upload)
 // ========================================
 function previewMultiple(files) {
