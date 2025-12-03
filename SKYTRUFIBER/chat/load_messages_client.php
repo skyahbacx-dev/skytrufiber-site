@@ -62,9 +62,9 @@ foreach ($messages as $msg) {
 
     // Avatar
     echo "<div class='message-avatar'>
-            <img src=\"/upload/default-avatar.png\">
+            <img src='/upload/default-avatar.png'>
           </div>";
-
+    
     echo "<div class='message-content'>
             <div class='message-bubble'>";
 
