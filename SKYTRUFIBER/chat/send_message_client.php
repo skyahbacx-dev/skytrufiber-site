@@ -4,51 +4,34 @@ header("Content-Type: application/json");
 
 require_once "../../db_connect.php";
 
-ini_set("display_errors", 1);
-error_reporting(E_ALL);
-
-$username = $_POST["username"] ?? null;
+$username = trim($_POST["username"] ?? "");
 $message  = trim($_POST["message"] ?? "");
 
-if (!$username) {
-    echo json_encode(["status" => "error", "msg" => "Missing username"]);
-    exit;
-}
+if (!$username)
+    exit(json_encode(["status"=>"error", "msg"=>"no username"]));
 
 $stmt = $conn->prepare("
-    SELECT id FROM users
-    WHERE email = ? OR full_name = ?
+    SELECT id FROM users 
+    WHERE email = ? COLLATE utf8mb4_general_ci 
+       OR full_name = ? COLLATE utf8mb4_general_ci
     LIMIT 1
 ");
 $stmt->execute([$username, $username]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$user) {
-    echo json_encode(["status" => "error", "msg" => "User not found"]);
-    exit;
-}
+if (!$user)
+    exit(json_encode(["status"=>"error", "msg"=>"invalid user"]));
 
-$client_id = (int)$user["id"];
+$client_id = $user["id"];
 
-// Empty message (allowed only if media attached)
-if ($message === "") {
-    echo json_encode(["status" => "skip", "msg" => "Empty text skipped"]);
-    exit;
-}
+// If no text and no media → ignore
+if ($message === "")
+    exit(json_encode(["status"=>"ok", "msg"=>"empty skipped"]));
 
-$ins = $conn->prepare("
+$insert = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
-    VALUES (?, 'client', ?, TRUE, FALSE, NOW())
+    VALUES (?, 'client', ?, 1, 0, NOW())
 ");
-$ok = $ins->execute([$client_id, $message]);
+$insert->execute([$client_id, $message]);
 
-if (!$ok) {
-    echo json_encode(["status" => "error", "msg" => "Database error"]);
-    exit;
-}
-
-echo json_encode([
-    "status" => "ok",
-    "chat_id" => $conn->lastInsertId()
-]);
-exit;
+echo json_encode(["status"=>"ok"]);
