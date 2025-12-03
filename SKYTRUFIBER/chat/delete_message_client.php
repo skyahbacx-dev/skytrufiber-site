@@ -3,16 +3,14 @@ if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
 $msgID = (int)($_POST["id"] ?? 0);
-$username = trim($_POST["username"] ?? "");
+$username = $_POST["username"] ?? "";
 
 if (!$msgID || !$username)
     exit(json_encode(["status"=>"error","msg"=>"invalid"]));
 
-// PostgreSQL-safe lookup
 $stmt = $conn->prepare("
     SELECT id FROM users
-    WHERE email = ?
-       OR full_name = ?
+    WHERE email ILIKE ? OR full_name ILIKE ?
     LIMIT 1
 ");
 $stmt->execute([$username, $username]);
@@ -23,12 +21,11 @@ if (!$user)
 
 $client_id = $user["id"];
 
-// Fetch message
+// Get message
 $stmt = $conn->prepare("
     SELECT sender_type, created_at, deleted
     FROM chat
     WHERE id = ? AND client_id = ?
-    LIMIT 1
 ");
 $stmt->execute([$msgID, $client_id]);
 $msg = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -42,7 +39,7 @@ if ($msg["deleted"] == 1)
 $isClientSender = ($msg["sender_type"] === "client");
 $age = (time() - strtotime($msg["created_at"])) / 60;
 
-// UNSEND (<10 min)
+// UNSEND (10 min rule)
 if ($isClientSender && $age <= 10) {
 
     $update = $conn->prepare("
@@ -58,5 +55,5 @@ if ($isClientSender && $age <= 10) {
     exit(json_encode(["status"=>"ok","type"=>"unsent"]));
 }
 
-// SELF DELETE
+// Client-side hide only
 exit(json_encode(["status"=>"ok","type"=>"self-delete"]));
