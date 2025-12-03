@@ -2,26 +2,28 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-ini_set("display_errors", 0);
+ini_set("display_errors", 1);
+error_reporting(E_ALL);
 
+// Validate username
 $username = $_POST["username"] ?? null;
-if (!$username) exit("No username");
+if (!$username) exit("");
 
-// Lookup customer by email or full name
+// Lookup client (email or full name)
 $stmt = $conn->prepare("
-    SELECT id, full_name
+    SELECT id, full_name 
     FROM users
     WHERE email = ? OR full_name = ?
     LIMIT 1
 ");
 $stmt->execute([$username, $username]);
-$clientRow = $stmt->fetch(PDO::FETCH_ASSOC);
+$client = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$clientRow) exit(""); // return empty instead of text
+if (!$client) exit("");
 
-$client_id = (int)$clientRow["id"];
+$client_id = (int)$client["id"];
 
-// Fetch chat messages including delete + edited flags
+// Fetch Messages
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted, edited
     FROM chat
@@ -31,14 +33,15 @@ $stmt = $conn->prepare("
 $stmt->execute([$client_id]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+if (!$messages) exit("");
 
-if (!$messages) exit(""); 
-
-
-// avatars
+// Avatars
 $csrAvatar  = "/upload/default-avatar.png";
 $userAvatar = "/upload/default-avatar.png";
 
+// --------------------------
+// RENDER CHAT MESSAGES
+// --------------------------
 foreach ($messages as $msg) {
 
     $msgID     = (int)$msg["id"];
@@ -50,63 +53,58 @@ foreach ($messages as $msg) {
     echo "<div class='message $sender fadeup' data-msg-id='$msgID'>";
 
     echo "<div class='message-avatar'>
-            <img src='$avatar' alt='avatar'>
+            <img src='$avatar'>
           </div>";
 
     echo "<div class='message-content'>";
-
     echo "<div class='message-bubble'>";
 
-    // Deleted placeholder
-    if ($msg['deleted'] == 1) {
-
+    // If message deleted
+    if ($msg["deleted"] == 1) {
         echo "<span class='removed-text'>Message removed</span>";
-
     } else {
 
-        // Load media attachments
-        $mQuery = $conn->prepare("
+        // Load media
+        $media = $conn->prepare("
             SELECT id, media_type
             FROM chat_media
             WHERE chat_id = ?
         ");
-        $mQuery->execute([$msgID]);
-        $mediaList = $mQuery->fetchAll(PDO::FETCH_ASSOC);
+        $media->execute([$msgID]);
+        $mediaList = $media->fetchAll(PDO::FETCH_ASSOC);
 
         if (!empty($mediaList)) {
-
             if (count($mediaList) > 1) echo "<div class='carousel-container'>";
 
             foreach ($mediaList as $m) {
-                $mediaID   = (int)$m['id'];
+                $mediaID   = $m["id"];
                 $filePath  = "get_media_client.php?id=$mediaID";
                 $thumbPath = "get_media_client.php?id=$mediaID&thumb=1";
 
-                if ($m['media_type'] === "image") {
+                if ($m["media_type"] === "image") {
                     echo "<img src='$thumbPath' data-full='$filePath' class='media-thumb'>";
-                }
-                elseif ($m['media_type'] === "video") {
+                } 
+                elseif ($m["media_type"] === "video") {
                     echo "<video muted preload='metadata' data-full='$filePath' class='media-video'>
-                            <source src='$thumbPath' type='video/mp4'>
+                          <source src='$thumbPath' type='video/mp4'>
                           </video>";
-                }
+                } 
                 else {
-                    echo "<a href='$filePath' download class='file-link'>📎 Download File</a>";
+                    echo "<a href='$filePath' download class='file-link'>📎 Download</a>";
                 }
             }
-
             if (count($mediaList) > 1) echo "</div>";
         }
 
-        // Actual text
-        if (!empty($msg['message'])) {
-            echo nl2br(htmlspecialchars($msg['message']));
+        // Message Text
+        if (!empty($msg["message"])) {
+            echo nl2br(htmlspecialchars($msg["message"]));
         }
     }
 
-    echo "</div>"; // end bubble
+    echo "</div>"; // bubble
 
-    // Reactions bar
+    // Reactions
     $r = $conn->prepare("
         SELECT emoji, COUNT(*) AS total
         FROM chat_reactions
@@ -115,32 +113,28 @@ foreach ($messages as $msg) {
         ORDER BY total DESC
     ");
     $r->execute([$msgID]);
-    $reactions = $r->fetchAll(PDO::FETCH_ASSOC);
 
+    $reactions = $r->fetchAll(PDO::FETCH_ASSOC);
     if (!empty($reactions)) {
         echo "<div class='reaction-bar'>";
         foreach ($reactions as $rc) {
-            echo "<span class='reaction-item'>{$rc['emoji']} <span class='reaction-count'>{$rc['total']}</span></span>";
+            echo "<span class='reaction-item'>{$rc['emoji']} {$rc['total']}</span>";
         }
         echo "</div>";
     }
 
-    // Timestamp + edited label
+    // Time + edited tag
     echo "<div class='message-time'>$timestamp";
     if ($isEdited) echo " <span class='edited-label'>(edited)</span>";
     echo "</div>";
 
-    // Actions toolbar (Reaction + More)
+    // Toolbar (client only & not deleted)
     echo "<div class='action-toolbar'>
             <button class='react-btn' data-msg-id='$msgID'>😊</button>";
-
-    // show menu button only for client's messages that are not deleted
-    if ($sender === "sent" && $msg['deleted'] == 0) {
+    if ($sender === "sent" && $msg["deleted"] == 0) {
         echo "<button class='more-btn' data-id='$msgID'>⋯</button>";
     }
+    echo "</div>";
 
-    echo "</div>"; // end action-toolbar
-
-    echo "</div></div>"; // content + message container
+    echo "</div></div>"; // content + message
 }
-?>
