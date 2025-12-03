@@ -10,10 +10,10 @@ $message  = trim($_POST["message"] ?? "");
 if (!$username)
     exit(json_encode(["status"=>"error", "msg"=>"no username"]));
 
+// PostgreSQL ILIKE
 $stmt = $conn->prepare("
-    SELECT id FROM users 
-    WHERE email = ? COLLATE utf8mb4_general_ci 
-       OR full_name = ? COLLATE utf8mb4_general_ci
+    SELECT id FROM users
+    WHERE email ILIKE ? OR full_name ILIKE ?
     LIMIT 1
 ");
 $stmt->execute([$username, $username]);
@@ -24,7 +24,6 @@ if (!$user)
 
 $client_id = $user["id"];
 
-// If no text and no media → ignore
 if ($message === "")
     exit(json_encode(["status"=>"ok", "msg"=>"empty skipped"]));
 
