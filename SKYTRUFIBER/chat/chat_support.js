@@ -457,8 +457,7 @@ let lightboxTranslateX = 0;
 let lightboxTranslateY = 0;
 let isPanning = false;
 
-let galleryItems = [];  
-let currentIndex = 0;
+
 
 const imgEl = document.getElementById("lightbox-image");
 
