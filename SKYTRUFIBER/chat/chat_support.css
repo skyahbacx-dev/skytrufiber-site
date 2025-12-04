@@ -568,14 +568,13 @@ body {
     -webkit-user-drag: none;
     user-select: none;
 }
-/* Ensure popups float above everything */
 .msg-action-popup {
-    position: absolute !important;
-    z-index: 999999999 !important;
+    position: absolute;
+    z-index: 9999999;
 }
 
-#chat-messages,
 .chat-modal,
+#chat-messages,
 .message {
     overflow: visible !important;
 }
