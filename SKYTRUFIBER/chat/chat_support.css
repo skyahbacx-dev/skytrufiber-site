@@ -19,7 +19,7 @@
     --input-bg: #ffffff;
     --input-border: #ccc;
 
-    --preview-bg: #fff;
+    --preview-bg: #ffffff;
 
     --lightbox-bg: rgba(0,0,0,0.92);
     --lightbox-icon: #fff;
@@ -48,7 +48,6 @@
     --preview-bg: #1b1b1b;
 
     --lightbox-bg: rgba(0,0,0,0.96);
-    --lightbox-icon: #fff;
 
     --scroll-btn-bg: #1a73e8;
 }
@@ -67,8 +66,8 @@ body {
 #chat-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(5px);
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -85,7 +84,7 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: 0 14px 40px rgba(0,0,0,0.25);
+    box-shadow: 0 14px 40px rgba(0,0,0,0.28);
     position: relative;
 }
 
@@ -124,15 +123,50 @@ body {
     cursor: pointer;
 }
 
-/* THEME BUTTON */
+/* ============================================================
+   ANIMATED THEME TOGGLE (SUN ↔ MOON)
+============================================================ */
 #theme-toggle {
     margin-left: 10px;
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.2);
     border: none;
+    background: rgba(255,255,255,0.25);
     cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.theme-icon {
+    position: absolute;
+    font-size: 22px;
+    opacity: 0;
+    transform: rotate(-120deg) scale(0.4);
+    transition: opacity .35s ease, transform .45s ease;
+}
+
+/* Light = show moon */
+:root[data-theme="light"] .moon-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+:root[data-theme="light"] .sun-icon {
+    opacity: 0;
+    transform: rotate(120deg) scale(0.4);
+}
+
+/* Dark = show sun */
+:root[data-theme="dark"] .sun-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+:root[data-theme="dark"] .moon-icon {
+    opacity: 0;
+    transform: rotate(-120deg) scale(0.4);
 }
 
 /* ============================================================
@@ -201,13 +235,6 @@ body {
     border-radius: 18px 18px 18px 4px;
 }
 
-/* TIMESTAMP */
-.timestamp {
-    font-size: 11px;
-    margin-top: 4px;
-    color: var(--text-light);
-}
-
 /* ============================================================
    ACTION TOOLBAR (😊 & ⋯)
 ============================================================ */
@@ -221,6 +248,7 @@ body {
     opacity: 0;
     pointer-events: none;
     transition: opacity .17s ease;
+    z-index: 2000;
 }
 
 .message.sent .action-toolbar {
@@ -254,7 +282,7 @@ body {
     border: 1px solid rgba(0,0,0,0.15);
     box-shadow: 0 12px 30px rgba(0,0,0,0.25);
     padding: 6px 0;
-    z-index: 999999;
+    z-index: 30000;
     display: none;
 }
 
@@ -279,13 +307,13 @@ body {
 #reaction-picker {
     position: absolute;
     background: var(--bg);
-    padding: 8px;
+    padding: 9px;
     border-radius: 30px;
     display: none;
     gap: 8px;
-    border: 1px solid rgba(0,0,0,0.12);
+    border: 1px solid rgba(0,0,0,0.1);
     box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-    z-index: 9999999;
+    z-index: 30000;
 }
 
 #reaction-picker.show {
@@ -299,7 +327,7 @@ body {
     font-size: 22px;
 }
 
-/* REACTION BAR */
+/* Reaction bar */
 .reaction-bar {
     margin-top: 6px;
     display: flex;
@@ -486,12 +514,13 @@ body {
     max-width: 92vw;
     max-height: 82vh;
     border-radius: 14px;
+    object-fit: contain;
 }
 
 #lightbox-close {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 22px;
+    right: 22px;
     font-size: 40px;
     cursor: pointer;
     color: var(--lightbox-icon);
@@ -512,16 +541,16 @@ body {
 #lightbox-next { right: 20px; }
 
 #lightbox-index {
-    position: absolute;
     bottom: 20px;
     left: 20px;
+    position: absolute;
     color: var(--lightbox-icon);
 }
 
 #lightbox-download {
-    position: absolute;
     bottom: 20px;
     right: 20px;
-    color: var(--lightbox-icon);
+    position: absolute;
     font-size: 22px;
+    color: var(--lightbox-icon);
 }
