@@ -543,3 +543,36 @@ body {
     from { opacity: 0; transform: translateY(18px); }
     to { opacity: 1; transform: translateY(0); }
 }
+/* ============================================================
+   UPLOAD BUTTON (with image icon)
+============================================================ */
+#upload-btn {
+    width: 46px;
+    height: 46px;
+    background: rgba(0,0,0,0.10);
+    border-radius: 50%;
+    border: none;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+
+    transition: background .2s ease;
+}
+
+#upload-btn:hover {
+    background: rgba(0,0,0,0.18);
+}
+
+#upload-btn img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    pointer-events: none;
+    filter: invert(0); /* LIGHT MODE */
+}
+
+:root[data-theme="dark"] #upload-btn img {
+    filter: invert(1); /* DARK MODE */
+}
