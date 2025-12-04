@@ -54,11 +54,17 @@ $(document).ready(() => {
     });
 
     /* CLOSE POPUPS */
-    $(document).on("click", e => {
-        if (!$(e.target).closest("#msg-action-popup, .more-btn").length) closePopup();
-        if (!$(e.target).closest("#reaction-picker, .react-btn").length)
-            $("#reaction-picker").removeClass("show");
-    });
+$(document).on("click", function(e) {
+    // Close action popup
+    if (!$(e.target).closest(".msg-action-popup, .more-btn").length) {
+        closePopup();
+    }
+
+    // Close reaction picker
+    if (!$(e.target).closest("#reaction-picker, .react-btn").length) {
+        $("#reaction-picker").removeClass("show");
+    }
+});
 
     /* THEME */
     $("#theme-toggle").click(toggleTheme);
