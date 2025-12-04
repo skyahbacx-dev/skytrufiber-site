@@ -217,6 +217,20 @@ body {
     border-radius: 50%;
     flex-shrink: 0;
 }
+/* Sent messages should NOT reserve avatar space */
+.message.no-avatar .message-avatar {
+    display: none;
+}
+
+/* Ensures perfect alignment */
+.message.sent {
+    justify-content: flex-end;
+}
+
+.message.sent .message-content {
+    max-width: 70%;
+    align-items: flex-end;
+}
 
 /* Bubble container */
 .message-content {
