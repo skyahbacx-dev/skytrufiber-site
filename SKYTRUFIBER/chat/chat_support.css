@@ -88,7 +88,7 @@ body {
     box-shadow: 0 12px 40px rgba(0,0,0,0.25);
     display: flex;
     flex-direction: column;
-    position: relative !important;
+    position: relative;
 }
 
 @media(max-width: 768px) {
@@ -107,34 +107,23 @@ body {
     color: var(--header-text);
     padding: 14px 18px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
 }
 
 .chat-header-left {
     display: flex;
     align-items: center;
-    gap: 10px;
-}
-
-.chat-header-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
 }
 
 .chat-header-logo {
     width: 46px;
     height: 46px;
-    border-radius: 50%;
+    margin-right: 10px;
 }
 
-.status {
-    font-size: 12px;
-    opacity: .85;
-}
-
+/* Logout */
 .logout-btn {
+    margin-left: auto;
     padding: 8px 14px;
     border-radius: 10px;
     border: none;
@@ -143,34 +132,27 @@ body {
     cursor: pointer;
 }
 
-/* Theme toggle button */
+/* Theme Toggle */
 #theme-toggle {
+    margin-left: 14px;
     width: 42px;
     height: 42px;
     border-radius: 50%;
     border: none;
-    background: rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.28);
     cursor: pointer;
-    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .theme-icon {
-    position: absolute;
-    font-size: 20px;
-    transition: opacity .25s ease;
+    font-size: 18px;
+    color: #fff;
 }
 
-[data-theme="light"] .sun-icon { opacity: 0; }
-[data-theme="light"] .moon-icon { opacity: 1; }
-
-[data-theme="dark"] .sun-icon { opacity: 1; }
-[data-theme="dark"] .moon-icon { opacity: 0; }
-
 /* ============================================================
-   CHAT MESSAGES
+   CHAT MESSAGES AREA
 ============================================================ */
 #chat-messages {
     flex: 1;
@@ -216,15 +198,17 @@ body {
     border-radius: 50%;
 }
 
+.message-content {
+    position: relative;
+}
+
 .message-bubble {
     padding: 12px 18px;
     border-radius: 20px;
-    max-width: 100%;
     background: var(--bubble-received);
     color: var(--bubble-received-text);
+    max-width: 100%;
     box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-    word-wrap: break-word;
-    white-space: pre-wrap;
 }
 
 .message.sent .message-bubble {
@@ -237,9 +221,6 @@ body {
     border-radius: 20px 20px 20px 4px;
 }
 
-/* ============================================================
-   ACTION TOOLBAR (😊 + ...)
-============================================================ */
 /* ============================================================
    ACTION TOOLBAR (😊 + ...)
 ============================================================ */
@@ -283,26 +264,25 @@ body {
     background: rgba(0,0,0,0.15);
 }
 
-
 /* ============================================================
-   POPUP MENU
+   POPUP MENU (3-dot)
 ============================================================ */
 .msg-action-popup {
     position: absolute;
     min-width: 160px;
-    padding: 6px 0;
     background: var(--bg);
     border-radius: 12px;
     border: 1px solid rgba(0,0,0,0.12);
     box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-    z-index: 9999999;
+    z-index: 999999;
+    padding: 6px 0;
     display: none;
 }
 
 .msg-action-popup button {
     width: 100%;
-    background: transparent;
     border: none;
+    background: transparent;
     padding: 10px 14px;
     text-align: left;
     display: flex;
@@ -316,17 +296,18 @@ body {
 }
 
 /* ============================================================
-   REACTION PICKER + BAR
+   REACTION PICKER
 ============================================================ */
 #reaction-picker {
     position: absolute;
     background: var(--bg);
-    border-radius: 30px;
-    display: none;
-    gap: 6px;
     padding: 8px;
+    border-radius: 30px;
+    gap: 6px;
+    display: flex;
     border: 1px solid rgba(0,0,0,0.1);
     box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    display: none;
     z-index: 2000000;
 }
 
@@ -335,12 +316,13 @@ body {
 }
 
 .reaction-choice {
-    border: none;
-    background: transparent;
     font-size: 20px;
+    background: transparent;
+    border: none;
     cursor: pointer;
 }
 
+/* Reaction Bar */
 .reaction-bar {
     margin-top: 6px;
     display: flex;
@@ -359,7 +341,7 @@ body {
 }
 
 /* ============================================================
-   MEDIA GRID (Messenger-style)
+   MEDIA GRID (Messenger-like)
 ============================================================ */
 .media-grid {
     display: grid;
@@ -432,12 +414,31 @@ body {
     gap: 10px;
 }
 
+/* Upload Button */
+#upload-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.07);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+#upload-btn img {
+    width: 24px;
+    height: 24px;
+}
+
+/* Input Box */
 .chat-input-box {
     flex: 1;
-    display: flex;
-    background: var(--input-bg);
     border: 1px solid var(--input-border);
+    background: var(--input-bg);
     border-radius: 22px;
+    display: flex;
     padding: 10px 14px;
 }
 
@@ -447,25 +448,6 @@ body {
     outline: none;
     background: transparent;
     font-size: 15px;
-    color: var(--text);
-}
-
-/* Upload button */
-#upload-btn {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(0,0,0,0.07);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-}
-
-#upload-btn img {
-    width: 24px;
-    height: 24px;
 }
 
 /* Send Button */
@@ -473,17 +455,13 @@ body {
     width: 46px;
     height: 46px;
     border-radius: 50%;
+    border: none;
     background: var(--bubble-sent);
+    color: #fff;
+    font-size: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: none;
-    cursor: pointer;
-}
-
-#send-btn i {
-    color: #fff;
-    font-size: 20px;
 }
 
 /* ============================================================
@@ -503,7 +481,6 @@ body {
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    cursor: pointer;
 
     opacity: 0;
     pointer-events: none;
