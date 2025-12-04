@@ -31,25 +31,28 @@
 
         <!-- HEADER -->
         <div class="chat-header">
-            <div class="chat-header-left">
-                <img src="../../SKYTRUFIBER.png" class="chat-header-logo">
-                <div>
-                    <h2>SkyTruFiber Support</h2>
-                    <span class="status active">Support Team Active</span>
-                </div>
-            </div>
 
-            <!-- THEME TOGGLE -->
-            <button id="theme-toggle" class="theme-toggle">
+            <div class="chat-header-left">
+            <img src="../../SKYTRUFIBER.png" class="chat-header-logo">
+            <div>
+                <h2>SkyTruFiber Support</h2>
+                <span class="status active">Support Team Active</span>
+            </div>
+        </div>
+
+            <div class="chat-header-right">
+                <button id="theme-toggle" class="theme-toggle">
                 <i class="fa-solid fa-moon theme-icon moon-icon"></i>
                 <i class="fa-solid fa-sun theme-icon sun-icon"></i>
             </button>
 
-            <!-- LOGOUT -->
             <button id="logout-btn" class="logout-btn">
                 <i class="fa-solid fa-right-from-bracket"></i> Logout
             </button>
         </div>
+
+    </div>
+
 
         <!-- MESSAGES WINDOW -->
         <div id="chat-messages" class="chat-messages"></div>
