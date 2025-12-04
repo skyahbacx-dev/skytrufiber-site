@@ -82,19 +82,17 @@ function toggleTheme() {
    SEND MESSAGE
 ============================================================ */
 function sendMessage() {
-
     const msg = $("#message-input").val().trim();
 
     if (!msg && selectedFiles.length === 0) return;
 
-    // Upload
     if (selectedFiles.length > 0) return uploadMedia(msg);
 
-    appendClientBubble(msg);
+    // Clear immediately (no bubble)
     $("#message-input").val("");
 
     $.post("send_message_client.php", { username, message: msg }, () => {
-        fetchNewMessages();
+        loadMessages(true); // fresh, no duplication
     });
 }
 
