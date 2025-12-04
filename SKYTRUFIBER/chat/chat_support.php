@@ -69,7 +69,7 @@
             <input type="file" id="chat-upload-media" multiple hidden>
 
             <button id="upload-btn">
-                <img src="upload_icon.svg">
+                <img src="upload_icon.png">
             </button>
 
 
