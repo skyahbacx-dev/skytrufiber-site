@@ -1,19 +1,20 @@
 /* ============================================================
-   SkyTruFiber Chat System — COMPLETE REWRITE
-   Messenger-Style Chat • Reactions • Lightbox • Toolbar
+   SkyTruFiber Chat System — Full JS
+   Messenger Reactions • Media Grid • Lightbox • Toolbar
 ============================================================ */
+
 
 /* ---------------- GLOBAL STATE ---------------- */
 let selectedFiles = [];
 let lastMessageID = 0;
 let editing = false;
-let reactingToMsgId = null;
 let activePopup = null;
+let reactingToMsgId = null;
 
 let galleryItems = [];
 let currentIndex = 0;
 
-const reactionChoices = ["👍","❤️","😂","😮","😢","😡"];
+const reactionChoices = ["👍", "❤️", "😂", "😮", "😢", "😡"];
 const username = new URLSearchParams(window.location.search).get("username");
 
 
@@ -23,21 +24,24 @@ const username = new URLSearchParams(window.location.search).get("username");
 $(document).ready(() => {
 
     if (!username) {
-        $("#chat-messages").html(`<p style="text-align:center;padding:20px;color:#555;">
-            Invalid user.
-        </p>`);
+        $("#chat-messages").html(`
+            <p style="text-align:center;padding:20px;color:#777;">
+                Invalid user.
+            </p>
+        `);
         return;
     }
 
     loadMessages(true);
 
-    // Message polling (safe)
+    // Polling
     setInterval(() => {
         if (!editing && !activePopup && !$("#preview-inline").is(":visible")) {
             fetchNewMessages();
         }
-    }, 4000);
+    }, 3500);
 
+    // Send message
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
         if (e.which === 13) {
@@ -46,34 +50,40 @@ $(document).ready(() => {
         }
     });
 
+    // Upload
     $("#upload-btn").click(() => $("#chat-upload-media").click());
     $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
-        selectedFiles.length ? previewMultiple() : null;
+        if (selectedFiles.length) previewMultiple();
     });
 
     // Close popups
     $(document).on("click", e => {
-        if (!$(e.target).closest(".more-btn, #msg-action-popup").length)
+
+        if (!$(e.target).closest("#msg-action-popup, .more-btn").length)
             closePopup();
 
-        if (!$(e.target).closest(".react-btn, #reaction-picker").length)
+        if (!$(e.target).closest("#reaction-picker, .react-btn").length)
             $("#reaction-picker").removeClass("show");
     });
 
+    // Theme toggle
     $("#theme-toggle").click(toggleTheme);
 });
 
 
 /* ============================================================
-   THEME TOGGLE
+   THEME TOGGLE + ROTATION ANIMATION
 ============================================================ */
 function toggleTheme() {
     const root = document.documentElement;
-    root.setAttribute(
-        "data-theme",
-        root.getAttribute("data-theme") === "dark" ? "light" : "dark"
-    );
+    const current = root.getAttribute("data-theme");
+
+    const newTheme = current === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", newTheme);
+
+    $("#theme-toggle").addClass("spin");
+    setTimeout(() => $("#theme-toggle").removeClass("spin"), 400);
 }
 
 
@@ -87,7 +97,6 @@ function sendMessage() {
 
     if (selectedFiles.length > 0) return uploadMedia(msg);
 
-    // Instant preview
     appendClientBubble(msg);
 
     $.post("send_message_client.php", { username, message: msg }, () => {
@@ -96,7 +105,6 @@ function sendMessage() {
     });
 }
 
-// Instant temporary bubble
 function appendClientBubble(msg) {
     $("#chat-messages").append(`
         <div class="message sent">
@@ -111,18 +119,19 @@ function appendClientBubble(msg) {
 
 
 /* ============================================================
-   MEDIA PREVIEW & UPLOAD
+   PREVIEW MULTIPLE
 ============================================================ */
 function previewMultiple() {
+
     $("#preview-files").html("");
     $("#preview-inline").slideDown(150);
 
-    selectedFiles.forEach((file, index) => {
+    selectedFiles.forEach((file, i) => {
         const url = URL.createObjectURL(file);
         $("#preview-files").append(`
             <div class="preview-item">
                 <img src="${url}" class="preview-thumb">
-                <button class="preview-remove" data-i="${index}">&times;</button>
+                <button class="preview-remove" data-i="${i}">&times;</button>
             </div>
         `);
     });
@@ -133,6 +142,10 @@ $(document).on("click", ".preview-remove", function () {
     selectedFiles.length ? previewMultiple() : $("#preview-inline").slideUp(200);
 });
 
+
+/* ============================================================
+   UPLOAD MEDIA
+============================================================ */
 function uploadMedia(msg) {
 
     const form = new FormData();
@@ -200,7 +213,6 @@ function fetchNewMessages() {
         bindReactionButtons();
         bindActionToolbar();
 
-        // auto-scroll if user near bottom
         const box = container[0];
         const dist = box.scrollHeight - box.scrollTop - box.clientHeight;
 
@@ -213,12 +225,13 @@ function fetchNewMessages() {
    SCROLL HANDLING
 ============================================================ */
 function scrollToBottom() {
-    $("#chat-messages")
-        .stop()
-        .animate({ scrollTop: $("#chat-messages")[0].scrollHeight }, 250);
+    $("#chat-messages").stop().animate({
+        scrollTop: $("#chat-messages")[0].scrollHeight
+    }, 230);
 }
 
 $("#chat-messages").on("scroll", function () {
+
     const box = this;
     const dist = box.scrollHeight - box.scrollTop - box.clientHeight;
 
@@ -230,7 +243,7 @@ $("#scroll-bottom-btn").click(scrollToBottom);
 
 
 /* ============================================================
-   ACTION TOOLBAR (... and 😊)
+   ACTION TOOLBAR
 ============================================================ */
 function bindActionToolbar() {
     $(".more-btn").off("click").on("click", function (e) {
@@ -239,15 +252,15 @@ function bindActionToolbar() {
     });
 }
 
-function openPopup(msgID, anchorEl) {
+function openPopup(id, anchor) {
 
     closePopup();
 
     const popup = $(`
-        <div class="msg-action-popup">
-            <button class="popup-edit" data-id="${msgID}"><i class="fa fa-pen"></i> Edit</button>
-            <button class="popup-unsend" data-id="${msgID}"><i class="fa fa-ban"></i> Unsend</button>
-            <button class="popup-delete" data-id="${msgID}"><i class="fa fa-trash"></i> Delete</button>
+        <div id="msg-action-popup" class="msg-action-popup">
+            <button class="popup-edit" data-id="${id}"><i class="fa-solid fa-pen"></i> Edit</button>
+            <button class="popup-unsend" data-id="${id}"><i class="fa-solid fa-ban"></i> Unsend</button>
+            <button class="popup-delete" data-id="${id}"><i class="fa-solid fa-trash"></i> Delete</button>
             <button class="popup-cancel">Cancel</button>
         </div>
     `);
@@ -255,11 +268,11 @@ function openPopup(msgID, anchorEl) {
     $("body").append(popup);
     activePopup = popup;
 
-    const pos = $(anchorEl).offset();
+    const p = $(anchor).offset();
 
     popup.css({
-        top: pos.top - popup.outerHeight() - 5,
-        left: pos.left - popup.outerWidth() / 2 + 15,
+        top: p.top - popup.outerHeight() - 6,
+        left: p.left - (popup.outerWidth() / 2) + 15,
         zIndex: 999999
     }).fadeIn(120);
 }
@@ -271,19 +284,25 @@ function closePopup() {
     }
 }
 
+
+// Edit
 $(document).on("click", ".popup-edit", function () {
     startEdit($(this).data("id"));
     closePopup();
 });
 
+// Delete / Unsend
 $(document).on("click", ".popup-unsend, .popup-delete", function () {
+
     $.post("delete_message_client.php",
         { id: $(this).data("id"), username },
         () => loadMessages(false)
     );
+
     closePopup();
 });
 
+// Cancel
 $(document).on("click", ".popup-cancel", closePopup);
 
 
@@ -291,6 +310,7 @@ $(document).on("click", ".popup-cancel", closePopup);
    EDIT MESSAGE
 ============================================================ */
 function startEdit(id) {
+
     editing = true;
 
     const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
@@ -316,7 +336,7 @@ $(document).on("click", ".edit-save", function () {
     });
 });
 
-$(document).on("click", ".edit-cancel", function () {
+$(document).on("click", ".edit-cancel", () => {
     editing = false;
     loadMessages(false);
 });
@@ -332,7 +352,9 @@ function ensureReactionPicker() {
     if (picker.length === 0) {
         $("body").append(`
             <div id="reaction-picker" class="reaction-picker">
-                ${reactionChoices.map(e => `<button class="reaction-choice" data-emoji="${e}">${e}</button>`).join("")}
+                ${reactionChoices.map(e =>
+                    `<button class="reaction-choice" data-emoji="${e}">${e}</button>`
+                ).join("")}
             </div>
         `);
         picker = $("#reaction-picker");
@@ -347,18 +369,18 @@ function bindReactionButtons() {
         e.stopPropagation();
 
         reactingToMsgId = $(this).data("msg-id");
+
         const picker = ensureReactionPicker();
         const pos = $(this).offset();
 
         picker.css({
-            top: pos.top - picker.outerHeight() - 12,
+            top: pos.top - picker.outerHeight() - 10,
             left: pos.left - picker.outerWidth() / 2 + 15,
-            zIndex: 999999
+            zIndex: 2000000
         }).addClass("show");
     });
 }
 
-// Apply reaction
 $(document).on("click", ".reaction-choice", function () {
 
     $.post("react_message_client.php",
@@ -374,6 +396,7 @@ function updateReactionBar(id) {
     $.post("load_messages_client.php", { username }, html => {
 
         const temp = $("<div>").html(html);
+
         const newBar = temp.find(`.message[data-msg-id='${id}'] .reaction-bar`);
         const curBar = $(`.message[data-msg-id='${id}'] .reaction-bar`);
 
@@ -384,31 +407,29 @@ function updateReactionBar(id) {
 
 
 /* ============================================================
-   LIGHTBOX (Images & Videos)
+   LIGHTBOX (Images + Videos)
 ============================================================ */
-
 let lightboxScale = 1;
 let lightboxTranslateX = 0;
 let lightboxTranslateY = 0;
-let isPanning = false;
 
 const imgEl = document.getElementById("lightbox-image");
 
 function attachMediaEvents() {
 
-    $(".media-thumb, .media-grid img").off("click").on("click", function () {
+    $(".media-grid img, .media-thumb").off("click").on("click", function () {
 
         const src = $(this).data("full");
         const grid = $(this).closest(".media-grid");
-        const imgs = grid.find("img");
 
-        galleryItems = imgs.map((i, el) => $(el).data("full")).get();
+        const imgs = grid.find("img");
+        galleryItems = imgs.map((i, e) => $(e).data("full")).get();
         currentIndex = imgs.index(this);
 
         openImage(src);
     });
 
-    $(".media-video, .media-grid video").off("click").on("click", function () {
+    $(".media-grid video, .media-video").off("click").on("click", function () {
         openVideo($(this).data("full"));
     });
 
@@ -438,7 +459,7 @@ function closeLightbox() {
 }
 
 function navigateGallery(step) {
-    if (galleryItems.length <= 1) return;
+    if (galleryItems.length < 2) return;
     currentIndex = (currentIndex + step + galleryItems.length) % galleryItems.length;
     openImage(galleryItems[currentIndex]);
 }
@@ -452,16 +473,12 @@ function updateLightboxIndex() {
 
 
 /* ============================================================
-   LIGHTBOX GESTURES (zoom, drag)
+   LIGHTBOX TRANSFORM
 ============================================================ */
-
 function resetLightboxTransform() {
     lightboxScale = 1;
     lightboxTranslateX = 0;
     lightboxTranslateY = 0;
+
     imgEl.style.transform = "translate(0px,0px) scale(1)";
 }
-
-// Drag + Zoom + Swipe listeners remain same
-// (They work without any edits)
-
