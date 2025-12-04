@@ -8,9 +8,7 @@ require_once "../../db_connect.php";
 $username = $_POST["username"] ?? "";
 if (!$username) exit("");
 
-// -----------------------------
 // Find client
-// -----------------------------
 $stmt = $conn->prepare("
     SELECT id, full_name
     FROM users
@@ -24,9 +22,7 @@ if (!$client) exit("");
 
 $client_id = (int)$client["id"];
 
-// -----------------------------
-// Fetch chat messages
-// -----------------------------
+// Fetch messages
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted, edited
     FROM chat
@@ -36,26 +32,28 @@ $stmt = $conn->prepare("
 $stmt->execute([$client_id]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Media preload statement
+// Prepare media loader
 $mstmt = $conn->prepare("
     SELECT id, media_type
     FROM chat_media
     WHERE chat_id = ?
 ");
 
-// Start output
 foreach ($messages as $msg) {
 
     $id     = $msg["id"];
     $sender = $msg["sender_type"] === "csr" ? "received" : "sent";
     $time   = date("g:i A", strtotime($msg["created_at"]));
 
-    echo "<div class='message $sender' data-msg-id='$id'>";
+    // SENT MESSAGES → NO AVATAR
+    $noAvatar = ($sender === "sent") ? "no-avatar" : "";
 
-    // Avatar
-    echo "<div class='message-avatar'>
-            <img src='/upload/default-avatar.png'>
-          </div>";
+    echo "<div class='message $sender $noAvatar' data-msg-id='$id'>";
+
+    // Avatar ONLY for received messages
+    if ($sender === "received") {
+        echo "<div class='message-avatar'><img src='/upload/default-avatar.png'></div>";
+    }
 
     echo "<div class='message-content'>";
 
@@ -65,18 +63,14 @@ foreach ($messages as $msg) {
         echo "<span class='removed-text'>Message removed</span>";
     } else {
 
-        // Fetch media for this message
+        // Load media
         $mstmt->execute([$id]);
         $media = $mstmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // -----------------------------
-        // MEDIA GRID
-        // -----------------------------
         if ($media) {
             echo "<div class='media-grid'>";
 
             foreach ($media as $m) {
-
                 $file  = "get_media_client.php?id={$m["id"]}";
                 $thumb = "get_media_client.php?id={$m["id"]}&thumb=1";
 
@@ -89,28 +83,23 @@ foreach ($messages as $msg) {
                           </video>";
                 }
                 else {
-                    echo "<a href='$file' download class='file-link'>📎 $file</a>";
+                    echo "<a href='$file' download class='file-link'>📎 File</a>";
                 }
             }
-
             echo "</div>";
         }
 
-        // Text message
         if (trim($msg["message"]) !== "")
             echo nl2br(htmlspecialchars($msg["message"]));
     }
 
     echo "</div>"; // bubble
 
-    // Time + edited label
     echo "<div class='message-time'>$time";
     if ($msg["edited"]) echo " <span class='edited-label'>(edited)</span>";
     echo "</div>";
 
-    // -----------------------------
-    // REACTIONS BAR
-    // -----------------------------
+    // Reaction bar
     $r = $conn->prepare("
         SELECT emoji, COUNT(*) AS total
         FROM chat_reactions
@@ -129,18 +118,17 @@ foreach ($messages as $msg) {
         echo "</div>";
     }
 
-    // -----------------------------
-    // ACTION TOOLBAR (😊 ...)
-    // -----------------------------
-echo "<div class='action-toolbar'>
-        <button class='react-btn' data-msg-id='$id'>☺︎</button>";
+    // Action toolbar
+    echo "<div class='action-toolbar'>
+            <button class='react-btn' data-msg-id='$id'>☺︎</button>";
 
-if ($sender === "sent" && !$msg["deleted"]) {
-    echo "<button class='more-btn' data-id='$id'>⋯</button>";
-}
+    if ($sender === "sent" && !$msg["deleted"]) {
+        echo "<button class='more-btn' data-id='$id'>⋯</button>";
+    }
 
-echo "</div>";
+    echo "</div>";
 
+    echo "</div>"; // message content
 
-    echo "</div></div>"; // close content + message
+    echo "</div>"; // message wrapper
 }
