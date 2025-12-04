@@ -1,14 +1,12 @@
-
 // ========================================
 // SkyTruFiber Chat System — PART 1 / 4
-// Init + Sending + Preview + Theme
+// Init + Theme + Sending + Preview + Upload
 // ========================================
 
 // GLOBAL STATE
 let selectedFiles = [];
 let lastMessageID = 0;
 let currentUploadXHR = null;
-
 let editing = false;
 let activePopup = null;
 let reactingToMsgId = null;
@@ -16,8 +14,7 @@ let reactingToMsgId = null;
 let galleryItems = [];
 let currentIndex = 0;
 
-
-const reactionChoices = ["👍", "❤️", "😂", "😮", "😢", "😡"];
+const reactionChoices = ["👍","❤️","😂","😮","😢","😡"];
 const username = new URLSearchParams(window.location.search).get("username");
 
 // ========================================
@@ -26,14 +23,15 @@ const username = new URLSearchParams(window.location.search).get("username");
 $(document).ready(function () {
 
     if (!username) {
-        $("#chat-messages").html("<p style='padding:20px;text-align:center;color:#888;'>Invalid user.</p>");
+        $("#chat-messages").html(
+            "<p style='padding:20px;text-align:center;color:#888;'>Invalid user.</p>"
+        );
         return;
     }
 
-    // Load initial messages
     loadMessages(true);
 
-    // Poll for new messages (only when not editing)
+    // Polling
     setInterval(() => {
         if (!editing && !activePopup && !$("#preview-inline").is(":visible")) {
             fetchNewMessages();
@@ -43,51 +41,12 @@ $(document).ready(function () {
     // Send message
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
-        if (e.which === 13) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
-function bindReactionButtons() {
-    $(".react-btn").off("click").on("click", function (e) {
-        e.stopPropagation();
-
-        reactingToMsgId = $(this).data("msg-id");
-
-        const picker = ensureReactionPicker();
-        const pos = $(this).offset();
-
-        picker.css({
-            top: pos.top - picker.outerHeight() - 10,
-            left: pos.left - (picker.outerWidth() / 2) + 15
-        }).addClass("show");
-    });
-}
-function showReactionPicker(btn) {
-    const picker = ensureReactionPicker();
-    const rect = btn.getBoundingClientRect();
-
-    picker.css({
-        top: rect.top - picker.outerHeight() - 12 + window.scrollY,
-        left: rect.left + rect.width / 2 - picker.outerWidth() / 2 + window.scrollX,
-        zIndex: 30000
-    }).addClass("show");
-}
-
-$(document).on("click", ".react-btn", function (e) {
-    e.stopPropagation();
-    reactingToMsgId = $(this).data("msg-id");
-    showReactionPicker(this);
-});
-
-// ========================================
-// UPLOAD MEDIA BUTTON
-// ========================================
-        $("#upload-btn").click(() => {
-        $("#chat-upload-media").click();
+        if (e.which === 13) { e.preventDefault(); sendMessage(); }
     });
 
-        $("#chat-upload-media").change(function () {
+    // Upload media
+    $("#upload-btn").click(() => $("#chat-upload-media").click());
+    $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
@@ -95,11 +54,9 @@ $(document).on("click", ".react-btn", function (e) {
     // Close popups
     $(document).on("click", function (e) {
 
-        // Close action popup
         if (!$(e.target).closest("#msg-action-popup, .more-btn").length)
             closePopup();
 
-        // Close reaction picker
         if (!$(e.target).closest("#reaction-picker, .react-btn").length)
             $("#reaction-picker").removeClass("show");
     });
@@ -109,7 +66,7 @@ $(document).on("click", ".react-btn", function (e) {
 });
 
 // ========================================
-// THEME TOGGLE
+// THEME
 // ========================================
 function toggleTheme() {
     const root = document.documentElement;
@@ -124,7 +81,6 @@ function toggleTheme() {
 function sendMessage() {
     const msg = $("#message-input").val().trim();
 
-    // If sending media
     if (selectedFiles.length > 0)
         return uploadMedia(selectedFiles, msg);
 
@@ -138,7 +94,7 @@ function sendMessage() {
     });
 }
 
-// Preview self message instantly
+// Quick preview bubble
 function appendClientMessageInstant(msg) {
     $("#chat-messages").append(`
         <div class="message sent fadeup">
@@ -153,24 +109,17 @@ function appendClientMessageInstant(msg) {
     scrollToBottom();
 }
 
-// ========================================
-// REMOVE ITEM FROM PREVIEW LIST
-// ========================================
+// PREVIEW REMOVE
 $(document).on("click", ".preview-remove", function () {
-    const index = $(this).data("i");
-    selectedFiles.splice(index, 1);
+    selectedFiles.splice($(this).data("i"), 1);
 
-    if (selectedFiles.length) {
+    if (selectedFiles.length)
         previewMultiple(selectedFiles);
-    } else {
+    else
         $("#preview-inline").slideUp(200);
-    }
 });
 
-
-// ========================================
-// PREVIEW BAR (before upload) — FIXED SIZE
-// ========================================
+// PREVIEW MULTIPLE
 function previewMultiple(files) {
 
     $("#preview-files").html("");
@@ -178,7 +127,6 @@ function previewMultiple(files) {
 
     files.forEach((file, i) => {
         const url = URL.createObjectURL(file);
-
         $("#preview-files").append(`
             <div class="preview-item">
                 <img src="${url}" class="preview-thumb">
@@ -188,25 +136,20 @@ function previewMultiple(files) {
     });
 }
 
-
-// ========================================
-// UPLOAD MEDIA TO SERVER
-// ========================================
+// UPLOAD MEDIA
 function uploadMedia(files, msg) {
-
     const form = new FormData();
     form.append("username", username);
     form.append("message", msg);
 
     files.forEach(f => form.append("media[]", f));
 
-    currentUploadXHR = $.ajax({
+    $.ajax({
         url: "upload_media_client.php",
         method: "POST",
         data: form,
-        processData: false,
         contentType: false,
-
+        processData: false,
         success: () => {
             selectedFiles = [];
             $("#preview-inline").slideUp(200);
@@ -216,19 +159,18 @@ function uploadMedia(files, msg) {
 }
 // ========================================
 // SkyTruFiber Chat System — PART 2 / 4
-// Messages + Editing + Popup Menu + Scroll Button
+// Load Messages + Scroll Button + Edit + Popup Menu
 // ========================================
 
-// ========================================
-// FULL MESSAGE LOAD (initial render)
-// ========================================
+// FULL LOAD
 function loadMessages(scrollBottom = false) {
+
     $.post("load_messages_client.php", { username }, html => {
 
         $("#chat-messages").html(html);
 
         attachMediaEvents();
-        bindReactionButtons();   // <— FIXED
+        bindReactionButtons();
 
         const last = $("#chat-messages .message:last").data("msg-id");
         if (last) lastMessageID = last;
@@ -237,10 +179,7 @@ function loadMessages(scrollBottom = false) {
     });
 }
 
-
-// ========================================
-// FETCH NEW MESSAGES (DOM DIFF) — FIXED AUTO-SCROLL
-// ========================================
+// NEW MESSAGES
 function fetchNewMessages() {
 
     if (editing || activePopup || $("#preview-inline").is(":visible")) return;
@@ -249,8 +188,8 @@ function fetchNewMessages() {
 
         const temp = $("<div>").html(html);
         const newMsgs = temp.find(".message");
-        const container = $("#chat-messages");
 
+        const container = $("#chat-messages");
         const currentLast = container.find(".message:last").data("msg-id") || 0;
 
         newMsgs.each(function () {
@@ -259,50 +198,35 @@ function fetchNewMessages() {
         });
 
         attachMediaEvents();
-        bindReactionButtons();   // <— FIXED
+        bindReactionButtons();
 
         const box = container[0];
-        const distanceFromBottom = box.scrollHeight - box.scrollTop - box.clientHeight;
+        const distance = box.scrollHeight - box.scrollTop - box.clientHeight;
 
-        if (distanceFromBottom < 120) scrollToBottom();
+        if (distance < 120) scrollToBottom();
     });
 }
 
-
-
-// ========================================
-// SCROLL TO BOTTOM
-// ========================================
+// SCROLL BUTTON
 function scrollToBottom() {
     const box = $("#chat-messages");
-    box.stop().animate({ scrollTop: box[0].scrollHeight }, 220);
+    box.stop().animate({ scrollTop: box[0].scrollHeight }, 230);
 }
 
-// ========================================
-// SCROLL-TO-BOTTOM BUTTON
-// ========================================
-const scrollBtn = document.getElementById("scroll-bottom-btn");
-
 $("#chat-messages").on("scroll", function () {
-
     const box = this;
-    const distanceFromBottom = box.scrollHeight - box.scrollTop - box.clientHeight;
+    const dist = box.scrollHeight - box.scrollTop - box.clientHeight;
 
-    if (distanceFromBottom > 70) {
-        scrollBtn.classList.add("show");
-    } else {
-        scrollBtn.classList.remove("show");
-    }
+    if (dist > 70) $("#scroll-bottom-btn").addClass("show");
+    else $("#scroll-bottom-btn").removeClass("show");
 });
 
-scrollBtn.addEventListener("click", () => scrollToBottom());
+document.getElementById("scroll-bottom-btn")
+    .addEventListener("click", () => scrollToBottom());
 
-// ========================================
-// EDIT MESSAGE
-// ========================================
+// EDIT
 function startEdit(msgID) {
     editing = true;
-
     const bubble = $(`.message[data-msg-id='${msgID}'] .message-bubble`);
     const original = bubble.text();
 
@@ -316,10 +240,11 @@ function startEdit(msgID) {
 }
 
 $(document).on("click", ".edit-save", function () {
-    const msgID = $(this).data("id");
-    const newText = $(this).closest(".message-bubble").find(".edit-textarea").val().trim();
+    const id = $(this).data("id");
+    const newText = $(this).closest(".message-bubble")
+                     .find(".edit-textarea").val().trim();
 
-    $.post("edit_message_client.php", { id: msgID, message: newText }, () => {
+    $.post("edit_message_client.php", { id, message: newText }, () => {
         editing = false;
         loadMessages(true);
     });
@@ -330,90 +255,76 @@ $(document).on("click", ".edit-cancel", function () {
     loadMessages(false);
 });
 
-// ========================================
-// POPUP MENU (3-dot actions)
-// ========================================
+// POPUP MENU
 function buildPopup(id) {
     return `
-        <div id="msg-action-popup" class="msg-action-popup">
+    <div id="msg-action-popup" class="msg-action-popup">
 
-            <button class="popup-edit" data-id="${id}">
-                <i class="fa-solid fa-pen"></i> Edit
-            </button>
+        <button class="popup-edit" data-id="${id}">
+            <i class="fa-solid fa-pen"></i> Edit
+        </button>
 
-            <button class="popup-unsend" data-id="${id}">
-                <i class="fa-solid fa-rotate-left"></i> Unsend
-            </button>
+        <button class="popup-unsend" data-id="${id}">
+            <i class="fa-solid fa-rotate-left"></i> Unsend
+        </button>
 
-            <button class="popup-delete" data-id="${id}">
-                <i class="fa-solid fa-trash"></i> Delete
-            </button>
+        <button class="popup-delete" data-id="${id}">
+            <i class="fa-solid fa-trash"></i> Delete
+        </button>
 
-            <button class="popup-cancel">
-                <i class="fa-solid fa-xmark"></i> Cancel
-            </button>
+        <button class="popup-cancel">
+            <i class="fa-solid fa-xmark"></i> Cancel
+        </button>
 
-        </div>
-    `;
+    </div>`;
 }
 
-// OPEN POPUP
 $(document).on("click", ".more-btn", function (e) {
     e.stopPropagation();
+
     closePopup();
+    const id = $(this).data("id");
 
-    const msgID = $(this).data("id");
-    $("body").append(buildPopup(msgID));
-
+    $("body").append(buildPopup(id));
     activePopup = $("#msg-action-popup");
 
     const pos = $(this).offset();
-    const popupHeight = activePopup.outerHeight();
 
     activePopup.css({
-        top: pos.top - popupHeight - 5,
+        top: pos.top - activePopup.outerHeight() - 5,
         left: pos.left - (activePopup.outerWidth() / 2) + 15,
-        zIndex: 999999 // FIX: prevents overlapping inside lightbox
+        zIndex: 999999
     }).fadeIn(120);
 });
 
-// CLOSE POPUP
 function closePopup() {
     if (activePopup) {
-        const p = activePopup;
+        activePopup.fadeOut(120, () => activePopup.remove());
         activePopup = null;
-        p.fadeOut(120, () => p.remove());
     }
 }
 
-// POPUP → UNSEND / DELETE
 $(document).on("click", ".popup-unsend", function () {
     $.post("delete_message_client.php", {
-        id: $(this).data("id"),
-        username
+        id: $(this).data("id"), username
     }, () => loadMessages(false));
-
     closePopup();
 });
 
 $(document).on("click", ".popup-delete", function () {
     $.post("delete_message_client.php", {
-        id: $(this).data("id"),
-        username
+        id: $(this).data("id"), username
     }, () => loadMessages(false));
-
     closePopup();
 });
 
 $(document).on("click", ".popup-cancel", closePopup);
 // ========================================
 // SkyTruFiber Chat System — PART 3 / 4
-// Messenger-Style Reactions System
+// Messenger-style Reactions
 // ========================================
 
-// ========================================
-// REACTION PICKER CREATOR
-// ========================================
+// REACTION PICKER
 function ensureReactionPicker() {
     let picker = $("#reaction-picker");
 
@@ -430,101 +341,82 @@ function ensureReactionPicker() {
     return $("#reaction-picker");
 }
 
-// ========================================
-// OPEN REACTION PICKER
-// ========================================
-$(document).on("click", ".react-btn", function (e) {
-    e.stopPropagation();
+// BIND REACTION BUTTONS
+function bindReactionButtons() {
+    $(".react-btn").off("click").on("click", function (e) {
+        e.stopPropagation();
 
-    reactingToMsgId = $(this).data("msg-id");
+        reactingToMsgId = $(this).data("msg-id");
 
-    const picker = ensureReactionPicker();
-    const pos = $(this).offset();
+        const picker = ensureReactionPicker();
+        const pos = $(this).offset();
 
-    picker.css({
-        top: pos.top - picker.outerHeight() - 10,
-        left: pos.left - (picker.outerWidth() / 2) + 15,
-        zIndex: 999999 // FIX lightbox layering
-    }).addClass("show");
-});
+        picker.css({
+            top: pos.top - picker.outerHeight() - 10,
+            left: pos.left - picker.outerWidth() / 2 + 15,
+            zIndex: 999999
+        }).addClass("show");
+    });
+}
 
-// ========================================
-// SELECT REACTION → SEND TO BACKEND
-// ========================================
+// SELECT REACTION
 $(document).on("click", ".reaction-choice", function () {
 
     $.post("react_message_client.php", {
         chat_id: reactingToMsgId,
         emoji: $(this).data("emoji")
-    }, () => {
-        updateReactionBar(reactingToMsgId);
-    });
+    }, () => updateReactionBar(reactingToMsgId));
 
     $("#reaction-picker").removeClass("show");
 });
 
-// ========================================
-// REFRESH REACTION BAR (after click)
-// ========================================
+// UPDATE REACTION BAR ONLY
 function updateReactionBar(msgID) {
 
     $.post("load_messages_client.php", { username }, html => {
 
         const temp = $("<div>").html(html);
+        const newBar = temp
+            .find(`.message[data-msg-id='${msgID}']`)
+            .find(".reaction-bar");
 
-        // Find the updated message in fresh HTML
-        const updated = temp.find(`.message[data-msg-id='${msgID}']`)
-                            .find(".reaction-bar");
+        const oldBar = $(`.message[data-msg-id='${msgID}']`)
+            .find(".reaction-bar");
 
-        // Replace only the reaction bar in current DOM
-        const current = $(`.message[data-msg-id='${msgID}']`)
-                        .find(".reaction-bar");
-
-        if (current.length) {
-            current.replaceWith(updated.clone());
-        } else {
-            // If reaction bar does not exist yet → append it
+        if (oldBar.length)
+            oldBar.replaceWith(newBar.clone());
+        else
             $(`.message[data-msg-id='${msgID}'] .message-content`)
-                .append(updated.clone());
-        }
+                .append(newBar.clone());
     });
 }
 
-// ========================================
-// GLOBAL CLICK → CLOSE REACTION PICKER
-// ========================================
+// CLOSE REACTION PICKER
 $(document).on("click", function (e) {
     if (!$(e.target).closest("#reaction-picker, .react-btn").length)
         $("#reaction-picker").removeClass("show");
 });
 // ========================================
 // SkyTruFiber Chat System — PART 4 / 4
-// ADVANCED LIGHTBOX VIEWER + GESTURES
+// Lightbox + Gestures + Gallery
 // ========================================
 
-// Internal viewer state
 let lightboxScale = 1;
 let lightboxTranslateX = 0;
 let lightboxTranslateY = 0;
 let isPanning = false;
 
-
-
 const imgEl = document.getElementById("lightbox-image");
-// ========================================
-// MEDIA EVENTS — FINAL FULL VERSION
-// ========================================
+
+// ATTACH MEDIA EVENTS
 function attachMediaEvents() {
 
-    // --------------------------------------------
-    // IMAGE (Grid / Single) → OPEN LIGHTBOX
-    // --------------------------------------------
+    // IMAGE CLICK
     $(".media-grid img, .media-thumb").off("click").on("click", function () {
 
         const full = $(this).data("full");
         if (!full) return;
 
-        // Build gallery from siblings inside same grid
         const grid = $(this).closest(".media-grid");
         const items = grid.find("img");
 
@@ -539,178 +431,121 @@ function attachMediaEvents() {
         showLightboxImage(full);
     });
 
-    // --------------------------------------------
-    // VIDEO CLICK (Grid or single video)
-    // --------------------------------------------
+    // VIDEO CLICK
     $(".media-grid video, .media-video").off("click").on("click", function () {
-
         const full = $(this).data("full");
-        if (!full) return;
-
         resetLightboxTransform();
         $("#lightbox-image").hide();
         $("#lightbox-video").attr("src", full).show();
-
         $("#lightbox-overlay").addClass("show");
         updateLightboxIndex();
     });
 
-    // --------------------------------------------
-    // LIGHTBOX CONTROLS
-    // --------------------------------------------
+    // CONTROLS
     $("#lightbox-prev").off("click").on("click", () => navigateGallery(-1));
     $("#lightbox-next").off("click").on("click", () => navigateGallery(1));
     $("#lightbox-close").off("click").on("click", closeLightbox);
 
-    // --------------------------------------------
-    // LIGHTBOX BACKGROUND CLICK (Smart Close)
-    // --------------------------------------------
     $("#lightbox-overlay").off("click").on("click", function (e) {
 
-        const isImg = $("#lightbox-image").is(":visible");
-
-        if (isImg) {
-            const img = document.getElementById("lightbox-image");
-            const rect = img.getBoundingClientRect();
-
-            // If clicking ON image → don't close
-            const inside =
-                e.clientX >= rect.left &&
-                e.clientX <= rect.right &&
-                e.clientY >= rect.top &&
-                e.clientY <= rect.bottom;
-
+        if ($("#lightbox-image").is(":visible")) {
+            const img = imgEl.getBoundingClientRect();
+            const inside = (
+                e.clientX >= img.left &&
+                e.clientX <= img.right &&
+                e.clientY >= img.top &&
+                e.clientY <= img.bottom
+            );
             if (inside) return;
         }
 
-        // Do NOT close if zoomed in
         if (lightboxScale > 1.02) return;
 
         closeLightbox();
     });
-
-    // --------------------------------------------
-    // ENSURE ACTION TOOLBAR POSITIONING
-    // --------------------------------------------
-    $(".message").each(function () {
-        $(this).css("position", "relative");
-    });
-
 }
 
-
-// ========================================
-// OPEN IMAGE
-// ========================================
-function openImage(src) {
+// SHOW IMAGE
+function showLightboxImage(src) {
     resetLightboxTransform();
-
     $("#lightbox-video").hide();
     $("#lightbox-image").attr("src", src).show();
-
     $("#lightbox-overlay").addClass("show");
     updateLightboxIndex();
 }
 
-// ========================================
-// UPDATE INDEX + DOWNLOAD URL
-// ========================================
-function updateLightboxIndex() {
-
-    if (galleryItems.length > 1) {
-        $("#lightbox-index")
-            .text(`${currentIndex + 1} / ${galleryItems.length}`)
-            .show();
-    } else {
-        $("#lightbox-index").hide();
-    }
-
-    const currentSrc = galleryItems[currentIndex];
-    $("#lightbox-download").attr("href", currentSrc);
-}
-
-// ========================================
-// SWIPE LEFT / RIGHT
-// ========================================
+// GALLERY NAVIGATE
 function navigateGallery(step) {
-    if (galleryItems.length <= 1) return;
-
+    if (!galleryItems.length) return;
     currentIndex = (currentIndex + step + galleryItems.length) % galleryItems.length;
-
     resetLightboxTransform();
     $("#lightbox-image").attr("src", galleryItems[currentIndex]);
-
     updateLightboxIndex();
 }
 
-// ========================================
-// CLOSE LIGHTBOX
-// ========================================
+// INDEX + DOWNLOAD
+function updateLightboxIndex() {
+    if (galleryItems.length > 1)
+        $("#lightbox-index").text(`${currentIndex + 1} / ${galleryItems.length}`).show();
+    else $("#lightbox-index").hide();
+
+    $("#lightbox-download").attr("href", galleryItems[currentIndex]);
+}
+
+// CLOSE
 function closeLightbox() {
     $("#lightbox-overlay").removeClass("show");
-    $("#lightbox-image").hide();
-    $("#lightbox-video").hide();
+    $("#lightbox-image, #lightbox-video").hide();
     resetLightboxTransform();
 }
 
-// ========================================
-// RESET TRANSFORM
-// ========================================
+// RESET
 function resetLightboxTransform() {
     lightboxScale = 1;
     lightboxTranslateX = 0;
     lightboxTranslateY = 0;
 
-    $("#lightbox-image").css({
-        transform: "translate(0px, 0px) scale(1)"
-    });
+    imgEl.style.transform = "translate(0px,0px) scale(1)";
 }
 
-// ========================================
-// TOUCH GESTURES
-// (Pinch zoom, pan drag, swipe left/right)
-// ========================================
+// TOUCH + MOUSE GESTURES
 let touchStartDistance = 0;
 let lastTouchX = 0;
 let lastTouchY = 0;
-
 let swipeStartX = 0;
 
-// BLOCK page scroll when lightbox open
-document.addEventListener("touchmove", function (e) {
-    if ($("#lightbox-overlay").hasClass("show")) {
-        e.preventDefault();
-    }
-}, { passive: false });
+// BLOCK SCROLL
+document.addEventListener("touchmove", e => {
+    if ($("#lightbox-overlay").hasClass("show")) e.preventDefault();
+}, { passive:false });
 
-// Get finger distance (for pinch)
+// DISTANCE FUNCTION
 function getTouchDistance(ev) {
     const dx = ev.touches[0].clientX - ev.touches[1].clientX;
     const dy = ev.touches[0].clientY - ev.touches[1].clientY;
-    return Math.sqrt(dx * dx + dy * dy);
+    return Math.sqrt(dx*dx + dy*dy);
 }
 
 // TOUCH START
-imgEl.addEventListener("touchstart", function (ev) {
+imgEl.addEventListener("touchstart", ev => {
 
     if (ev.touches.length === 1) {
         isPanning = true;
         lastTouchX = ev.touches[0].clientX;
         lastTouchY = ev.touches[0].clientY;
         swipeStartX = lastTouchX;
-    }
-    else if (ev.touches.length === 2) {
+    } else if (ev.touches.length === 2) {
         isPanning = false;
         touchStartDistance = getTouchDistance(ev);
     }
 
-}, { passive: false });
+}, { passive:false });
 
 // TOUCH MOVE
-imgEl.addEventListener("touchmove", function (ev) {
+imgEl.addEventListener("touchmove", ev => {
 
-    // PAN
     if (ev.touches.length === 1 && isPanning && lightboxScale > 1.02) {
+
         let x = ev.touches[0].clientX;
         let y = ev.touches[0].clientY;
 
@@ -723,14 +558,13 @@ imgEl.addEventListener("touchmove", function (ev) {
         updateTransform();
     }
 
-    // PINCH
     if (ev.touches.length === 2) {
+
         let newDist = getTouchDistance(ev);
         let ratio = newDist / touchStartDistance;
 
         let newScale = lightboxScale * ratio;
-
-        newScale = Math.max(1, Math.min(newScale, 4)); // clamp
+        newScale = Math.max(1, Math.min(4, newScale));
 
         lightboxScale = newScale;
         touchStartDistance = newDist;
@@ -738,82 +572,62 @@ imgEl.addEventListener("touchmove", function (ev) {
         updateTransform();
     }
 
-}, { passive: false });
+}, { passive:false });
 
-// TOUCH END
-imgEl.addEventListener("touchend", function (ev) {
+// TOUCH END (swipe)
+imgEl.addEventListener("touchend", ev => {
 
-    // SWIPE (only when NOT zoomed)
     if (ev.touches.length === 0 && lightboxScale <= 1.02) {
+
         const diff = lastTouchX - swipeStartX;
 
         if (Math.abs(diff) > 60) {
-            if (diff > 0) navigateGallery(1);     // swipe left → next
-            if (diff < 0) navigateGallery(-1);    // swipe right → prev
+            if (diff > 0) navigateGallery(1);
+            if (diff < 0) navigateGallery(-1);
         }
     }
 
-    // Reset if at natural zoom
-    if (lightboxScale <= 1.02) {
-        resetLightboxTransform();
-    }
+    if (lightboxScale <= 1.02) resetLightboxTransform();
 
     isPanning = false;
 
-}, { passive: false });
+}, { passive:false });
 
-// ========================================
-// DOUBLE TAP ZOOM
-// ========================================
+// DOUBLE TAP
 let lastTap = 0;
-
-imgEl.addEventListener("touchend", function () {
-    let now = Date.now();
+imgEl.addEventListener("touchend", () => {
+    const now = Date.now();
 
     if (now - lastTap < 250) {
-        // toggle zoom
-        if (lightboxScale > 1.05) {
-            resetLightboxTransform();
-        } else {
+        if (lightboxScale > 1.05) resetLightboxTransform();
+        else {
             lightboxScale = 2;
             updateTransform();
         }
     }
-
     lastTap = now;
 });
 
-// ========================================
-// DESKTOP — MOUSE WHEEL ZOOM
-// ========================================
-imgEl.addEventListener("wheel", function (ev) {
+// MOUSE ZOOM
+imgEl.addEventListener("wheel", ev => {
     ev.preventDefault();
-
-    let zoom = -ev.deltaY * 0.001;
-    lightboxScale += zoom;
-
-    lightboxScale = Math.max(1, Math.min(lightboxScale, 4));
-
+    lightboxScale += -ev.deltaY * 0.001;
+    lightboxScale = Math.max(1, Math.min(4, lightboxScale));
     updateTransform();
+}, { passive:false });
 
-}, { passive: false });
-
-// ========================================
-// DESKTOP — DRAG TO PAN
-// ========================================
+// DRAG (mouse)
 let mouseDown = false;
 let lastMouseX = 0;
 let lastMouseY = 0;
 
-imgEl.addEventListener("mousedown", function (ev) {
+imgEl.addEventListener("mousedown", ev => {
     if (lightboxScale <= 1.02) return;
-
     mouseDown = true;
     lastMouseX = ev.clientX;
     lastMouseY = ev.clientY;
 });
-
-document.addEventListener("mousemove", function (ev) {
+document.addEventListener("mousemove", ev => {
     if (!mouseDown || lightboxScale <= 1.02) return;
 
     lightboxTranslateX += (ev.clientX - lastMouseX);
@@ -824,13 +638,12 @@ document.addEventListener("mousemove", function (ev) {
 
     updateTransform();
 });
-
-document.addEventListener("mouseup", function () {
+document.addEventListener("mouseup", () => {
     mouseDown = false;
 });
 
-// UPDATE CSS TRANSFORM
+// UPDATE TRANSFORM
 function updateTransform() {
     imgEl.style.transform =
-        `translate(${lightboxTranslateX}px, ${lightboxTranslateY}px) scale(${lightboxScale})`;
+        `translate(${lightboxTranslateX}px,${lightboxTranslateY}px) scale(${lightboxScale})`;
 }
