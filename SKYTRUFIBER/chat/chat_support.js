@@ -188,10 +188,15 @@ function fetchNewMessages() {
         const container = $("#chat-messages");
         const lastDisplayedID = container.find(".message:last").data("msg-id") || 0;
 
-        newMsgs.each(function () {
-            const id = $(this).data("msg-id");
-            if (id > lastDisplayedID) container.append($(this));
-        });
+         newMsgs.each(function () {
+          const id = Number($(this).data("msg-id"));
+          if (!id) return; // ignore invalid nodes
+
+           if (id > currentLast) {
+           container.append($(this));
+          }
+      });
+
 
         bindReactionButtons();
         bindActionToolbar();
