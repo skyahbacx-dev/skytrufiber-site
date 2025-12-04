@@ -27,6 +27,7 @@
     --scroll-btn-bg: #0084ff;
 }
 
+/* Dark mode */
 :root[data-theme="dark"] {
     --bg: #0f0f0f;
     --bg-secondary: #141414;
@@ -68,10 +69,10 @@ body {
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(5px);
     display: flex;
     justify-content: center;
     align-items: center;
+    backdrop-filter: blur(5px);
 }
 
 /* ============================================================
@@ -82,14 +83,13 @@ body {
     height: 88vh;
     background: var(--bg);
     border-radius: 22px;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
     box-shadow: 0 14px 40px rgba(0,0,0,0.25);
-    position: relative;
 }
 
-@media(max-width: 768px) {
+@media (max-width: 768px) {
     .chat-modal {
         width: 100vw;
         height: 100vh;
@@ -98,16 +98,16 @@ body {
 }
 
 /* ============================================================
-   HEADER FIX
+   HEADER
 ============================================================ */
 .chat-header {
+    height: 82px;
+    padding: 14px 20px;
     background: var(--header-bg);
     color: var(--header-text);
-    padding: 14px 20px;
-    height: 82px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
 }
 
 .chat-header-left {
@@ -131,22 +131,22 @@ body {
 /* Logout */
 .logout-btn {
     padding: 8px 14px;
-    border-radius: 10px;
     border: none;
     background: #ff4040;
-    color: #fff;
+    border-radius: 10px;
     cursor: pointer;
+    color: #fff;
 }
 
 /* ============================================================
-   THEME TOGGLE FIX
+   THEME TOGGLE
 ============================================================ */
 #theme-toggle {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.25);
     border: none;
+    background: rgba(255,255,255,0.25);
     cursor: pointer;
     display: flex;
     justify-content: center;
@@ -158,27 +158,25 @@ body {
 .theme-icon {
     position: absolute;
     font-size: 20px;
-    transition: opacity .35s ease, transform .35s ease;
+    transition: opacity .35s, transform .35s;
 }
 
 .moon-icon { opacity: 1; transform: rotate(0deg); }
 .sun-icon { opacity: 0; transform: rotate(-180deg); }
 
 :root[data-theme="dark"] .moon-icon { opacity: 0; transform: rotate(180deg); }
-:root[data-theme="dark"] .sun-icon { opacity: 1; transform: rotate(0); }
+:root[data-theme="dark"] .sun-icon { opacity: 1; transform: rotate(0deg); }
 
-#theme-toggle:active {
-    transform: rotate(160deg);
-}
+#theme-toggle:active { transform: rotate(160deg); }
 
 /* ============================================================
    CHAT MESSAGES AREA
 ============================================================ */
 #chat-messages {
     flex: 1;
+    background: var(--bg-secondary);
     overflow-y: auto;
     padding: 22px;
-    background: var(--bg-secondary);
     display: flex;
     flex-direction: column;
     gap: 18px;
@@ -191,21 +189,22 @@ body {
 }
 
 /* ============================================================
-   MESSAGE ALIGNMENT FIXED
+   MESSAGE ALIGNMENT (FINAL FIX)
 ============================================================ */
 .message {
     width: 100%;
     display: flex;
     align-items: flex-end;
     gap: 10px;
+    position: relative;
 }
 
-/* Received → Left */
+/* RECEIVED → LEFT */
 .message.received {
     justify-content: flex-start;
 }
 
-/* Sent → Right */
+/* SENT → RIGHT */
 .message.sent {
     justify-content: flex-end;
 }
@@ -215,22 +214,10 @@ body {
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    flex-shrink: 0;
-}
-/* Sent messages should NOT reserve avatar space */
-.message.no-avatar .message-avatar {
-    display: none;
 }
 
-/* Ensures perfect alignment */
-.message.sent {
-    justify-content: flex-end;
-}
-
-.message.sent .message-content {
-    max-width: 70%;
-    align-items: flex-end;
-}
+/* Sent messages have no avatar */
+.message.no-avatar .message-avatar { display: none; }
 
 /* Bubble container */
 .message-content {
@@ -241,11 +228,11 @@ body {
 .message-bubble {
     padding: 13px 20px;
     border-radius: 20px;
+    display: inline-block;
     background: var(--bubble-received);
     color: var(--bubble-received-text);
     font-size: 15px;
     word-wrap: break-word;
-    display: inline-block;
 }
 
 .message.sent .message-bubble {
@@ -260,29 +247,35 @@ body {
 
 .message-time {
     font-size: 11px;
-    margin-top: 4px;
     color: var(--text-light);
+    margin-top: 4px;
 }
 
 /* ============================================================
-   MEDIA GRID — fully fixed
+   MEDIA GRID (FINAL 3-COLUMN FIX)
 ============================================================ */
 .media-grid {
-    width: 100%;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 6px;
     margin-top: 6px;
+    width: 100%;
+    max-width: 320px; /* prevents full-width stretching */
 }
 
 .media-grid img,
 .media-grid video {
     width: 100%;
-    height: auto;
-    max-height: 200px;
+    height: 110px;
     object-fit: cover;
     border-radius: 12px;
     cursor: pointer;
+}
+
+@media (max-width: 480px) {
+    .media-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 /* ============================================================
@@ -314,8 +307,8 @@ body {
     width: 32px;
     height: 32px;
     background: rgba(0,0,0,0.08);
-    border: none;
     border-radius: 50%;
+    border: none;
     cursor: pointer;
     font-size: 16px;
 }
@@ -325,21 +318,21 @@ body {
 ============================================================ */
 #reaction-picker {
     position: absolute;
-    background: var(--bg);
     padding: 8px;
     border-radius: 30px;
     display: none;
+    background: var(--bg);
     gap: 8px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
     border: 1px solid rgba(0,0,0,0.12);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
     z-index: 999999;
 }
 
 #reaction-picker.show { display: flex; }
 
 .reaction-choice {
-    background: none;
     border: none;
+    background: none;
     font-size: 22px;
     cursor: pointer;
 }
@@ -365,8 +358,8 @@ body {
 #preview-inline {
     background: var(--preview-bg);
     padding: 12px;
-    border-top: 1px solid var(--input-border);
     display: none;
+    border-top: 1px solid var(--input-border);
 }
 
 #preview-files {
@@ -380,8 +373,8 @@ body {
 .preview-thumb {
     width: 110px;
     height: 110px;
-    object-fit: cover;
     border-radius: 10px;
+    object-fit: cover;
     border: 1px solid #ccc;
 }
 
@@ -389,12 +382,12 @@ body {
     position: absolute;
     top: -8px;
     right: -8px;
+    background: red;
+    border: none;
+    border-radius: 50%;
     width: 22px;
     height: 22px;
-    background: red;
-    color: white;
-    border-radius: 50%;
-    border: none;
+    color: #fff;
     cursor: pointer;
 }
 
@@ -403,17 +396,17 @@ body {
 ============================================================ */
 .chat-input-area {
     padding: 14px;
-    display: flex;
-    gap: 12px;
     background: var(--input-bg);
     border-top: 1px solid var(--input-border);
+    display: flex;
+    gap: 12px;
 }
 
 .chat-input-box {
     flex: 1;
-    border: 1px solid var(--input-border);
     border-radius: 24px;
     padding: 10px 14px;
+    border: 1px solid var(--input-border);
     display: flex;
     background: var(--input-bg);
 }
@@ -432,51 +425,48 @@ body {
     height: 42px;
     border-radius: 50%;
     background: rgba(0,0,0,0.07);
-    border: none;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
+    border: none;
 }
 
-#upload-btn img {
-    width: 22px;
-    height: 22px;
-}
+#upload-btn img { width: 22px; height: 22px; }
 
 /* Send */
 #send-btn {
     width: 46px;
     height: 46px;
-    border-radius: 50%;
     background: var(--bubble-sent);
+    color: #fff;
+    border-radius: 50%;
     border: none;
-    color: white;
+    font-size: 22px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 22px;
 }
 
 /* ============================================================
-   SCROLL BOTTOM BUTTON
+   SCROLL BUTTON
 ============================================================ */
 #scroll-bottom-btn {
     position: absolute;
-    bottom: 100px;
     right: 20px;
+    bottom: 100px;
     width: 46px;
     height: 46px;
     border-radius: 50%;
     background: var(--scroll-btn-bg);
     color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     opacity: 0;
     pointer-events: none;
     transform: translateY(10px);
-    transition: 0.25s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: .25s;
 }
 
 #scroll-bottom-btn.show {
@@ -491,16 +481,14 @@ body {
 #lightbox-overlay {
     position: fixed;
     inset: 0;
-    background: var(--lightbox-bg);
     display: none;
+    background: var(--lightbox-bg);
     justify-content: center;
     align-items: center;
     z-index: 2000000;
 }
 
-#lightbox-overlay.show {
-    display: flex !important;
-}
+#lightbox-overlay.show { display: flex !important; }
 
 #lightbox-image,
 #lightbox-video {
