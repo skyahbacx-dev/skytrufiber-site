@@ -150,6 +150,7 @@ body {
     justify-content: center;
     align-items: center;
     transition: transform .4s ease;
+    margin-right: -20px;
 }
 
 .theme-icon {
