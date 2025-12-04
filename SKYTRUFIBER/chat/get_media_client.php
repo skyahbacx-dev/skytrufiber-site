@@ -2,54 +2,32 @@
 require_once "../../db_connect.php";
 
 $id = (int)($_GET["id"] ?? 0);
-$thumb = isset($_GET["thumb"]);
+$thumbReq = isset($_GET["thumb"]);
 
-// Fetch media
+// Load row
 $stmt = $conn->prepare("
-    SELECT media_type, media_path, media_blob, thumb_blob
+    SELECT media_type, media_blob, thumb_blob
     FROM chat_media
-    WHERE id = $1
-    LIMIT 1
+    WHERE id = ?
 ");
 $stmt->execute([$id]);
-$file = $stmt->fetch(PDO::FETCH_ASSOC);
+$media = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$file) {
-    http_response_code(404);
-    exit("Not found");
-}
+if (!$media) exit("");
 
-$mediaType = $file["media_type"];
-$filename  = $file["media_path"];
-
-// Choose blob: thumbnail OR full
-$data = ($thumb && $file["thumb_blob"])
-    ? $file["thumb_blob"]
-    : $file["media_blob"];
-
-// ==== Set proper headers ====
-
-if ($mediaType === "image") {
-
+// If thumbnail requested and exists
+if ($thumbReq && !empty($media["thumb_blob"])) {
     header("Content-Type: image/jpeg");
-    header("Content-Length: " . strlen($data));
-    header("Content-Disposition: inline; filename=\"$filename\"");
-    echo $data;
+    echo $media["thumb_blob"];
     exit;
 }
 
-if ($mediaType === "video") {
+// MAIN FILE
+$type = $media["media_type"];
 
-    header("Content-Type: video/mp4");
-    header("Content-Length: " . strlen($data));
-    header("Content-Disposition: inline; filename=\"$filename\"");
-    echo $data;
-    exit;
-}
+if ($type === "image") header("Content-Type: image/jpeg");
+else if ($type === "video") header("Content-Type: video/mp4");
+else header("Content-Type: application/octet-stream");
 
-// Fallback for ANY other file
-header("Content-Type: application/octet-stream");
-header("Content-Length: " . strlen($data));
-header("Content-Disposition: attachment; filename=\"$filename\"");
-echo $data;
-exit;
+echo $media["media_blob"];
+?>
