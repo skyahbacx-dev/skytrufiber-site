@@ -1,33 +1,66 @@
 <?php
+if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$id = (int)($_GET["id"] ?? 0);
-$thumbReq = isset($_GET["thumb"]);
+// --------------------------------------
+// Validate & sanitize input
+// --------------------------------------
+$id = isset($_GET["id"]) ? intval($_GET["id"]) : 0;
+$thumb = isset($_GET["thumb"]) ? intval($_GET["thumb"]) : 0;
 
-// Load row
+if ($id <= 0) {
+    http_response_code(400);
+    exit("Invalid ID");
+}
+
+// --------------------------------------
+// Fetch media row
+// --------------------------------------
 $stmt = $conn->prepare("
     SELECT media_type, media_blob, thumb_blob
     FROM chat_media
     WHERE id = ?
+    LIMIT 1
 ");
 $stmt->execute([$id]);
 $media = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$media) exit("");
-
-// If thumbnail requested and exists
-if ($thumbReq && !empty($media["thumb_blob"])) {
-    header("Content-Type: image/jpeg");
-    echo $media["thumb_blob"];
-    exit;
+if (!$media) {
+    http_response_code(404);
+    exit("Media not found");
 }
 
-// MAIN FILE
 $type = $media["media_type"];
+$blob = ($thumb && !empty($media["thumb_blob"]))
+        ? $media["thumb_blob"]
+        : $media["media_blob"];
 
-if ($type === "image") header("Content-Type: image/jpeg");
-else if ($type === "video") header("Content-Type: video/mp4");
-else header("Content-Type: application/octet-stream");
+if (!$blob) {
+    http_response_code(404);
+    exit("No data");
+}
 
-echo $media["media_blob"];
-?>
+// --------------------------------------
+// Set correct MIME type
+// --------------------------------------
+$mime = "application/octet-stream";
+
+if ($type === "image") {
+    $mime = "image/jpeg";
+}
+elseif ($type === "video") {
+    $mime = "video/mp4";
+}
+else {
+    $mime = "application/octet-stream";
+}
+
+header("Content-Type: $mime");
+header("Content-Length: " . strlen($blob));
+header("Cache-Control: public, max-age=86400");
+
+// --------------------------------------
+// Output the media
+// --------------------------------------
+echo $blob;
+exit;
