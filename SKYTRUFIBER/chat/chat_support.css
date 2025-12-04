@@ -420,3 +420,19 @@ body {
 #lightbox-overlay.show {
     display: flex !important;
 }
+.msg-action-popup {
+    position: absolute;
+    z-index: 9999999;
+}
+
+#chat-messages {
+    overflow-y: auto !important;   /* IMPORTANT */
+}
+
+.chat-modal {
+    overflow: hidden !important;   /* Keeps content inside */
+}
+
+.message {
+    overflow: visible; /* Only messages can overflow toolbars */
+}
