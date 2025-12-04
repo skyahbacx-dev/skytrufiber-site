@@ -242,22 +242,24 @@ body {
 }
 
 .message-bubble {
-    padding: 12px 16px;
-    border-radius: 18px;
+    padding: 12px 18px;
+    border-radius: 20px;
     max-width: 100%;
     background: var(--bubble-received);
     color: var(--bubble-received-text);
     font-size: 15px;
+    word-wrap: break-word;
+    width: fit-content;
 }
 
 .message.sent .message-bubble {
     background: var(--bubble-sent);
     color: var(--bubble-sent-text);
-    border-radius: 18px 18px 4px 18px;
+    border-radius: 20px 20px 4px 20px;
 }
 
 .message.received .message-bubble {
-    border-radius: 18px 18px 18px 4px;
+    border-radius: 20px 20px 20px 4px;
 }
 
 .message-time {
@@ -388,8 +390,9 @@ body {
    MEDIA GRID
 ============================================================ */
 .media-grid {
+    width: 100%;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px,3fr));
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 6px;
     margin-top: 6px;
 }
