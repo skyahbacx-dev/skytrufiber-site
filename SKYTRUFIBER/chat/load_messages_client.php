@@ -132,14 +132,15 @@ foreach ($messages as $msg) {
     // -----------------------------
     // ACTION TOOLBAR (😊 ...)
     // -----------------------------
-    echo "<div class='action-toolbar'>
-            <button class='react-btn' data-msg-id='$id'>☺︎</button>";
+echo "<div class='action-toolbar'>
+        <button class='react-btn' data-msg-id='$id'>☺︎</button>";
 
-    if ($sender === "sent" && !$msg["deleted"]) {
-        echo "<button class='more-btn' data-id='$id'>⋯</button>";
-    }
+if ($sender === "sent" && !$msg["deleted"]) {
+    echo "<button class='more-btn' data-id='$id'>⋯</button>";
+}
 
-    echo "</div>";
+echo "</div>";
+
 
     echo "</div></div>"; // close content + message
 }
