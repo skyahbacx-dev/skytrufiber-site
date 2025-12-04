@@ -108,7 +108,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-sizing: border-box;
 }
 
 .chat-header-left {
@@ -116,6 +115,13 @@ body {
     align-items: center;
     gap: 12px;
 }
+
+.chat-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* spacing between toggle + logout */
+}
+
 
 .chat-header-logo {
     width: 48px;
@@ -370,7 +376,7 @@ body {
 ============================================================ */
 .media-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px,1fr));
+    grid-template-columns: repeat(auto-fill, minmax(130px,3fr));
     gap: 6px;
     margin-top: 6px;
 }
