@@ -1,5 +1,5 @@
 /* ============================================================
-   SkyTruFiber Chat System — FINAL JS BUILD
+   SkyTruFiber Chat System — FINAL JS BUILD (Stabilized)
    Reactions • Media Grid • Lightbox V2 • Toolbar • Upload
 ============================================================ */
 
@@ -10,7 +10,7 @@ let editing = false;
 let activePopup = null;
 let reactingToMsgId = null;
 
-let galleryItems = [];     // {type: "image"/"video", src:"..."}
+let galleryItems = [];
 let currentIndex = 0;
 
 const reactionChoices = ["👍", "❤️", "😂", "😮", "😢", "😡"];
@@ -22,23 +22,22 @@ const username = new URLSearchParams(window.location.search).get("username");
 $(document).ready(() => {
 
     if (!username) {
-        $("#chat-messages").html(`
-            <p style="text-align:center;padding:20px;color:#777;">Invalid user.</p>
-        `);
+        $("#chat-messages").html(`<p style="text-align:center;padding:20px;color:#777;">Invalid user.</p>`);
         return;
     }
 
     loadMessages(true);
 
-    // Poll every 3.5s
+    // Polling
     setInterval(() => {
         if (!editing && !activePopup && !$("#preview-inline").is(":visible")) {
             fetchNewMessages();
         }
     }, 3500);
 
-    /* SEND */
+    // Send
     $("#send-btn").click(sendMessage);
+
     $("#message-input").keypress(e => {
         if (e.which === 13) {
             e.preventDefault();
@@ -46,32 +45,29 @@ $(document).ready(() => {
         }
     });
 
-    /* UPLOAD */
+    // Upload
     $("#upload-btn").click(() => $("#chat-upload-media").click());
+
     $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple();
     });
 
-    /* CLOSE POPUPS */
-$(document).on("click", function(e) {
-    // Close action popup
-    if (!$(e.target).closest(".msg-action-popup, .more-btn").length) {
-        closePopup();
-    }
+    // Close popups
+    $(document).on("click", e => {
 
-    // Close reaction picker
-    if (!$(e.target).closest("#reaction-picker, .react-btn").length) {
-        $("#reaction-picker").removeClass("show");
-    }
-});
+        if (!$(e.target).closest(".msg-action-popup, .more-btn").length) closePopup();
 
-    /* THEME */
+        if (!$(e.target).closest("#reaction-picker, .react-btn").length)
+            $("#reaction-picker").removeClass("show");
+    });
+
+    // Theme toggle
     $("#theme-toggle").click(toggleTheme);
 });
 
 /* ============================================================
-   THEME TOGGLE
+   THEME
 ============================================================ */
 function toggleTheme() {
     const root = document.documentElement;
@@ -91,6 +87,7 @@ function sendMessage() {
 
     if (!msg && selectedFiles.length === 0) return;
 
+    // Upload
     if (selectedFiles.length > 0) return uploadMedia(msg);
 
     appendClientBubble(msg);
@@ -163,19 +160,20 @@ function uploadMedia(msg) {
 /* ============================================================
    LOAD MESSAGES
 ============================================================ */
-function loadMessages(scrollBottom = false) {
+function loadMessages(scroll = false) {
+
     $.post("load_messages_client.php", { username }, html => {
 
         $("#chat-messages").html(html);
 
-        attachMediaEvents();
         bindReactionButtons();
         bindActionToolbar();
+        attachMediaEvents();
 
         const last = $("#chat-messages .message:last").data("msg-id");
         if (last) lastMessageID = last;
 
-        if (scrollBottom) scrollToBottom();
+        if (scroll) scrollToBottom();
     });
 }
 
@@ -190,16 +188,16 @@ function fetchNewMessages() {
         const newMsgs = temp.find(".message");
 
         const container = $("#chat-messages");
-        const currentLast = container.find(".message:last").data("msg-id") || 0;
+        const lastDisplayedID = container.find(".message:last").data("msg-id") || 0;
 
         newMsgs.each(function () {
             const id = $(this).data("msg-id");
-            if (id > currentLast) container.append($(this));
+            if (id > lastDisplayedID) container.append($(this));
         });
 
-        attachMediaEvents();
         bindReactionButtons();
         bindActionToolbar();
+        attachMediaEvents();
 
         const box = container[0];
         const dist = box.scrollHeight - box.scrollTop - box.clientHeight;
@@ -217,7 +215,10 @@ function scrollToBottom() {
     }, 230);
 }
 
+$("#scroll-bottom-btn").click(scrollToBottom);
+
 $("#chat-messages").on("scroll", function () {
+
     const box = this;
     const dist = box.scrollHeight - box.scrollTop - box.clientHeight;
 
@@ -225,10 +226,8 @@ $("#chat-messages").on("scroll", function () {
     else $("#scroll-bottom-btn").removeClass("show");
 });
 
-$("#scroll-bottom-btn").click(scrollToBottom);
-
 /* ============================================================
-   ACTION TOOLBAR
+   ACTION TOOLBAR / POPUP
 ============================================================ */
 function bindActionToolbar() {
     $(".more-btn").off("click").on("click", function (e) {
@@ -250,16 +249,16 @@ function openPopup(id, anchor) {
         </div>
     `);
 
-    $(".chat-modal").append(popup); // FIXED
+    $(".chat-modal").append(popup);
 
     activePopup = popup;
 
     const a = $(anchor).offset();
-    const modalOffset = $(".chat-modal").offset();
+    const modal = $(".chat-modal").offset();
 
     popup.css({
-        top: a.top - modalOffset.top - popup.outerHeight() - 4,
-        left: a.left - modalOffset.left - (popup.outerWidth() / 2) + 20
+        top: a.top - modal.top - popup.outerHeight() - 6,
+        left: a.left - modal.left - popup.outerWidth() / 2 + 20
     }).fadeIn(120);
 }
 
@@ -270,7 +269,7 @@ function closePopup() {
     }
 }
 
-/* POPUP ACTIONS */
+/* Popup actions */
 $(document).on("click", ".popup-edit", function () {
     startEdit($(this).data("id"));
     closePopup();
@@ -290,13 +289,14 @@ $(document).on("click", ".popup-cancel", closePopup);
    EDIT MESSAGE
 ============================================================ */
 function startEdit(id) {
+
     editing = true;
 
     const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
-    const oldText = bubble.text();
+    const old = bubble.text();
 
     bubble.html(`
-        <textarea class="edit-textarea">${oldText}</textarea>
+        <textarea class="edit-textarea">${old}</textarea>
         <div class="edit-actions">
             <button class="edit-save" data-id="${id}">Save</button>
             <button class="edit-cancel">Cancel</button>
@@ -305,6 +305,7 @@ function startEdit(id) {
 }
 
 $(document).on("click", ".edit-save", function () {
+
     const id = $(this).data("id");
     const newText = $(this).closest(".message-bubble").find("textarea").val().trim();
 
@@ -323,10 +324,12 @@ $(document).on("click", ".edit-cancel", () => {
    REACTIONS
 ============================================================ */
 function ensureReactionPicker() {
+
     let picker = $("#reaction-picker");
+
     if (!picker.length) {
         $("body").append(`
-            <div id="reaction-picker">
+            <div id="reaction-picker" class="reaction-picker">
                 ${reactionChoices.map(e =>
                     `<button class="reaction-choice" data-emoji="${e}">${e}</button>`
                 ).join("")}
@@ -334,6 +337,7 @@ function ensureReactionPicker() {
         `);
         picker = $("#reaction-picker");
     }
+
     return picker;
 }
 
@@ -341,6 +345,7 @@ function bindReactionButtons() {
     $(".react-btn").off("click").on("click", function (e) {
 
         e.stopPropagation();
+
         reactingToMsgId = $(this).data("msg-id");
 
         const picker = ensureReactionPicker();
@@ -364,31 +369,32 @@ $(document).on("click", ".reaction-choice", function () {
 });
 
 function updateReactionBar(id) {
+
     $.post("load_messages_client.php", { username }, html => {
 
         const temp = $("<div>").html(html);
+
         const newBar = temp.find(`.message[data-msg-id='${id}'] .reaction-bar`);
         const curBar = $(`.message[data-msg-id='${id}'] .reaction-bar`);
 
-        if (curBar.length) curBar.replaceWith(newBar.clone());
-        else $(`.message[data-msg-id='${id}'] .message-content`).append(newBar.clone());
+        if (curBar.length)
+            curBar.replaceWith(newBar.clone());
+        else
+            $(`.message[data-msg-id='${id}'] .message-content`).append(newBar.clone());
     });
 }
 
 /* ============================================================
-   LIGHTBOX V2 
-   Slide Animation + Swipe + Keyboard + Video Support
+   LIGHTBOX V2
 ============================================================ */
-
 const lbOverlay = document.getElementById("lightbox-overlay");
-const lbImage   = document.getElementById("lightbox-image");
-const lbVideo   = document.getElementById("lightbox-video");
-const lbIndex   = document.getElementById("lightbox-index");
+const lbImage = document.getElementById("lightbox-image");
+const lbVideo = document.getElementById("lightbox-video");
+const lbIndex = document.getElementById("lightbox-index");
 
 let touchStartX = 0;
-let touchEndX = 0;
 
-/* --------------- MEDIA CLICK EVENTS --------------- */
+/* MEDIA BINDERS */
 function attachMediaEvents() {
 
     $(".media-grid img, .media-thumb").off("click").on("click", function () {
@@ -398,9 +404,9 @@ function attachMediaEvents() {
         const grid = $(this).closest(".media-grid");
         const imgs = grid.find("img");
 
-        galleryItems = imgs.map((i, el) => ({
+        galleryItems = imgs.map((i, e) => ({
             type: "image",
-            src: $(el).data("full")
+            src: $(e).data("full")
         })).get();
 
         currentIndex = imgs.index(this);
@@ -409,13 +415,9 @@ function attachMediaEvents() {
     });
 
     $(".media-grid video").off("click").on("click", function () {
-
-        const src = $(this).data("full");
-
-        galleryItems = [{ type: "video", src }];
+        galleryItems = [{ type: "video", src: $(this).data("full") }];
         currentIndex = 0;
-
-        openVideo(src);
+        openVideo($(this).data("full"));
     });
 
     $("#lightbox-prev").off().click(() => navigateGallery(-1));
@@ -423,14 +425,12 @@ function attachMediaEvents() {
     $("#lightbox-close").off().click(closeLightbox);
 }
 
-/* --------------- OPEN / CLOSE --------------- */
+/* OPEN IMAGE / VIDEO */
 function openImage(src) {
     lbVideo.style.display = "none";
     lbImage.style.display = "block";
     lbImage.src = src;
-
     lbOverlay.classList.add("show");
-
     updateLightboxIndex();
 }
 
@@ -438,17 +438,17 @@ function openVideo(src) {
     lbImage.style.display = "none";
     lbVideo.style.display = "block";
     lbVideo.src = src;
-
     lbOverlay.classList.add("show");
 }
 
+/* CLOSE LIGHTBOX */
 function closeLightbox() {
     lbOverlay.classList.remove("show");
-    lbImage.src = "";
     lbVideo.src = "";
+    lbImage.src = "";
 }
 
-/* --------------- NAVIGATION --------------- */
+/* NAVIGATION */
 function navigateGallery(step) {
 
     if (galleryItems.length <= 1) return;
@@ -473,7 +473,7 @@ function navigateGallery(step) {
     updateLightboxIndex();
 }
 
-/* --------------- COUNTER --------------- */
+/* COUNTER */
 function updateLightboxIndex() {
     if (galleryItems.length > 1) {
         lbIndex.style.display = "block";
@@ -483,19 +483,18 @@ function updateLightboxIndex() {
     }
 }
 
-/* --------------- SWIPE GESTURES --------------- */
+/* SWIPE */
 lbOverlay.addEventListener("touchstart", e => {
     touchStartX = e.changedTouches[0].screenX;
 });
 
 lbOverlay.addEventListener("touchend", e => {
-    touchEndX = e.changedTouches[0].screenX;
-
-    if (touchEndX + 60 < touchStartX) navigateGallery(1);
-    if (touchEndX - 60 > touchStartX) navigateGallery(-1);
+    const delta = e.changedTouches[0].screenX - touchStartX;
+    if (delta < -60) navigateGallery(1);
+    if (delta > 60) navigateGallery(-1);
 });
 
-/* --------------- KEYBOARD SUPPORT --------------- */
+/* KEYBOARD */
 document.addEventListener("keydown", e => {
     if (!lbOverlay.classList.contains("show")) return;
 
