@@ -573,6 +573,3 @@ body {
     filter: invert(0); /* LIGHT MODE */
 }
 
-:root[data-theme="dark"] #upload-btn img {
-    filter: invert(1); /* DARK MODE */
-}
