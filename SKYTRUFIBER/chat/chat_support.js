@@ -98,9 +98,9 @@ function sendMessage() {
     if (selectedFiles.length > 0) return uploadMedia(msg);
 
     appendClientBubble(msg);
-
+    $("#message-input").val("");
     $.post("send_message_client.php", { username, message: msg }, () => {
-        $("#message-input").val("");
+       
         fetchNewMessages();
     });
 }
