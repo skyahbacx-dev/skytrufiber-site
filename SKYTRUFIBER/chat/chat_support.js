@@ -238,24 +238,28 @@ function bindActionToolbar() {
 }
 
 function openPopup(id, anchor) {
+
     closePopup();
 
     const popup = $(`
-        <div id="msg-action-popup" class="msg-action-popup">
-            <button class="popup-edit" data-id="${id}">✏️ Edit</button>
-            <button class="popup-unsend" data-id="${id}">🚫 Unsend</button>
-            <button class="popup-delete" data-id="${id}">🗑 Delete</button>
+        <div class="msg-action-popup">
+            <button class="popup-edit" data-id="${id}">Edit</button>
+            <button class="popup-unsend" data-id="${id}">Unsend</button>
+            <button class="popup-delete" data-id="${id}">Delete</button>
             <button class="popup-cancel">Cancel</button>
         </div>
     `);
 
-    $("body").append(popup);
+    $(".chat-modal").append(popup); // FIXED
+
     activePopup = popup;
 
-    const p = $(anchor).offset();
+    const a = $(anchor).offset();
+    const modalOffset = $(".chat-modal").offset();
+
     popup.css({
-        top: p.top - popup.outerHeight() - 8,
-        left: p.left - popup.outerWidth() / 2 + 15
+        top: a.top - modalOffset.top - popup.outerHeight() - 4,
+        left: a.left - modalOffset.left - (popup.outerWidth() / 2) + 20
     }).fadeIn(120);
 }
 
