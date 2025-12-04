@@ -273,10 +273,15 @@ function buildPopup(id) {
 }
 
 function closePopup() {
-    if (activePopup) {
-        activePopup.fadeOut(120, () => activePopup.remove());
-        activePopup = null;
-    }
+    if (!activePopup) return;
+
+    const popup = activePopup;  // copy reference BEFORE resetting
+
+    activePopup = null;
+
+    popup.fadeOut(120, function () {
+        $(this).remove();  // ALWAYS valid — never null
+    });
 }
 
 /* ------------------------------
