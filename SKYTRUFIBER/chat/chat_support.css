@@ -98,7 +98,7 @@ body {
 }
 
 /* ============================================================
-   HEADER FIXED & CLEAN
+   HEADER FIX
 ============================================================ */
 .chat-header {
     background: var(--header-bg);
@@ -119,9 +119,8 @@ body {
 .chat-header-right {
     display: flex;
     align-items: center;
-    gap: 12px; /* spacing between toggle + logout */
+    gap: 12px;
 }
-
 
 .chat-header-logo {
     width: 48px;
@@ -137,11 +136,10 @@ body {
     background: #ff4040;
     color: #fff;
     cursor: pointer;
-    margin-left: 10px;
 }
 
 /* ============================================================
-   THEME TOGGLE — FIXED WITH ANIMATION
+   THEME TOGGLE FIX
 ============================================================ */
 #theme-toggle {
     width: 44px;
@@ -150,13 +148,11 @@ body {
     background: rgba(255,255,255,0.25);
     border: none;
     cursor: pointer;
-    position: relative;
-    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: transform .4s ease;
-    margin-right: -20px;
+    position: relative;
+    transition: transform .35s ease;
 }
 
 .theme-icon {
@@ -165,35 +161,18 @@ body {
     transition: opacity .35s ease, transform .35s ease;
 }
 
-/* default moon */
-.moon-icon {
-    opacity: 1;
-    transform: rotate(0deg);
-}
+.moon-icon { opacity: 1; transform: rotate(0deg); }
+.sun-icon { opacity: 0; transform: rotate(-180deg); }
 
-/* sun hidden initially */
-.sun-icon {
-    opacity: 0;
-    transform: rotate(-180deg);
-}
-
-/* swap when DARK */
-:root[data-theme="dark"] .moon-icon {
-    opacity: 0;
-    transform: rotate(180deg);
-}
-
-:root[data-theme="dark"] .sun-icon {
-    opacity: 1;
-    transform: rotate(0deg);
-}
+:root[data-theme="dark"] .moon-icon { opacity: 0; transform: rotate(180deg); }
+:root[data-theme="dark"] .sun-icon { opacity: 1; transform: rotate(0); }
 
 #theme-toggle:active {
-    transform: rotate(140deg);
+    transform: rotate(160deg);
 }
 
 /* ============================================================
-   MESSAGES AREA
+   CHAT MESSAGES AREA
 ============================================================ */
 #chat-messages {
     flex: 1;
@@ -205,51 +184,54 @@ body {
     gap: 18px;
 }
 
-#chat-messages::-webkit-scrollbar {
-    width: 6px;
-}
-
+#chat-messages::-webkit-scrollbar { width: 6px; }
 #chat-messages::-webkit-scrollbar-thumb {
     background: #8dbdff;
     border-radius: 4px;
 }
 
 /* ============================================================
-   MESSAGE STYLES
+   MESSAGE ALIGNMENT FIXED
 ============================================================ */
 .message {
+    width: 100%;
     display: flex;
-    gap: 10px;
-    max-width: 75%;
-    position: relative;
     align-items: flex-end;
+    gap: 10px;
 }
 
-.message.sent {
-    flex-direction: row-reverse;
-    align-self: flex-end;
-    max-width: 100%;
-}
-
+/* Received → Left */
 .message.received {
-    align-self: flex-start;
+    justify-content: flex-start;
 }
 
+/* Sent → Right */
+.message.sent {
+    justify-content: flex-end;
+}
+
+/* Avatar */
 .message-avatar img {
     width: 34px;
     height: 34px;
     border-radius: 50%;
+    flex-shrink: 0;
 }
 
+/* Bubble container */
+.message-content {
+    max-width: 70%;
+}
+
+/* Bubble */
 .message-bubble {
     padding: 13px 20px;
     border-radius: 20px;
-    max-width: 100%;
     background: var(--bubble-received);
     color: var(--bubble-received-text);
     font-size: 15px;
     word-wrap: break-word;
-    width: fit-content;
+    display: inline-block;
 }
 
 .message.sent .message-bubble {
@@ -267,32 +249,41 @@ body {
     margin-top: 4px;
     color: var(--text-light);
 }
-/* Make media grid fill bubble width */
-.message .media-grid {
+
+/* ============================================================
+   MEDIA GRID — fully fixed
+============================================================ */
+.media-grid {
     width: 100%;
-    max-width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 6px;
+    margin-top: 6px;
 }
 
-/* Make the bubble grow */
-.message-bubble {
+.media-grid img,
+.media-grid video {
     width: 100%;
-    max-width: 100%;
-    display: block;
+    height: auto;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 12px;
+    cursor: pointer;
 }
 
 /* ============================================================
-   ACTION TOOLBAR (😊 ⋯)
+   ACTION TOOLBAR
 ============================================================ */
 .action-toolbar {
     position: absolute;
     top: -4px;
     right: -40px;
+    opacity: 0;
+    pointer-events: none;
     display: flex;
     flex-direction: column;
     gap: 6px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .17s ease;
+    transition: opacity .17s;
 }
 
 .message.sent .action-toolbar {
@@ -308,41 +299,11 @@ body {
 .action-toolbar button {
     width: 32px;
     height: 32px;
-    border-radius: 50%;
-    border: none;
     background: rgba(0,0,0,0.08);
+    border: none;
+    border-radius: 50%;
     cursor: pointer;
     font-size: 16px;
-}
-
-/* ============================================================
-   POPUP MENU
-============================================================ */
-.msg-action-popup {
-    position: absolute;
-    min-width: 150px;
-    background: var(--bg);
-    border-radius: 12px;
-    border: 1px solid rgba(0,0,0,0.15);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-    padding: 6px 0;
-    z-index: 999999;
-    display: none;
-}
-
-.msg-action-popup button {
-    width: 100%;
-    padding: 10px 14px;
-    border: none;
-    background: transparent;
-    display: flex;
-    gap: 10px;
-    cursor: pointer;
-    align-items: center;
-}
-
-.msg-action-popup button:hover {
-    background: rgba(0,0,0,0.06);
 }
 
 /* ============================================================
@@ -355,20 +316,18 @@ body {
     border-radius: 30px;
     display: none;
     gap: 8px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
     border: 1px solid rgba(0,0,0,0.12);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-    z-index: 9999999;
+    z-index: 999999;
 }
 
-#reaction-picker.show {
-    display: flex;
-}
+#reaction-picker.show { display: flex; }
 
 .reaction-choice {
-    background: transparent;
+    background: none;
     border: none;
-    cursor: pointer;
     font-size: 22px;
+    cursor: pointer;
 }
 
 .reaction-bar {
@@ -387,28 +346,7 @@ body {
 }
 
 /* ============================================================
-   MEDIA GRID
-============================================================ */
-.media-grid {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 6px;
-    margin-top: 6px;
-}
-
-.media-grid img,
-.media-grid video {
-    width: 100%;
-    height: auto;
-   max-height: 200px;
-    border-radius: 12px;
-    object-fit: cover;
-    cursor: pointer;
-}
-
-/* ============================================================
-   PREVIEW BAR
+   PREVIEW UPLOAD
 ============================================================ */
 #preview-inline {
     background: var(--preview-bg);
@@ -423,9 +361,7 @@ body {
     overflow-x: auto;
 }
 
-.preview-item {
-    position: relative;
-}
+.preview-item { position: relative; }
 
 .preview-thumb {
     width: 110px;
@@ -461,20 +397,19 @@ body {
 
 .chat-input-box {
     flex: 1;
-    background: var(--input-bg);
     border: 1px solid var(--input-border);
-    padding: 10px 14px;
     border-radius: 24px;
+    padding: 10px 14px;
     display: flex;
+    background: var(--input-bg);
 }
 
 .chat-input-box input {
+    flex: 1;
     border: none;
     outline: none;
-    flex: 1;
     background: transparent;
     font-size: 15px;
-    color: var(--text);
 }
 
 /* Upload */
@@ -502,7 +437,7 @@ body {
     border-radius: 50%;
     background: var(--bubble-sent);
     border: none;
-    color: #fff;
+    color: white;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -510,7 +445,7 @@ body {
 }
 
 /* ============================================================
-   SCROLL BUTTON
+   SCROLL BOTTOM BUTTON
 ============================================================ */
 #scroll-bottom-btn {
     position: absolute;
@@ -521,14 +456,13 @@ body {
     border-radius: 50%;
     background: var(--scroll-btn-bg);
     color: #fff;
-    border: none;
     display: flex;
     justify-content: center;
     align-items: center;
     opacity: 0;
     pointer-events: none;
     transform: translateY(10px);
-    transition: opacity .25s, transform .25s;
+    transition: 0.25s;
 }
 
 #scroll-bottom-btn.show {
@@ -561,40 +495,9 @@ body {
     border-radius: 14px;
 }
 
-#lightbox-close {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    font-size: 40px;
-    cursor: pointer;
-    color: var(--lightbox-icon);
-}
-
+#lightbox-close,
 #lightbox-prev,
-#lightbox-next {
-    position: absolute;
-    top: 50%;
-    font-size: 48px;
-    color: var(--lightbox-icon);
-    background: none;
-    border: none;
-    cursor: pointer;
-}
-
-#lightbox-prev { left: 20px; }
-#lightbox-next { right: 20px; }
-
+#lightbox-next,
 #lightbox-index {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
     color: var(--lightbox-icon);
-}
-
-#lightbox-download {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    color: var(--lightbox-icon);
-    font-size: 22px;
 }
