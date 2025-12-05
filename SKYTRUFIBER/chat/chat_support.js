@@ -342,7 +342,7 @@ function ensureReactionPicker() {
                     `<button class="reaction-choice" data-emoji="${e}">${e}</button>`
                 ).join("")}
             </div>
-        );
+        `);
         picker = $("#reaction-picker");
     }
     return picker;
