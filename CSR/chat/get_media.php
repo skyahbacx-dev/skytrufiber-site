@@ -2,129 +2,86 @@
 require_once "../../db_connect.php";
 
 $id = $_GET["id"] ?? null;
-$thumb = isset($_GET["thumb"]); // thumbnail mode
-
 if (!$id) {
     http_response_code(400);
     exit("Missing ID");
 }
 
-$stmt = $conn->prepare("
-    SELECT media_blob, media_path, media_type
-    FROM chat_media
-    WHERE id = ?
-");
-$stmt->bindValue(1, $id, PDO::PARAM_INT);
-$stmt->execute();
+try {
+    $stmt = $conn->prepare("
+        SELECT media_blob, media_path, media_type
+        FROM chat_media
+        WHERE id = ?
+        LIMIT 1
+    ");
+    $stmt->execute([(int)$id]);
+    $file = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$stmt->bindColumn("media_blob", $blob, PDO::PARAM_LOB);
-$media = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if (!$media) {
-    http_response_code(404);
-    exit("Not found");
-}
-
-/* ============================================================
-   READ BLOB CONTENT
-============================================================ */
-if (is_resource($blob)) {
-    $binary = stream_get_contents($blob);
-} else {
-    $binary = $blob;
-}
-
-if (!$binary) {
-    http_response_code(500);
-    exit("Error reading file");
-}
-
-/* ============================================================
-   DETECT MIME TYPE
-============================================================ */
-$finfo = finfo_open(FILEINFO_MIME_TYPE);
-$mimeType = finfo_buffer($finfo, $binary);
-finfo_close($finfo);
-
-if (!$mimeType) $mimeType = "application/octet-stream";
-
-
-/* ============================================================
-   HANDLE THUMBNAIL MODE
-   (For images only, reduce size for faster loading)
-============================================================ */
-if ($thumb && strpos($mimeType, "image") === 0) {
-
-    // Create thumbnail (max 300px)
-    $img = @imagecreatefromstring($binary);
-
-    if ($img !== false) {
-
-        $w = imagesx($img);
-        $h = imagesy($img);
-
-        $max = 300; // thumbnail size
-        $scale = min($max / $w, $max / $h);
-
-        $newW = intval($w * $scale);
-        $newH = intval($h * $scale);
-
-        $thumbImg = imagecreatetruecolor($newW, $newH);
-        imagecopyresampled($thumbImg, $img, 0, 0, 0, 0, $newW, $newH, $w, $h);
-
-        ob_start();
-        imagejpeg($thumbImg, null, 80);
-        $binary = ob_get_clean();
-
-        imagedestroy($img);
-        imagedestroy($thumbImg);
-
-        $mimeType = "image/jpeg";
+    if (!$file) {
+        http_response_code(404);
+        exit("Not found");
     }
-}
 
+    // Grab the blob value from the row
+    $blob = $file["media_blob"];
 
-/* ============================================================
-   SUPPORT VIDEO STREAMING (Range Requests)
-============================================================ */
-if (strpos($mimeType, "video") === 0) {
+    // If PDO driver returns a stream resource, read it
+    if (is_resource($blob)) {
+        $binary = stream_get_contents($blob);
+    } else {
+        $binary = $blob;
+    }
 
-    $filesize = strlen($binary);
-    $start = 0;
-    $end = $filesize - 1;
+    if ($binary === false || $binary === null) {
+        http_response_code(500);
+        exit("Empty file");
+    }
 
-    if (isset($_SERVER['HTTP_RANGE'])) {
+    // Detect MIME type from binary; fallback to stored media_type
+    $mimeType = null;
 
-        preg_match('/bytes=(\d+)-(\d*)/', $_SERVER['HTTP_RANGE'], $matches);
-
-        $start = intval($matches[1]);
-
-        if (!empty($matches[2])) {
-            $end = intval($matches[2]);
+    if (function_exists("finfo_open")) {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo) {
+            $detected = finfo_buffer($finfo, $binary);
+            finfo_close($finfo);
+            if ($detected) {
+                $mimeType = $detected;
+            }
         }
-
-        if ($end > $filesize - 1) $end = $filesize - 1;
-
-        header("HTTP/1.1 206 Partial Content");
     }
 
-    $length = $end - $start + 1;
+    // If detection failed, pick a reasonable default from media_type
+    if (!$mimeType) {
+        switch ($file["media_type"]) {
+            case "image":
+                $mimeType = "image/jpeg";
+                break;
+            case "video":
+                $mimeType = "video/mp4";
+                break;
+            default:
+                $mimeType = "application/octet-stream";
+        }
+    }
 
-    header("Content-Type: $mimeType");
-    header("Accept-Ranges: bytes");
-    header("Content-Length: $length");
-    header("Content-Range: bytes $start-$end/$filesize");
+    // Send correct headers
+    header("Content-Type: {$mimeType}");
+    header("Content-Length: " . strlen($binary));
 
-    echo substr($binary, $start, $length);
+    // You can add this if you want forced download for non-image/video types:
+    // if ($file["media_type"] === "file") {
+    //     $name = basename($file["media_path"] ?: "download.bin");
+    //     header("Content-Disposition: attachment; filename=\"" . $name . "\"");
+    // }
+
+    echo $binary;
     exit;
+
+} catch (Throwable $e) {
+    http_response_code(500);
+    // Don't echo HTML here; it corrupts the binary response if it happens mid-stream.
+    // Log in real code instead:
+    // error_log("get_media.php error: " . $e->getMessage());
+    exit("Error");
 }
-
-
-/* ============================================================
-   DEFAULT FILE OUTPUT (images, pdf, attachments)
-============================================================ */
-header("Content-Type: $mimeType");
-header("Content-Length: " . strlen($binary));
-
-echo $binary;
-exit;
