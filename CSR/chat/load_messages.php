@@ -29,7 +29,7 @@ try {
 
         echo "<div class='message $sender' data-msg-id='$msgID'>";
 
-        /* Avatar (optional) */
+        // Avatar
         echo "<div class='message-avatar'>
                 <img src='/upload/default-avatar.png'>
               </div>";
@@ -37,7 +37,7 @@ try {
         echo "<div class='message-content'>";
 
         /* ==========================
-           ACTION TOOLBAR (⋮)
+           ACTION TOOLBAR (⋮ button)
         =========================== */
         echo "
             <div class='action-toolbar'>
@@ -49,100 +49,86 @@ try {
 
         echo "<div class='message-bubble'>";
 
-        /* ----------------------------------------------------
-           LOAD MEDIA (multiple or single)
-        ----------------------------------------------------- */
+        /* =====================================================
+           LOAD MEDIA
+        ====================================================== */
         $mediaStmt = $conn->prepare("
-            SELECT id, media_type 
+            SELECT id, media_type
             FROM chat_media
             WHERE chat_id = ?
         ");
         $mediaStmt->execute([$msgID]);
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* ==============================
-   MULTIPLE MEDIA (GRID)
-============================== */
-if ($mediaList && count($mediaList) > 1) {
+        $count = count($mediaList);
 
-    $count = count($mediaList);
+        /* Determine grid layout class */
+        if ($count == 1)            $gridClass = "media-1";
+        elseif ($count == 2)        $gridClass = "media-2";
+        elseif ($count == 3)        $gridClass = "media-3";
+        elseif ($count == 4)        $gridClass = "media-4";
+        elseif ($count >= 5)        $gridClass = "media-5";
+        else                        $gridClass = "";
 
-    $cols = "cols-1";
-    if ($count == 2) $cols = "cols-2";
-    if ($count == 3) $cols = "cols-3";
-    if ($count >= 4) $cols = "cols-4";
+        /* ==========================
+           RENDER MEDIA GRID
+        =========================== */
+        if ($count > 0) {
 
-    echo "<div class='media-grid $cols'>";
+            echo "<div class='media-grid $gridClass'>";
 
-    foreach ($mediaList as $m) {
+            // For 5+ media, show only 4 and overlay "+X more"
+            $limit = ($count >= 5) ? 4 : $count;
 
-        $mediaID = (int)$m["id"];
-        $src = "../chat/get_media.php?id=$mediaID";
+            for ($i = 0; $i < $limit; $i++) {
 
-        if ($m["media_type"] === "image") {
-            echo "<img src='$src' data-full='$src' class='fullview-item'>";
+                $m = $mediaList[$i];
+                $mediaID = (int)$m["id"];
+                $src = "../chat/get_media.php?id=$mediaID";
+
+                // Overlay needed?
+                $isLast = ($count >= 5 && $i == 3);
+                $extraDiv = $isLast ? "media-more-overlay' data-more='+".($count-4)."'" : "'";
+
+                echo "<div class=$extraDiv>";
+
+                if ($m["media_type"] === "image") {
+                    echo "<img src='$src' data-full='$src' class='fullview-item'>";
+                }
+                elseif ($m["media_type"] === "video") {
+                    echo "<video data-full='$src' class='fullview-item'>
+                            <source src='$src' type='video/mp4'>
+                          </video>";
+                }
+                else {
+                    echo "<a href='$src' download class='download-btn'>📎 File</a>";
+                }
+
+                echo "</div>";
+            } // for each media
+
+            echo "</div>"; // media-grid
         }
-        elseif ($m["media_type"] === "video") {
-            echo "<video data-full='$src' class='fullview-item'>
-                    <source src='$src' type='video/mp4'>
-                  </video>";
-        }
-        else {
-            echo "<a href='$src' download class='download-btn'>📎 File</a>";
-        }
-    }
-
-    echo "</div>"; // media-grid
-}
-
-
-/* ==============================
-   SINGLE MEDIA
-============================== */
-elseif ($mediaList && count($mediaList) === 1) {
-
-    $cols = "cols-1";
-    echo "<div class='media-grid $cols'>";
-
-    $media = $mediaList[0];
-    $mediaID = (int)$media["id"];
-    $src = "../chat/get_media.php?id=$mediaID";
-
-    if ($media["media_type"] === "image") {
-        echo "<img src='$src' data-full='$src' class='fullview-item'>";
-    }
-    elseif ($media["media_type"] === "video") {
-        echo "<video class='fullview-item' controls>
-                <source src='$src' type='video/mp4'>
-              </video>";
-    }
-    else {
-        echo "<a href='$src' download class='download-btn large'>📎 Download File</a>";
-    }
-
-    echo "</div>";
-}
-
 
         /* ==========================
            TEXT MESSAGE
-        ========================== */
+        =========================== */
         if (!empty($msg["message"])) {
             $safeText = nl2br(htmlspecialchars($msg["message"]));
             echo "<div class='msg-text'>$safeText</div>";
         }
 
-        echo "</div>"; // message bubble
+        echo "</div>"; // message-bubble
 
-        /* Edited Tag */
+        /* Edited label */
         if (!empty($msg["edited"])) {
             echo "<div class='edited-label'>(edited)</div>";
         }
 
         echo "<div class='message-time'>$timestamp</div>";
 
-        echo "</div>"; // message-content
-        echo "</div>"; // message wrapper
+        echo "</div>"; // content
+        echo "</div>"; // wrapper
     }
 
 } catch (Exception $e) {
