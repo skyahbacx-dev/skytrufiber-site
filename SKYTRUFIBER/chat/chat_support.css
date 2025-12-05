@@ -79,7 +79,7 @@ body {
     box-shadow: 0 14px 40px rgba(0,0,0,0.25);
     display: flex;
     flex-direction: column;
-    overflow: hidden !important;
+
     position: relative;
 }
 
@@ -183,7 +183,7 @@ body {
     align-items: flex-end;
     gap: 10px;
     position: relative;
-    overflow: visible;
+
 
     opacity: 0;
     transform: translateY(6px);
@@ -292,22 +292,45 @@ body {
 ============================================================ */
 .action-toolbar {
     position: absolute;
-    right: -6px;
     top: 50%;
     transform: translateY(-50%);
     display: flex;
     gap: 6px;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .22s ease, transform .22s ease;
+    transition: opacity .22s ease;
+    z-index: 9999; /* FIXED */
 }
 
+/* position RIGHT for received (left side bubble) */
+.message.received .action-toolbar {
+    left: -40px;
+}
+
+/* position LEFT for sent (right side bubble) */
+.message.sent .action-toolbar {
+    right: -40px;  /* WAS -6px → FIXED */
+}
+
+/* now they become clickable */
 .message:hover .action-toolbar {
     opacity: 1;
     pointer-events: auto;
-    transform: translate(4px, -50%);
 }
 
+.action-toolbar button {
+    background: rgba(0,0,0,0.10);
+    border: none;
+    padding: 6px 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    z-index: 99999;
+}
+
+.message.sent .action-toolbar button {
+    background: rgba(255,255,255,0.25);
+}
 .react-btn,
 .more-btn {
     background: rgba(0,0,0,0.10);
