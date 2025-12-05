@@ -115,7 +115,16 @@ body {
     height: 48px;
     border-radius: 50%;
 }
-
+/* Logout */
+.logout-btn {
+    margin-left: 14px;
+    background: #ff4040;
+    padding: 8px 14px;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
 /* ============================================================
    THEME TOGGLE
 ============================================================ */
