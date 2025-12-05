@@ -8,7 +8,7 @@ if (!$client_id) exit;
 try {
 
     $stmt = $conn->prepare("
-        SELECT id, sender_type, message, created_at
+        SELECT id, sender_type, message, created_at, edited
         FROM chat
         WHERE client_id = ?
         ORDER BY created_at ASC
@@ -29,14 +29,29 @@ try {
 
         echo "<div class='message $sender' data-msg-id='$msgID'>";
 
+        /* Avatar (optional) */
         echo "<div class='message-avatar'>
-                <img src='/upload/default-avatar.png' alt='avatar'>
+                <img src='/upload/default-avatar.png'>
               </div>";
 
         echo "<div class='message-content'>";
+
+        /* ==========================
+           ACTION TOOLBAR (⋮)
+        =========================== */
+        echo "
+            <div class='action-toolbar'>
+                <button class='more-btn' data-id='$msgID'>
+                    <i class='fa-solid fa-ellipsis-vertical'></i>
+                </button>
+            </div>
+        ";
+
         echo "<div class='message-bubble'>";
 
-        // Load media IDs and type
+        /* ----------------------------------------------------
+           LOAD MEDIA (multiple or single)
+        ----------------------------------------------------- */
         $mediaStmt = $conn->prepare("
             SELECT id, media_type 
             FROM chat_media
@@ -45,76 +60,79 @@ try {
         $mediaStmt->execute([$msgID]);
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // =============================
-        // MULTIPLE MEDIA CAROUSEL
-        // =============================
+        /* ==========================
+           MULTIPLE MEDIA (GRID)
+        ========================== */
         if ($mediaList && count($mediaList) > 1) {
 
-            $groupID = "carousel-" . $msgID;
-
-            echo "
-            <div class='carousel-wrapper'>
-                <button class='carousel-arrow left' data-group='$groupID'>&lsaquo;</button>
-                <div class='carousel-container swipe-area' data-group='$groupID'>
-            ";
+            echo "<div class='media-grid'>";
 
             foreach ($mediaList as $m) {
+
                 $mediaID = (int)$m["id"];
                 $src = "../chat/get_media.php?id=$mediaID";
 
                 if ($m["media_type"] === "image") {
-                    echo "<img src='$src' class='carousel-img fullview-item'>";
-                } elseif ($m["media_type"] === "video") {
-                    echo "<video class='carousel-video fullview-item' autoplay muted loop>
+                    echo "<img src='$src' data-full='$src' class='fullview-item'>";
+                }
+                elseif ($m["media_type"] === "video") {
+                    echo "<video data-full='$src' class='fullview-item'>
                             <source src='$src' type='video/mp4'>
                           </video>";
-                } else {
-                    echo "<a href='$src' download class='download-btn'>📎 Download</a>";
+                }
+                else {
+                    echo "<a href='$src' download class='download-btn'>📎 File</a>";
                 }
             }
 
-            echo "
-                </div>
-                <button class='carousel-arrow right' data-group='$groupID'>&rsaquo;</button>
-            </div>
-            ";
+            echo "</div>"; // media-grid
         }
 
-        // =============================
-        // SINGLE MEDIA
-        // =============================
+        /* ==========================
+           SINGLE MEDIA
+        ========================== */
         elseif ($mediaList && count($mediaList) === 1) {
 
             $media = $mediaList[0];
             $mediaID = (int)$media["id"];
             $src = "../chat/get_media.php?id=$mediaID";
 
-            echo "<div class='single-media'>";
+            echo "<div class='media-grid'>";
 
             if ($media["media_type"] === "image") {
-                echo "<img src='$src' class='single-media-img fullview-item'>";
-            } elseif ($media["media_type"] === "video") {
-                echo "<video class='single-media-video fullview-item' autoplay muted loop controls>
+                echo "<img src='$src' data-full='$src' class='fullview-item'>";
+            }
+            elseif ($media["media_type"] === "video") {
+                echo "<video class='fullview-item' controls>
                         <source src='$src' type='video/mp4'>
                       </video>";
-            } else {
+            }
+            else {
                 echo "<a href='$src' download class='download-btn large'>📎 Download File</a>";
             }
 
             echo "</div>";
         }
 
-        // =============================
-        // TEXT MESSAGE
-        // =============================
+        /* ==========================
+           TEXT MESSAGE
+        ========================== */
         if (!empty($msg["message"])) {
-            echo nl2br(htmlspecialchars($msg["message"]));
+            $safeText = nl2br(htmlspecialchars($msg["message"]));
+            echo "<div class='msg-text'>$safeText</div>";
         }
 
         echo "</div>"; // message bubble
+
+        /* Edited Tag */
+        if (!empty($msg["edited"])) {
+            echo "<div class='edited-label'>(edited)</div>";
+        }
+
         echo "<div class='message-time'>$timestamp</div>";
-        echo "</div>"; // content
-        echo "</div>"; // wrapper
+
+        echo "</div>"; // message-content
+        echo "</div>"; // message wrapper
     }
 
 } catch (Exception $e) {
