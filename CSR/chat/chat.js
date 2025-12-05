@@ -1,6 +1,7 @@
 // ============================================================
 // SkyTruFiber CSR Chat System — 2025 Full Updated Version
 // Includes: Messenger-Style Media Grid • Edit • Delete • Unsend
+// + Full Lightbox Carousel with Thumbnails
 // ============================================================
 
 // ---------------- GLOBAL STATE ----------------
@@ -11,6 +12,10 @@ let selectedFiles = [];
 let lastMessageID = 0;
 let editing = false;
 let activePopup = null;
+
+// Global media slideshow
+let allMedia = [];
+let currentSlide = 0;
 
 $(document).ready(function () {
 
@@ -79,6 +84,15 @@ $(document).ready(function () {
             closeActionPopup();
         }
     });
+
+    // ESC to close lightbox
+    $(document).on("keydown", function(e){
+        if ($("#lightbox-overlay").is(":visible")) {
+            if (e.key === "Escape") closeLightbox();
+            if (e.key === "ArrowLeft") showPrev();
+            if (e.key === "ArrowRight") showNext();
+        }
+    });
 });
 
 /* ============================================================
@@ -115,6 +129,7 @@ function loadMessages(scrollBottom = false) {
         $("#chat-messages").html(html);
 
         bindActionButtons();
+        assignMediaIndex();
         attachMediaEvents();
 
         const last = $("#chat-messages .message:last").data("msg-id");
@@ -128,6 +143,7 @@ function loadMessages(scrollBottom = false) {
    FETCH NEW MESSAGES ONLY
 ============================================================ */
 function fetchNewMessages() {
+
     $.post("../chat/load_messages.php", { client_id: currentClientID }, function (html) {
 
         const temp = $("<div>").html(html);
@@ -143,6 +159,7 @@ function fetchNewMessages() {
         });
 
         bindActionButtons();
+        assignMediaIndex();
         attachMediaEvents();
 
         const box = $("#chat-messages")[0];
@@ -330,25 +347,102 @@ $(document).on("click", ".action-unsend, .action-delete", function () {
 });
 
 /* ============================================================
-   MEDIA FULL VIEW + OVERLAY + GRID
+   ASSIGN MEDIA INDEXES
 ============================================================ */
-function attachMediaEvents() {
+function assignMediaIndex() {
+    let index = 0;
 
-    // Fullscreen image / video
-    $(document).off("click", ".fullview-item").on("click", ".fullview-item", function () {
-
-        const src = $(this).attr("src") || $(this).attr("data-full");
-
-        $("#lightbox-image").attr("src", src);
-        $("#lightbox-overlay").fadeIn(200);
-    });
-
-    $("#lightbox-close, #lightbox-overlay").on("click", function (e) {
-        if (e.target.id === "lightbox-overlay" || e.target.id === "lightbox-close") {
-            $("#lightbox-overlay").fadeOut(200);
-        }
+    $(".fullview-item").each(function () {
+        $(this).attr("data-media-index", index);
+        index++;
     });
 }
+
+/* ============================================================
+   FULL LIGHTBOX SYSTEM
+============================================================ */
+function collectAllMedia() {
+    allMedia = [];
+
+    $(".fullview-item").each(function () {
+
+        let src = $(this).attr("data-full") || $(this).attr("src");
+        let type = this.tagName.toLowerCase() === "video" ? "video" : "image";
+        let index = parseInt($(this).attr("data-media-index"));
+
+        allMedia.push({ src, type, index });
+    });
+
+    allMedia.sort((a, b) => a.index - b.index);
+}
+
+$(document).on("click", ".fullview-item", function () {
+
+    collectAllMedia();
+
+    currentSlide = parseInt($(this).attr("data-media-index"));
+
+    $("#lightbox-overlay").fadeIn(150);
+    showSlide(currentSlide);
+});
+
+/* SHOW SLIDE */
+function showSlide(i) {
+    const item = allMedia[i];
+    if (!item) return;
+
+    $(".lb-media").hide();
+    $("#lightbox-video").trigger("pause");
+
+    if (item.type === "image") {
+        $("#lightbox-image").attr("src", item.src).show();
+    } else {
+        $("#lightbox-video").attr("src", item.src).show();
+    }
+
+    currentSlide = i;
+    rebuildThumbs();
+}
+
+/* NEXT / PREV */
+function showNext() {
+    if (currentSlide < allMedia.length - 1)
+        showSlide(currentSlide + 1);
+}
+function showPrev() {
+    if (currentSlide > 0)
+        showSlide(currentSlide - 1);
+}
+$("#lightbox-next").click(showNext);
+$("#lightbox-prev").click(showPrev);
+
+/* THUMBNAILS */
+function rebuildThumbs() {
+    $("#lightbox-thumbs").html("");
+
+    allMedia.forEach((m, i) => {
+
+        $("#lightbox-thumbs").append(`
+            <img src="${m.src}" class="thumb ${i === currentSlide ? "thumb-active" : ""}" data-i="${i}">
+        `);
+    });
+}
+
+$(document).on("click", ".thumb", function () {
+    showSlide(parseInt($(this).data("i")));
+});
+
+/* CLOSE LIGHTBOX */
+function closeLightbox() {
+    $("#lightbox-overlay").fadeOut(150);
+    $("#lightbox-video").trigger("pause");
+}
+
+$("#lightbox-close, #lightbox-overlay").click(function (e) {
+    if (e.target.id === "lightbox-overlay" || e.target.id === "lightbox-close") {
+        closeLightbox();
+    }
+});
 
 /* ============================================================
    CLIENT ASSIGN
@@ -367,103 +461,3 @@ function unassignClient(id) {
             $("#client-info-content").html("<p>Select a client.</p>");
     });
 }
-// -------------------------------------------------------
-// GLOBAL MEDIA SLIDESHOW STORAGE
-// -------------------------------------------------------
-let allMedia = [];          // [{src,type,index}, ...]
-let currentSlide = 0;
-
-// -------------------------------------------------------
-// Build media array every time messages load
-// -------------------------------------------------------
-function collectAllMedia() {
-    allMedia = [];
-
-    $(".fullview-item").each(function () {
-        const src = $(this).attr("data-full") || $(this).attr("src");
-        const type = this.tagName.toLowerCase() === "video" ? "video" : "image";
-        const index = parseInt($(this).attr("data-media-index"));
-
-        allMedia.push({ src, type, index });
-    });
-
-    // Sort by index to maintain chronological order
-    allMedia.sort((a, b) => a.index - b.index);
-}
-
-// -------------------------------------------------------
-// Open Lightbox
-// -------------------------------------------------------
-$(document).on("click", ".fullview-item", function () {
-
-    collectAllMedia();
-
-    currentSlide = parseInt($(this).attr("data-media-index"));
-
-    $("#lightbox-overlay").fadeIn(150);
-    showSlide(currentSlide);
-});
-
-// -------------------------------------------------------
-// Display selected slide
-// -------------------------------------------------------
-function showSlide(i) {
-    const item = allMedia[i];
-    if (!item) return;
-
-    $(".lb-media").hide();
-
-    if (item.type === "image") {
-        $("#lightbox-image").attr("src", item.src).show();
-    } else {
-        $("#lightbox-video").attr("src", item.src).show();
-    }
-
-    currentSlide = i;
-    rebuildThumbs();
-}
-
-// -------------------------------------------------------
-// Next / Prev buttons
-// -------------------------------------------------------
-$("#lightbox-next").click(() => {
-    if (currentSlide < allMedia.length - 1)
-        showSlide(currentSlide + 1);
-});
-
-$("#lightbox-prev").click(() => {
-    if (currentSlide > 0)
-        showSlide(currentSlide - 1);
-});
-
-// -------------------------------------------------------
-// Thumbnail bar
-// -------------------------------------------------------
-function rebuildThumbs() {
-
-    $("#lightbox-thumbs").html("");
-
-    allMedia.forEach((m, i) => {
-        const active = (i === currentSlide) ? "thumb-active" : "";
-
-        const el = `
-            <img src="${m.src}" class="thumb ${active}" data-i="${i}">
-        `;
-
-        $("#lightbox-thumbs").append(el);
-    });
-}
-
-$(document).on("click", ".thumb", function () {
-    showSlide(parseInt($(this).attr("data-i")));
-});
-
-// -------------------------------------------------------
-// Close lightbox
-// -------------------------------------------------------
-$("#lightbox-close, #lightbox-overlay").click(function (e) {
-    if (e.target.id === "lightbox-overlay" || e.target.id === "lightbox-close") {
-        $("#lightbox-overlay").fadeOut(150);
-        $("#lightbox-video").trigger("pause");
-    }
-});
