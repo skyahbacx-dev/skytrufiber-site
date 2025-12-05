@@ -6,62 +6,96 @@ require_once "../../db_connect.php";
 
 $client_id = $_POST["client_id"] ?? null;
 $csr       = $_SESSION["csr_user"] ?? null;
-$message   = $_POST["message"] ?? "";
+$message   = trim($_POST["message"] ?? "");
 
 if (!$client_id || !$csr) {
     echo json_encode(["status" => "error", "msg" => "Missing data"]);
     exit;
 }
 
-// Create main chat record FIRST (text or placeholder)
+/* ============================================================
+   CREATE CHAT MESSAGE FIRST
+   If text is empty but media exists → create empty placeholder ""
+============================================================ */
 $stmt = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
-    VALUES (?, 'csr', ?, TRUE, FALSE, NOW())
+    VALUES (:cid, 'csr', :msg, TRUE, FALSE, NOW())
 ");
-$stmt->execute([$client_id, $message]);
+$stmt->execute([
+    ":cid" => $client_id,
+    ":msg" => $message
+]);
+
 $chatId = $conn->lastInsertId();
 
-// TEXT ONLY MESSAGE
+
+/* ============================================================
+   IF NO MEDIA → TEXT-ONLY MESSAGE
+============================================================ */
 if (!isset($_FILES["media"]) || empty($_FILES["media"]["name"][0])) {
-    echo json_encode(["status" => "ok", "chat_id" => $chatId, "msg" => "Text saved"]);
+    echo json_encode([
+        "status" => "ok",
+        "chat_id" => $chatId,
+        "msg" => "Text saved"
+    ]);
     exit;
 }
 
-// MEDIA FILES
-foreach ($_FILES["media"]["name"] as $i => $name) {
 
-    $tmpName = $_FILES["media"]["tmp_name"][$i];
+/* ============================================================
+   PROCESS ALL UPLOADED FILES
+============================================================ */
+foreach ($_FILES["media"]["name"] as $i => $originalName) {
 
-    // SKIP empty tmp entries to avoid "Path cannot be empty"
-    if (!$tmpName || !file_exists($tmpName)) {
+    $tmpPath = $_FILES["media"]["tmp_name"][$i];
+    $mime = $_FILES["media"]["type"][$i];
+    $error = $_FILES["media"]["error"][$i];
+    $size = $_FILES["media"]["size"][$i];
+
+    // Skip invalid uploads
+    if ($error !== UPLOAD_ERR_OK || !$tmpPath || !file_exists($tmpPath)) {
         continue;
     }
 
-    $fileType = $_FILES["media"]["type"][$i];
-    $fileData = file_get_contents($tmpName);
-
-    if ($fileData === false) {
-        echo json_encode(["status" => "error", "msg" => "Failed to read uploaded file"]);
-        exit;
+    // Basic validation
+    if ($size > 50 * 1024 * 1024) { // 50MB limit
+        continue;
     }
 
     // Determine file type
-    $type = "file";
-    if (strpos($fileType, "image") !== false)  $type = "image";
-    elseif (strpos($fileType, "video") !== false) $type = "video";
+    $mediaType = "file";
+    if (strpos($mime, "image") === 0)      $mediaType = "image";
+    elseif (strpos($mime, "video") === 0)  $mediaType = "video";
 
-    // Insert BLOB into DB
-    $mediaInsert = $conn->prepare("
+    // Read raw file for BLOB storage
+    $blob = file_get_contents($tmpPath);
+    if ($blob === false) continue;
+
+    // Unique storage filename
+    $ext = pathinfo($originalName, PATHINFO_EXTENSION);
+    $uniqueName = time() . "_" . bin2hex(random_bytes(6)) . "." . $ext;
+
+    // Insert into DB
+    $insert = $conn->prepare("
         INSERT INTO chat_media (chat_id, media_path, media_type, media_blob, created_at)
-        VALUES (?, ?, ?, ?, NOW())
+        VALUES (:chat, :path, :type, :blob, NOW())
     ");
-    $mediaInsert->bindValue(1, $chatId, PDO::PARAM_INT);
-    $mediaInsert->bindValue(2, $name, PDO::PARAM_STR);
-    $mediaInsert->bindValue(3, $type, PDO::PARAM_STR);
-    $mediaInsert->bindValue(4, $fileData, PDO::PARAM_LOB);
-    $mediaInsert->execute();
+    $insert->bindValue(":chat", $chatId, PDO::PARAM_INT);
+    $insert->bindValue(":path", $uniqueName, PDO::PARAM_STR);
+    $insert->bindValue(":type", $mediaType, PDO::PARAM_STR);
+    $insert->bindValue(":blob", $blob, PDO::PARAM_LOB);
+    $insert->execute();
 }
 
-echo json_encode(["status" => "ok", "chat_id" => $chatId, "msg" => "Upload complete"]);
+
+/* ============================================================
+   DONE — MEDIA + TEXT SAVED
+============================================================ */
+echo json_encode([
+    "status" => "ok",
+    "chat_id" => $chatId,
+    "msg" => "Upload complete"
+]);
+
 exit;
 ?>
