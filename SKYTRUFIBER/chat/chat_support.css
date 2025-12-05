@@ -80,7 +80,7 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden !important;
-    position: relative; /* contains popups */
+    position: relative;
 }
 
 @media (max-width: 768px) {
@@ -165,6 +165,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 18px;
+    scroll-behavior: smooth;
 }
 
 #chat-messages::-webkit-scrollbar { width: 6px; }
@@ -182,7 +183,18 @@ body {
     align-items: flex-end;
     gap: 10px;
     position: relative;
-    overflow: visible; /* popups allowed */
+    overflow: visible;
+
+    opacity: 0;
+    transform: translateY(6px);
+    animation: msgFade .28s ease forwards;
+}
+
+@keyframes msgFade {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .message.sent { justify-content: flex-end; }
@@ -209,6 +221,7 @@ body {
     background: var(--bubble-received);
     color: var(--bubble-received-text);
     word-wrap: break-word;
+    transition: all .22s ease;
 }
 
 .message.sent .message-bubble {
@@ -217,8 +230,18 @@ body {
     border-radius: 20px 20px 4px 20px;
 }
 
+.message.sent .message-bubble:hover {
+    box-shadow: 0 2px 10px rgba(0,132,255,0.35);
+    transform: translateY(-1px);
+}
+
 .message.received .message-bubble {
     border-radius: 20px 20px 20px 4px;
+}
+
+.message.received .message-bubble:hover {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
 }
 
 .message-time {
@@ -251,6 +274,12 @@ body {
     border-radius: 12px;
     cursor: pointer;
     transition: transform .25s;
+    animation: fadeInMedia .25s ease;
+}
+
+@keyframes fadeInMedia {
+    from { opacity: 0; transform: scale(.97); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 .media-grid img:hover,
@@ -270,12 +299,13 @@ body {
     gap: 6px;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .22s ease;
+    transition: opacity .22s ease, transform .22s ease;
 }
 
 .message:hover .action-toolbar {
     opacity: 1;
     pointer-events: auto;
+    transform: translate(4px, -50%);
 }
 
 .react-btn,
@@ -288,16 +318,10 @@ body {
     font-size: 14px;
 }
 
-.message.sent .react-btn,
-.message.sent .more-btn {
-    background: rgba(255,255,255,0.25);
-}
-
 .react-btn:hover,
 .more-btn:hover {
     background: rgba(0,0,0,0.20);
 }
-
 
 /* ============================================================
    POPUP MENU
@@ -310,6 +334,13 @@ body {
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0,0,0,.25);
     display: none;
+    transform-origin: top;
+    animation: popupDrop .22s ease;
+}
+
+@keyframes popupDrop {
+    from { opacity: 0; transform: translateY(-6px) scale(.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 #msg-action-popup button {
@@ -325,6 +356,7 @@ body {
 #msg-action-popup button:hover {
     background: rgba(0,0,0,0.05);
 }
+
 /* ============================================================
    REACTION PICKER
 ============================================================ */
@@ -338,19 +370,20 @@ body {
     display: none;
     gap: 8px;
     z-index: 9999999;
+    animation: reactionPop .2s ease;
 }
 
-#reaction-picker.show { display: flex; }
+@keyframes reactionPop {
+    from { transform: scale(.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
 .reaction-bar {
     display: inline-flex;
     gap: 6px;
     margin-top: 4px;
     margin-left: 6px;
     align-items: center;
-}
-
-.message.sent .reaction-bar {
-    background: rgba(255,255,255,0.25);
 }
 
 .reaction-item {
@@ -366,23 +399,16 @@ body {
     transition: transform .18s ease, background .18s ease;
 }
 
-.message.sent .reaction-item {
-    background: rgba(255,255,255,0.4);
-}
-
-.reaction-emoji {
-    font-size: 16px;
-}
-
 .reaction-item:hover {
-    transform: scale(1.08);
-    background: rgba(255,255,255,0.9);
+    transform: scale(1.12);
+    background: rgba(255,255,255,0.95);
 }
 
 .reaction-count {
     font-size: 12px;
     color: var(--text-light);
 }
+
 /* ============================================================
    INPUT AREA
 ============================================================ */
@@ -401,6 +427,11 @@ body {
     border: 1px solid var(--input-border);
     padding: 10px 16px;
     border-radius: 20px;
+    transition: box-shadow .22s ease;
+}
+
+.chat-input-box:focus-within {
+    box-shadow: 0 0 0 2px rgba(0,132,255,0.35);
 }
 
 .chat-input-box input {
@@ -409,6 +440,28 @@ body {
     background: transparent;
     outline: none;
     color: var(--text);
+}
+
+#upload-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform .2s ease;
+}
+
+#upload-btn:hover {
+    transform: scale(1.12);
+}
+
+#upload-btn img {
+    width: 24px;
+    opacity: 0.8;
 }
 
 .chat-send-btn {
@@ -420,22 +473,27 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: transform .25s ease;
+}
+
+.chat-send-btn:hover {
+    transform: scale(1.12);
 }
 
 .chat-send-btn i {
     color: #fff;
     font-size: 20px;
 }
+
 /* ============================================================
-   PREVIEW BAR (FULLY FIXED)
+   PREVIEW BAR
 ============================================================ */
-/* PREVIEW BAR THUMBNAILS */
 .preview-inline {
     background: var(--preview-bg);
     padding: 10px;
     border-top: 1px solid var(--input-border);
     display: none;
-    max-height: 130px;      /* Limit height */
+    max-height: 130px;
     overflow-y: auto;
 }
 
@@ -451,35 +509,15 @@ body {
 }
 
 .preview-thumb {
-    width: 85px;            /* Smaller square preview */
+    width: 85px;
     height: 85px;
     border-radius: 10px;
     border: 1px solid #ccc;
-    object-fit: cover;      /* Ensures it crops instead of stretching */
-}
-#upload-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: transparent;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-}
-
-#upload-btn img {
-    width: 24px;
-    opacity: 0.8;
-}
-
-#upload-btn:hover img {
-    opacity: 1;
+    object-fit: cover;
 }
 
 /* ============================================================
-   SCROLL BUTTON
+   SCROLL BOTTOM BUTTON
 ============================================================ */
 .scroll-bottom-btn {
     position: absolute;
@@ -503,11 +541,6 @@ body {
 .scroll-bottom-btn.show {
     opacity: 1;
     pointer-events: auto;
-    transform: translateY(0);
-}
-
-@media(max-width: 768px) {
-    .scroll-bottom-btn { bottom: 100px; }
 }
 
 /* ============================================================
@@ -516,16 +549,27 @@ body {
 #lightbox-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.92);
+    background: var(--lightbox-bg);
     display: none;
     justify-content: center;
     align-items: center;
     z-index: 2000000;
 }
 
+#lightbox-overlay.show .lightbox-image,
+#lightbox-overlay.show .lightbox-video {
+    animation: zoomLightbox .28s ease;
+}
+
+@keyframes zoomLightbox {
+    from { opacity: 0; transform: scale(.92); }
+    to { opacity: 1; transform: scale(1); }
+}
+
 #lightbox-overlay.show {
     display: flex !important;
 }
+
 .lightbox-image,
 .lightbox-video {
     max-width: 92vw;
@@ -540,7 +584,7 @@ body {
     position: absolute;
     font-size: 42px;
     cursor: pointer;
-    color: var(--lightbox-icon);
+    color: #fff;
 }
 
 .lightbox-nav {
@@ -549,7 +593,7 @@ body {
     font-size: 48px;
     border: none;
     background: none;
-    color: var(--lightbox-icon);
+    color: #fff;
     cursor: pointer;
 }
 
@@ -561,26 +605,12 @@ body {
     bottom: 20px;
     right: 20px;
     font-size: 22px;
-    color: var(--lightbox-icon);
+    color: #fff;
 }
 
 .lightbox-index {
     position: absolute;
     bottom: 20px;
     left: 20px;
-    color: var(--lightbox-icon);
-}
-.carousel-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.media-thumb,
-.media-video {
-    width: 160px;
-    height: 160px;
-    border-radius: 10px;
-    object-fit: cover;
-    cursor: pointer;
+    color: #fff;
 }
