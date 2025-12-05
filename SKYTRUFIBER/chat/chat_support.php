@@ -95,7 +95,7 @@
         </div>
 
         <!-- =========================
-             MESSAGE ACTION POPUP (static)
+             MESSAGE ACTION POPUP
         ========================== -->
         <div id="msg-action-popup" class="msg-action-popup">
             <button class="action-edit"><i class="fa-solid fa-pen"></i> Edit</button>
@@ -104,10 +104,7 @@
             <button class="action-cancel">Cancel</button>
         </div>
 
-        <!-- =========================
-             REACTION PICKER (created dynamically)
-        ========================== -->
-        <div id="reaction-picker"></div>
+        <!-- REACTION PICKER REMOVED -->
 
     </div> <!-- END CHAT MODAL -->
 </div> <!-- END OVERLAY -->
