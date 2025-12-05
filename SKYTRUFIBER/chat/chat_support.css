@@ -44,8 +44,6 @@
     --input-border: #333;
 
     --preview-bg: #1b1b1b;
-
-    --lightbox-bg: rgba(0,0,0,0.92);
     --scroll-btn-bg: #1a73e8;
 }
 
@@ -78,11 +76,11 @@ body {
     height: 88vh;
     background: var(--bg);
     border-radius: 22px;
+    box-shadow: 0 14px 40px rgba(0,0,0,0.25);
     display: flex;
     flex-direction: column;
-    box-shadow: 0 14px 40px rgba(0,0,0,0.25);
-    overflow: hidden;
-    position: relative; /* IMPORTANT — contains popups */
+    overflow: hidden !important;
+    position: relative; /* contains popups */
 }
 
 @media (max-width: 768px) {
@@ -107,12 +105,6 @@ body {
 }
 
 .chat-header-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.chat-header-right {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -169,7 +161,7 @@ body {
     flex: 1;
     padding: 22px;
     background: var(--bg-secondary);
-    overflow-y: auto;
+    overflow-y: auto !important;
     display: flex;
     flex-direction: column;
     gap: 18px;
@@ -190,6 +182,7 @@ body {
     align-items: flex-end;
     gap: 10px;
     position: relative;
+    overflow: visible; /* popups allowed */
 }
 
 .message.sent { justify-content: flex-end; }
@@ -240,7 +233,7 @@ body {
 }
 
 /* ============================================================
-   MEDIA GRID (3×3)
+   MEDIA GRID
 ============================================================ */
 .media-grid {
     width: 100%;
@@ -300,7 +293,7 @@ body {
 }
 
 /* ============================================================
-   FIXED — MESSAGE ACTION POPUP INSIDE MODAL
+   POPUP MENU
 ============================================================ */
 .msg-action-popup {
     position: absolute;
@@ -322,10 +315,6 @@ body {
     cursor: pointer;
 }
 
-.msg-action-popup button:hover {
-    background: rgba(0,0,0,0.06);
-}
-
 /* ============================================================
    REACTION PICKER
 ============================================================ */
@@ -335,9 +324,9 @@ body {
     background: var(--bg);
     border-radius: 30px;
     border: 1px solid rgba(0,0,0,0.12);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
     display: none;
     gap: 8px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
     z-index: 9999999;
 }
 
@@ -364,19 +353,39 @@ body {
 
 .chat-input-box input {
     flex: 1;
+    background: transparent;
     border: none;
     outline: none;
-    background: transparent;
     font-size: 15px;
 }
 
-#upload-btn,
-#send-btn {
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
-    border: none;
+/* ============================================================
+   PREVIEW BAR (FULLY FIXED)
+============================================================ */
+#preview-inline {
+    width: 100%;
+    background: var(--preview-bg);
+    padding: 12px;
+    border-top: 1px solid var(--input-border);
+    display: none;
+    position: relative;
+    z-index: 5;
+    box-sizing: border-box;
+}
+
+#preview-files {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+}
+
+#preview-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 20px;
     cursor: pointer;
+    opacity: 0.7;
 }
 
 /* ============================================================
@@ -419,48 +428,4 @@ body {
 
 #lightbox-overlay.show {
     display: flex !important;
-}
-.msg-action-popup {
-    position: absolute;
-    z-index: 9999999;
-}
-
-#chat-messages {
-    overflow-y: auto !important;   /* IMPORTANT */
-}
-
-.chat-modal {
-    overflow: hidden !important;   /* Keeps content inside */
-}
-
-.message {
-    overflow: visible; /* Only messages can overflow toolbars */
-}
-/* ============================================================
-   FIXED PREVIEW BAR (Prevents layout explosions)
-============================================================ */
-#preview-inline {
-    width: 100%;
-    background: var(--preview-bg);
-    padding: 12px;
-    border-top: 1px solid var(--input-border);
-    display: none;
-    position: relative; /* <-- IMPORTANT */
-    z-index: 5;          /* Keep above chat but below popup */
-    box-sizing: border-box;
-}
-
-#preview-files {
-    display: flex;
-    gap: 14px;
-    overflow-x: auto;
-}
-
-#preview-close {
-    position: absolute;
-    top: 6px;
-    right: 8px;
-    font-size: 20px;
-    cursor: pointer;
-    opacity: 0.7;
 }
