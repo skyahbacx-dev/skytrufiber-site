@@ -116,15 +116,6 @@ body {
     border-radius: 50%;
 }
 
-.logout-btn {
-    padding: 8px 14px;
-    background: #ff4040;
-    border: none;
-    border-radius: 10px;
-    color: #fff;
-    cursor: pointer;
-}
-
 /* ============================================================
    THEME TOGGLE
 ============================================================ */
@@ -139,7 +130,6 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: transform .35s ease;
 }
 
 .theme-icon {
@@ -165,7 +155,6 @@ body {
     display: flex;
     flex-direction: column;
     gap: 18px;
-    scroll-behavior: smooth;
 }
 
 #chat-messages::-webkit-scrollbar { width: 6px; }
@@ -180,12 +169,12 @@ body {
 .message {
     width: 100%;
     display: flex;
-    align-items: flex-end;
     gap: 10px;
+    align-items: flex-end;
     position: relative;
     opacity: 0;
     transform: translateY(6px);
-    animation: msgFade .26s ease forwards;
+    animation: msgFade .25s ease forwards;
 }
 
 @keyframes msgFade {
@@ -215,8 +204,7 @@ body {
     font-size: 15px;
     background: var(--bubble-received);
     color: var(--bubble-received-text);
-    word-wrap: break-word;
-    position: relative;
+    word-break: break-word;
 }
 
 .message.sent .message-bubble {
@@ -233,11 +221,6 @@ body {
     font-size: 11px;
     color: var(--text-light);
     margin-top: 4px;
-}
-
-.removed-text {
-    opacity: 0.6;
-    font-style: italic;
 }
 
 /* ============================================================
@@ -261,28 +244,23 @@ body {
     transition: transform .25s;
 }
 
-.media-grid img:hover,
-.media-grid video:hover {
-    transform: scale(1.03);
-}
-
 /* ============================================================
-   ACTION TOOLBAR — FIXED CLICKABLE
+   ACTION TOOLBAR
 ============================================================ */
 .action-toolbar {
     position: absolute;
-    top: 8px;
-    right: -4px;
+    top: 6px;
+    right: -40px;
     display: flex;
     gap: 6px;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .22s ease;
-    z-index: 9999;
+    transition: opacity .25s ease;
+    z-index: 99999;
 }
 
 .message.sent .action-toolbar {
-    left: -4px;
+    left: -40px;
     right: auto;
 }
 
@@ -291,47 +269,35 @@ body {
     pointer-events: auto;
 }
 
-.action-toolbar button {
-    width: 30px;
-    height: 30px;
-    background: rgba(0,0,0,0.10);
-    border: none;
+.more-btn, .react-btn {
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
+    background: rgba(0,0,0,0.12);
+    border: none;
     cursor: pointer;
-    z-index: 99999;
-}
-
-.message.sent .action-toolbar button {
-    background: rgba(255,255,255,0.28);
 }
 
 /* ============================================================
-   POPUP MENU (below ⋯ button)
+   POPUP MENU (STATIC)
 ============================================================ */
 #msg-action-popup {
     position: absolute;
     background: var(--bg);
     border-radius: 12px;
-    border: 1px solid rgba(0,0,0,0.15);
     padding: 8px 0;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-    z-index: 9999999;
+    border: 1px solid rgba(0,0,0,0.15);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.25);
     display: none;
-    animation: fadeDrop .22s ease;
-}
-
-@keyframes fadeDrop {
-    from { opacity:0; transform: translateY(-4px) scale(.96); }
-    to   { opacity:1; transform: translateY(0) scale(1); }
+    z-index: 999999;
 }
 
 #msg-action-popup button {
     width: 100%;
-    padding: 10px 14px;
-    border: none;
+    padding: 10px 16px;
     background: none;
+    border: none;
     text-align: left;
-    cursor: pointer;
 }
 
 #msg-action-popup button:hover {
@@ -344,13 +310,13 @@ body {
 #reaction-picker {
     position: absolute;
     padding: 8px;
+    display: none;
+    gap: 8px;
     background: var(--bg);
     border-radius: 30px;
     border: 1px solid rgba(0,0,0,0.12);
-    display: none;
-    gap: 8px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-    z-index: 9999999;
+    z-index: 999999;
 }
 
 #reaction-picker.show { display: flex; }
@@ -369,42 +335,33 @@ body {
 
 .chat-input-box {
     flex: 1;
-    background: var(--input-bg);
+    border-radius: 22px;
     border: 1px solid var(--input-border);
-    padding: 10px 16px;
-    border-radius: 20px;
+    padding: 10px 14px;
 }
 
 .chat-input-box input {
     width: 100%;
     border: none;
-    background: transparent;
+    background: none;
     outline: none;
-    color: var(--text);
 }
 
 #upload-btn {
-    width: 40px;
-    height: 40px;
-    background: none;
+    width: 42px;
+    height: 42px;
+    background: transparent;
     border: none;
-    cursor: pointer;
 }
 
-.chat-send-btn {
+.chat-send-btn,
+#send-btn {
     width: 48px;
     height: 48px;
-    background: var(--bubble-sent);
     border-radius: 50%;
     border: none;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.chat-send-btn i {
-    color: #fff;
-    font-size: 20px;
+    background: var(--bubble-sent);
+    color: white;
 }
 
 /* ============================================================
@@ -428,20 +385,19 @@ body {
 ============================================================ */
 .scroll-bottom-btn {
     position: absolute;
-    right: 18px;
-    bottom: 94px;
+    right: 20px;
+    bottom: 100px;
     width: 46px;
     height: 46px;
     background: var(--scroll-btn-bg);
-    color: #fff;
     border-radius: 50%;
-    border: none;
+    color: white;
     display: flex;
     justify-content: center;
     align-items: center;
     opacity: 0;
     pointer-events: none;
-    transition: .25s;
+    transition: all .25s;
 }
 
 .scroll-bottom-btn.show {
@@ -459,17 +415,14 @@ body {
     display: none;
     justify-content: center;
     align-items: center;
-    z-index: 2000000;
+    z-index: 9999999;
 }
 
-#lightbox-overlay.show {
-    display: flex !important;
-}
+#lightbox-overlay.show { display: flex !important; }
 
 .lightbox-image,
 .lightbox-video {
     max-width: 92vw;
     max-height: 83vh;
-    object-fit: contain;
     border-radius: 8px;
 }
