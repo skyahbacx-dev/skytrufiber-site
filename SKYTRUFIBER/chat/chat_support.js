@@ -1,6 +1,6 @@
 /* ============================================================
-   SkyTruFiber Chat System — FINAL JS BUILD (Popup Fixed)
-   Reactions • Media Grid • Lightbox V2 • Toolbar • Upload
+   SkyTruFiber Chat System — FINAL JS BUILD (Popup Below Button)
+   Reactions • Media Grid • Lightbox • Toolbar • Upload
 ============================================================ */
 
 /* ---------------- GLOBAL STATE ---------------- */
@@ -10,7 +10,7 @@ let editing = false;
 let activePopup = null;
 let reactingToMsgId = null;
 
-let galleryItems = [];     // {type: "image"/"video", src:"..."}
+let galleryItems = [];     
 let currentIndex = 0;
 
 const reactionChoices = ["👍", "❤️", "😂", "😮", "😢", "😡"];
@@ -22,21 +22,19 @@ const username = new URLSearchParams(window.location.search).get("username");
 $(document).ready(() => {
 
     if (!username) {
-        $("#chat-messages").html(`
-            <p style="text-align:center;padding:20px;color:#777;">Invalid user.</p>
-        `);
+        $("#chat-messages").html(
+            `<p style="text-align:center;padding:20px;color:#777;">Invalid user.</p>`
+        );
         return;
     }
 
-    // move the static popup INSIDE the modal so absolute positioning works
+    // Move popup inside modal (absolute works only here)
     const staticPopup = $("#msg-action-popup");
-    if (staticPopup.length) {
-        $(".chat-modal").append(staticPopup.detach());
-    }
+    if (staticPopup.length) $(".chat-modal").append(staticPopup.detach());
 
     loadMessages(true);
 
-    // Poll every 3.5s
+    // Polling
     setInterval(() => {
         if (!editing && !activePopup && !$("#preview-inline").is(":visible")) {
             fetchNewMessages();
@@ -60,16 +58,10 @@ $(document).ready(() => {
     });
 
     /* CLOSE POPUPS */
-    $(document).on("click", function(e) {
-        // Close action popup
-        if (!$(e.target).closest("#msg-action-popup, .more-btn").length) {
-            closePopup();
-        }
-
-        // Close reaction picker
-        if (!$(e.target).closest("#reaction-picker, .react-btn").length) {
+    $(document).on("click", function (e) {
+        if (!$(e.target).closest("#msg-action-popup, .more-btn").length) closePopup();
+        if (!$(e.target).closest("#reaction-picker, .react-btn").length)
             $("#reaction-picker").removeClass("show");
-        }
     });
 
     /* THEME */
@@ -92,11 +84,9 @@ function toggleTheme() {
    SEND MESSAGE
 ============================================================ */
 function sendMessage() {
-
     const msg = $("#message-input").val().trim();
 
     if (!msg && selectedFiles.length === 0) return;
-
     if (selectedFiles.length > 0) return uploadMedia(msg);
 
     appendClientBubble(msg);
@@ -160,7 +150,7 @@ function uploadMedia(msg) {
         success: () => {
             selectedFiles = [];
             $("#preview-inline").slideUp(200);
-            $("#message-input").val("");
+            "#message-input".val("");
             fetchNewMessages();
         }
     });
@@ -189,7 +179,6 @@ function loadMessages(scrollBottom = false) {
    FETCH NEW MESSAGES
 ============================================================ */
 function fetchNewMessages() {
-
     $.post("load_messages_client.php", { username }, html => {
 
         const temp = $("<div>").html(html);
@@ -234,7 +223,7 @@ $("#chat-messages").on("scroll", function () {
 $("#scroll-bottom-btn").click(scrollToBottom);
 
 /* ============================================================
-   ACTION TOOLBAR + POPUP
+   ACTION TOOLBAR + POPUP (Below Button)
 ============================================================ */
 function bindActionToolbar() {
     $(".more-btn").off("click").on("click", function (e) {
@@ -243,37 +232,33 @@ function bindActionToolbar() {
     });
 }
 
-/**
- * Use the SINGLE static popup (#msg-action-popup)
- * and position it relative to the clicked "more" button.
- */
+/** POPUP STYLE #3 — place BELOW the ⋯ button */
 function openPopup(id, anchor) {
+
     const popup = $("#msg-action-popup");
     if (!popup.length) return;
 
-    // Remember which message this popup belongs to
     popup.data("msgId", id);
 
-    // position relative to the modal
     const modalOffset = $(".chat-modal").offset();
-    const aOffset = $(anchor).offset();
+    const buttonOffset = $(anchor).offset();
 
+    // Place popup UNDER the ⋯ button
     popup.css({
         display: "block",
-        top: aOffset.top - modalOffset.top - popup.outerHeight() - 6,
-        left: aOffset.left - modalOffset.left - (popup.outerWidth() / 2) + 20
+        top: buttonOffset.top - modalOffset.top + 28,
+        left: buttonOffset.left - modalOffset.left - (popup.outerWidth() / 2) + 16
     });
 
     activePopup = popup;
 }
 
 function closePopup() {
-    const popup = $("#msg-action-popup");
-    if (popup.length) popup.hide();
+    $("#msg-action-popup").hide();
     activePopup = null;
 }
 
-/* POPUP BUTTON ACTIONS (use msgId stored on popup) */
+/* POPUP BUTTON ACTIONS */
 $(document).on("click", ".action-edit", function () {
     const id = $("#msg-action-popup").data("msgId");
     if (!id) return;
@@ -285,29 +270,24 @@ $(document).on("click", ".action-unsend, .action-delete", function () {
     const id = $("#msg-action-popup").data("msgId");
     if (!id) return;
 
-    $.post("delete_message_client.php",
-        { id, username },
-        () => loadMessages(false)
-    );
-
+    $.post("delete_message_client.php", { id, username }, () => loadMessages(false));
     closePopup();
 });
 
-$(document).on("click", ".action-cancel", function () {
-    closePopup();
-});
+$(document).on("click", ".action-cancel", closePopup);
 
 /* ============================================================
    EDIT MESSAGE
 ============================================================ */
 function startEdit(id) {
+
     editing = true;
 
     const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
-    const oldText = bubble.text();
+    const old = bubble.text();
 
     bubble.html(`
-        <textarea class="edit-textarea">${oldText}</textarea>
+        <textarea class="edit-textarea">${old}</textarea>
         <div class="edit-actions">
             <button class="edit-save" data-id="${id}">Save</button>
             <button class="edit-cancel">Cancel</button>
@@ -325,7 +305,7 @@ $(document).on("click", ".edit-save", function () {
     });
 });
 
-$(document).on("click", ".edit-cancel", () => {
+$(document).on("click", ".edit-cancel", function () {
     editing = false;
     loadMessages(false);
 });
@@ -360,12 +340,12 @@ function bindReactionButtons() {
         picker.css({
             top: pos.top - picker.outerHeight() - 10,
             left: pos.left - picker.outerWidth() / 2 + 15
-        }).addClass("show");
+        })
+        .addClass("show");
     });
 }
 
 $(document).on("click", ".reaction-choice", function () {
-
     $.post("react_message_client.php",
         { chat_id: reactingToMsgId, emoji: $(this).data("emoji") },
         () => updateReactionBar(reactingToMsgId)
@@ -376,8 +356,8 @@ $(document).on("click", ".reaction-choice", function () {
 
 function updateReactionBar(id) {
     $.post("load_messages_client.php", { username }, html => {
-
         const temp = $("<div>").html(html);
+
         const newBar = temp.find(`.message[data-msg-id='${id}'] .reaction-bar`);
         const curBar = $(`.message[data-msg-id='${id}'] .reaction-bar`);
 
@@ -387,7 +367,7 @@ function updateReactionBar(id) {
 }
 
 /* ============================================================
-   LIGHTBOX V2 — Images + Video + Swipe
+   LIGHTBOX V2 — Images + Video
 ============================================================ */
 const lbOverlay = document.getElementById("lightbox-overlay");
 const lbImage   = document.getElementById("lightbox-image");
@@ -397,7 +377,6 @@ const lbIndex   = document.getElementById("lightbox-index");
 let touchStartX = 0;
 let touchEndX = 0;
 
-/* --------------- MEDIA CLICK EVENTS --------------- */
 function attachMediaEvents() {
 
     $(".media-grid img, .media-thumb").off("click").on("click", function () {
@@ -432,7 +411,6 @@ function attachMediaEvents() {
     $("#lightbox-close").off().click(closeLightbox);
 }
 
-/* --------------- OPEN / CLOSE --------------- */
 function openImage(src) {
     lbVideo.style.display = "none";
     lbImage.style.display = "block";
@@ -457,9 +435,7 @@ function closeLightbox() {
     lbVideo.src = "";
 }
 
-/* --------------- NAVIGATION --------------- */
 function navigateGallery(step) {
-
     if (galleryItems.length <= 1) return;
 
     const el = lbImage.style.display !== "none" ? lbImage : lbVideo;
@@ -467,7 +443,6 @@ function navigateGallery(step) {
     el.classList.add(step === 1 ? "lightbox-slide-left" : "lightbox-slide-right");
 
     setTimeout(() => {
-
         currentIndex = (currentIndex + step + galleryItems.length) % galleryItems.length;
 
         const item = galleryItems[currentIndex];
@@ -482,7 +457,6 @@ function navigateGallery(step) {
     updateLightboxIndex();
 }
 
-/* --------------- COUNTER --------------- */
 function updateLightboxIndex() {
     if (galleryItems.length > 1) {
         lbIndex.style.display = "block";
@@ -492,7 +466,6 @@ function updateLightboxIndex() {
     }
 }
 
-/* --------------- SWIPE GESTURES --------------- */
 lbOverlay.addEventListener("touchstart", e => {
     touchStartX = e.changedTouches[0].screenX;
 });
@@ -504,7 +477,6 @@ lbOverlay.addEventListener("touchend", e => {
     if (touchEndX - 60 > touchStartX) navigateGallery(-1);
 });
 
-/* --------------- KEYBOARD SUPPORT --------------- */
 document.addEventListener("keydown", e => {
     if (!lbOverlay.classList.contains("show")) return;
 
