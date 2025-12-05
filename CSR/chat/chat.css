@@ -3,7 +3,7 @@
 =========================================================== */
 #chat-container {
   display: grid;
-  grid-template-columns: 300px auto 320px;
+  grid-template-columns: 300px 1fr 320px;   /* ✅ always fills properly */
   height: calc(100vh - 55px);
   overflow: hidden;
   background: #f8fdfb;
