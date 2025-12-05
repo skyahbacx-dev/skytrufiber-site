@@ -2,12 +2,15 @@
 require_once "../../db_connect.php";
 
 $id = $_GET["id"] ?? null;
+$thumb = isset($_GET["thumb"]); // TRUE if requesting thumbnail
+
 if (!$id) {
     http_response_code(400);
     exit("Missing ID");
 }
 
 try {
+
     $stmt = $conn->prepare("
         SELECT media_blob, media_path, media_type
         FROM chat_media
@@ -22,66 +25,113 @@ try {
         exit("Not found");
     }
 
-    // Grab the blob value from the row
     $blob = $file["media_blob"];
 
-    // If PDO driver returns a stream resource, read it
+    // Convert LOB stream to string if necessary
     if (is_resource($blob)) {
         $binary = stream_get_contents($blob);
     } else {
         $binary = $blob;
     }
 
-    if ($binary === false || $binary === null) {
+    if (!$binary) {
         http_response_code(500);
         exit("Empty file");
     }
 
-    // Detect MIME type from binary; fallback to stored media_type
+    $type = $file["media_type"]; // image / video / file
+
+
+    /* ==========================================================
+       THUMBNAIL MODE
+    ========================================================== */
+    if ($thumb) {
+
+        // Thumbnails supported ONLY for media_type="image" or "video"
+        if ($type === "image") {
+
+            // Try to create resized JPEG thumbnail
+            $srcImg = @imagecreatefromstring($binary);
+
+            if ($srcImg) {
+                $w = imagesx($srcImg);
+                $h = imagesy($srcImg);
+
+                // Resize to width 300px max (grid size)
+                $maxW = 300;
+                $ratio = $maxW / $w;
+                $thumbW = $maxW;
+                $thumbH = intval($h * $ratio);
+
+                $thumbImg = imagecreatetruecolor($thumbW, $thumbH);
+                imagecopyresampled($thumbImg, $srcImg, 0, 0, 0, 0, $thumbW, $thumbH, $w, $h);
+
+                header("Content-Type: image/jpeg");
+                ob_start();
+                imagejpeg($thumbImg, null, 70);
+                $output = ob_get_clean();
+
+                imagedestroy($thumbImg);
+                imagedestroy($srcImg);
+
+                echo $output;
+                exit;
+            }
+
+            // fallback if thumbnail fails
+            header("Content-Type: image/jpeg");
+            echo $binary;
+            exit;
+        }
+
+        elseif ($type === "video") {
+            // Return STILL FULL video but muted thumbnail – frontend uses <video> element
+            header("Content-Type: video/mp4");
+            echo $binary;
+            exit;
+        }
+
+        else {
+            // Files do not have thumbnails → return normal binary
+            header("Content-Type: application/octet-stream");
+            echo $binary;
+            exit;
+        }
+    }
+
+
+    /* ==========================================================
+       FULL MEDIA OUTPUT (NORMAL MODE)
+    ========================================================== */
+
+    // MIME detection
     $mimeType = null;
 
     if (function_exists("finfo_open")) {
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        if ($finfo) {
-            $detected = finfo_buffer($finfo, $binary);
-            finfo_close($finfo);
-            if ($detected) {
-                $mimeType = $detected;
-            }
+        $f = finfo_open(FILEINFO_MIME_TYPE);
+        if ($f) {
+            $mimeType = finfo_buffer($f, $binary);
+            finfo_close($f);
         }
     }
 
-    // If detection failed, pick a reasonable default from media_type
+    // fallback MIME types
     if (!$mimeType) {
-        switch ($file["media_type"]) {
-            case "image":
-                $mimeType = "image/jpeg";
-                break;
-            case "video":
-                $mimeType = "video/mp4";
-                break;
-            default:
-                $mimeType = "application/octet-stream";
+        switch ($type) {
+            case "image": $mimeType = "image/jpeg"; break;
+            case "video": $mimeType = "video/mp4"; break;
+            default:      $mimeType = "application/octet-stream";
         }
     }
 
-    // Send correct headers
     header("Content-Type: {$mimeType}");
     header("Content-Length: " . strlen($binary));
-
-    // You can add this if you want forced download for non-image/video types:
-    // if ($file["media_type"] === "file") {
-    //     $name = basename($file["media_path"] ?: "download.bin");
-    //     header("Content-Disposition: attachment; filename=\"" . $name . "\"");
-    // }
 
     echo $binary;
     exit;
 
+
 } catch (Throwable $e) {
     http_response_code(500);
-    // Don't echo HTML here; it corrupts the binary response if it happens mid-stream.
-    // Log in real code instead:
-    // error_log("get_media.php error: " . $e->getMessage());
     exit("Error");
 }
