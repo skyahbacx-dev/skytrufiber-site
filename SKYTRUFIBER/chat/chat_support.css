@@ -436,3 +436,31 @@ body {
 .message {
     overflow: visible; /* Only messages can overflow toolbars */
 }
+/* ============================================================
+   FIXED PREVIEW BAR (Prevents layout explosions)
+============================================================ */
+#preview-inline {
+    width: 100%;
+    background: var(--preview-bg);
+    padding: 12px;
+    border-top: 1px solid var(--input-border);
+    display: none;
+    position: relative; /* <-- IMPORTANT */
+    z-index: 5;          /* Keep above chat but below popup */
+    box-sizing: border-box;
+}
+
+#preview-files {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+}
+
+#preview-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0.7;
+}
