@@ -1,7 +1,7 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — 2025 Full Updated Version
-// Includes: Messenger-Style Media Grid • Edit • Delete • Unsend
-// + Full Lightbox Carousel with Thumbnails
+// SkyTruFiber CSR Chat System — 2025 Full Stable Build
+// Messenger Grid • Lightbox Carousel • Thumbnail Strip
+// Edit • Delete • Unsend • Smooth Polling
 // ============================================================
 
 // ---------------- GLOBAL STATE ----------------
@@ -13,10 +13,11 @@ let lastMessageID = 0;
 let editing = false;
 let activePopup = null;
 
-// Global media slideshow
+// Global Lightbox State
 let allMedia = [];
 let currentSlide = 0;
 
+// ---------------- DOCUMENT READY ----------------
 $(document).ready(function () {
 
     loadClients();
@@ -48,8 +49,9 @@ $(document).ready(function () {
         if (selectedFiles.length) previewMultiple(selectedFiles);
     });
 
-    // SELECT A CLIENT
+    // SELECT CLIENT
     $(document).on("click", ".client-item", function () {
+
         currentClientID = $(this).data("id");
         $("#chat-client-name").text($(this).data("name"));
 
@@ -60,6 +62,7 @@ $(document).ready(function () {
         loadMessages(true);
 
         if (messageInterval) clearInterval(messageInterval);
+
         messageInterval = setInterval(() => {
             if (!editing && !$("#preview-inline").is(":visible")) {
                 fetchNewMessages();
@@ -67,11 +70,9 @@ $(document).ready(function () {
         }, 1200);
     });
 
-    // SCROLL BUTTON APPEAR
+    // SCROLL BUTTON VISIBILITY
     $("#chat-messages").on("scroll", function () {
-        const box = this;
-        const dist = box.scrollHeight - box.scrollTop - box.clientHeight;
-
+        const dist = this.scrollHeight - this.scrollTop - this.clientHeight;
         if (dist > 80) $("#scroll-bottom-btn").addClass("show");
         else $("#scroll-bottom-btn").removeClass("show");
     });
@@ -85,7 +86,7 @@ $(document).ready(function () {
         }
     });
 
-    // ESC to close lightbox
+    // LIGHTBOX KEYBOARD SHORTCUTS
     $(document).on("keydown", function(e){
         if ($("#lightbox-overlay").is(":visible")) {
             if (e.key === "Escape") closeLightbox();
@@ -119,9 +120,10 @@ function loadClientInfo(id) {
 }
 
 /* ============================================================
-   LOAD ALL MESSAGES
+   LOAD MESSAGES
 ============================================================ */
 function loadMessages(scrollBottom = false) {
+
     if (!currentClientID) return;
 
     $.post("../chat/load_messages.php", { client_id: currentClientID }, function (html) {
@@ -140,7 +142,7 @@ function loadMessages(scrollBottom = false) {
 }
 
 /* ============================================================
-   FETCH NEW MESSAGES ONLY
+   FETCH ONLY NEW MESSAGES
 ============================================================ */
 function fetchNewMessages() {
 
@@ -150,11 +152,8 @@ function fetchNewMessages() {
         const incoming = temp.find(".message");
 
         incoming.each(function () {
-
             const id = $(this).data("msg-id");
-
             if ($(`.message[data-msg-id='${id}']`).length) return;
-
             $("#chat-messages").append($(this));
         });
 
@@ -176,7 +175,6 @@ function sendMessage() {
 
     const msg = $("#chat-input").val().trim();
 
-    // sending media → go file upload flow
     if (selectedFiles.length > 0) {
         uploadMedia(selectedFiles, msg);
         return;
@@ -197,12 +195,12 @@ function sendMessage() {
 }
 
 /* ============================================================
-   TEMPORARY SENDING BUBBLE
+   TEMPORARY MESSAGE BUBBLE
 ============================================================ */
 function appendTempBubble(msg) {
     $("#chat-messages").append(`
         <div class="message sent temp-msg">
-            <div class="message-content">
+            <div class="message-content" style="max-width:300px;">
                 <div class="message-bubble">${msg}</div>
                 <div class="message-time">Sending...</div>
             </div>
@@ -212,14 +210,13 @@ function appendTempBubble(msg) {
 }
 
 /* ============================================================
-   MEDIA PREVIEW THUMBNAILS
+   MEDIA PREVIEW BAR
 ============================================================ */
 function previewMultiple(files) {
     $("#preview-files").html("");
 
     files.forEach((file, index) => {
         const url = URL.createObjectURL(file);
-
         $("#preview-files").append(`
             <div class="preview-item">
                 <img src="${url}" class="preview-thumb">
@@ -239,7 +236,7 @@ $(document).on("click", ".preview-remove", function () {
 });
 
 /* ============================================================
-   UPLOAD MEDIA FILES
+   UPLOAD MEDIA
 ============================================================ */
 function uploadMedia(files, msg = "") {
 
@@ -247,7 +244,6 @@ function uploadMedia(files, msg = "") {
 
     form.append("client_id", currentClientID);
     form.append("message", msg);
-
     files.forEach(f => form.append("media[]", f));
 
     $("#preview-inline").slideUp(150);
@@ -267,17 +263,20 @@ function uploadMedia(files, msg = "") {
 }
 
 /* ============================================================
-   ACTION MENU: EDIT / UNSEND / DELETE
+   ACTION POPUP
 ============================================================ */
 function bindActionButtons() {
 
     $(".more-btn").off("click").on("click", function (e) {
+
         e.stopPropagation();
+
         openActionPopup($(this).data("id"), this);
     });
 }
 
 function openActionPopup(id, anchor) {
+
     const popup = $("#msg-action-popup");
     popup.data("msg-id", id);
 
@@ -289,16 +288,15 @@ function openActionPopup(id, anchor) {
         top: offsetMsg.top - offsetChat.top + 30,
         left: offsetMsg.left - offsetChat.left - popup.outerWidth() + 40
     });
-
-    activePopup = popup;
 }
 
 function closeActionPopup() {
     $("#msg-action-popup").hide();
-    activePopup = null;
 }
 
-/* ------------ EDIT MESSAGE ------------- */
+/* ============================================================
+   EDIT MESSAGE
+============================================================ */
 $(document).on("click", ".action-edit", function () {
     const id = $("#msg-action-popup").data("msg-id");
     startCSRMessageEdit(id);
@@ -306,6 +304,7 @@ $(document).on("click", ".action-edit", function () {
 });
 
 function startCSRMessageEdit(id) {
+
     editing = true;
 
     const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
@@ -321,6 +320,7 @@ function startCSRMessageEdit(id) {
 }
 
 $(document).on("click", ".edit-save", function () {
+
     const id = $(this).data("id");
     const newText = $(this).closest(".message-bubble").find("textarea").val().trim();
 
@@ -335,8 +335,11 @@ $(document).on("click", ".edit-cancel", function () {
     loadMessages(false);
 });
 
-/* ------------ DELETE / UNSEND ----------- */
+/* ============================================================
+   DELETE / UNSEND
+============================================================ */
 $(document).on("click", ".action-unsend, .action-delete", function () {
+
     const id = $("#msg-action-popup").data("msg-id");
 
     $.post("../chat/delete_message.php", { id }, () => {
@@ -347,9 +350,10 @@ $(document).on("click", ".action-unsend, .action-delete", function () {
 });
 
 /* ============================================================
-   ASSIGN MEDIA INDEXES
+   MEDIA INDEX ASSIGNMENT
 ============================================================ */
 function assignMediaIndex() {
+
     let index = 0;
 
     $(".fullview-item").each(function () {
@@ -359,9 +363,10 @@ function assignMediaIndex() {
 }
 
 /* ============================================================
-   FULL LIGHTBOX SYSTEM
+   LIGHTBOX — COLLECT MEDIA
 ============================================================ */
 function collectAllMedia() {
+
     allMedia = [];
 
     $(".fullview-item").each(function () {
@@ -376,18 +381,29 @@ function collectAllMedia() {
     allMedia.sort((a, b) => a.index - b.index);
 }
 
-$(document).on("click", ".fullview-item", function () {
+/* ============================================================
+   LIGHTBOX OPEN
+============================================================ */
+function attachMediaEvents() {
 
-    collectAllMedia();
+    $(document).off("click", ".fullview-item");
 
-    currentSlide = parseInt($(this).attr("data-media-index"));
+    $(document).on("click", ".fullview-item", function () {
 
-    $("#lightbox-overlay").fadeIn(150);
-    showSlide(currentSlide);
-});
+        collectAllMedia();
 
-/* SHOW SLIDE */
+        currentSlide = parseInt($(this).attr("data-media-index"));
+        $("#lightbox-overlay").fadeIn(150);
+
+        showSlide(currentSlide);
+    });
+}
+
+/* ============================================================
+   SHOW SLIDE
+============================================================ */
 function showSlide(i) {
+
     const item = allMedia[i];
     if (!item) return;
 
@@ -404,7 +420,9 @@ function showSlide(i) {
     rebuildThumbs();
 }
 
-/* NEXT / PREV */
+/* ============================================================
+   NEXT / PREV
+============================================================ */
 function showNext() {
     if (currentSlide < allMedia.length - 1)
         showSlide(currentSlide + 1);
@@ -413,11 +431,15 @@ function showPrev() {
     if (currentSlide > 0)
         showSlide(currentSlide - 1);
 }
+
 $("#lightbox-next").click(showNext);
 $("#lightbox-prev").click(showPrev);
 
-/* THUMBNAILS */
+/* ============================================================
+   THUMBNAIL STRIP
+============================================================ */
 function rebuildThumbs() {
+
     $("#lightbox-thumbs").html("");
 
     allMedia.forEach((m, i) => {
@@ -432,7 +454,9 @@ $(document).on("click", ".thumb", function () {
     showSlide(parseInt($(this).data("i")));
 });
 
-/* CLOSE LIGHTBOX */
+/* ============================================================
+   CLOSE LIGHTBOX
+============================================================ */
 function closeLightbox() {
     $("#lightbox-overlay").fadeOut(150);
     $("#lightbox-video").trigger("pause");
