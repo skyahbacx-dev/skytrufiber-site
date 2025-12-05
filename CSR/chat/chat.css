@@ -354,15 +354,6 @@
   cursor: pointer;
 }
 
-/* Single media */
-.single-media img,
-.single-media video {
-  max-width: 280px;
-  max-height: 260px;
-  border-radius: 12px;
-  margin-top: 6px;
-  cursor: pointer;
-}
 
 /* ===========================================================
    INLINE PREVIEW BAR
