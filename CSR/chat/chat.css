@@ -135,9 +135,9 @@
   align-items: flex-end;
   gap: 10px;
   animation: fadeInUp 0.25s ease;
-  max-width: 72%;
+  max-width: 480px;          /* FIX: Prevent tall skinny messages */
+  width: fit-content;        /* FIX: Bubble takes natural width */
   position: relative;
-  word-break: break-word;
 }
 
 .message.received { align-self: flex-start; flex-direction: row; }
