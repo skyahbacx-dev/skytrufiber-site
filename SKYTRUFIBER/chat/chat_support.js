@@ -1,5 +1,5 @@
 /* ============================================================
-   SkyTruFiber Chat System — FINAL JS BUILD (Stabilized)
+   SkyTruFiber Chat System — FINAL JS BUILD (Popup Fixed)
    Reactions • Media Grid • Lightbox V2 • Toolbar • Upload
 ============================================================ */
 
@@ -10,7 +10,7 @@ let editing = false;
 let activePopup = null;
 let reactingToMsgId = null;
 
-let galleryItems = [];
+let galleryItems = [];     // {type: "image"/"video", src:"..."}
 let currentIndex = 0;
 
 const reactionChoices = ["👍", "❤️", "😂", "😮", "😢", "😡"];
@@ -22,22 +22,29 @@ const username = new URLSearchParams(window.location.search).get("username");
 $(document).ready(() => {
 
     if (!username) {
-        $("#chat-messages").html(`<p style="text-align:center;padding:20px;color:#777;">Invalid user.</p>`);
+        $("#chat-messages").html(`
+            <p style="text-align:center;padding:20px;color:#777;">Invalid user.</p>
+        `);
         return;
+    }
+
+    // move the static popup INSIDE the modal so absolute positioning works
+    const staticPopup = $("#msg-action-popup");
+    if (staticPopup.length) {
+        $(".chat-modal").append(staticPopup.detach());
     }
 
     loadMessages(true);
 
-    // Polling
+    // Poll every 3.5s
     setInterval(() => {
         if (!editing && !activePopup && !$("#preview-inline").is(":visible")) {
             fetchNewMessages();
         }
     }, 3500);
 
-    // Send
+    /* SEND */
     $("#send-btn").click(sendMessage);
-
     $("#message-input").keypress(e => {
         if (e.which === 13) {
             e.preventDefault();
@@ -45,29 +52,32 @@ $(document).ready(() => {
         }
     });
 
-    // Upload
+    /* UPLOAD */
     $("#upload-btn").click(() => $("#chat-upload-media").click());
-
     $("#chat-upload-media").change(function () {
         selectedFiles = Array.from(this.files);
         if (selectedFiles.length) previewMultiple();
     });
 
-    // Close popups
-    $(document).on("click", e => {
+    /* CLOSE POPUPS */
+    $(document).on("click", function(e) {
+        // Close action popup
+        if (!$(e.target).closest("#msg-action-popup, .more-btn").length) {
+            closePopup();
+        }
 
-        if (!$(e.target).closest(".msg-action-popup, .more-btn").length) closePopup();
-
-        if (!$(e.target).closest("#reaction-picker, .react-btn").length)
+        // Close reaction picker
+        if (!$(e.target).closest("#reaction-picker, .react-btn").length) {
             $("#reaction-picker").removeClass("show");
+        }
     });
 
-    // Theme toggle
+    /* THEME */
     $("#theme-toggle").click(toggleTheme);
 });
 
 /* ============================================================
-   THEME
+   THEME TOGGLE
 ============================================================ */
 function toggleTheme() {
     const root = document.documentElement;
@@ -82,17 +92,18 @@ function toggleTheme() {
    SEND MESSAGE
 ============================================================ */
 function sendMessage() {
+
     const msg = $("#message-input").val().trim();
 
     if (!msg && selectedFiles.length === 0) return;
 
     if (selectedFiles.length > 0) return uploadMedia(msg);
 
-    // Clear immediately (no bubble)
+    appendClientBubble(msg);
     $("#message-input").val("");
 
     $.post("send_message_client.php", { username, message: msg }, () => {
-        loadMessages(true); // fresh, no duplication
+        fetchNewMessages();
     });
 }
 
@@ -158,20 +169,19 @@ function uploadMedia(msg) {
 /* ============================================================
    LOAD MESSAGES
 ============================================================ */
-function loadMessages(scroll = false) {
-
+function loadMessages(scrollBottom = false) {
     $.post("load_messages_client.php", { username }, html => {
 
         $("#chat-messages").html(html);
 
+        attachMediaEvents();
         bindReactionButtons();
         bindActionToolbar();
-        attachMediaEvents();
 
         const last = $("#chat-messages .message:last").data("msg-id");
         if (last) lastMessageID = last;
 
-        if (scroll) scrollToBottom();
+        if (scrollBottom) scrollToBottom();
     });
 }
 
@@ -186,21 +196,16 @@ function fetchNewMessages() {
         const newMsgs = temp.find(".message");
 
         const container = $("#chat-messages");
-        const lastDisplayedID = container.find(".message:last").data("msg-id") || 0;
+        const currentLast = container.find(".message:last").data("msg-id") || 0;
 
-         newMsgs.each(function () {
-          const id = Number($(this).data("msg-id"));
-          if (!id) return; // ignore invalid nodes
+        newMsgs.each(function () {
+            const id = $(this).data("msg-id");
+            if (id > currentLast) container.append($(this));
+        });
 
-           if (id > currentLast) {
-           container.append($(this));
-          }
-      });
-
-
+        attachMediaEvents();
         bindReactionButtons();
         bindActionToolbar();
-        attachMediaEvents();
 
         const box = container[0];
         const dist = box.scrollHeight - box.scrollTop - box.clientHeight;
@@ -218,10 +223,7 @@ function scrollToBottom() {
     }, 230);
 }
 
-$("#scroll-bottom-btn").click(scrollToBottom);
-
 $("#chat-messages").on("scroll", function () {
-
     const box = this;
     const dist = box.scrollHeight - box.scrollTop - box.clientHeight;
 
@@ -229,8 +231,10 @@ $("#chat-messages").on("scroll", function () {
     else $("#scroll-bottom-btn").removeClass("show");
 });
 
+$("#scroll-bottom-btn").click(scrollToBottom);
+
 /* ============================================================
-   ACTION TOOLBAR / POPUP
+   ACTION TOOLBAR + POPUP
 ============================================================ */
 function bindActionToolbar() {
     $(".more-btn").off("click").on("click", function (e) {
@@ -239,67 +243,71 @@ function bindActionToolbar() {
     });
 }
 
+/**
+ * Use the SINGLE static popup (#msg-action-popup)
+ * and position it relative to the clicked "more" button.
+ */
 function openPopup(id, anchor) {
+    const popup = $("#msg-action-popup");
+    if (!popup.length) return;
 
-    closePopup();
+    // Remember which message this popup belongs to
+    popup.data("msgId", id);
 
-    const popup = $(`
-        <div class="msg-action-popup">
-            <button class="popup-edit" data-id="${id}">Edit</button>
-            <button class="popup-unsend" data-id="${id}">Unsend</button>
-            <button class="popup-delete" data-id="${id}">Delete</button>
-            <button class="popup-cancel">Cancel</button>
-        </div>
-    `);
-
-    $(".chat-modal").append(popup);
-
-    activePopup = popup;
-
-    const a = $(anchor).offset();
-    const modal = $(".chat-modal").offset();
+    // position relative to the modal
+    const modalOffset = $(".chat-modal").offset();
+    const aOffset = $(anchor).offset();
 
     popup.css({
-        top: a.top - modal.top - popup.outerHeight() - 6,
-        left: a.left - modal.left - popup.outerWidth() / 2 + 20
-    }).fadeIn(120);
+        display: "block",
+        top: aOffset.top - modalOffset.top - popup.outerHeight() - 6,
+        left: aOffset.left - modalOffset.left - (popup.outerWidth() / 2) + 20
+    });
+
+    activePopup = popup;
 }
 
 function closePopup() {
-    if (activePopup) {
-        activePopup.remove();
-        activePopup = null;
-    }
+    const popup = $("#msg-action-popup");
+    if (popup.length) popup.hide();
+    activePopup = null;
 }
 
-/* Popup actions */
-$(document).on("click", ".popup-edit", function () {
-    startEdit($(this).data("id"));
+/* POPUP BUTTON ACTIONS (use msgId stored on popup) */
+$(document).on("click", ".action-edit", function () {
+    const id = $("#msg-action-popup").data("msgId");
+    if (!id) return;
+    startEdit(id);
     closePopup();
 });
 
-$(document).on("click", ".popup-unsend, .popup-delete", function () {
+$(document).on("click", ".action-unsend, .action-delete", function () {
+    const id = $("#msg-action-popup").data("msgId");
+    if (!id) return;
+
     $.post("delete_message_client.php",
-        { id: $(this).data("id"), username },
+        { id, username },
         () => loadMessages(false)
     );
+
     closePopup();
 });
 
-$(document).on("click", ".popup-cancel", closePopup);
+$(document).on("click", ".action-cancel", function () {
+    closePopup();
+});
 
 /* ============================================================
    EDIT MESSAGE
 ============================================================ */
 function startEdit(id) {
-
     editing = true;
 
     const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
-    const old = bubble.text();
+    const oldText = bubble.text();
 
     bubble.html(`
-        <textarea class="edit-textarea">${old}</textarea>
+        <textarea class="edit-textarea">${oldText}</textarea>
         <div class="edit-actions">
             <button class="edit-save" data-id="${id}">Save</button>
             <button class="edit-cancel">Cancel</button>
@@ -308,7 +316,6 @@ function startEdit(id) {
 }
 
 $(document).on("click", ".edit-save", function () {
-
     const id = $(this).data("id");
     const newText = $(this).closest(".message-bubble").find("textarea").val().trim();
 
@@ -327,20 +334,17 @@ $(document).on("click", ".edit-cancel", () => {
    REACTIONS
 ============================================================ */
 function ensureReactionPicker() {
-
     let picker = $("#reaction-picker");
-
     if (!picker.length) {
         $("body").append(`
-            <div id="reaction-picker" class="reaction-picker">
+            <div id="reaction-picker">
                 ${reactionChoices.map(e =>
                     `<button class="reaction-choice" data-emoji="${e}">${e}</button>`
                 ).join("")}
             </div>
-        `);
+        );
         picker = $("#reaction-picker");
     }
-
     return picker;
 }
 
@@ -348,7 +352,6 @@ function bindReactionButtons() {
     $(".react-btn").off("click").on("click", function (e) {
 
         e.stopPropagation();
-
         reactingToMsgId = $(this).data("msg-id");
 
         const picker = ensureReactionPicker();
@@ -372,32 +375,29 @@ $(document).on("click", ".reaction-choice", function () {
 });
 
 function updateReactionBar(id) {
-
     $.post("load_messages_client.php", { username }, html => {
 
         const temp = $("<div>").html(html);
-
         const newBar = temp.find(`.message[data-msg-id='${id}'] .reaction-bar`);
         const curBar = $(`.message[data-msg-id='${id}'] .reaction-bar`);
 
-        if (curBar.length)
-            curBar.replaceWith(newBar.clone());
-        else
-            $(`.message[data-msg-id='${id}'] .message-content`).append(newBar.clone());
+        if (curBar.length) curBar.replaceWith(newBar.clone());
+        else $(`.message[data-msg-id='${id}'] .message-content`).append(newBar.clone());
     });
 }
 
 /* ============================================================
-   LIGHTBOX V2
+   LIGHTBOX V2 — Images + Video + Swipe
 ============================================================ */
 const lbOverlay = document.getElementById("lightbox-overlay");
-const lbImage = document.getElementById("lightbox-image");
-const lbVideo = document.getElementById("lightbox-video");
-const lbIndex = document.getElementById("lightbox-index");
+const lbImage   = document.getElementById("lightbox-image");
+const lbVideo   = document.getElementById("lightbox-video");
+const lbIndex   = document.getElementById("lightbox-index");
 
 let touchStartX = 0;
+let touchEndX = 0;
 
-/* MEDIA BINDERS */
+/* --------------- MEDIA CLICK EVENTS --------------- */
 function attachMediaEvents() {
 
     $(".media-grid img, .media-thumb").off("click").on("click", function () {
@@ -407,9 +407,9 @@ function attachMediaEvents() {
         const grid = $(this).closest(".media-grid");
         const imgs = grid.find("img");
 
-        galleryItems = imgs.map((i, e) => ({
+        galleryItems = imgs.map((i, el) => ({
             type: "image",
-            src: $(e).data("full")
+            src: $(el).data("full")
         })).get();
 
         currentIndex = imgs.index(this);
@@ -418,9 +418,13 @@ function attachMediaEvents() {
     });
 
     $(".media-grid video").off("click").on("click", function () {
-        galleryItems = [{ type: "video", src: $(this).data("full") }];
+
+        const src = $(this).data("full");
+
+        galleryItems = [{ type: "video", src }];
         currentIndex = 0;
-        openVideo($(this).data("full"));
+
+        openVideo(src);
     });
 
     $("#lightbox-prev").off().click(() => navigateGallery(-1));
@@ -428,12 +432,14 @@ function attachMediaEvents() {
     $("#lightbox-close").off().click(closeLightbox);
 }
 
-/* OPEN IMAGE / VIDEO */
+/* --------------- OPEN / CLOSE --------------- */
 function openImage(src) {
     lbVideo.style.display = "none";
     lbImage.style.display = "block";
     lbImage.src = src;
+
     lbOverlay.classList.add("show");
+
     updateLightboxIndex();
 }
 
@@ -441,17 +447,17 @@ function openVideo(src) {
     lbImage.style.display = "none";
     lbVideo.style.display = "block";
     lbVideo.src = src;
+
     lbOverlay.classList.add("show");
 }
 
-/* CLOSE LIGHTBOX */
 function closeLightbox() {
     lbOverlay.classList.remove("show");
-    lbVideo.src = "";
     lbImage.src = "";
+    lbVideo.src = "";
 }
 
-/* NAVIGATION */
+/* --------------- NAVIGATION --------------- */
 function navigateGallery(step) {
 
     if (galleryItems.length <= 1) return;
@@ -476,7 +482,7 @@ function navigateGallery(step) {
     updateLightboxIndex();
 }
 
-/* COUNTER */
+/* --------------- COUNTER --------------- */
 function updateLightboxIndex() {
     if (galleryItems.length > 1) {
         lbIndex.style.display = "block";
@@ -486,18 +492,19 @@ function updateLightboxIndex() {
     }
 }
 
-/* SWIPE */
+/* --------------- SWIPE GESTURES --------------- */
 lbOverlay.addEventListener("touchstart", e => {
     touchStartX = e.changedTouches[0].screenX;
 });
 
 lbOverlay.addEventListener("touchend", e => {
-    const delta = e.changedTouches[0].screenX - touchStartX;
-    if (delta < -60) navigateGallery(1);
-    if (delta > 60) navigateGallery(-1);
+    touchEndX = e.changedTouches[0].screenX;
+
+    if (touchEndX + 60 < touchStartX) navigateGallery(1);
+    if (touchEndX - 60 > touchStartX) navigateGallery(-1);
 });
 
-/* KEYBOARD */
+/* --------------- KEYBOARD SUPPORT --------------- */
 document.addEventListener("keydown", e => {
     if (!lbOverlay.classList.contains("show")) return;
 
