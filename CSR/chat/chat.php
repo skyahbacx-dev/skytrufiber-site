@@ -91,10 +91,22 @@ $csrUser = $_SESSION["csr_user"];
 
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
 
-<!-- LIGHTBOX VIEWER -->
+<!-- GLOBAL LIGHTBOX VIEWER -->
 <div id="lightbox-overlay">
     <span id="lightbox-close">&times;</span>
-    <img id="lightbox-image">
+
+    <div id="lightbox-main-wrapper">
+        <button id="lightbox-prev" class="lb-arrow">&#10094;</button>
+
+        <img id="lightbox-image" class="lb-media">
+        <video id="lightbox-video" class="lb-media" controls></video>
+
+        <button id="lightbox-next" class="lb-arrow">&#10095;</button>
+    </div>
+
+    <!-- THUMBNAIL CAROUSEL -->
+    <div id="lightbox-thumbs"></div>
 </div>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
