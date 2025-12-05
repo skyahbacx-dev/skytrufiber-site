@@ -1,12 +1,13 @@
 <?php
 if (!isset($_SESSION)) session_start();
-require_once "../../db_connect.php";
+require "../../db_connect.php";
 
 $client_id = $_POST["client_id"] ?? null;
 if (!$client_id) exit;
 
 try {
 
+    // Fetch all messages
     $stmt = $conn->prepare("
         SELECT id, sender_type, message, created_at, edited
         FROM chat
@@ -21,94 +22,52 @@ try {
         exit;
     }
 
+    // GLOBAL MEDIA LIST INDEX
+    $globalMediaIndex = 0;
+
     foreach ($messages as $msg) {
 
-        $msgID     = (int)$msg["id"];
-        $sender    = ($msg["sender_type"] === "csr") ? "sent" : "received";
+        $msgID = (int)$msg["id"];
+        $sender = ($msg["sender_type"] === "csr") ? "sent" : "received";
         $timestamp = date("M j g:i A", strtotime($msg["created_at"]));
 
         echo "<div class='message $sender' data-msg-id='$msgID'>";
 
-        /* Avatar */
-        echo "<div class='message-avatar'>
-                <img src='/upload/default-avatar.png'>
-              </div>";
-
+        echo "<div class='message-avatar'><img src='/upload/default-avatar.png'></div>";
         echo "<div class='message-content'>";
 
-        /* Action Toolbar */
-        echo "
-            <div class='action-toolbar'>
-                <button class='more-btn' data-id='$msgID'>
-                    <i class='fa-solid fa-ellipsis-vertical'></i>
-                </button>
-            </div>
-        ";
+        // ACTION BUTTON
+        echo "<button class='more-btn' data-id='$msgID'><i class='fa-solid fa-ellipsis-vertical'></i></button>";
 
         echo "<div class='message-bubble'>";
 
-        /* Load media list */
-        $mediaStmt = $conn->prepare("
-            SELECT id, media_type
-            FROM chat_media
-            WHERE chat_id = ?
-        ");
-        $mediaStmt->execute([$msgID]);
-        $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
+        // FETCH MEDIA FOR MESSAGE
+        $mquery = $conn->prepare("SELECT id, media_type FROM chat_media WHERE chat_id = ?");
+        $mquery->execute([$msgID]);
+        $mediaList = $mquery->fetchAll(PDO::FETCH_ASSOC);
 
         $count = count($mediaList);
 
-        /* Match existing CSS layout exactly */
-        if ($count == 1)        $gridClass = "media-1";
-        elseif ($count == 2)    $gridClass = "media-2";
-        elseif ($count == 3)    $gridClass = "media-3";
-        elseif ($count == 4)    $gridClass = "media-4";
-        elseif ($count >= 5)    $gridClass = "media-5"; // 5 or more → overlay layout
-        else                    $gridClass = "";
-
-        /* Render media grid */
         if ($count > 0) {
+            echo "<div class='media-grid'>";
 
-            echo "<div class='media-grid $gridClass'>";
+            foreach ($mediaList as $media) {
+                $mediaID = (int)$media["id"];
+                $src = "../chat/get_media.php?id=$mediaID";
 
-            $visible = ($count >= 5) ? 4 : $count;
+                // IMPORTANT: Add global index for carousel
+                $indexAttr = "data-media-index='{$globalMediaIndex}'";
+                $globalMediaIndex++;
 
-            for ($i = 0; $i < $visible; $i++) {
+                echo "<div class='media-item'>";
 
-                $m = $mediaList[$i];
-                $mediaID = (int)$m["id"];
-
-                $fullSrc  = "../chat/get_media.php?id=$mediaID";
-                $thumbSrc = "../chat/get_media.php?id=$mediaID"; // same endpoint (your system does NOT support thumbnails)
-
-                $isOverlay = ($count >= 5 && $i == 3);
-                $extraMore = $count - 4;
-
-                echo $isOverlay
-                    ? "<div class='media-item media-more-overlay' data-more='+$extraMore'>"
-                    : "<div class='media-item'>";
-
-                /* IMAGE */
-                if ($m["media_type"] === "image") {
-                    echo "
-                        <img src='$thumbSrc'
-                             data-full='$fullSrc'
-                             class='fullview-item media-thumb'>
-                    ";
+                if ($media["media_type"] === "image") {
+                    echo "<img src='$src' class='fullview-item' data-full='$src' $indexAttr>";
                 }
-
-                /* VIDEO */
-                elseif ($m["media_type"] === "video") {
-                    echo "
-                        <video class='media-thumb fullview-item' data-full='$fullSrc' muted>
-                            <source src='$fullSrc' type='video/mp4'>
-                        </video>
-                    ";
-                }
-
-                /* FILE */
-                else {
-                    echo "<a href='$fullSrc' download class='download-btn'>📎 File</a>";
+                elseif ($media["media_type"] === "video") {
+                    echo "<video class='fullview-item' data-full='$src' $indexAttr muted>
+                            <source src='$src' type='video/mp4'>
+                          </video>";
                 }
 
                 echo "</div>";
@@ -117,21 +76,13 @@ try {
             echo "</div>";
         }
 
-        /* Text message */
         if (!empty($msg["message"])) {
             $safe = nl2br(htmlspecialchars($msg["message"]));
             echo "<div class='msg-text'>$safe</div>";
         }
 
-        echo "</div>"; // bubble
-
-        if (!empty($msg["edited"]))
-            echo "<div class='edited-label'>(edited)</div>";
-
-        echo "<div class='message-time'>$timestamp</div>";
-
-        echo "</div>"; // content
-        echo "</div>"; // message wrapper
+        echo "</div>";
+        echo "<div class='message-time'>$timestamp</div></div>";
     }
 
 } catch (Exception $e) {
