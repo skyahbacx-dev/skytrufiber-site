@@ -79,8 +79,8 @@ body {
     box-shadow: 0 14px 40px rgba(0,0,0,0.25);
     display: flex;
     flex-direction: column;
-    overflow: visible;
     position: relative;
+    overflow: hidden;
 }
 
 @media (max-width: 768px) {
@@ -148,7 +148,7 @@ body {
     transition: opacity .35s, transform .35s;
 }
 
-.moon-icon { opacity: 1; transform: rotate(0deg); }
+.moon-icon { opacity: 1; }
 .sun-icon { opacity: 0; transform: rotate(-160deg); }
 
 :root[data-theme="dark"] .moon-icon { opacity: 0; transform: rotate(120deg); }
@@ -161,7 +161,7 @@ body {
     flex: 1;
     padding: 22px;
     background: var(--bg-secondary);
-    overflow-y: auto !important;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 18px;
@@ -183,19 +183,13 @@ body {
     align-items: flex-end;
     gap: 10px;
     position: relative;
-    z-index: 1 !important;
-
-
     opacity: 0;
     transform: translateY(6px);
-    animation: msgFade .28s ease forwards;
+    animation: msgFade .26s ease forwards;
 }
 
 @keyframes msgFade {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .message.sent { justify-content: flex-end; }
@@ -214,7 +208,7 @@ body {
 .message-content {
     max-width: 70%;
     position: relative;
-    z-index: 1 !important;
+    z-index: 10;
 }
 
 .message-bubble {
@@ -224,9 +218,7 @@ body {
     background: var(--bubble-received);
     color: var(--bubble-received-text);
     word-wrap: break-word;
-    transition: all .22s ease;
     position: relative;
-    z-index: 1 !important;
 }
 
 .message.sent .message-bubble {
@@ -235,18 +227,8 @@ body {
     border-radius: 20px 20px 4px 20px;
 }
 
-.message.sent .message-bubble:hover {
-    box-shadow: 0 2px 10px rgba(0,132,255,0.35);
-    transform: translateY(-1px);
-}
-
 .message.received .message-bubble {
     border-radius: 20px 20px 20px 4px;
-}
-
-.message.received .message-bubble:hover {
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-    transform: translateY(-1px);
 }
 
 .message-time {
@@ -279,110 +261,74 @@ body {
     border-radius: 12px;
     cursor: pointer;
     transition: transform .25s;
-    animation: fadeInMedia .25s ease;
-}
-
-@keyframes fadeInMedia {
-    from { opacity: 0; transform: scale(.97); }
-    to { opacity: 1; transform: scale(1); }
 }
 
 .media-grid img:hover,
-.media-grid video:hover {
-    transform: scale(1.03);
-}
+.media-grid video:hover { transform: scale(1.03); }
 
 /* ============================================================
-   ACTION TOOLBAR
+   ACTION TOOLBAR — OPTION A (inside bubble edge)
 ============================================================ */
 .action-toolbar {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 8px;
+    right: 6px;
     display: flex;
     gap: 6px;
     opacity: 0;
     pointer-events: none;
     transition: opacity .22s ease;
-    z-index: 9999; /* FIXED */
+    z-index: 9999;
 }
 
-/* position RIGHT for received (left side bubble) */
-.message.received .action-toolbar {
-    left: -40px;
-}
-
-/* position LEFT for sent (right side bubble) */
 .message.sent .action-toolbar {
-    right: -40px;  /* WAS -6px → FIXED */
+    right: auto;
+    left: 6px;
 }
 
-/* now they become clickable */
 .message:hover .action-toolbar {
     opacity: 1;
     pointer-events: auto;
 }
 
 .action-toolbar button {
+    width: 30px;
+    height: 30px;
     background: rgba(0,0,0,0.10);
     border: none;
-    padding: 6px 8px;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 14px;
-    z-index: 99999;
 }
 
 .message.sent .action-toolbar button {
     background: rgba(255,255,255,0.25);
 }
-.react-btn,
-.more-btn {
-    background: rgba(0,0,0,0.10);
-    border: none;
-    padding: 6px 8px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.react-btn:hover,
-.more-btn:hover {
-    background: rgba(0,0,0,0.20);
-}
 
 /* ============================================================
    POPUP MENU
 ============================================================ */
-#msg-action-popup {
+.msg-action-popup {
     position: absolute;
-    z-index: 99999;
     background: var(--bg);
-    padding: 10px;
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,.25);
+    border: 1px solid rgba(0,0,0,0.15);
+    padding: 8px 0;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    z-index: 999999;
     display: none;
-    transform-origin: top;
-    animation: popupDrop .22s ease;
 }
 
-@keyframes popupDrop {
-    from { opacity: 0; transform: translateY(-6px) scale(.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-#msg-action-popup button {
-    padding: 10px 14px;
+.msg-action-popup button {
     width: 100%;
-    background: transparent;
+    padding: 10px 14px;
+    background: none;
     border: none;
     text-align: left;
-    font-size: 14px;
     cursor: pointer;
 }
 
-#msg-action-popup button:hover {
-    background: rgba(0,0,0,0.05);
+.msg-action-popup button:hover {
+    background: rgba(0,0,0,0.06);
 }
 
 /* ============================================================
@@ -394,47 +340,18 @@ body {
     background: var(--bg);
     border-radius: 30px;
     border: 1px solid rgba(0,0,0,0.12);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
     display: none;
     gap: 8px;
-    z-index: 9999999;
-    animation: reactionPop .2s ease;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    z-index: 999999;
 }
 
-@keyframes reactionPop {
-    from { transform: scale(.85); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
+#reaction-picker.show { display: flex; }
 
 .reaction-bar {
     display: inline-flex;
     gap: 6px;
     margin-top: 4px;
-    margin-left: 6px;
-    align-items: center;
-}
-
-.reaction-item {
-    background: rgba(255,255,255,0.6);
-    padding: 3px 7px;
-    border-radius: 14px;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-    transition: transform .18s ease, background .18s ease;
-}
-
-.reaction-item:hover {
-    transform: scale(1.12);
-    background: rgba(255,255,255,0.95);
-}
-
-.reaction-count {
-    font-size: 12px;
-    color: var(--text-light);
 }
 
 /* ============================================================
@@ -455,11 +372,6 @@ body {
     border: 1px solid var(--input-border);
     padding: 10px 16px;
     border-radius: 20px;
-    transition: box-shadow .22s ease;
-}
-
-.chat-input-box:focus-within {
-    box-shadow: 0 0 0 2px rgba(0,132,255,0.35);
 }
 
 .chat-input-box input {
@@ -473,18 +385,9 @@ body {
 #upload-btn {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
-    border: none;
     background: transparent;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    border: none;
     cursor: pointer;
-    transition: transform .2s ease;
-}
-
-#upload-btn:hover {
-    transform: scale(1.12);
 }
 
 #upload-btn img {
@@ -501,15 +404,10 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: transform .25s ease;
-}
-
-.chat-send-btn:hover {
-    transform: scale(1.12);
 }
 
 .chat-send-btn i {
-    color: #fff;
+    color: white;
     font-size: 20px;
 }
 
@@ -521,8 +419,6 @@ body {
     padding: 10px;
     border-top: 1px solid var(--input-border);
     display: none;
-    max-height: 130px;
-    overflow-y: auto;
 }
 
 .preview-files {
@@ -531,21 +427,8 @@ body {
     overflow-x: auto;
 }
 
-.preview-item {
-    position: relative;
-    flex-shrink: 0;
-}
-
-.preview-thumb {
-    width: 85px;
-    height: 85px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    object-fit: cover;
-}
-
 /* ============================================================
-   SCROLL BOTTOM BUTTON
+   SCROLL TO BOTTOM BUTTON
 ============================================================ */
 .scroll-bottom-btn {
     position: absolute;
@@ -560,10 +443,9 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 20px;
     opacity: 0;
     pointer-events: none;
-    transition: all .25s;
+    transition: .25s;
 }
 
 .scroll-bottom-btn.show {
@@ -581,17 +463,7 @@ body {
     display: none;
     justify-content: center;
     align-items: center;
-    z-index: 2000000;
-}
-
-#lightbox-overlay.show .lightbox-image,
-#lightbox-overlay.show .lightbox-video {
-    animation: zoomLightbox .28s ease;
-}
-
-@keyframes zoomLightbox {
-    from { opacity: 0; transform: scale(.92); }
-    to { opacity: 1; transform: scale(1); }
+    z-index: 200000;
 }
 
 #lightbox-overlay.show {
@@ -602,50 +474,5 @@ body {
 .lightbox-video {
     max-width: 92vw;
     max-height: 83vh;
-    object-fit: contain;
     border-radius: 8px;
-}
-
-.lightbox-close {
-    top: 20px;
-    right: 20px;
-    position: absolute;
-    font-size: 42px;
-    cursor: pointer;
-    color: #fff;
-}
-
-.lightbox-nav {
-    position: absolute;
-    top: 50%;
-    font-size: 48px;
-    border: none;
-    background: none;
-    color: #fff;
-    cursor: pointer;
-}
-
-.prev { left: 20px; }
-.next { right: 20px; }
-
-.lightbox-download {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    font-size: 22px;
-    color: #fff;
-}
-
-.lightbox-index {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    color: #fff;
-}
-/* FORCE toolbar above bubbles */
-.action-toolbar,
-.action-toolbar button {
-    position: relative;
-    z-index: 999999 !important;
-    pointer-events: auto !important;
 }
