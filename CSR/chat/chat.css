@@ -208,7 +208,7 @@
 }
 
 /* ===========================================================
-   TEMPORARY SENDING / UPLOADING BUBBLE
+   TEMPORARY / UPLOADING BUBBLE
 =========================================================== */
 .uploading-bubble {
   display: flex;
@@ -229,22 +229,13 @@
 }
 
 @keyframes dotPulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scale(1.8);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0.5;
-  }
+  0% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.8); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.5; }
 }
 
 /* ===========================================================
-   ACTION TOOLBAR (⋮ options: edit / delete / unsend)
+   ACTION TOOLBAR (⋮)
 =========================================================== */
 .more-btn {
   width: 26px;
@@ -275,7 +266,7 @@
 }
 
 /* ===========================================================
-   ACTION POPUP (edit / unsend / delete)
+   ACTION POPUP
 =========================================================== */
 #msg-action-popup {
   position: absolute;
@@ -297,7 +288,6 @@
   cursor: pointer;
   font-size: 14px;
 }
-
 #msg-action-popup button:hover {
   background: rgba(0,0,0,0.06);
 }
@@ -337,25 +327,6 @@
 }
 
 /* ===========================================================
-   MEDIA + CAROUSEL
-=========================================================== */
-.carousel-container {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 6px 0;
-}
-.carousel-img,
-.carousel-video {
-  width: 150px;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 12px;
-  cursor: pointer;
-}
-
-
-/* ===========================================================
    INLINE PREVIEW BAR
 =========================================================== */
 .preview-inline {
@@ -364,12 +335,14 @@
   border-top: 1px solid #ccc;
   padding: 10px 14px;
   box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
+  max-height: 130px;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .preview-files {
   display: flex;
   gap: 10px;
-  overflow-x: auto;
 }
 
 .preview-item {
@@ -462,12 +435,12 @@
   box-shadow: 0 4px 14px rgba(0,0,0,0.35);
   z-index: 50;
 }
-.scroll-bottom-btn i {
-  color: white;
-  font-size: 22px;
-}
 .scroll-bottom-btn.show {
   display: flex;
+}
+.scroll-bottom-btn i {
+  font-size: 22px;
+  color: white;
 }
 
 /* ===========================================================
@@ -505,9 +478,10 @@
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
+}
 
 /* ===========================================================
-   IMPROVED MEDIA GRID (Messenger Style)
+   MESSENGER-STYLE MEDIA GRID (FINAL FIX)
 =========================================================== */
 .media-grid {
     display: grid;
@@ -517,7 +491,7 @@
     overflow: hidden;
 }
 
-/* Base image/video styling */
+/* Base Thumbnail Style */
 .media-grid img,
 .media-grid video {
     width: 100%;
@@ -527,10 +501,9 @@
     cursor: pointer;
 }
 
-
-/* ==========================
+/* -----------------------
    1 item
-========================== */
+----------------------- */
 .media-1 {
     grid-template-columns: 1fr;
 }
@@ -539,10 +512,9 @@
     height: 260px;
 }
 
-
-/* ==========================
+/* -----------------------
    2 items
-========================== */
+----------------------- */
 .media-2 {
     grid-template-columns: 1fr 1fr;
 }
@@ -551,10 +523,9 @@
     height: 200px;
 }
 
-
-/* ==========================
-   3 items (Messenger Layout)
-========================== */
+/* -----------------------
+   3 items
+----------------------- */
 .media-3 {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 130px 150px;
@@ -568,10 +539,9 @@
     height: 170px;
 }
 
-
-/* ==========================
+/* -----------------------
    4 items
-========================== */
+----------------------- */
 .media-4 {
     grid-template-columns: 1fr 1fr;
 }
@@ -580,13 +550,11 @@
     height: 150px;
 }
 
-
-/* ==========================
-   5 OR MORE — show 4 + overlay
-========================== */
+/* -----------------------
+   5+ items (show 4 + overlay)
+----------------------- */
 .media-5 {
     grid-template-columns: 1fr 1fr;
-    position: relative;
 }
 .media-5 img,
 .media-5 video {
@@ -608,5 +576,3 @@
     align-items: center;
     border-radius: 12px;
 }
-
-
