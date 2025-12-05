@@ -60,59 +60,69 @@ try {
         $mediaStmt->execute([$msgID]);
         $mediaList = $mediaStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        /* ==========================
-           MULTIPLE MEDIA (GRID)
-        ========================== */
-        if ($mediaList && count($mediaList) > 1) {
+/* ==============================
+   MULTIPLE MEDIA (GRID)
+============================== */
+if ($mediaList && count($mediaList) > 1) {
 
-            echo "<div class='media-grid'>";
+    $count = count($mediaList);
 
-            foreach ($mediaList as $m) {
+    $cols = "cols-1";
+    if ($count == 2) $cols = "cols-2";
+    if ($count == 3) $cols = "cols-3";
+    if ($count >= 4) $cols = "cols-4";
 
-                $mediaID = (int)$m["id"];
-                $src = "../chat/get_media.php?id=$mediaID";
+    echo "<div class='media-grid $cols'>";
 
-                if ($m["media_type"] === "image") {
-                    echo "<img src='$src' data-full='$src' class='fullview-item'>";
-                }
-                elseif ($m["media_type"] === "video") {
-                    echo "<video data-full='$src' class='fullview-item'>
-                            <source src='$src' type='video/mp4'>
-                          </video>";
-                }
-                else {
-                    echo "<a href='$src' download class='download-btn'>📎 File</a>";
-                }
-            }
+    foreach ($mediaList as $m) {
 
-            echo "</div>"; // media-grid
+        $mediaID = (int)$m["id"];
+        $src = "../chat/get_media.php?id=$mediaID";
+
+        if ($m["media_type"] === "image") {
+            echo "<img src='$src' data-full='$src' class='fullview-item'>";
         }
-
-        /* ==========================
-           SINGLE MEDIA
-        ========================== */
-        elseif ($mediaList && count($mediaList) === 1) {
-
-            $media = $mediaList[0];
-            $mediaID = (int)$media["id"];
-            $src = "../chat/get_media.php?id=$mediaID";
-
-            echo "<div class='media-grid'>";
-
-            if ($media["media_type"] === "image") {
-                echo "<img src='$src' data-full='$src' class='fullview-item'>";
-            }
-            elseif ($media["media_type"] === "video") {
-                echo "<video class='fullview-item' controls>
-                        <source src='$src' type='video/mp4'>
-                      </video>";
-            }
-            else {
-                echo "<a href='$src' download class='download-btn large'>📎 Download File</a>";
-            }
-
-            echo "</div>";
+        elseif ($m["media_type"] === "video") {
+            echo "<video data-full='$src' class='fullview-item'>
+                    <source src='$src' type='video/mp4'>
+                  </video>";
         }
+        else {
+            echo "<a href='$src' download class='download-btn'>📎 File</a>";
+        }
+    }
+
+    echo "</div>"; // media-grid
+}
+
+
+/* ==============================
+   SINGLE MEDIA
+============================== */
+elseif ($mediaList && count($mediaList) === 1) {
+
+    $cols = "cols-1";
+    echo "<div class='media-grid $cols'>";
+
+    $media = $mediaList[0];
+    $mediaID = (int)$media["id"];
+    $src = "../chat/get_media.php?id=$mediaID";
+
+    if ($media["media_type"] === "image") {
+        echo "<img src='$src' data-full='$src' class='fullview-item'>";
+    }
+    elseif ($media["media_type"] === "video") {
+        echo "<video class='fullview-item' controls>
+                <source src='$src' type='video/mp4'>
+              </video>";
+    }
+    else {
+        echo "<a href='$src' download class='download-btn large'>📎 Download File</a>";
+    }
+
+    echo "</div>";
+}
+
 
         /* ==========================
            TEXT MESSAGE
