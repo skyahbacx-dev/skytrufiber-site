@@ -91,7 +91,7 @@ function sendMessage() {
 
     if (selectedFiles.length > 0) return uploadMedia(msg);
 
-    appendClientBubble(msg);
+    
     $("#message-input").val("");
 
     $.post("send_message_client.php", { username, message: msg }, () => {
@@ -186,9 +186,14 @@ function fetchNewMessages() {
         const currentLastId = container.find(".message:last").data("msg-id") || 0;
 
         newMsgs.each(function () {
-            const id = $(this).data("msg-id");
-            if (id > currentLastId) container.append($(this));
-        });
+        const id = $(this).data("msg-id");
+
+        // Skip if already exists in DOM
+        if ($(`.message[data-msg-id='${id}']`).length) return;
+
+       container.append($(this));
+      });
+
 
         attachMediaEvents();
         bindReactionButtons();
