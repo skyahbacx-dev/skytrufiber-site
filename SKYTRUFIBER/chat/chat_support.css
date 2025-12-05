@@ -201,9 +201,7 @@ body {
     border-radius: 50%;
 }
 
-.message.no-avatar .message-avatar {
-    display: none;
-}
+.message.no-avatar .message-avatar { display: none; }
 
 .message-content {
     max-width: 70%;
@@ -264,15 +262,17 @@ body {
 }
 
 .media-grid img:hover,
-.media-grid video:hover { transform: scale(1.03); }
+.media-grid video:hover {
+    transform: scale(1.03);
+}
 
 /* ============================================================
-   ACTION TOOLBAR — OPTION A (inside bubble edge)
+   ACTION TOOLBAR — FIXED CLICKABLE
 ============================================================ */
 .action-toolbar {
     position: absolute;
     top: 8px;
-    right: 6px;
+    right: -4px;
     display: flex;
     gap: 6px;
     opacity: 0;
@@ -282,8 +282,8 @@ body {
 }
 
 .message.sent .action-toolbar {
+    left: -4px;
     right: auto;
-    left: 6px;
 }
 
 .message:hover .action-toolbar {
@@ -298,36 +298,43 @@ body {
     border: none;
     border-radius: 50%;
     cursor: pointer;
+    z-index: 99999;
 }
 
 .message.sent .action-toolbar button {
-    background: rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.28);
 }
 
 /* ============================================================
-   POPUP MENU
+   POPUP MENU (below ⋯ button)
 ============================================================ */
-.msg-action-popup {
+#msg-action-popup {
     position: absolute;
     background: var(--bg);
     border-radius: 12px;
     border: 1px solid rgba(0,0,0,0.15);
     padding: 8px 0;
     box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-    z-index: 999999;
+    z-index: 9999999;
     display: none;
+    animation: fadeDrop .22s ease;
 }
 
-.msg-action-popup button {
+@keyframes fadeDrop {
+    from { opacity:0; transform: translateY(-4px) scale(.96); }
+    to   { opacity:1; transform: translateY(0) scale(1); }
+}
+
+#msg-action-popup button {
     width: 100%;
     padding: 10px 14px;
-    background: none;
     border: none;
+    background: none;
     text-align: left;
     cursor: pointer;
 }
 
-.msg-action-popup button:hover {
+#msg-action-popup button:hover {
     background: rgba(0,0,0,0.06);
 }
 
@@ -343,16 +350,10 @@ body {
     display: none;
     gap: 8px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-    z-index: 999999;
+    z-index: 9999999;
 }
 
 #reaction-picker.show { display: flex; }
-
-.reaction-bar {
-    display: inline-flex;
-    gap: 6px;
-    margin-top: 4px;
-}
 
 /* ============================================================
    INPUT AREA
@@ -385,14 +386,9 @@ body {
 #upload-btn {
     width: 40px;
     height: 40px;
-    background: transparent;
+    background: none;
     border: none;
     cursor: pointer;
-}
-
-#upload-btn img {
-    width: 24px;
-    opacity: 0.8;
 }
 
 .chat-send-btn {
@@ -407,7 +403,7 @@ body {
 }
 
 .chat-send-btn i {
-    color: white;
+    color: #fff;
     font-size: 20px;
 }
 
@@ -428,7 +424,7 @@ body {
 }
 
 /* ============================================================
-   SCROLL TO BOTTOM BUTTON
+   SCROLL BUTTON
 ============================================================ */
 .scroll-bottom-btn {
     position: absolute;
@@ -437,7 +433,7 @@ body {
     width: 46px;
     height: 46px;
     background: var(--scroll-btn-bg);
-    color: white;
+    color: #fff;
     border-radius: 50%;
     border: none;
     display: flex;
@@ -463,7 +459,7 @@ body {
     display: none;
     justify-content: center;
     align-items: center;
-    z-index: 200000;
+    z-index: 2000000;
 }
 
 #lightbox-overlay.show {
@@ -474,5 +470,6 @@ body {
 .lightbox-video {
     max-width: 92vw;
     max-height: 83vh;
+    object-fit: contain;
     border-radius: 8px;
 }
