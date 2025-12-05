@@ -85,30 +85,46 @@ function toggleTheme() {
    SEND MESSAGE
 ============================================================ */
 function sendMessage() {
-    const msg = $("#message-input").val().trim();
 
+    const msg = $("#message-input").val().trim();
     if (!msg && selectedFiles.length === 0) return;
 
+    // UPLOAD MEDIA → different handler
     if (selectedFiles.length > 0) return uploadMedia(msg);
 
-    
+    // 1. Create a temporary bubble
+    const tempId = appendClientBubble(msg);
     $("#message-input").val("");
 
-    $.post("send_message_client.php", { username, message: msg }, () => {
+    // 2. Send to server
+    $.post("send_message_client.php", { username, message: msg }, response => {
+
+        // Remove temporary bubble
+        $(`.message[data-msg-id='${tempId}']`).remove();
+
+        // Reload REAL messages from server
         fetchNewMessages();
+
     });
 }
 
+
 function appendClientBubble(msg) {
+    const tempId = "temp-" + Date.now();
+
     $("#chat-messages").append(`
-        <div class="message sent no-avatar">
+        <div class="message sent no-avatar" data-msg-id="${tempId}">
             <div class="message-content">
                 <div class="message-bubble">${msg}</div>
+                <div class="message-time">Sending...</div>
             </div>
         </div>
     `);
+
     scrollToBottom();
+    return tempId; // return the temporary bubble ID
 }
+
 
 /* ============================================================
    PREVIEW MULTIPLE
