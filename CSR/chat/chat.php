@@ -15,6 +15,7 @@ $csrUser = $_SESSION["csr_user"];
             <h3>Clients</h3>
             <input type="text" id="client-search" placeholder="Search clients...">
         </div>
+
         <div id="client-list" class="client-list"></div>
     </div>
 
@@ -37,12 +38,12 @@ $csrUser = $_SESSION["csr_user"];
             <!-- CHAT MESSAGES -->
             <div id="chat-messages" class="chat-messages"></div>
 
-            <!-- SCROLL TO BOTTOM BUTTON -->
+            <!-- SCROLL BUTTON -->
             <button id="scroll-bottom-btn" class="scroll-bottom-btn">
                 <i class="fa fa-arrow-down"></i>
             </button>
 
-            <!-- PREVIEW BAR -->
+            <!-- MEDIA PREVIEW BAR -->
             <div id="preview-inline" class="preview-inline">
                 <div id="preview-files" class="preview-files"></div>
             </div>
@@ -50,14 +51,17 @@ $csrUser = $_SESSION["csr_user"];
             <!-- INPUT AREA -->
             <div class="chat-input-area">
 
-                <input type="file" id="chat-upload-media" accept="image/*,video/*,application/pdf" multiple hidden>
+                <input type="file" id="chat-upload-media"
+                       accept="image/*,video/*,application/pdf" multiple hidden>
 
                 <button id="upload-btn" class="upload-btn">
                     <i class="fa fa-paperclip"></i>
                 </button>
 
                 <div class="chat-input-box">
-                    <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
+                    <input type="text" id="chat-input"
+                           placeholder="Type a message..."
+                           autocomplete="off">
                 </div>
 
                 <button id="send-btn" class="chat-send-btn">
@@ -66,9 +70,9 @@ $csrUser = $_SESSION["csr_user"];
 
             </div>
 
-        </div> <!-- chat-wrapper -->
+        </div> <!-- /chat-wrapper -->
 
-        <!-- ACTION POPUP -->
+        <!-- ACTION MENU POPUP -->
         <div id="msg-action-popup" class="msg-action-popup">
             <button class="action-edit"><i class="fa fa-pen"></i> Edit</button>
             <button class="action-unsend"><i class="fa fa-ban"></i> Unsend</button>
@@ -76,7 +80,7 @@ $csrUser = $_SESSION["csr_user"];
             <button class="action-cancel">Cancel</button>
         </div>
 
-    </div> <!-- chat-middle-panel -->
+    </div> <!-- /chat-middle-panel -->
 
     <!-- RIGHT PANEL -->
     <div class="chat-right-panel">
@@ -87,15 +91,24 @@ $csrUser = $_SESSION["csr_user"];
         </div>
     </div>
 
-</div>
+</div> <!-- /chat-container -->
 
+
+<!-- Hidden: Logged in CSR username -->
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
 
-<!-- GLOBAL LIGHTBOX VIEWER -->
+
+<!-- =============================
+     GLOBAL LIGHTBOX (updated)
+============================= -->
 <div id="lightbox-overlay">
+
+    <!-- Close X -->
     <span id="lightbox-close">&times;</span>
 
+    <!-- MAIN CENTERED VIEW -->
     <div id="lightbox-main-wrapper">
+
         <button id="lightbox-prev" class="lb-arrow">&#10094;</button>
 
         <img id="lightbox-image" class="lb-media">
@@ -104,8 +117,14 @@ $csrUser = $_SESSION["csr_user"];
         <button id="lightbox-next" class="lb-arrow">&#10095;</button>
     </div>
 
-    <!-- THUMBNAIL CAROUSEL -->
+    <!-- DOWNLOAD BUTTON -->
+    <a id="lightbox-download" class="lightbox-download" download>
+        <i class="fa fa-download"></i>
+    </a>
+
+    <!-- THUMBNAIL BAR -->
     <div id="lightbox-thumbs"></div>
+
 </div>
 
 
