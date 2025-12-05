@@ -367,3 +367,103 @@ function unassignClient(id) {
             $("#client-info-content").html("<p>Select a client.</p>");
     });
 }
+// -------------------------------------------------------
+// GLOBAL MEDIA SLIDESHOW STORAGE
+// -------------------------------------------------------
+let allMedia = [];          // [{src,type,index}, ...]
+let currentSlide = 0;
+
+// -------------------------------------------------------
+// Build media array every time messages load
+// -------------------------------------------------------
+function collectAllMedia() {
+    allMedia = [];
+
+    $(".fullview-item").each(function () {
+        const src = $(this).attr("data-full") || $(this).attr("src");
+        const type = this.tagName.toLowerCase() === "video" ? "video" : "image";
+        const index = parseInt($(this).attr("data-media-index"));
+
+        allMedia.push({ src, type, index });
+    });
+
+    // Sort by index to maintain chronological order
+    allMedia.sort((a, b) => a.index - b.index);
+}
+
+// -------------------------------------------------------
+// Open Lightbox
+// -------------------------------------------------------
+$(document).on("click", ".fullview-item", function () {
+
+    collectAllMedia();
+
+    currentSlide = parseInt($(this).attr("data-media-index"));
+
+    $("#lightbox-overlay").fadeIn(150);
+    showSlide(currentSlide);
+});
+
+// -------------------------------------------------------
+// Display selected slide
+// -------------------------------------------------------
+function showSlide(i) {
+    const item = allMedia[i];
+    if (!item) return;
+
+    $(".lb-media").hide();
+
+    if (item.type === "image") {
+        $("#lightbox-image").attr("src", item.src).show();
+    } else {
+        $("#lightbox-video").attr("src", item.src).show();
+    }
+
+    currentSlide = i;
+    rebuildThumbs();
+}
+
+// -------------------------------------------------------
+// Next / Prev buttons
+// -------------------------------------------------------
+$("#lightbox-next").click(() => {
+    if (currentSlide < allMedia.length - 1)
+        showSlide(currentSlide + 1);
+});
+
+$("#lightbox-prev").click(() => {
+    if (currentSlide > 0)
+        showSlide(currentSlide - 1);
+});
+
+// -------------------------------------------------------
+// Thumbnail bar
+// -------------------------------------------------------
+function rebuildThumbs() {
+
+    $("#lightbox-thumbs").html("");
+
+    allMedia.forEach((m, i) => {
+        const active = (i === currentSlide) ? "thumb-active" : "";
+
+        const el = `
+            <img src="${m.src}" class="thumb ${active}" data-i="${i}">
+        `;
+
+        $("#lightbox-thumbs").append(el);
+    });
+}
+
+$(document).on("click", ".thumb", function () {
+    showSlide(parseInt($(this).attr("data-i")));
+});
+
+// -------------------------------------------------------
+// Close lightbox
+// -------------------------------------------------------
+$("#lightbox-close, #lightbox-overlay").click(function (e) {
+    if (e.target.id === "lightbox-overlay" || e.target.id === "lightbox-close") {
+        $("#lightbox-overlay").fadeOut(150);
+        $("#lightbox-video").trigger("pause");
+    }
+});
