@@ -29,7 +29,7 @@ try {
 
         echo "<div class='message $sender' data-msg-id='$msgID'>";
 
-        // Avatar
+        /* AVATAR */
         echo "<div class='message-avatar'>
                 <img src='/upload/default-avatar.png'>
               </div>";
@@ -37,7 +37,7 @@ try {
         echo "<div class='message-content'>";
 
         /* ==========================
-           ACTION TOOLBAR (⋮ button)
+           ACTION TOOLBAR
         =========================== */
         echo "
             <div class='action-toolbar'>
@@ -49,9 +49,9 @@ try {
 
         echo "<div class='message-bubble'>";
 
-        /* =====================================================
-           LOAD MEDIA
-        ====================================================== */
+        /* ==========================
+           LOAD MEDIA LIST
+        =========================== */
         $mediaStmt = $conn->prepare("
             SELECT id, media_type
             FROM chat_media
@@ -62,13 +62,17 @@ try {
 
         $count = count($mediaList);
 
-        /* Determine grid layout class */
-        if ($count == 1)            $gridClass = "media-1";
-        elseif ($count == 2)        $gridClass = "media-2";
-        elseif ($count == 3)        $gridClass = "media-3";
-        elseif ($count == 4)        $gridClass = "media-4";
-        elseif ($count >= 5)        $gridClass = "media-5";
-        else                        $gridClass = "";
+        /* Determine grid class: 1–10 items */
+        if ($count <= 1)      $gridClass = "media-1";
+        elseif ($count == 2) $gridClass = "media-2";
+        elseif ($count == 3) $gridClass = "media-3";
+        elseif ($count == 4) $gridClass = "media-4";
+        elseif ($count == 5) $gridClass = "media-5";
+        elseif ($count == 6) $gridClass = "media-6";
+        elseif ($count == 7) $gridClass = "media-7";
+        elseif ($count == 8) $gridClass = "media-8";
+        elseif ($count == 9) $gridClass = "media-9";
+        else                 $gridClass = "media-10"; // 10+ items → max grid
 
         /* ==========================
            RENDER MEDIA GRID
@@ -77,58 +81,80 @@ try {
 
             echo "<div class='media-grid $gridClass'>";
 
-            // For 5+ media, show only 4 and overlay "+X more"
-            $limit = ($count >= 5) ? 4 : $count;
+            // 5+ = show first 4 + overlay
+            $visible = ($count >= 5) ? 4 : $count;
 
-            for ($i = 0; $i < $limit; $i++) {
+            for ($i = 0; $i < $visible; $i++) {
 
                 $m = $mediaList[$i];
                 $mediaID = (int)$m["id"];
-                $src = "../chat/get_media.php?id=$mediaID";
+                
+                // Use thumbnail mode for faster grid load
+                $fullSrc = "../chat/get_media.php?id=$mediaID";
+                $thumbSrc = "../chat/get_media.php?id=$mediaID&thumb=1";
 
-                // Overlay needed?
-                $isLast = ($count >= 5 && $i == 3);
-                $extraDiv = $isLast ? "media-more-overlay' data-more='+".($count-4)."'" : "'";
+                $overlay = "";
+                $openDiv = "<div class='media-item'>";
 
-                echo "<div class=$extraDiv>";
+                if ($count >= 5 && $i == 3) {
+                    $extra = $count - 4;
+                    $openDiv = "<div class='media-item media-more-overlay' data-more='+$extra'>";
+                }
 
+                echo $openDiv;
+
+                /* IMAGE */
                 if ($m["media_type"] === "image") {
-                    echo "<img src='$src' data-full='$src' class='fullview-item'>";
+                    echo "
+                        <img src='$thumbSrc'
+                             data-full='$fullSrc'
+                             class='fullview-item media-thumb'>
+                    ";
                 }
+
+                /* VIDEO – show snapshot thumbnail */
                 elseif ($m["media_type"] === "video") {
-                    echo "<video data-full='$src' class='fullview-item'>
-                            <source src='$src' type='video/mp4'>
-                          </video>";
+
+                    // Use poster frame via same thumb endpoint (fast)
+                    echo "
+                        <video class='media-thumb fullview-item' 
+                               data-full='$fullSrc'
+                               muted>
+                            <source src='$fullSrc' type='video/mp4'>
+                        </video>
+                    ";
                 }
+
+                /* FILE */
                 else {
-                    echo "<a href='$src' download class='download-btn'>📎 File</a>";
+                    echo "<a href='$fullSrc' download class='download-btn'>📎 File</a>";
                 }
 
-                echo "</div>";
-            } // for each media
+                echo "</div>"; // end media-item
+            }
 
-            echo "</div>"; // media-grid
+            echo "</div>"; // end media-grid
         }
 
         /* ==========================
            TEXT MESSAGE
         =========================== */
         if (!empty($msg["message"])) {
-            $safeText = nl2br(htmlspecialchars($msg["message"]));
-            echo "<div class='msg-text'>$safeText</div>";
+            $safe = nl2br(htmlspecialchars($msg["message"]));
+            echo "<div class='msg-text'>$safe</div>";
         }
 
         echo "</div>"; // message-bubble
 
-        /* Edited label */
+        /* Edited tag */
         if (!empty($msg["edited"])) {
             echo "<div class='edited-label'>(edited)</div>";
         }
 
         echo "<div class='message-time'>$timestamp</div>";
 
-        echo "</div>"; // content
-        echo "</div>"; // wrapper
+        echo "</div>"; // message-content
+        echo "</div>"; // message
     }
 
 } catch (Exception $e) {
