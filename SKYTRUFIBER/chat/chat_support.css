@@ -348,12 +348,25 @@ body {
 }
 
 #upload-btn {
-    width: 42px;
-    height: 42px;
-    background: transparent;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
     border: none;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
 }
 
+#upload-btn img {
+    width: 24px;
+    opacity: 0.8;
+}
+
+#upload-btn:hover img {
+    opacity: 1;
+}
 .chat-send-btn,
 #send-btn {
     width: 48px;
@@ -372,12 +385,27 @@ body {
     padding: 10px;
     border-top: 1px solid var(--input-border);
     display: none;
+    max-height: 130px;      /* Limit height */
+    overflow-y: auto;
 }
 
 .preview-files {
     display: flex;
     gap: 10px;
     overflow-x: auto;
+}
+
+.preview-item {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.preview-thumb {
+    width: 85px;            /* Smaller square preview */
+    height: 85px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    object-fit: cover;      /* Ensures it crops instead of stretching */
 }
 
 /* ============================================================
