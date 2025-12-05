@@ -1,6 +1,6 @@
-/* ===========================================
-   CHAT CORE LAYOUT — GRID PANELS
-   =========================================== */
+/* ============================================================
+   LAYOUT PANELS
+============================================================ */
 #chat-container {
   display: grid;
   grid-template-columns: 300px auto 320px;
@@ -9,7 +9,7 @@
   background: #f8fdfb;
 }
 
-/* LEFT PANEL — CLIENT LIST */
+/* LEFT PANEL ------------------------------------------------ */
 .chat-left-panel {
   background: #ffffff;
   border-right: 1px solid #dcdcdc;
@@ -22,22 +22,24 @@
   padding: 8px 12px;
   border: 1px solid #ccc;
   border-radius: 14px;
-  display: block;
   margin: 12px auto;
   font-size: 14px;
+  display: block;
 }
 
 .client-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: 14px;
   cursor: pointer;
   border-bottom: 1px solid #f1f1f1;
   transition: 0.15s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.client-item.active-client,
-.client-item:hover { background: #dfffe0; }
+.client-item:hover,
+.client-item.active-client {
+  background: #dfffe0;
+}
 
 .client-info {
   display: flex;
@@ -45,15 +47,19 @@
   flex: 1;
   margin-left: 8px;
 }
+.client-info strong {
+  font-size: 15px;
+  color: #004700;
+}
+.last-msg {
+  font-size: 12px;
+  color: #888;
+}
 
-.client-info strong { font-size: 15px; color: #004700; }
-.last-msg { font-size: 12px; color: #888; }
-
-/* ===========================================
-   CHAT WINDOW
-   =========================================== */
+/* ============================================================
+   CHAT PANEL (Middle)
+============================================================ */
 .chat-middle-panel {
-  position: relative;
   display: flex;
   flex-direction: column;
   background: #f1f8f1;
@@ -66,24 +72,34 @@
   height: 100%;
 }
 
-/* CHAT HEADER */
+/* HEADER ---------------------------------------------------- */
 .chat-header {
   padding: 14px 20px;
-  background: white;
+  background: #fff;
   border-bottom: 1px solid #dcdcdc;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.chat-with { display: flex; gap: 10px; align-items: center; }
-#chat-client-name { font-size: 18px; font-weight: bold; color: #004700; }
+#chat-client-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #004700;
+}
 
 .status-dot {
-  width: 12px; height: 12px; border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
 }
-.status-dot.online { background: #2ecc71; box-shadow: 0 0 6px rgba(46,204,113,0.7); }
-.status-dot.offline { background: #bbb; }
+.status-dot.online {
+  background: #2ecc71;
+  box-shadow: 0 0 6px rgba(46,204,113,0.7);
+}
+.status-dot.offline {
+  background: #bbb;
+}
 
 .typing-indicator {
   font-size: 13px;
@@ -91,9 +107,9 @@
   font-style: italic;
 }
 
-/* ===========================================
+/* ============================================================
    CHAT MESSAGES
-   =========================================== */
+============================================================ */
 .chat-messages {
   flex: 1;
   display: flex;
@@ -103,456 +119,309 @@
   overflow-y: auto;
   background: #f8fdfb;
 }
-.chat-messages::-webkit-scrollbar { width: 6px; }
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
 .chat-messages::-webkit-scrollbar-thumb {
-  background: #b9e1c7; border-radius: 8px;
+  background: #b9e1c7;
+  border-radius: 8px;
 }
 
-/* MESSAGE BUBBLES */
+/* MESSAGE BUBBLES ------------------------------------------ */
 .message {
   display: flex;
   gap: 10px;
   align-items: flex-end;
   max-width: 70%;
-  animation: fadeInUp .25s ease;
+  animation: fadeInUp 0.25s ease;
+  position: relative;
 }
-.message.received { align-self: flex-start; flex-direction: row; }
-.message.sent { align-self: flex-end; flex-direction: row-reverse; }
+.message.sent {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+.message.received {
+  align-self: flex-start;
+  flex-direction: row;
+}
 
-.message-avatar {
-  width: 38px; height: 38px;
+.message-avatar img {
+  width: 38px;
+  height: 38px;
+  object-fit: cover;
   border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
 }
-.message-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
+/* Bubble */
 .message-bubble {
   padding: 12px 18px;
   border-radius: 20px;
+  background: #e6e6e6;
   font-size: 15px;
   line-height: 1.4;
-  box-shadow: 0px 2px 6px rgba(0,0,0,0.08);
-  background: #e6e6e6;
   color: #111;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  word-break: break-word;
+  transition: 0.25s;
 }
-.message-bubble:hover { transform: scale(1.02); }
-
-.received .message-bubble { border-radius: 20px 20px 20px 4px; }
 .sent .message-bubble {
   background: #0084ff;
-  color: white;
+  color: #fff;
   border-radius: 20px 20px 4px 20px;
 }
+.received .message-bubble {
+  border-radius: 20px 20px 20px 4px;
+}
 
-/* SENDING / UPLOADING PLACEHOLDER BUBBLE */
+/* Sending bubble dots */
 .uploading-bubble {
   display: flex;
   gap: 4px;
-  align-items: center;
 }
 .uploading-bubble .dot {
   width: 8px;
   height: 8px;
   background: white;
   border-radius: 50%;
-  animation: dotPulse 1.1s infinite ease-in-out;
-}
-.uploading-bubble .dot:nth-child(2) { animation-delay: .2s; }
-.uploading-bubble .dot:nth-child(3) { animation-delay: .4s; }
-
-@keyframes dotPulse {
-  0% { transform: scale(1); opacity:.5; }
-  50% { transform: scale(1.8); opacity:1; }
-  100% { transform: scale(1); opacity:.5; }
+  animation: dotPulse 1.1s infinite;
 }
 
-/* READ RECEIPTS */
-.msg-status {
-  font-size: 13px;
-  margin-left: 6px;
-}
-.msg-status.delivered { color: #c8c8c8; }
-.msg-status.seen { color: #00c3ff; font-weight: bold; }
-
-/* CAROUSEL MEDIA */
-.carousel-container {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 6px 0;
-}
-.carousel-container::-webkit-scrollbar { height: 6px; }
-.carousel-container::-webkit-scrollbar-thumb {
-  background: #b9e1c7; border-radius: 6px;
-}
-
-.carousel-img, .carousel-video {
-  width: 140px; height: 140px;
-  border-radius: 12px;
-  object-fit: cover;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-/* Single image fallback */
-.message-bubble img {
-  max-width: 240px;
-  max-height: 260px;
-  border-radius: 12px;
-  margin-top: 6px;
-  cursor: pointer;
-  object-fit: cover;
-}
-
+/* Time stamp */
 .message-time {
   font-size: 11px;
-  opacity: .6;
+  opacity: 0.6;
   margin-top: 4px;
   text-align: right;
 }
 
-/* ===========================================
-   INLINE PREVIEW BAR
-   =========================================== */
-.preview-inline {
+/* ============================================================
+   MEDIA STYLE (Images + Video)
+============================================================ */
+.carousel-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding: 6px 0;
+}
+.carousel-img,
+.carousel-video {
+  width: 140px;
+  height: 140px;
+  border-radius: 12px;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.single-media img,
+.single-media video {
+  width: 240px;
+  max-height: 260px;
+  border-radius: 12px;
+  margin-top: 6px;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+/* ============================================================
+   ACTION TOOLBAR (Edit / Delete / Unsend)
+============================================================ */
+.action-toolbar {
+  position: absolute;
+  top: 6px;
+  right: -40px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.25s;
+  z-index: 9999;
+}
+.message.sent .action-toolbar {
+  left: -40px;
+  right: auto;
+}
+.message:hover .action-toolbar {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.more-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+}
+
+/* POPUP MENU ------------------------------------------------ */
+#msg-action-popup {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 8px 0;
   display: none;
-  background: #ffffff;
+  z-index: 999999;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+}
+
+#msg-action-popup button {
+  width: 100%;
+  text-align: left;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+#msg-action-popup button:hover {
+  background: rgba(0,0,0,0.07);
+}
+
+/* EDIT MODE ------------------------------------------------- */
+.edit-textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 1px solid #bbb;
+}
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.edit-save {
+  background: #0084ff;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 10px;
+  border: none;
+}
+.edit-cancel {
+  background: #ccc;
+  padding: 6px 14px;
+  border-radius: 10px;
+  border: none;
+}
+
+/* ============================================================
+   PREVIEW BAR (Before Sending Media)
+============================================================ */
+.preview-inline {
+  background: #fff;
+  padding: 10px;
+  display: none;
   border-top: 1px solid #ccc;
-  padding: 10px 14px;
-  animation: slideUp .25s ease;
-  box-shadow: 0 -2px 8px rgba(0,0,0,.15);
-  z-index: 15;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
 }
 
 .preview-files {
   display: flex;
-  overflow-x: auto;
   gap: 10px;
+  overflow-x: auto;
 }
-.preview-files::-webkit-scrollbar { height: 4px; }
-.preview-files::-webkit-scrollbar-thumb {
-  background: #b9e1c7;
-  border-radius: 6px;
+.preview-file::-webkit-scrollbar {
+  height: 4px;
 }
-
-.preview-item { position: relative; animation: fadeInUp .25s ease; }
+.preview-item {
+  position: relative;
+}
 
 .preview-thumb {
-  width: 90px; height: 90px;
+  width: 90px;
+  height: 90px;
   border-radius: 10px;
   object-fit: cover;
   border: 1px solid #ccc;
-  cursor: grab;
 }
-.preview-thumb:hover { transform: scale(1.05); transition: .2s; }
 
 .preview-remove {
   position: absolute;
   top: -6px;
   right: -6px;
+  width: 22px;
+  height: 22px;
   background: #ff4444;
   color: white;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 22px;
-}
-
-/* ===========================================
-   INPUT BAR
-   =========================================== */
-.chat-input-area {
-  padding: 14px 18px;
-  background: white;
-  border-top: 1px solid #ccc;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.upload-btn {
-  border: none; background: none;
-  font-size: 22px; cursor: pointer; opacity: .7;
-}
-.upload-btn:hover { opacity: 1; transform: scale(1.15); }
-
-.chat-input-box {
-  flex: 1;
-  border: 1px solid #ccc;
-  border-radius: 24px;
-  padding: 12px 17px;
-  display: flex;
-  align-items: center;
-}
-.chat-input-box input {
-  flex: 1;
-  border: none;
-  font-size: 15px;
-  background: none;
-  outline: none;
-}
-
-.chat-send-btn {
-  background: #0084ff;
-  width: 48px; height: 48px;
-  border-radius: 50%;
   border: none;
   cursor: pointer;
 }
-.chat-send-btn i { color: white; font-size: 20px; }
 
+/* ============================================================
+   LIGHTBOX (Full Screen Media)
+============================================================ */
 #lightbox-overlay {
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.85);
-  justify-content:center;
-  align-items:center;
-  z-index:999999;
-}
-
-#lightbox-image, #lightbox-video {
-  max-width: 95vw;
-  max-height: 95vh;
-  display: block;
-  margin: auto;
-  border-radius: 14px;
-}
-
-#lightbox-close {
-  position:absolute;
-  top:30px; right:30px;
-  color:white; font-size:40px;
-  cursor:pointer;
-}
-
-#lightbox-prev, #lightbox-next {
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  background:rgba(255,255,255,0.25);
-  border:none;
-  font-size:44px;
-  padding:14px 18px;
-  color:white;
-  border-radius:50%;
-  cursor:pointer;
-  transition:0.25s;
-}
-
-#lightbox-prev:hover, #lightbox-next:hover {
-  background:rgba(255,255,255,0.4);
-}
-
-#lightbox-prev { left:40px; }
-#lightbox-next { right:40px; }
-
-.lightbox-download {
-  position:absolute;
-  bottom:40px; right:40px;
-  padding:12px 18px;
-  background:#0084ff;
-  color:white;
-  border-radius:12px;
-  text-decoration:none;
-  font-size:16px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.3);
-}
-
-/* ===========================================
-   ANIMATIONS
-   =========================================== */
-@keyframes fadeIn {
-  from { opacity:0; transform:translateY(10px); }
-  to { opacity:1; transform:translateY(0); }
-}
-
-/* ===========================================
-   SCROLL TO BOTTOM BUTTON
-   =========================================== */
-.scroll-bottom-btn {
   display: none;
-  position: absolute;
-  bottom: 110px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 48px; height: 48px;
-  background: #0084ff;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  z-index: 50;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-}
-
-.scroll-bottom-btn i {
-  font-size: 22px;
-  color: white;
-}
-
-.scroll-bottom-btn.show { display:flex; }
-
-/* ANIMATIONS */
-@keyframes fadeInUp {
-  from { opacity:0; transform:translateY(10px); }
-  to { opacity:1; transform:translateY(0); }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(15px); opacity:0; }
-  to { transform: translateY(0); opacity:1; }
-}
-/* ===========================================
-   MEDIA CENTERING + VIDEO + DOWNLOAD BUTTON
-   =========================================== */
-
-.media-center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  width: 100%;
-}
-
-.media-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
-.media-thumb,
-.media-video {
-  max-width: 250px;
-  max-height: 250px;
-  border-radius: 14px;
-  object-fit: cover;
-  cursor: pointer;
-  background: #000;
-  display: block;
-  transition: 0.2s;
-}
-
-.media-thumb:hover,
-.media-video:hover {
-  transform: scale(1.03);
-}
-
-/* Hover Download Button */
-.download-btn {
-  position: absolute;
-  right: 8px;
-  bottom: 8px;
-  background: rgba(0,0,0,0.65);
-  padding: 5px 9px;
-  font-size: 15px;
-  color: white;
-  border-radius: 8px;
-  text-decoration: none;
-  opacity: 0;
-  transition: opacity .25s ease;
-}
-
-.media-wrapper:hover .download-btn {
-  opacity: 1;
-}
-
-/* VIDEO styling */
-.media-video {
-  width: 250px;
-  height: 250px;
-  border-radius: 14px;
-  object-fit: cover;
-  background: black;
-}
-
-/* Carousel improvements */
-.carousel-container {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 8px 0;
-}
-
-.carousel-img,
-.carousel-video {
-  width: 180px;
-  height: 180px;
-  border-radius: 14px;
-  object-fit: cover;
-}
-/* =========================
-   SWIPE / ARROWS / FULL VIEW
-   ========================= */
-
-.carousel-container {
-  display: flex;
-  gap: 10px;
-  overflow: hidden;
-  position: relative;
-  padding: 10px 0;
-  scroll-behavior: smooth;
-}
-
-.carousel-item {
-  flex: 0 0 auto;
-}
-
-.carousel-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: rgba(0,0,0,0.45);
-  color: white;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  opacity: 0;
-  transition: opacity .25s ease;
-}
-
-.carousel-container:hover .carousel-arrow {
-  opacity: 1;
-}
-
-.carousel-arrow.left { left: -5px; }
-.carousel-arrow.right { right: -5px; }
-
-/* FULLSCREEN MODAL */
-#fullview-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.9);
-  display: none;
+  background: rgba(0,0,0,0.9);
   justify-content: center;
   align-items: center;
   z-index: 20000;
 }
-#fullview-modal img,
-#fullview-modal video {
-  max-width: 92%;
-  max-height: 92%;
+
+#lightbox-image,
+#lightbox-video {
+  max-width: 92vw;
+  max-height: 92vh;
   border-radius: 12px;
 }
 
-#fullview-close {
+#lightbox-close {
   position: absolute;
   top: 25px;
   right: 35px;
   font-size: 40px;
   color: white;
   cursor: pointer;
+}
+
+/* ============================================================
+   SCROLL TO BOTTOM BUTTON
+============================================================ */
+.scroll-bottom-btn {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #0084ff;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+}
+.scroll-bottom-btn.show {
+  display: flex;
+}
+.scroll-bottom-btn i {
+  font-size: 20px;
+}
+
+/* ============================================================
+   ANIMATIONS
+============================================================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dotPulse {
+  0% { opacity: .6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.7); }
+  100% { opacity: .6; transform: scale(1); }
 }
