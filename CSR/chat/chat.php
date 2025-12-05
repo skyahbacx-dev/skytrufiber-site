@@ -28,6 +28,7 @@ $csrUser = $_SESSION["csr_user"];
                     <h3 id="chat-client-name">Select a Client</h3>
                     <span id="client-status" class="status-dot offline"></span>
                 </div>
+
                 <div id="typing-indicator" class="typing-indicator" style="display:none;">
                     typing...
                 </div>
@@ -41,7 +42,7 @@ $csrUser = $_SESSION["csr_user"];
                 <i class="fa fa-arrow-down"></i>
             </button>
 
-            <!-- INLINE PREVIEW BAR -->
+            <!-- PREVIEW BAR -->
             <div id="preview-inline" class="preview-inline">
                 <div id="preview-files" class="preview-files"></div>
             </div>
@@ -63,13 +64,11 @@ $csrUser = $_SESSION["csr_user"];
                     <i class="fa fa-paper-plane"></i>
                 </button>
 
-            </div> <!-- chat-input-area -->
+            </div>
 
         </div> <!-- chat-wrapper -->
 
-        <!-- ============================
-             MESSAGE ACTION POPUP (STATIC)
-        ============================ -->
+        <!-- ACTION POPUP -->
         <div id="msg-action-popup" class="msg-action-popup">
             <button class="action-edit"><i class="fa fa-pen"></i> Edit</button>
             <button class="action-unsend"><i class="fa fa-ban"></i> Unsend</button>
@@ -88,7 +87,7 @@ $csrUser = $_SESSION["csr_user"];
         </div>
     </div>
 
-</div> <!-- chat-container end -->
+</div>
 
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
 
@@ -98,5 +97,4 @@ $csrUser = $_SESSION["csr_user"];
     <img id="lightbox-image">
 </div>
 
-<!-- DRAG-SORT -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
