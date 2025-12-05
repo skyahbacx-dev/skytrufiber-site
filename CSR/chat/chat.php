@@ -41,7 +41,7 @@ $csrUser = $_SESSION["csr_user"];
                 <i class="fa fa-arrow-down"></i>
             </button>
 
-            <!-- INLINE MULTIPLE FILE PREVIEW BAR (Messenger Style) -->
+            <!-- INLINE PREVIEW BAR -->
             <div id="preview-inline" class="preview-inline">
                 <div id="preview-files" class="preview-files"></div>
             </div>
@@ -49,7 +49,6 @@ $csrUser = $_SESSION["csr_user"];
             <!-- INPUT AREA -->
             <div class="chat-input-area">
 
-                <!-- MULTIPLE MEDIA FILE UPLOAD -->
                 <input type="file" id="chat-upload-media" accept="image/*,video/*,application/pdf" multiple hidden>
 
                 <button id="upload-btn" class="upload-btn">
@@ -67,6 +66,16 @@ $csrUser = $_SESSION["csr_user"];
             </div> <!-- chat-input-area -->
 
         </div> <!-- chat-wrapper -->
+
+        <!-- ============================
+             MESSAGE ACTION POPUP (STATIC)
+        ============================ -->
+        <div id="msg-action-popup" class="msg-action-popup">
+            <button class="action-edit"><i class="fa fa-pen"></i> Edit</button>
+            <button class="action-unsend"><i class="fa fa-ban"></i> Unsend</button>
+            <button class="action-delete"><i class="fa fa-trash"></i> Delete</button>
+            <button class="action-cancel">Cancel</button>
+        </div>
 
     </div> <!-- chat-middle-panel -->
 
