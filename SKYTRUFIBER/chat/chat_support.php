@@ -59,9 +59,9 @@
         <!-- =========================
              CHAT MESSAGES
         ========================== -->
-        <div id="chat-messages"></div>
+        <div id="chat-messages" class="chat-messages"></div>
 
-        <button id="scroll-bottom-btn">
+        <button id="scroll-bottom-btn" class="scroll-bottom-btn">
             <i class="fa-solid fa-arrow-down"></i>
         </button>
 
@@ -88,41 +88,50 @@
                 <input id="message-input" type="text" placeholder="Type a message...">
             </div>
 
-            <button id="send-btn">
+            <button id="send-btn" class="chat-send-btn">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
 
         </div>
+
+        <!-- =========================
+             MESSAGE ACTION POPUP (static)
+        ========================== -->
+        <div id="msg-action-popup" class="msg-action-popup">
+            <button class="action-edit"><i class="fa-solid fa-pen"></i> Edit</button>
+            <button class="action-unsend"><i class="fa-solid fa-ban"></i> Unsend</button>
+            <button class="action-delete"><i class="fa-solid fa-trash"></i> Delete</button>
+            <button class="action-cancel">Cancel</button>
+        </div>
+
+        <!-- =========================
+             REACTION PICKER (created dynamically)
+        ========================== -->
+        <div id="reaction-picker"></div>
 
     </div> <!-- END CHAT MODAL -->
 </div> <!-- END OVERLAY -->
 
 
 <!-- =========================
-     LIGHTBOX OVERLAY
+     LIGHTBOX (images / video)
 ========================== -->
-<div id="lightbox-overlay">
+<div id="lightbox-overlay" class="lightbox-overlay">
 
-    <span id="lightbox-close">&times;</span>
+    <span id="lightbox-close" class="lightbox-close">&times;</span>
 
-    <img id="lightbox-image" draggable="false">
-    <video id="lightbox-video" controls></video>
+    <img id="lightbox-image" class="lightbox-image" draggable="false">
+    <video id="lightbox-video" class="lightbox-video" controls></video>
 
-    <button id="lightbox-prev">&#10094;</button>
-    <button id="lightbox-next">&#10095;</button>
+    <button id="lightbox-prev" class="lightbox-nav prev">&#10094;</button>
+    <button id="lightbox-next" class="lightbox-nav next">&#10095;</button>
 
-    <div id="lightbox-index"></div>
+    <div id="lightbox-index" class="lightbox-index"></div>
 
-    <a id="lightbox-download" download>
+    <a id="lightbox-download" class="lightbox-download" download>
         <i class="fa-solid fa-download"></i>
     </a>
 </div>
-
-<!-- IMPORTANT:
-The reaction picker and message action popup
-are NOT placed here anymore.
-They are created dynamically by JS.
--->
 
 </body>
 </html>
