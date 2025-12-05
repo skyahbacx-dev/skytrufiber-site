@@ -269,15 +269,21 @@ body {
     pointer-events: auto;
 }
 
-.more-btn, .react-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.12);
-    border: none;
-    cursor: pointer;
+.react-btn, .more-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #ffffff;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.25);
+  display: flex;
+  justify-content:center;
+  align-items:center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform .18s;
 }
-
+.react-btn:hover, .more-btn:hover { transform: scale(1.15); }
 /* ============================================================
    POPUP MENU (STATIC)
 ============================================================ */
@@ -501,4 +507,34 @@ body {
     bottom: 20px;
     left: 20px;
     color: var(--lightbox-icon);
+}
+.edit-textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #bbb;
+  padding: 10px;
+  font-size: 15px;
+  resize: none;
+  outline: none;
+}
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.edit-save,
+.edit-cancel {
+  padding: 5px 12px;
+  border-radius: 12px;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+}
+.edit-save { background: #0084ff; color: white; }
+.edit-cancel { background: #ccc; }
+
+.edited-label {
+  font-size: 11px;
+  opacity: .6;
+  margin-left: 6px;
 }
