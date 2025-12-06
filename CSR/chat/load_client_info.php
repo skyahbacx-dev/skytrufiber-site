@@ -39,7 +39,12 @@ try {
 
     // --- PERMISSION LOGIC FLAGS ---
     // assigned to THIS csr?
-    $isAssignedToMe = (!empty($c["assigned_csr"]) && $csrUser && $c["assigned_csr"] === $csrUser);
+    $isAssignedToMe = (
+        !empty($c["assigned_csr"])
+        && $csrUser
+        && strcasecmp($c["assigned_csr"], $csrUser) === 0
+    );
+
     // locked?
     $isLocked = (bool)$c["is_locked"];
 
