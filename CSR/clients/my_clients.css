@@ -1,0 +1,80 @@
+.clients-container {
+    padding: 20px;
+}
+
+h1 {
+    margin-bottom: 10px;
+}
+
+.client-count {
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+.client-search {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.client-search input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    flex: 1;
+}
+
+.client-search button {
+    padding: 8px 14px;
+    background: #05702e;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.styled-table th {
+    background: #05702e;
+    color: white;
+    cursor: pointer;
+    padding: 8px;
+}
+
+.styled-table td {
+    background: white;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.empty {
+    text-align: center;
+    padding: 12px;
+    color: #888;
+}
+
+.pagination {
+    margin-top: 15px;
+}
+
+.pagination a {
+    padding: 6px 12px;
+    background: #ddd;
+    margin-right: 4px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: black;
+}
+
+.pagination a.active {
+    background: #05702e;
+    color: white;
+}
