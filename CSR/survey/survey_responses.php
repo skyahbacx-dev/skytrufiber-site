@@ -73,7 +73,8 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $dList = $conn->query("SELECT DISTINCT district FROM survey_responses ORDER BY district")->fetchAll(PDO::FETCH_COLUMN);
 ?>
 
-<link rel="stylesheet" href="survey_responses.css">
+<link rel="stylesheet" href="../survey/survey_responses.css">
+
 
 <h1>📄 Survey Responses</h1>
 
