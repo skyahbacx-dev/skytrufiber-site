@@ -92,16 +92,3 @@ $total = count($clients);
 </table>
 </div>
 
-<style>
-.chat-btn {
-    background: #05702e;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 13px;
-}
-.chat-btn:hover {
-    background: #045a24;
-}
-</style>
