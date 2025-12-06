@@ -1,5 +1,6 @@
 <?php
 session_start();
+
 if (!isset($_SESSION['csr_user'])) {
     header("Location: ../csr_login.php");
     exit;
@@ -7,6 +8,9 @@ if (!isset($_SESSION['csr_user'])) {
 
 $csrUser     = $_SESSION["csr_user"];
 $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
+
+// Detect module (chat = default)
+$tab = $_GET['tab'] ?? 'chat';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -15,25 +19,23 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CSR Dashboard — <?= htmlspecialchars($csrFullName) ?></title>
 
-<!-- STYLES -->
-<link rel="stylesheet" href="csr_dashboard.css">
-<link rel="stylesheet" href="../chat/chat.css">
+<!-- Styles -->
+<link rel="stylesheet" href="../csr_dashboard.css">
+<link rel="stylesheet" href="../../chat/chat.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<!-- JQUERY -->
+<!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<!-- GLOBAL JS VARIABLES -->
+<!-- Chat Script -->
+<script src="../../chat/chat.js"></script>
+
 <script>
     const csrUser     = "<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>";
     const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 </script>
 
-<!-- CHAT SCRIPT -->
-<script src="../chat/chat.js"></script>
-
 </head>
-
 <body>
 
 <!-- TOP NAV -->
@@ -46,31 +48,74 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
     </div>
 
     <div class="nav-buttons">
-        <button class="nav-btn active">💬 CHAT DASHBOARD</button>
-        <button class="nav-btn" onclick="window.location='my_clients.php'">👥 MY CLIENTS</button>
-        <button class="nav-btn" onclick="window.location='reminders.php'">⏱ REMINDERS</button>
-        <button class="nav-btn" onclick="window.location='../survey_responses.php'">📄 SURVEY</button>
-        <button class="nav-btn" onclick="window.location='../update_profile.php'">👤 PROFILE</button>
-        <a href="../csr_logout.php" class="logout-btn">Logout</a>
+
+        <button class="nav-btn <?= $tab === 'chat' ? 'active' : '' ?>"
+            onclick="window.location='csr_dashboard.php?tab=chat'">💬 CHAT DASHBOARD</button>
+
+        <button class="nav-btn <?= $tab === 'clients' ? 'active' : '' ?>"
+            onclick="window.location='csr_dashboard.php?tab=clients'">👥 MY CLIENTS</button>
+
+        <button class="nav-btn <?= $tab === 'reminders' ? 'active' : '' ?>"
+            onclick="window.location='csr_dashboard.php?tab=reminders'">⏱ REMINDERS</button>
+
+        <button class="nav-btn <?= $tab === 'survey' ? 'active' : '' ?>"
+            onclick="window.location='csr_dashboard.php?tab=survey'">📄 SURVEY</button>
+
+        <button class="nav-btn"
+            onclick="window.location='../../update_profile.php'">👤 PROFILE</button>
+
+        <a href="../../csr_logout.php" class="logout-btn">Logout</a>
     </div>
 </div>
 
 <!-- SIDE MENU -->
 <div class="sidebar" id="sidebar">
     <div class="side-title">MENU</div>
-    <button class="side-item" onclick="window.location='csr_dashboard.php'">💬 Chat Dashboard</button>
-    <button class="side-item" onclick="window.location='my_clients.php'">👥 My Clients</button>
-    <button class="side-item" onclick="window.location='reminders.php'">⏱ Reminders</button>
-    <button class="side-item" onclick="window.location='../survey_responses.php'">📄 Survey Responses</button>
-    <button class="side-item" onclick="window.location='../update_profile.php'">👤 Edit Profile</button>
-    <button class="side-item logout" onclick="window.location='../csr_logout.php'">🚪 Logout</button>
+
+    <button class="side-item <?= $tab === 'chat' ? 'active' : '' ?>"
+        onclick="window.location='csr_dashboard.php?tab=chat'">💬 Chat Dashboard</button>
+
+    <button class="side-item <?= $tab === 'clients' ? 'active' : '' ?>"
+        onclick="window.location='csr_dashboard.php?tab=clients'">👥 My Clients</button>
+
+    <button class="side-item <?= $tab === 'reminders' ? 'active' : '' ?>"
+        onclick="window.location='csr_dashboard.php?tab=reminders'">⏱ Reminders</button>
+
+    <button class="side-item <?= $tab === 'survey' ? 'active' : '' ?>"
+        onclick="window.location='csr_dashboard.php?tab=survey'">📄 Survey Responses</button>
+
+    <button class="side-item"
+        onclick="window.location='../../update_profile.php'">👤 Edit Profile</button>
+
+    <button class="side-item logout"
+        onclick="window.location='../../csr_logout.php'">🚪 Logout</button>
 </div>
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<!-- MAIN CONTENT WRAPPER -->
+<!-- MAIN CONTENT -->
 <div class="dashboard-container">
-    <?php include "../chat/chat.php"; ?>
+    <?php
+        switch ($tab) {
+
+            case 'clients':
+                include "../my_clients.php";
+                break;
+
+            case 'reminders':
+                include "../reminders.php";
+                break;
+
+            case 'survey':
+                include "../survey/survey_responses.php";  // MODULE
+                break;
+
+            default:
+            case 'chat':
+                include "../../chat/chat.php";  // DEFAULT MODULE
+                break;
+        }
+    ?>
 </div>
 
 <script>
