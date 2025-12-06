@@ -469,8 +469,9 @@
   }
 }
 
+
 /* ===========================================================
-   MEDIA GRID
+   MEDIA GRID (MESSENGER STYLE)
 =========================================================== */
 .media-grid {
   display: grid;
@@ -489,27 +490,38 @@
   cursor: pointer;
 }
 
-.media-1 {
-  grid-template-columns: 1fr;
-}
-.media-1 img,
-.media-1 video {
-  height: 260px;
-}
+.media-1 { grid-template-columns: 1fr; }
+.media-1 img, .media-1 video { height: 260px; }
 
 .media-2 {
   grid-template-columns: 1fr 1fr;
 }
+.media-2 img, .media-2 video { height: 200px; }
 
 .media-3 {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 130px 150px;
 }
+.media-3 > :nth-child(1),
+.media-3 > :nth-child(2) { height: 130px; }
+.media-3 > :nth-child(3) {
+  grid-column: span 2;
+  height: 170px;
+}
+
+.media-4 {
+  grid-template-columns: 1fr 1fr;
+}
+.media-4 img, .media-4 video { height: 150px; }
+
+.media-5 {
+  grid-template-columns: 1fr 1fr;
+}
+.media-5 img, .media-5 video { height: 150px; }
 
 .media-more-overlay {
   position: relative;
 }
-
 .media-more-overlay::after {
   content: attr(data-more);
   position: absolute;
