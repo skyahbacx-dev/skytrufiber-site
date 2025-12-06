@@ -3,7 +3,7 @@
 =========================================================== */
 #chat-container {
   display: grid;
-  grid-template-columns: 300px 1fr 320px;   /* ✅ always fills properly */
+  grid-template-columns: 300px 1fr 320px;
   height: calc(100vh - 55px);
   overflow: hidden;
   background: #f8fdfb;
@@ -36,8 +36,9 @@
   padding: 14px;
   cursor: pointer;
   border-bottom: 1px solid #f1f1f1;
-  transition: 0.15s;
+  transition: 0.15s ease;
 }
+
 .client-item.active-client,
 .client-item:hover {
   background: #dfffe0;
@@ -49,8 +50,43 @@
   flex: 1;
   margin-left: 8px;
 }
-.client-info strong { font-size: 15px; color: #004700; }
-.last-msg { font-size: 12px; color: #888; }
+
+.client-info strong {
+  font-size: 15px;
+  color: #004700;
+}
+.last-msg {
+  font-size: 12px;
+  color: #888;
+}
+
+/* ===========================================================
+   CLIENT ACTION BUTTONS ( + / - / lock )
+=========================================================== */
+
+.client-icons button {
+  opacity: 1;
+  transform: scale(1);
+  transition: 0.2s ease;
+}
+
+.client-icons button.fade-in {
+  opacity: 0;
+  transform: scale(0.4);
+  animation: fadeInAssignBtn 0.25s forwards ease;
+}
+
+@keyframes fadeInAssignBtn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.client-icons button.animating {
+  transform: scale(0.6);
+  opacity: 0.2;
+}
 
 /* ===========================================================
    MAIN CHAT PANEL
@@ -86,6 +122,7 @@
   gap: 10px;
   align-items: center;
 }
+
 #chat-client-name {
   font-size: 18px;
   font-weight: bold;
@@ -101,12 +138,8 @@
   background: #2ecc71;
   box-shadow: 0 0 6px rgba(46,204,113,0.7);
 }
-.status-dot.offline { background: #bbb; }
-
-.typing-indicator {
-  font-size: 13px;
-  color: #0084ff;
-  font-style: italic;
+.status-dot.offline {
+  background: #bbb;
 }
 
 /* ===========================================================
@@ -121,7 +154,10 @@
   overflow-y: auto;
   background: #f8fdfb;
 }
-.chat-messages::-webkit-scrollbar { width: 6px; }
+
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
 .chat-messages::-webkit-scrollbar-thumb {
   background: #b9e1c7;
   border-radius: 8px;
@@ -135,26 +171,23 @@
   align-items: flex-end;
   gap: 10px;
   animation: fadeInUp 0.25s ease;
-  max-width: 480px;          /* FIX: Prevent tall skinny messages */
-  width: fit-content;        /* FIX: Bubble takes natural width */
+  max-width: 480px;
+  width: fit-content;
   position: relative;
 }
 
-.message.received { align-self: flex-start; flex-direction: row; }
-.message.sent { align-self: flex-end; flex-direction: row-reverse; }
-
-.message-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
+.message.received {
+  align-self: flex-start;
+  flex-direction: row;
 }
-.message-avatar img {
-  width: 100%; height: 100%; object-fit: cover;
+.message.sent {
+  align-self: flex-end;
+  flex-direction: row-reverse;
 }
 
-.message-content { position: relative; }
+.message-content {
+  position: relative;
+}
 
 .message-bubble {
   padding: 12px 18px;
@@ -175,39 +208,27 @@
   border-radius: 20px 20px 20px 4px;
 }
 
-.message-bubble:hover { transform: scale(1.03); }
+.message-bubble:hover {
+  transform: scale(1.03);
+}
 
 .message-time {
   font-size: 11px;
   opacity: 0.6;
   margin-top: 4px;
 }
-/* Smooth temporary sending message */
+
+/* TEMP SENDING */
 .temp-msg {
   opacity: 0.65;
   animation: fadeInUp 0.25s ease, fadeOutTemp 0.2s ease forwards;
 }
 
 @keyframes fadeOutTemp {
-  100% { opacity: 0.3; transform: scale(0.98); }
-}
-
-/* ===========================================================
-   TEMP / UPLOADING
-=========================================================== */
-.uploading-bubble { display: flex; gap: 4px; }
-.uploading-bubble .dot {
-  width: 8px; height: 8px; background: white;
-  border-radius: 50%;
-  animation: dotPulse 1.1s infinite ease-in-out;
-}
-.uploading-bubble .dot:nth-child(2) { animation-delay: .2s; }
-.uploading-bubble .dot:nth-child(3) { animation-delay: .4s; }
-
-@keyframes dotPulse {
-  0% { transform: scale(1); opacity:.5; }
-  50% { transform: scale(1.8); opacity:1; }
-  100% { transform: scale(1); opacity:.5; }
+  100% {
+    opacity: 0.3;
+    transform: scale(0.98);
+  }
 }
 
 /* ===========================================================
@@ -227,18 +248,19 @@
   transition: 0.2s;
   position: absolute;
   top: 4px;
-  right: -34px;        /* RECEIVED → button on right side */
+  right: -34px;
   z-index: 10;
 }
 
 .message.sent .more-btn {
-  left: -34px;         /* SENT → button on left side */
+  left: -34px;
   right: auto;
 }
 
 .message:hover .more-btn {
   opacity: 1;
 }
+
 /* ===========================================================
    ACTION POPUP
 =========================================================== */
@@ -250,12 +272,11 @@
   padding: 6px 0;
   border: 1px solid #ccc;
   display: none;
-  width: 170px;                /* fixed width so positioning is stable */
+  width: 170px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.25);
 }
 
-
-/* Popup buttons */
+/* Buttons */
 #msg-action-popup button {
   width: 100%;
   border: none;
@@ -264,61 +285,8 @@
   text-align: left;
   cursor: pointer;
 }
-
 #msg-action-popup button:hover {
   background: rgba(0,0,0,0.06);
-}
-
-/* ===========================================================
-   EDIT MODE
-=========================================================== */
-.edit-textarea {
-  width: 100%;
-  border-radius: 12px;
-  border: 1px solid #aaa;
-  padding: 8px;
-  resize: none;
-}
-.edit-actions { display: flex; gap: 8px; margin-top: 6px; }
-.edit-save {
-  background: #0084ff; color: #fff;
-  padding: 5px 10px; border-radius: 10px; border: none;
-}
-.edit-cancel {
-  background: #ccc; padding: 5px 10px;
-  border-radius: 10px; border: none;
-}
-
-/* ===========================================================
-   INLINE PREVIEW STRIP
-=========================================================== */
-.preview-inline {
-  display: none;
-  background: white;
-  border-top: 1px solid #ccc;
-  padding: 10px 14px;
-  max-height: 130px;
-  overflow-y: hidden;
-  overflow-x: auto;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
-}
-.preview-files { display: flex; gap: 10px; }
-
-.preview-item { position: relative; }
-.preview-thumb {
-  width: 90px; height: 90px;
-  border-radius: 10px;
-  object-fit: cover;
-  border: 1px solid #ccc;
-}
-
-.preview-remove {
-  position: absolute;
-  top: -6px; right: -6px;
-  background: #ff4444;
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  color: #fff; cursor: pointer;
 }
 
 /* ===========================================================
@@ -331,21 +299,14 @@
   display: flex;
   gap: 10px;
   align-items: center;
-
-  /* ❌ BAD (removed)
-     opacity: 0.4;
-     pointer-events: none;
-  */
 }
 
-/* ✅ Correct disabled state */
 .chat-input-area.disabled {
   opacity: 0.4;
   filter: blur(1px);
-  pointer-events: none;     /* disables input & buttons */
+  pointer-events: none;
 }
 
-/* ✅ Enabled state override */
 .chat-input-area:not(.disabled) {
   opacity: 1 !important;
   filter: none !important;
@@ -353,8 +314,10 @@
 }
 
 .upload-btn {
-  border: none; background: none;
-  font-size: 22px; cursor: pointer;
+  border: none;
+  background: none;
+  font-size: 22px;
+  cursor: pointer;
   opacity: 0.7;
 }
 
@@ -366,41 +329,49 @@
 }
 
 .chat-input-box input {
-  width: 100%; border: none; outline: none;
+  width: 100%;
+  border: none;
+  outline: none;
 }
 
 .chat-send-btn {
   background: #0084ff;
-  width: 48px; height: 48px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: none;
   cursor: pointer;
 }
 
-.chat-send-btn i { color: white; font-size: 20px; }
-
-/* FIXED ERROR — a stray "}" was here in your CSS */
+.chat-send-btn i {
+  color: white;
+  font-size: 20px;
+}
 
 /* ===========================================================
    SCROLL TO BOTTOM BUTTON
 =========================================================== */
 .scroll-bottom-btn {
   position: absolute;
-  bottom: 110px; left: 50%;
+  bottom: 110px;
+  left: 50%;
   transform: translateX(-50%);
-  width: 48px; height: 48px;
+  width: 48px;
+  height: 48px;
   background: #0084ff;
   border-radius: 50%;
   display: none;
-  justify-content: center; align-items: center;
+  justify-content: center;
+  align-items: center;
   border: none;
   box-shadow: 0 4px 14px rgba(0,0,0,0.35);
 }
-.scroll-bottom-btn.show { display: flex; }
-.scroll-bottom-btn i { color: white; font-size: 22px; }
+.scroll-bottom-btn.show {
+  display: flex;
+}
 
 /* ===========================================================
-   LIGHTBOX (FULLSCREEN VIEWER)
+   LIGHTBOX
 =========================================================== */
 #lightbox-overlay {
   position: fixed;
@@ -440,12 +411,19 @@
   color: white;
   transition: 0.2s;
 }
-.lb-arrow:hover { background: rgba(255,255,255,0.35); }
 
-#lightbox-prev { left: -70px; }
-#lightbox-next { right: -70px; }
+.lb-arrow:hover {
+  background: rgba(255,255,255,0.35);
+}
 
-/* Thumbnail bar */
+#lightbox-prev {
+  left: -70px;
+}
+#lightbox-next {
+  right: -70px;
+}
+
+/* THUMBNAILS */
 #lightbox-thumbs {
   display: flex;
   gap: 8px;
@@ -456,13 +434,15 @@
 }
 
 #lightbox-thumbs .thumb {
-  width: 70px; height: 70px;
+  width: 70px;
+  height: 70px;
   object-fit: cover;
   border-radius: 8px;
   opacity: 0.6;
   cursor: pointer;
   flex-shrink: 0;
 }
+
 #lightbox-thumbs .thumb-active {
   opacity: 1;
   outline: 3px solid #00aaff;
@@ -472,12 +452,18 @@
    ANIMATIONS
 =========================================================== */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ===========================================================
-   MEDIA GRID (MESSENGER STYLE)
+   MEDIA GRID
 =========================================================== */
 .media-grid {
   display: grid;
@@ -496,38 +482,27 @@
   cursor: pointer;
 }
 
-.media-1 { grid-template-columns: 1fr; }
-.media-1 img, .media-1 video { height: 260px; }
+.media-1 {
+  grid-template-columns: 1fr;
+}
+.media-1 img,
+.media-1 video {
+  height: 260px;
+}
 
 .media-2 {
   grid-template-columns: 1fr 1fr;
 }
-.media-2 img, .media-2 video { height: 200px; }
 
 .media-3 {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 130px 150px;
 }
-.media-3 > :nth-child(1),
-.media-3 > :nth-child(2) { height: 130px; }
-.media-3 > :nth-child(3) {
-  grid-column: span 2;
-  height: 170px;
-}
-
-.media-4 {
-  grid-template-columns: 1fr 1fr;
-}
-.media-4 img, .media-4 video { height: 150px; }
-
-.media-5 {
-  grid-template-columns: 1fr 1fr;
-}
-.media-5 img, .media-5 video { height: 150px; }
 
 .media-more-overlay {
   position: relative;
 }
+
 .media-more-overlay::after {
   content: attr(data-more);
   position: absolute;
@@ -539,4 +514,21 @@
   color: #fff;
   font-size: 32px;
   border-radius: 12px;
+}
+/* ===========================================================
+   SMOOTH SLIDE-IN WHEN SWITCHING CLIENTS
+=========================================================== */
+.chat-slide-in {
+  animation: chatSlideIn 0.35s ease both;
+}
+
+@keyframes chatSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
