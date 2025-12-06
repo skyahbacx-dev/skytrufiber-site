@@ -110,6 +110,8 @@ $dList = $conn->query("
 <div class="export-buttons">
     <a class="export-btn" href="export_survey_pdf.php?<?= http_build_query($_GET) ?>" target="_blank">📄 Export PDF</a>
     <a class="export-btn" href="export_survey_excel.php?<?= http_build_query($_GET) ?>">📊 Export Excel</a>
+   <a class="export-btn" href="print_survey.php?<?= http_build_query($_GET) ?>" target="_blank">🖨 Print View</a>
+
 </div>
 
 <!-- SUB NAV TABS -->
