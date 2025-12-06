@@ -1,15 +1,14 @@
-name: Send Payment Reminders
+name: Daily Reminder Cron
 
 on:
   schedule:
-    - cron: '0 8 * * *'   # runs at 8 AM every day (UTC)
-  workflow_dispatch:      # allows manual run
+    - cron: "0 8 * * *"   # Runs daily at 8 AM Philippine time (adjust if needed)
+  workflow_dispatch:        # Allows you to run it manually
 
 jobs:
-  trigger-reminder:
+  send-reminders:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Call reminder URL
+      - name: Call Reminder Script
         run: |
-          curl -s "https://skytrufiber-site-1.onrender.com/SKYTRUFIBER/send_reminders.php?token=${{ secrets.REMINDER_TOKEN }}"
+          curl -s "https://ahbadevt.com/cron/send_due_reminders.php?token=AE92JF83HF82HSLA29FD"
