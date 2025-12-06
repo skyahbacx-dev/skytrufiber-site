@@ -109,9 +109,19 @@ function loadClients() {
 
 function loadClientInfo(id) {
     $.post("../chat/load_client_info.php", { client_id: id }, html => {
+
         $("#client-info-content").html(html);
+
+        // Read assignment + lock flags
+        const meta = $("#client-meta");
+        const isAssigned = meta.data("assigned") === "yes";
+        const isLocked = meta.data("locked") === true;
+
+        // Disable or enable chat controls
+        handleChatPermission(isAssigned, isLocked);
     });
 }
+
 
 // ============================================================
 // LOAD FULL MESSAGES
@@ -500,4 +510,37 @@ function unassignClient(id) {
         if (id === currentClientID)
             $("#client-info-content").html("<p>Select a client.</p>");
     });
+}
+function handleChatPermission(isAssigned, isLocked) {
+
+    const bar = $(".chat-input-area");
+    const input = $("#chat-input");
+    const sendBtn = $("#send-btn");
+    const uploadBtn = $("#upload-btn");
+
+    if (!isAssigned || isLocked) {
+
+        // Disable input UI
+        bar.addClass("disabled");
+        input.prop("disabled", true);
+        sendBtn.prop("disabled", true);
+        uploadBtn.prop("disabled", true);
+
+        // Optional placeholder change
+        input.attr(
+            "placeholder",
+            isLocked
+                ? "Client is locked — messaging disabled"
+                : "Client not assigned — messaging disabled"
+        );
+
+    } else {
+
+        // Enable chat input
+        bar.removeClass("disabled");
+        input.prop("disabled", false);
+        sendBtn.prop("disabled", false);
+        uploadBtn.prop("disabled", false);
+        input.attr("placeholder", "Type a message...");
+    }
 }
