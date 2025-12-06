@@ -15,14 +15,25 @@ if (!in_array($sort, $allowed)) $sort = "created_at";
 $where = "WHERE 1=1";
 $params = [];
 
+/* Search */
 if ($search !== "") {
-    $where .= " AND (client_name ILIKE :s OR account_number ILIKE :s OR email ILIKE :s OR district ILIKE :s OR location ILIKE :s)";
+    $where .= " AND (
+        client_name ILIKE :s OR
+        account_number ILIKE :s OR
+        email ILIKE :s OR
+        district ILIKE :s OR
+        location ILIKE :s
+    )";
     $params[':s'] = "%$search%";
 }
+
+/* District filter */
 if ($district !== "") {
     $where .= " AND district = :d";
     $params[':d'] = $district;
 }
+
+/* Date filters */
 if ($date_from !== "") {
     $where .= " AND created_at::date >= :df";
     $params[':df'] = $date_from;
@@ -42,7 +53,6 @@ $stmt = $conn->prepare("
 $stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* Logo Path */
 $logoPath = "../../AHBALOGO.png";
 ?>
 
@@ -52,6 +62,8 @@ $logoPath = "../../AHBALOGO.png";
 <title>Print Survey Responses</title>
 
 <style>
+@page { size: A4 landscape; margin: 20mm; }
+
 body {
     font-family: Arial, sans-serif;
     padding: 20px;
@@ -65,12 +77,12 @@ body {
 
 .header img {
     height: 70px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .header h1 {
     margin: 0;
-    font-size: 26px;
+    font-size: 28px;
     font-weight: bold;
 }
 
@@ -83,6 +95,10 @@ body {
 .print-info {
     margin-bottom: 10px;
     font-size: 14px;
+    background: #f3f7f3;
+    padding: 10px;
+    border-left: 4px solid #05702e;
+    border-radius: 6px;
 }
 
 table {
@@ -93,18 +109,19 @@ table {
 
 th, td {
     border: 1px solid #ccc;
-    padding: 8px;
-    font-size: 13px;
+    padding: 7px;
+    font-size: 12px;
 }
 
 th {
     background: #05702e;
     color: white;
+    font-size: 13px;
 }
 
 .footer {
     position: fixed;
-    bottom: 10px;
+    bottom: 5px;
     left: 0;
     width: 100%;
     text-align: center;
@@ -127,16 +144,19 @@ th {
 
 @media print {
     .no-print { display: none; }
-
-    .footer {
-        position: fixed;
-        bottom: 5px;
-    }
+    body { margin: 0; }
 }
 </style>
 
 </head>
 <body>
+
+<!-- Auto-print when coming from export button -->
+<?php if (isset($_GET['auto'])): ?>
+<script>
+window.onload = () => window.print();
+</script>
+<?php endif; ?>
 
 <div class="no-print">
     <button onclick="window.print()" class="print-btn">🖨 Print Now</button>
@@ -158,31 +178,33 @@ th {
     District: <?= htmlspecialchars($district ?: 'All') ?><br>
     Date From: <?= htmlspecialchars($date_from ?: 'N/A') ?><br>
     Date To: <?= htmlspecialchars($date_to ?: 'N/A') ?><br>
+    Sorted By: <?= htmlspecialchars($sort) ?> (<?= $dir ?>)
 </div>
 
 <!-- TABLE -->
 <table>
-    <tr>
-        <th>Client</th>
-        <th>Account #</th>
-        <th>Email</th>
-        <th>District</th>
-        <th>Location</th>
-        <th>Feedback</th>
-        <th>Date</th>
-    </tr>
+<tr>
+    <th>Client</th>
+    <th>Account #</th>
+    <th>Email</th>
+    <th>District</th>
+    <th>Location</th>
+    <th>Feedback</th>
+    <th>Date</th>
+</tr>
 
-    <?php foreach ($rows as $r): ?>
-        <tr>
-            <td><?= htmlspecialchars($r['client_name']) ?></td>
-            <td><?= htmlspecialchars($r['account_number']) ?></td>
-            <td><?= htmlspecialchars($r['email']) ?></td>
-            <td><?= htmlspecialchars($r['district']) ?></td>
-            <td><?= htmlspecialchars($r['location']) ?></td>
-            <td><?= htmlspecialchars($r['feedback']) ?></td>
-            <td><?= date("Y-m-d", strtotime($r['created_at'])) ?></td>
-        </tr>
-    <?php endforeach; ?>
+<?php foreach ($rows as $r): ?>
+<tr>
+    <td><?= htmlspecialchars($r['client_name'] ?? 'N/A') ?></td>
+    <td><?= htmlspecialchars($r['account_number'] ?? 'N/A') ?></td>
+    <td><?= htmlspecialchars($r['email'] ?? 'N/A') ?></td>
+    <td><?= htmlspecialchars($r['district'] ?? 'N/A') ?></td>
+    <td><?= htmlspecialchars($r['location'] ?? 'N/A') ?></td>
+    <td><?= htmlspecialchars($r['feedback'] ?? 'N/A') ?></td>
+    <td><?= !empty($r['created_at']) ? date("Y-m-d", strtotime($r['created_at'])) : 'N/A' ?></td>
+</tr>
+<?php endforeach; ?>
+
 </table>
 
 <!-- FOOTER -->
@@ -191,12 +213,10 @@ th {
 </div>
 
 <script>
-/* Auto page number (for browsers that support it) */
+/* Auto insert page number on browsers that support it */
 document.addEventListener("DOMContentLoaded", () => {
-    const footer = document.querySelector(".pageNumber");
-    if (footer && typeof window.print === "function") {
-        footer.textContent = "";
-    }
+    const el = document.querySelector(".pageNumber");
+    if (el) el.textContent = "";
 });
 </script>
 
