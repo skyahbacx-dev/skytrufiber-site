@@ -106,6 +106,11 @@ $dList = $conn->query("
 <link rel="stylesheet" href="../survey/survey_responses.css">
 
 <h1>📄 Survey Responses</h1>
+<!-- EXPORT BUTTONS -->
+<div class="export-buttons">
+    <a class="export-btn" href="export_survey_pdf.php?<?= http_build_query($_GET) ?>" target="_blank">📄 Export PDF</a>
+    <a class="export-btn" href="export_survey_excel.php?<?= http_build_query($_GET) ?>">📊 Export Excel</a>
+</div>
 
 <!-- SUB NAV TABS -->
 <div class="survey-tabs">
