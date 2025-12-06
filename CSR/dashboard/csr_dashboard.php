@@ -95,22 +95,6 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 ?>
 </div>
 
-<script>
-function navigate(tab) {
-    showLoader();
-    window.location = "csr_dashboard.php?tab=" + tab;
-}
-
-function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('active');
-    document.querySelector('.sidebar-overlay').classList.toggle('active');
-}
-
-/* LOADER */
-function showLoader(){ document.getElementById("loadingOverlay").style.display="flex"; }
-function hideLoader(){ document.getElementById("loadingOverlay").style.display="none"; }
-window.onload = hideLoader;
-</script>
-
+<script src="csr_dashboard.js"></script>
 </body>
 </html>
