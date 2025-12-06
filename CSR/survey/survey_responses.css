@@ -1,0 +1,82 @@
+h1 {
+    margin: 10px 0;
+}
+
+.survey-tabs {
+    margin-bottom: 15px;
+}
+.survey-tabs a {
+    padding: 6px 12px;
+    background: #cce7d8;
+    margin-right: 5px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #05702e;
+}
+.survey-tabs a.active {
+    background: #05702e;
+    color: #fff;
+}
+
+/* Search box */
+.search-section input {
+    padding: 7px;
+    width: 220px;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    margin-top: 12px;
+}
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.styled-table th {
+    background: #05702e;
+    color: white;
+    cursor: pointer;
+    padding: 8px;
+}
+.styled-table td {
+    background: white;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Pagination */
+.pagination {
+    margin-top: 15px;
+}
+.pagination a {
+    padding: 6px 12px;
+    background: #ddd;
+    margin-right: 4px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: black;
+}
+.pagination a.active {
+    background: #05702e;
+    color: white;
+}
+
+/* Analytics */
+.analytics-block {
+    display: grid;
+    gap: 15px;
+    margin-top: 10px;
+}
+.metric-card {
+    background:white;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 22px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+canvas {
+    background:white;
+    padding:15px;
+    border-radius:10px;
+}
