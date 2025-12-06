@@ -76,7 +76,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     <button class="side-item <?= $tab==='reminders'?'active':'' ?>" onclick="navigate('reminders')">⏱ Reminders</button>
     <button class="side-item <?= $tab==='survey'?'active':'' ?>" onclick="navigate('survey')">📄 Survey Responses</button>
     
-    <button class="side-item logout" onclick="window.location='../../csr_logout.php'">🚪 Logout</button>
+    <button class="side-item logout" onclick="window.location='../csr_logout.php'">🚪 Logout</button>
 </div>
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
