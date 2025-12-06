@@ -3,66 +3,43 @@ if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
 $clientID = $_POST["client_id"] ?? null;
-if (!$clientID) {
-    exit("No client selected.");
-}
+if (!$clientID) exit("No client selected.");
 
-$csrUser = $_SESSION["csr_user"] ?? null;
+$csrUser = $_SESSION["csr_user"];
 
-try {
-    $stmt = $conn->prepare("
-        SELECT 
-            id, 
-            full_name, 
-            email, 
-            district, 
-            barangay, 
-            is_online, 
-            assigned_csr,
-            is_locked
-        FROM users
-        WHERE id = :cid
-        LIMIT 1
-    ");
-    $stmt->execute([":cid" => $clientID]);
-    $c = $stmt->fetch(PDO::FETCH_ASSOC);
+$stmt = $conn->prepare("
+    SELECT 
+        id,
+        full_name,
+        email,
+        district,
+        barangay,
+        is_online,
+        assigned_csr,
+        is_locked
+    FROM users
+    WHERE id = :cid
+    LIMIT 1
+");
+$stmt->execute([":cid" => $clientID]);
+$c = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$c) {
-        exit("Client not found.");
-    }
+if (!$c) exit("Client not found.");
 
-    $onlineStatus = $c["is_online"]
-        ? "<span style='color:green;'>Online</span>"
-        : "<span style='color:gray;'>Offline</span>";
+$isAssignedToMe = ($c["assigned_csr"] === $csrUser) ? "yes" : "no";
+$isLocked       = $c["is_locked"] ? "true" : "false";
 
-    $lockedStatus = $c["is_locked"] ? "Locked" : "Unlocked";
+echo "
+    <p><strong>Name:</strong> {$c['full_name']}</p>
+    <p><strong>Email:</strong> {$c['email']}</p>
+    <p><strong>District:</strong> {$c['district']}</p>
+    <p><strong>Barangay:</strong> {$c['barangay']}</p>
+    <p><strong>Status:</strong> " . ($c["is_online"] ? "Online" : "Offline") . "</p>
+    <p><strong>Lock State:</strong> " . ($c["is_locked"] ? "Locked" : "Unlocked") . "</p>
 
-    // --- PERMISSION LOGIC FLAGS ---
-    // assigned to THIS csr?
-    $isAssignedToMe = (
-        !empty($c["assigned_csr"])
-        && $csrUser
-        && strcasecmp($c["assigned_csr"], $csrUser) === 0
-    );
-
-    // locked?
-    $isLocked = (bool)$c["is_locked"];
-
-    echo "
-        <p><strong>Name:</strong> " . htmlspecialchars($c['full_name']) . "</p>
-        <p><strong>Email:</strong> " . htmlspecialchars($c['email']) . "</p>
-        <p><strong>District:</strong> " . htmlspecialchars($c['district']) . "</p>
-        <p><strong>Barangay:</strong> " . htmlspecialchars($c['barangay']) . "</p>
-        <p><strong>Status:</strong> $onlineStatus</p>
-        <p><strong>Lock State:</strong> $lockedStatus</p>
-
-        <!-- Hidden meta for JS permission handling -->
-        <div id='client-meta'
-             data-assigned='" . ($isAssignedToMe ? "yes" : "no") . "'
-             data-locked='" . ($isLocked ? "true" : "false") . "'
-        ></div>
-    ";
-
-} catch (PDOException $e) {
-    echo "DB Error: " . htmlspecialchars($e->getMessage());
-}
+    <!-- 🔥 HIDDEN META REQUIRED BY JS -->
+    <div id='client-meta'
+        data-assigned='$isAssignedToMe'
+        data-locked='$isLocked'>
+    </div>
+";
