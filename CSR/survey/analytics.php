@@ -25,24 +25,25 @@ $feedback = $conn->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<link rel="stylesheet" href="survey_responses.css">
+<link rel="stylesheet" href="../survey/survey_responses.css">
+
+<div class="survey-analytics-container">
 
 <h1>📊 Survey Analytics</h1>
 
-<!-- Buttons -->
 <div class="analytics-actions">
     <a class="export-btn" href="analytics_report.php" target="_blank">📄 Download Analytics PDF</a>
     <a class="export-btn" href="analytics_report.php?weekly=1" target="_blank">📆 Weekly Report</a>
 </div>
 
-<div class="analytics-block">
-    <div class="metric-card">
-        <h3>Total Surveys</h3>
-        <p><?= $total ?></p>
-    </div>
+<h3>Total Surveys</h3>
+<div class="metric-card"><?= $total ?></div>
 
+<div class="charts">
     <canvas id="districtChart"></canvas>
     <canvas id="feedbackChart"></canvas>
+</div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
