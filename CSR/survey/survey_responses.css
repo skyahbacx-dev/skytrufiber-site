@@ -149,3 +149,19 @@ canvas {
 .charts {
     display: none; /* No longer used */
 }
+.export-buttons {
+    margin-bottom: 12px;
+}
+
+.export-btn {
+    background: #05702e;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    margin-right: 10px;
+    font-size: 14px;
+}
+.export-btn:hover {
+    background: #045a25;
+}
