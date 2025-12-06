@@ -4,7 +4,7 @@ if (!isset($csrUser)) {
     $csrUser = $_SESSION['csr_user'] ?? '';
 }
 
-include "../db_connect.php";
+include "../../db_connect.php";
 
 /* -------------------------
       FILTERS
@@ -53,7 +53,7 @@ $stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<link rel="stylesheet" href="my_clients.css">
+<link rel="stylesheet" href="../clients/my_clients.css">
 
 <div class="clients-container">
 
