@@ -226,14 +226,14 @@
   opacity: 0;
   transition: 0.2s;
   position: absolute;
-  top: 6px;
-  right: -8px;       /* RECEIVED messages → button on right */
+  top: 4px;
+  right: -34px;        /* RECEIVED → button on right side */
   z-index: 10;
 }
 
 .message.sent .more-btn {
+  left: -34px;         /* SENT → button on left side */
   right: auto;
-  left: -8px;        /* SENT messages → button on LEFT */
 }
 
 .message:hover .more-btn {
@@ -244,26 +244,16 @@
 =========================================================== */
 #msg-action-popup {
   position: absolute;
-  z-index: 9999;
+  z-index: 99999;
   background: #fff;
   border-radius: 12px;
   padding: 6px 0;
   border: 1px solid #ccc;
   display: none;
+  width: 170px;                /* fixed width so positioning is stable */
   box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-  max-width: 220px;
-  white-space: nowrap;
 }
 
-/* OPEN ON RIGHT for RECEIVED MESSAGES */
-.message.received #msg-action-popup {
-  left: 40px;     /* offset slightly right of bubble */
-}
-
-/* OPEN ON LEFT for SENT MESSAGES */
-.message.sent #msg-action-popup {
-  right: 40px;    /* offset slightly left of bubble */
-}
 
 /* Popup buttons */
 #msg-action-popup button {
