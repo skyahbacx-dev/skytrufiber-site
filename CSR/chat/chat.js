@@ -62,9 +62,6 @@ $(document).ready(function () {
 
         // Start polling
         messageInterval = setInterval(fetchNewMessages, 1500);
-
-        // Always show input bar (fix for unassigned clients)
-        $(".chat-input-area").css("display", "flex");
     });
 
     // Scroll button
@@ -109,19 +106,57 @@ function loadClients() {
 
 function loadClientInfo(id) {
     $.post("../chat/load_client_info.php", { client_id: id }, html => {
-
         $("#client-info-content").html(html);
 
-        // Read assignment + lock flags
+        // ===== Permission control based on hidden meta =====
         const meta = $("#client-meta");
-        const isAssigned = meta.data("assigned") === "yes";
-        const isLocked = meta.data("locked") === true;
-
-        // Disable or enable chat controls
-        handleChatPermission(isAssigned, isLocked);
+        if (meta.length) {
+            const isAssignedToMe = meta.data("assigned") === "yes";
+            // make sure we treat string "true" as true
+            const isLocked = String(meta.data("locked")) === "true";
+            handleChatPermission(isAssignedToMe, isLocked);
+        } else {
+            // Fallback: disable just to be safe if no meta
+            handleChatPermission(false, false);
+        }
     });
 }
 
+// ============================================================
+// ENABLE / DISABLE CHAT INPUT PERMISSIONS
+// ============================================================
+function handleChatPermission(isAssignedToMe, isLocked) {
+
+    const bar       = $(".chat-input-area");
+    const input     = $("#chat-input");
+    const sendBtn   = $("#send-btn");
+    const uploadBtn = $("#upload-btn");
+
+    // Logic:
+    // - Must be assigned to THIS csr AND NOT locked to send
+    // - Otherwise: disabled (unassigned, assigned to another CSR, or locked)
+    if (!isAssignedToMe || isLocked) {
+
+        bar.addClass("disabled");
+        input.prop("disabled", true);
+        sendBtn.prop("disabled", true);
+        uploadBtn.prop("disabled", true);
+
+        if (isLocked) {
+            input.attr("placeholder", "Client is locked — you can't send messages.");
+        } else {
+            input.attr("placeholder", "Client is assigned to another CSR or unassigned — you can't send messages.");
+        }
+
+    } else {
+
+        bar.removeClass("disabled");
+        input.prop("disabled", true === false); // just clear any old state
+        sendBtn.prop("disabled", false);
+        uploadBtn.prop("disabled", false);
+        input.attr("placeholder", "Type a message...");
+    }
+}
 
 // ============================================================
 // LOAD FULL MESSAGES
@@ -167,7 +202,7 @@ function fetchNewMessages() {
         attachMediaEvents();
 
         const box = $("#chat-messages")[0];
-        const dist = box.scrollHeight - box.scrollTop - box.clientHeight;
+        const dist = box.scrollHeight - box.clientHeight - box.scrollTop;
         if (dist < 150) scrollToBottom();
     });
 }
@@ -510,37 +545,4 @@ function unassignClient(id) {
         if (id === currentClientID)
             $("#client-info-content").html("<p>Select a client.</p>");
     });
-}
-function handleChatPermission(isAssigned, isLocked) {
-
-    const bar = $(".chat-input-area");
-    const input = $("#chat-input");
-    const sendBtn = $("#send-btn");
-    const uploadBtn = $("#upload-btn");
-
-    if (!isAssigned || isLocked) {
-
-        // Disable input UI
-        bar.addClass("disabled");
-        input.prop("disabled", true);
-        sendBtn.prop("disabled", true);
-        uploadBtn.prop("disabled", true);
-
-        // Optional placeholder change
-        input.attr(
-            "placeholder",
-            isLocked
-                ? "Client is locked — messaging disabled"
-                : "Client not assigned — messaging disabled"
-        );
-
-    } else {
-
-        // Enable chat input
-        bar.removeClass("disabled");
-        input.prop("disabled", false);
-        sendBtn.prop("disabled", false);
-        uploadBtn.prop("disabled", false);
-        input.attr("placeholder", "Type a message...");
-    }
 }
