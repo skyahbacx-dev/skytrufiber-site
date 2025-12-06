@@ -133,7 +133,6 @@ function handleChatPermission(isAssignedToMe, isLocked) {
     const sendBtn   = $("#send-btn");
     const uploadBtn = $("#upload-btn");
 
-    // Disable when NOT assigned OR locked
     if (!isAssignedToMe || isLocked) {
 
         bar.addClass("disabled");
@@ -141,22 +140,22 @@ function handleChatPermission(isAssignedToMe, isLocked) {
         sendBtn.prop("disabled", true);
         uploadBtn.prop("disabled", true);
 
-        if (isLocked) {
-            input.attr("placeholder", "Client is locked — you can't send messages.");
-        } else {
-            input.attr("placeholder", "Not assigned — you can't send messages.");
-        }
+        input.attr("placeholder",
+            isLocked ?
+            "Client is locked — you can't send messages." :
+            "Client is assigned to another CSR or unassigned — you can't send messages."
+        );
 
     } else {
 
-        bar.removeClass("disabled");
-        input.prop("disabled", false);   // ✅ fixed enabling logic
+        bar.removeClass("disabled");   // ✅ fixes blur!
+        input.prop("disabled", false);
         sendBtn.prop("disabled", false);
         uploadBtn.prop("disabled", false);
-
         input.attr("placeholder", "Type a message...");
     }
 }
+
 
 
 
