@@ -1,93 +1,169 @@
 <?php
 include __DIR__ . "/../db_connect.php";
 
-/* -----------------------------
-   CRON SECURITY TOKEN CHECK
------------------------------- */
-
-// Secret token – change this to your own!
-$CRON_TOKEN = "AE92JF83HF82HSLA29FD";
+/* --------------------------------------
+   🔐 SECURITY TOKEN PROTECTION
+--------------------------------------- */
+$CRON_TOKEN = "AE92JF83HF82HSLA29FD"; // <-- CHANGE this for security
 
 if (!isset($_GET['token']) || $_GET['token'] !== $CRON_TOKEN) {
     http_response_code(403);
-    exit("⛔ Access Denied.");
+    exit("⛔ Unauthorized.");
 }
 
-// Optional: disable browser execution entirely
-if (php_sapi_name() !== 'cli' && !isset($_GET['token'])) {
-    http_response_code(403);
-    exit("⛔ Forbidden.");
-}
+/* --------------------------------------
+   📅 GET TODAY
+--------------------------------------- */
+$today = new DateTime();
 
-
-/* Get all subscribers with installation date */
-$users = $conn->query("
+/* --------------------------------------
+   📌 FETCH ALL USERS WITH BILLING DATES
+--------------------------------------- */
+$stmt = $conn->prepare("
     SELECT id, full_name, email, account_number, date_installed
     FROM users
     WHERE date_installed IS NOT NULL
-")->fetchAll(PDO::FETCH_ASSOC);
+");
+$stmt->execute();
+$users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+/* --------------------------------------
+   🔁 PROCESS EACH USER
+--------------------------------------- */
 foreach ($users as $u) {
 
     $installDate = new DateTime($u['date_installed']);
-    $today = new DateTime();
 
-    // Calculate how many months have passed
-    $monthsPassed = $installDate->diff($today)->m + ($installDate->diff($today)->y * 12);
+    // Calculate how many months since installation
+    $diff = $installDate->diff($today);
+    $monthsPassed = ($diff->y * 12) + $diff->m;
 
-    // Calculate next due date
+    // Their next due date
     $dueDate = (clone $installDate)->modify("+{$monthsPassed} month");
+
+    // If the due date already passed, move to next month
     if ($dueDate < $today) {
         $dueDate = (clone $installDate)->modify("+".($monthsPassed + 1)." month");
     }
 
-    $diffDays = (int)$today->diff($dueDate)->format("%r%a");
+    // Days remaining until due date
+    $daysRemaining = (int)$today->diff($dueDate)->format("%r%a");
 
-    $reminderType = null;
-    if ($diffDays === 7) $reminderType = "7_days";
-    elseif ($diffDays === 3) $reminderType = "3_days";
-    elseif ($diffDays === 1) $reminderType = "1_day";
-    else continue;
+    /* -------------------------
+       🎯 Determine Reminder Type
+    -------------------------- */
+    if ($daysRemaining === 7) {
+        $type = "7_days_before";
+    } elseif ($daysRemaining === 3) {
+        $type = "3_days_before";
+    } elseif ($daysRemaining === 1) {
+        $type = "1_day_before";
+    } else {
+        continue;
+    }
 
-    // Prevent duplicates for SAME due date
-    $stmt = $conn->prepare("
-        SELECT id FROM reminder_logs
+    /* -------------------------
+       🔄 Check if already sent
+    -------------------------- */
+    $check = $conn->prepare("
+        SELECT 1 FROM reminder_logs
         WHERE user_id = :uid AND reminder_type = :type AND due_date = :due
     ");
-    $stmt->execute([
+    $check->execute([
         ':uid' => $u['id'],
-        ':type' => $reminderType,
+        ':type' => $type,
         ':due' => $dueDate->format("Y-m-d")
     ]);
 
-    if ($stmt->fetch()) continue;
+    if ($check->fetch()) {
+        continue; // Already sent → skip
+    }
 
-    /* Email content */
-    $subject = "Billing Reminder – Payment Due Soon";
-    $message = "
-        Hello {$u['full_name']},<br><br>
-        This is a reminder that your next bill is due on:
-        <h3>{$dueDate->format('Y-m-d')}</h3>
-        Please settle your account to avoid service interruption.<br><br>
-        Thank you!
-    ";
+    /* -------------------------
+       ✉ Generate email content
+    -------------------------- */
+    $emailBody = buildReminderEmail(
+        $u['full_name'],
+        $u['account_number'],
+        $dueDate->format("Y-m-d"),
+        $type
+    );
 
-    $headers = "Content-Type: text/html; charset=UTF-8";
+    $subjectMap = [
+        "7_days_before" => "Your SkyTruFiber Billing is Due in 7 Days",
+        "3_days_before" => "Your SkyTruFiber Billing is Due in 3 Days",
+        "1_day_before" => "Your SkyTruFiber Billing is Due Tomorrow"
+    ];
 
-    $sent = mail($u['email'], $subject, $message, $headers);
-    $status = $sent ? "sent" : "failed";
+    $subject = $subjectMap[$type];
 
-    /* Log it */
+    /* -------------------------
+       📧 Send Email
+    -------------------------- */
+    $headers = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $headers .= "From: SkyTruFiber Support <no-reply@ahbadevt.com>\r\n";
+
+    $sent = mail($u['email'], $subject, $emailBody, $headers);
+
+    /* -------------------------
+       📝 Log reminder
+    -------------------------- */
     $log = $conn->prepare("
-        INSERT INTO reminder_logs (user_id, account_number, email, reminder_type, due_date, status)
-        VALUES (:uid, :acc, :email, :type, :due, :status)
+        INSERT INTO reminder_logs (user_id, reminder_type, email, due_date, message, status)
+        VALUES (:uid, :type, :email, :due, :msg, :status)
+        ON CONFLICT (user_id, reminder_type, due_date) DO NOTHING
     ");
+
     $log->execute([
         ':uid' => $u['id'],
-        ':acc' => $u['account_number'],
+        ':type' => $type,
         ':email' => $u['email'],
-        ':type' => $reminderType,
         ':due' => $dueDate->format("Y-m-d"),
-        ':status' => $status
+        ':msg' => $emailBody,
+        ':status' => $sent ? "sent" : "failed"
     ]);
+}
+
+echo "Reminder cron completed.";
+exit;
+
+/* =====================================================
+   📧 EMAIL TEMPLATE FUNCTION
+===================================================== */
+function buildReminderEmail($name, $account, $dueDate, $type) {
+
+    $messages = [
+        "7_days_before" => "
+            Hello $name,<br><br>
+            This is a friendly reminder that your SkyTruFiber subscription is due in <b>7 days</b>.<br><br>
+            <b>Account Number:</b> $account<br>
+            <b>Due Date:</b> $dueDate<br><br>
+            Please settle your payment before the due date to avoid service interruption.<br><br>
+            Thank you,<br>
+            SkyTruFiber Support
+        ",
+
+        "3_days_before" => "
+            Hello $name,<br><br>
+            Your SkyTruFiber subscription is due in <b>3 days</b>.<br><br>
+            <b>Account Number:</b> $account<br>
+            <b>Due Date:</b> $dueDate<br><br>
+            Kindly settle your balance soon to avoid disconnection.<br><br>
+            Thank you,<br>
+            SkyTruFiber Support
+        ",
+
+        "1_day_before" => "
+            Hello $name,<br><br>
+            This is a reminder that your SkyTruFiber subscription is due <b>tomorrow</b>.<br><br>
+            <b>Account Number:</b> $account<br>
+            <b>Due Date:</b> $dueDate<br><br>
+            Please make your payment to ensure uninterrupted service.<br><br>
+            Thank you,<br>
+            SkyTruFiber Support
+        "
+    ];
+
+    return $messages[$type];
 }
