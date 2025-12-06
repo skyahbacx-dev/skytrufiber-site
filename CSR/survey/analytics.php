@@ -1,17 +1,17 @@
 <?php
 include '../../db_connect.php';
 
-/* Count surveys */
+/* Totals */
 $total = $conn->query("SELECT COUNT(*) FROM survey_responses")->fetchColumn();
 
-/* District count */
+/* District Breakdown */
 $districts = $conn->query("
     SELECT district, COUNT(*) AS total 
     FROM survey_responses
     GROUP BY district ORDER BY district
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-/* Sentiment check */
+/* Sentiment */
 $feedback = $conn->query("
     SELECT
         CASE 
@@ -25,7 +25,15 @@ $feedback = $conn->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<h2>📊 Survey Analytics</h2>
+<link rel="stylesheet" href="survey_responses.css">
+
+<h1>📊 Survey Analytics</h1>
+
+<!-- Buttons -->
+<div class="analytics-actions">
+    <a class="export-btn" href="analytics_report.php" target="_blank">📄 Download Analytics PDF</a>
+    <a class="export-btn" href="analytics_report.php?weekly=1" target="_blank">📆 Weekly Report</a>
+</div>
 
 <div class="analytics-block">
     <div class="metric-card">
@@ -47,7 +55,8 @@ new Chart(document.getElementById("districtChart"), {
         labels: <?= json_encode(array_column($districts, 'district')) ?>,
         datasets: [{ 
             label: "Surveys per District",
-            data: <?= json_encode(array_column($districts, 'total')) ?>
+            data: <?= json_encode(array_column($districts, 'total')) ?>,
+            backgroundColor: "#05702e"
         }]
     }
 });
@@ -57,7 +66,24 @@ new Chart(document.getElementById("feedbackChart"), {
     type: "pie",
     data: {
         labels: <?= json_encode(array_column($feedback, 'label')) ?>,
-        datasets: [{ data: <?= json_encode(array_column($feedback, 'total')) ?> }]
+        datasets: [{ 
+            data: <?= json_encode(array_column($feedback, 'total')) ?>,
+            backgroundColor: ["#0a7e3c","#f44336","#ff9800"]
+        }]
     }
 });
 </script>
+
+<style>
+.analytics-actions {
+    margin-bottom: 12px;
+}
+.export-btn {
+    background: #05702e;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-decoration:none;
+    margin-right: 10px;
+}
+</style>
