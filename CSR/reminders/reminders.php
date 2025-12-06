@@ -30,7 +30,7 @@ $stmt->execute($params);
 $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<link rel="stylesheet" href="reminders.css">
+<link rel="stylesheet" href="../reminders/reminders.css">
 
 <h1>🔔 Billing Reminder Notifications</h1>
 
