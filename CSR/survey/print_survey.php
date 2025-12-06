@@ -41,6 +41,9 @@ $stmt = $conn->prepare("
 ");
 $stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+/* Logo Path */
+$logoPath = "../../AHBALOGO.png";
 ?>
 
 <!DOCTYPE html>
@@ -52,11 +55,34 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 body {
     font-family: Arial, sans-serif;
     padding: 20px;
+    color: #000;
 }
 
-h1 {
+.header {
     text-align: center;
     margin-bottom: 20px;
+}
+
+.header img {
+    height: 70px;
+    margin-bottom: 8px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: bold;
+}
+
+.header h3 {
+    margin: 4px 0 0;
+    font-size: 16px;
+    color: #444;
+}
+
+.print-info {
+    margin-bottom: 10px;
+    font-size: 14px;
 }
 
 table {
@@ -68,7 +94,7 @@ table {
 th, td {
     border: 1px solid #ccc;
     padding: 8px;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 th {
@@ -76,12 +102,36 @@ th {
     color: white;
 }
 
-.print-info {
-    margin-bottom: 10px;
-    font-size: 14px;
+.footer {
+    position: fixed;
+    bottom: 10px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    color: #444;
+    font-size: 12px;
 }
+
+.no-print {
+    margin-bottom: 20px;
+}
+
+.print-btn {
+    padding: 10px 16px;
+    background: #05702e;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
 @media print {
     .no-print { display: none; }
+
+    .footer {
+        position: fixed;
+        bottom: 5px;
+    }
 }
 </style>
 
@@ -89,13 +139,19 @@ th {
 <body>
 
 <div class="no-print">
-    <button onclick="window.print()" style="padding:10px 16px; background:#05702e; color:white; border:none; border-radius:6px; cursor:pointer;">
-        🖨 Print Now
-    </button>
+    <button onclick="window.print()" class="print-btn">🖨 Print Now</button>
 </div>
 
-<h1>Survey Responses Report</h1>
+<!-- HEADER WITH LOGO -->
+<div class="header">
+    <?php if (file_exists($logoPath)): ?>
+        <img src="<?= $logoPath ?>" alt="Company Logo">
+    <?php endif; ?>
+    <h1>Survey Responses Report</h1>
+    <h3>SkyTruFiber — Customer Insights Department</h3>
+</div>
 
+<!-- FILTER SUMMARY -->
 <div class="print-info">
     <strong>Filters Applied:</strong><br>
     Search: <?= htmlspecialchars($search ?: 'None') ?><br>
@@ -104,6 +160,7 @@ th {
     Date To: <?= htmlspecialchars($date_to ?: 'N/A') ?><br>
 </div>
 
+<!-- TABLE -->
 <table>
     <tr>
         <th>Client</th>
@@ -126,8 +183,22 @@ th {
             <td><?= date("Y-m-d", strtotime($r['created_at'])) ?></td>
         </tr>
     <?php endforeach; ?>
-
 </table>
+
+<!-- FOOTER -->
+<div class="footer">
+    Generated on <?= date("Y-m-d H:i:s") ?> — Page <span class="pageNumber"></span>
+</div>
+
+<script>
+/* Auto page number (for browsers that support it) */
+document.addEventListener("DOMContentLoaded", () => {
+    const footer = document.querySelector(".pageNumber");
+    if (footer && typeof window.print === "function") {
+        footer.textContent = "";
+    }
+});
+</script>
 
 </body>
 </html>
