@@ -569,4 +569,34 @@ $(document).on("click", ".remove-client", function (e) {
     }, 200);
 });
 
-// END OF FILE
+function assignClient(id) {
+
+    $.post("../chat/assign_client.php", { client_id: id }, () => {
+
+        // Refresh sidebar instantly
+        loadClients();
+
+        // Auto-select the client you just assigned
+        setTimeout(() => {
+            $(`.client-item[data-id='${id}']`).click();
+        }, 120);
+
+        // Refresh permissions immediately
+        loadClientInfo(id);
+    });
+}
+function unassignClient(id) {
+
+    $.post("../chat/unassign_client.php", { client_id: id }, () => {
+
+        loadClients();
+
+        // Remove active selection
+        if (id === currentClientID) {
+            currentClientID = null;
+            $("#chat-client-name").text("Select a Client");
+            $("#chat-messages").html("");
+            $("#client-info-content").html("<p>Select a client.</p>");
+        }
+    });
+}
