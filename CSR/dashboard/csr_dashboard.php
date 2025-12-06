@@ -25,8 +25,12 @@ $tab = $_GET['tab'] ?? 'chat';
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<!-- Chat System -->
-<script src="../../chat/chat.js"></script>
+<!-- Dashboard JS (correct path) -->
+<script src="csr_dashboard.js?v=2"></script>
+
+<!-- Chat System JS (correct path) -->
+<script src="../chat/chat.js?v=2"></script>
+
 
 <script>
 const csrUser     = "<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>";
