@@ -61,8 +61,8 @@ $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
     <button class="side-item" onclick="window.location='csr_dashboard.php'">💬 Chat Dashboard</button>
     <button class="side-item" onclick="window.location='my_clients.php'">👥 My Clients</button>
     <button class="side-item" onclick="window.location='reminders.php'">⏱ Reminders</button>
-    <button class="side-item" onclick="window.location='survey_responses.php'">📄 Survey Responses</button>
-    <button class="side-item" onclick="window.location='update_profile.php'">👤 Edit Profile</button>
+    <button class="side-item" onclick="window.location='../survey_responses.php'">📄 Survey Responses</button>
+    <button class="side-item" onclick="window.location='../update_profile.php'">👤 Edit Profile</button>
     <button class="side-item logout" onclick="window.location='../csr_logout.php'">🚪 Logout</button>
 </div>
 
