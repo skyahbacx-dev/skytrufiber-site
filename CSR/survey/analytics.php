@@ -1,17 +1,18 @@
 <?php
 include '../../db_connect.php';
 
-/* Totals */
+/* Total responses */
 $total = $conn->query("SELECT COUNT(*) FROM survey_responses")->fetchColumn();
 
-/* District Breakdown */
+/* District breakdown */
 $districts = $conn->query("
-    SELECT district, COUNT(*) AS total 
+    SELECT COALESCE(district,'Unknown') AS district, COUNT(*) AS total
     FROM survey_responses
-    GROUP BY district ORDER BY district
+    GROUP BY district
+    ORDER BY district
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-/* Sentiment */
+/* Sentiment grouping */
 $feedback = $conn->query("
     SELECT
         CASE 
@@ -22,6 +23,7 @@ $feedback = $conn->query("
         COUNT(*) AS total
     FROM survey_responses
     GROUP BY label
+    ORDER BY label
 ")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
@@ -29,62 +31,66 @@ $feedback = $conn->query("
 
 <div class="survey-analytics-container">
 
-<h1>📊 Survey Analytics</h1>
+    <h1>📊 Survey Analytics</h1>
 
-<div class="analytics-actions">
-    <a class="export-btn" href="analytics_report.php" target="_blank">📄 Download Analytics PDF</a>
-    <a class="export-btn" href="analytics_report.php?weekly=1" target="_blank">📆 Weekly Report</a>
+    <div class="analytics-actions">
+        <a class="export-btn" href="analytics_report.php" target="_blank">📄 Download Analytics PDF</a>
+        <a class="export-btn" href="analytics_report.php?weekly=1" target="_blank">📆 Weekly Report</a>
+    </div>
+
+    <!-- TOTAL SURVEYS CARD -->
+    <h3>Total Surveys</h3>
+    <div class="metric-card"><?= htmlspecialchars($total) ?></div>
+
+    <!-- SIDE-BY-SIDE CHARTS -->
+    <div class="analytics-row">
+
+        <div class="analytics-box">
+            <canvas id="districtChart"></canvas>
+        </div>
+
+        <div class="analytics-box">
+            <canvas id="feedbackChart"></canvas>
+        </div>
+
+    </div>
+
 </div>
 
-<h3>Total Surveys</h3>
-<div class="metric-card"><?= $total ?></div>
-
-<div class="charts">
-    <canvas id="districtChart"></canvas>
-    <canvas id="feedbackChart"></canvas>
-</div>
-
-</div>
-
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-// District
+// DISTRICT CHART
 new Chart(document.getElementById("districtChart"), {
     type: "bar",
     data: {
         labels: <?= json_encode(array_column($districts, 'district')) ?>,
-        datasets: [{ 
+        datasets: [{
             label: "Surveys per District",
             data: <?= json_encode(array_column($districts, 'total')) ?>,
             backgroundColor: "#05702e"
         }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
     }
 });
 
-// Feedback
+// SENTIMENT PIE CHART
 new Chart(document.getElementById("feedbackChart"), {
     type: "pie",
     data: {
         labels: <?= json_encode(array_column($feedback, 'label')) ?>,
-        datasets: [{ 
+        datasets: [{
             data: <?= json_encode(array_column($feedback, 'total')) ?>,
             backgroundColor: ["#0a7e3c","#f44336","#ff9800"]
         }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
     }
 });
 </script>
-
-<style>
-.analytics-actions {
-    margin-bottom: 12px;
-}
-.export-btn {
-    background: #05702e;
-    color: white;
-    padding: 8px 14px;
-    border-radius: 8px;
-    text-decoration:none;
-    margin-right: 10px;
-}
-</style>
