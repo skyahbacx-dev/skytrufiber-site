@@ -3,14 +3,17 @@ include '../../db_connect.php';
 
 $view = $_GET['view'] ?? 'responses';
 
-/* If analytics tab clicked */
+/* --------------------------------------
+   LOAD ANALYTICS PAGE
+--------------------------------------- */
 if ($view === 'analytics') {
     include "analytics.php";
     return;
 }
 
-/* ---------------- FILTERS ---------------- */
-
+/* --------------------------------------
+   FILTERS
+--------------------------------------- */
 $search     = $_GET['search'] ?? '';
 $district   = $_GET['district'] ?? '';
 $date_from  = $_GET['date_from'] ?? '';
@@ -19,15 +22,27 @@ $date_to    = $_GET['date_to'] ?? '';
 $sort   = $_GET['sort'] ?? 'created_at';
 $dir    = (isset($_GET['dir']) && strtolower($_GET['dir']) === 'asc') ? 'ASC' : 'DESC';
 
-$allowed = ["client_name","account_number","email","district","location","feedback","created_at"];
-if (!in_array($sort, $allowed)) $sort = "created_at";
+$allowedColumns = [
+    "client_name","account_number","email","district","location",
+    "feedback","created_at","user_id"
+];
+
+if (!in_array($sort, $allowedColumns)) {
+    $sort = "created_at";
+}
 
 $where = "WHERE 1=1";
 $params = [];
 
 /* Search filter */
 if ($search !== "") {
-    $where .= " AND (client_name ILIKE :s OR account_number ILIKE :s OR email ILIKE :s OR district ILIKE :s OR location ILIKE :s)";
+    $where .= " AND (
+        client_name ILIKE :s
+        OR account_number ILIKE :s
+        OR email ILIKE :s
+        OR district ILIKE :s
+        OR location ILIKE :s
+    )";
     $params[':s'] = "%$search%";
 }
 
@@ -48,60 +63,76 @@ if ($date_to !== "") {
     $params[':dt'] = $date_to;
 }
 
-/* Pagination */
+/* --------------------------------------
+   PAGINATION
+--------------------------------------- */
 $limit = 10;
 $page = max(1, intval($_GET['page'] ?? 1));
 $offset = ($page - 1) * $limit;
 
-/* Count */
 $countStmt = $conn->prepare("SELECT COUNT(*) FROM survey_responses $where");
 $countStmt->execute($params);
 $totalRows = $countStmt->fetchColumn();
 $totalPages = ceil($totalRows / $limit);
 
-/* Fetch */
+/* --------------------------------------
+   FETCH RESPONSES + USER LINK
+--------------------------------------- */
 $query = "
-    SELECT id, client_name, account_number, email, district, location, feedback, created_at
-    FROM survey_responses
-    $where ORDER BY $sort $dir
+    SELECT sr.id, sr.user_id, sr.client_name, sr.account_number, sr.email,
+           sr.district, sr.location, sr.feedback, sr.created_at,
+           u.full_name AS linked_name
+    FROM survey_responses sr
+    LEFT JOIN users u ON u.id = sr.user_id
+    $where
+    ORDER BY $sort $dir
 ";
+
 $stmt = $conn->prepare($query . " LIMIT $limit OFFSET $offset");
 $stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* District List */
-$dList = $conn->query("SELECT DISTINCT district FROM survey_responses ORDER BY district")->fetchAll(PDO::FETCH_COLUMN);
+/* --------------------------------------
+   DISTRICT LIST
+--------------------------------------- */
+$dList = $conn->query("
+    SELECT DISTINCT district
+    FROM survey_responses
+    WHERE district IS NOT NULL AND district <> ''
+    ORDER BY district
+")->fetchAll(PDO::FETCH_COLUMN);
 ?>
 
 <link rel="stylesheet" href="../survey/survey_responses.css">
 
-
 <h1>📄 Survey Responses</h1>
 
-<!-- SUB TABS -->
+<!-- SUB NAV TABS -->
 <div class="survey-tabs">
-    <a href="?tab=survey&view=responses" class="<?= $view==='responses' ? 'active' : '' ?>">📝 Responses</a>
-    <a href="?tab=survey&view=analytics" class="<?= $view==='analytics' ? 'active' : '' ?>">📊 Analytics</a>
+    <a href="?tab=survey&view=responses" class="<?= $view === 'responses' ? 'active' : '' ?>">📝 Responses</a>
+    <a href="?tab=survey&view=analytics" class="<?= $view === 'analytics' ? 'active' : '' ?>">📊 Analytics</a>
 </div>
 
-<!-- FILTERS -->
+<!-- FILTER BAR -->
 <form method="GET" class="filter-bar">
     <input type="hidden" name="tab" value="survey">
 
-    <input type="text" name="search" value="<?= htmlspecialchars($search ?? '') ?>" placeholder="Search...">
+    <input type="text" name="search"
+           value="<?= htmlspecialchars($search) ?>"
+           placeholder="Search name, account #, email…">
 
     <select name="district">
         <option value="">All Districts</option>
         <?php foreach ($dList as $d): ?>
-            <option value="<?= htmlspecialchars($d ?? '') ?>" <?= $district == $d ? 'selected' : '' ?>>
-                <?= htmlspecialchars($d ?? '') ?>
+            <option value="<?= htmlspecialchars($d) ?>" <?= $district == $d ? 'selected' : '' ?>>
+                <?= htmlspecialchars($d) ?>
             </option>
         <?php endforeach; ?>
     </select>
 
     <label>Date:</label>
-    <input type="date" name="date_from" value="<?= htmlspecialchars($date_from ?? '') ?>">
-    <input type="date" name="date_to" value="<?= htmlspecialchars($date_to ?? '') ?>">
+    <input type="date" name="date_from" value="<?= htmlspecialchars($date_from) ?>">
+    <input type="date" name="date_to" value="<?= htmlspecialchars($date_to) ?>">
 
     <button>Apply</button>
 </form>
@@ -118,6 +149,7 @@ $dList = $conn->query("SELECT DISTINCT district FROM survey_responses ORDER BY d
                 <th onclick="sortBy('location')">Location</th>
                 <th onclick="sortBy('feedback')">Feedback</th>
                 <th onclick="sortBy('created_at')">Date</th>
+                <th>User Link</th>
             </tr>
         </thead>
         <tbody>
@@ -129,8 +161,15 @@ $dList = $conn->query("SELECT DISTINCT district FROM survey_responses ORDER BY d
                 <td><?= htmlspecialchars($r['district'] ?? '') ?></td>
                 <td><?= htmlspecialchars($r['location'] ?? '') ?></td>
                 <td><?= htmlspecialchars($r['feedback'] ?? '') ?></td>
+                <td><?= !empty($r['created_at']) ? date("Y-m-d", strtotime($r['created_at'])) : '' ?></td>
+
+                <!-- USER CONNECTION STATUS -->
                 <td>
-                    <?= !empty($r['created_at']) ? date("Y-m-d", strtotime($r['created_at'])) : '' ?>
+                    <?php if (!empty($r['linked_name'])): ?>
+                        <span style="color:#05702e; font-weight:bold;">✔ Linked (<?= htmlspecialchars($r['linked_name']) ?>)</span>
+                    <?php else: ?>
+                        <span style="color:#c00; font-weight:bold;">✖ No User</span>
+                    <?php endif; ?>
                 </td>
             </tr>
         <?php endforeach ?>
@@ -142,8 +181,7 @@ $dList = $conn->query("SELECT DISTINCT district FROM survey_responses ORDER BY d
 <div class="pagination">
 <?php for ($i = 1; $i <= $totalPages; $i++): ?>
     <a class="<?= $i == $page ? 'active' : '' ?>"
-       href="?tab=survey&page=<?= $i ?>&search=<?= urlencode($search) ?>&district=<?= urlencode($district) ?>
-       &date_from=<?= urlencode($date_from) ?>&date_to=<?= urlencode($date_to) ?>&sort=<?= urlencode($sort) ?>&dir=<?= urlencode($dir) ?>">
+       href="?tab=survey&page=<?= $i ?>&search=<?= urlencode($search) ?>&district=<?= urlencode($district) ?>&date_from=<?= urlencode($date_from) ?>&date_to=<?= urlencode($date_to) ?>&sort=<?= urlencode($sort) ?>&dir=<?= urlencode($dir) ?>">
        <?= $i ?>
     </a>
 <?php endfor ?>
