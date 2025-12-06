@@ -13,11 +13,11 @@ if ($weekly) {
 
     $where = "WHERE created_at::date BETWEEN :start AND :end";
     $params = [":start" => $start, ":end" => $end];
-    $title = "Weekly Survey Report ($start to $end)";
+    $title = "WEEKLY SURVEY REPORT<br><small>($start to $end)</small>";
 } else {
     $where = "";
     $params = [];
-    $title = "Full Survey Analytics Report";
+    $title = "FULL SURVEY ANALYTICS REPORT";
 }
 
 /* -------------------------
@@ -53,7 +53,7 @@ $sentimentStmt = $conn->prepare("
         COUNT(*) AS total
     FROM survey_responses
     $where
-    GROUP BY label
+    GROUP_BY label
     ORDER BY label
 ");
 $sentimentStmt->execute($params);
@@ -65,27 +65,55 @@ $sentiments = $sentimentStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $html = "
 <style>
-body { font-family: sans-serif; }
-h1 { text-align: center; margin-bottom: 10px; }
-h2 { margin-top: 25px; color:#05702e; }
-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-th, td { border: 1px solid #ccc; padding: 8px; }
-th { background: #05702e; color: white; }
-.section { margin-top: 25px; }
+body {
+    font-family: sans-serif;
+    font-size: 12px;
+}
+
+h1 {
+    text-align: center;
+    color: #05702e;
+    margin-bottom: 5px;
+}
+
+h2 {
+    margin-top: 25px;
+    color: #05702e;
+    border-bottom: 2px solid #05702e;
+    padding-bottom: 5px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 12px;
+}
+
+th, td {
+    border: 1px solid #bbb;
+    padding: 8px;
+}
+
+th {
+    background: #05702e;
+    color: white;
+}
+
 .count-box {
     background: #e9f7ee;
-    padding: 12px;
-    border-radius: 8px;
+    padding: 15px;
     border-left: 5px solid #05702e;
+    margin-top: 20px;
     font-size: 16px;
-    font-weight: bold;
+    border-radius: 6px;
 }
 </style>
 
 <h1>$title</h1>
 
 <div class='count-box'>
-Total Survey Responses: <b>$total</b>
+<b>Total Survey Responses:</b> $total
 </div>
 
 <h2>District Breakdown</h2>
@@ -98,9 +126,9 @@ foreach ($districts as $d) {
     $html .= "<tr><td>$dist</td><td>$count</td></tr>";
 }
 
-$html .= "</table>";
-
 $html .= "
+</table>
+
 <h2>Feedback Sentiment</h2>
 <table>
     <tr><th>Sentiment</th><th>Total Responses</th></tr>";
