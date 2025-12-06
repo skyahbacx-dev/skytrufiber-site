@@ -7,7 +7,9 @@ if (!$client_id) exit;
 
 try {
 
-    // Fetch messages
+    /* ============================================================
+       1) Fetch all messages for this client
+    ============================================================ */
     $stmt = $conn->prepare("
         SELECT id, sender_type, message, created_at, edited
         FROM chat
@@ -22,7 +24,26 @@ try {
         exit;
     }
 
-    // GLOBAL MEDIA INDEX FOR LIGHTBOX
+    $msgIDs = array_column($messages, "id");
+
+    /* ============================================================
+       2) Batch-load ALL media in ONE query
+    ============================================================ */
+    $mediaMap = [];
+    if (!empty($msgIDs)) {
+        $in = implode(",", array_fill(0, count($msgIDs), "?"));
+        $query = $conn->prepare("SELECT id, chat_id, media_type FROM chat_media WHERE chat_id IN ($in)");
+        $query->execute($msgIDs);
+        $allMedia = $query->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($allMedia as $m) {
+            $mediaMap[$m["chat_id"]][] = $m;
+        }
+    }
+
+    /* ============================================================
+       3) Rendering messages
+    ============================================================ */
     $globalIndex = 0;
 
     foreach ($messages as $msg) {
@@ -30,6 +51,7 @@ try {
         $msgID = (int)$msg["id"];
         $sender = ($msg["sender_type"] === "csr") ? "sent" : "received";
         $timestamp = date("M j g:i A", strtotime($msg["created_at"]));
+        $mediaList = $mediaMap[$msgID] ?? [];
 
         echo "<div class='message $sender' data-msg-id='$msgID'>";
 
@@ -42,36 +64,33 @@ try {
 
         echo "<div class='message-content'>";
 
-        // MORE BUTTON
+        // More button
         echo "
             <button class='more-btn' data-id='$msgID'>
                 <i class='fa-solid fa-ellipsis-vertical'></i>
             </button>
         ";
 
-        // MESSAGE BUBBLE START
+        /* ============================================================
+           MESSAGE BUBBLE
+        ============================================================ */
         echo "<div class='message-bubble'>";
 
-        /* -----------------------------------------------------------
-           LOAD MEDIA ATTACHMENTS
-        ------------------------------------------------------------ */
-        $m = $conn->prepare("SELECT id, media_type FROM chat_media WHERE chat_id = ?");
-        $m->execute([$msgID]);
-        $mediaList = $m->fetchAll(PDO::FETCH_ASSOC);
-
+        /* ------------------------ MEDIA GRID ------------------------ */
         $count = count($mediaList);
 
         if ($count > 0) {
 
-            // Determine grid class
+            // Determine grid layout
             if ($count === 1) $grid = "media-1";
             elseif ($count === 2) $grid = "media-2";
             elseif ($count === 3) $grid = "media-3";
             elseif ($count === 4) $grid = "media-4";
-            else $grid = "media-5"; // 5 or more
+            else $grid = "media-5";
 
             echo "<div class='media-grid $grid'>";
 
+            // For 5+ show 4 only, then overlay
             $visibleCount = ($count >= 5 ? 4 : $count);
 
             for ($i = 0; $i < $visibleCount; $i++) {
@@ -83,10 +102,9 @@ try {
                 $indexAttr = "data-media-index='{$globalIndex}'";
                 $globalIndex++;
 
-                // Overlay for extra items
-                $overlay = "";
                 $openTag = "<div class='media-item'>";
 
+                // Extra overlay for 5+ items
                 if ($count >= 5 && $i === 3) {
                     $extra = $count - 4;
                     $openTag = "<div class='media-item media-more-overlay' data-more='+$extra'>";
@@ -101,8 +119,7 @@ try {
                              data-full='$src'
                              $indexAttr>
                     ";
-                }
-                elseif ($media["media_type"] === "video") {
+                } else {
                     echo "
                         <video class='fullview-item'
                                data-full='$src'
@@ -115,29 +132,27 @@ try {
                 echo "</div>";
             }
 
-            echo "</div>"; // end media-grid
+            echo "</div>"; // end grid
         }
 
-        /* -----------------------------------------------------------
-           MESSAGE TEXT
-        ------------------------------------------------------------ */
+        /* ------------------------ MESSAGE TEXT ------------------------ */
         if (!empty($msg["message"])) {
             $safe = nl2br(htmlspecialchars($msg["message"]));
             echo "<div class='msg-text'>$safe</div>";
         }
 
-        echo "</div>"; // close message-bubble
+        echo "</div>"; // close .message-bubble
 
-        // Edited label
+        /* ------------------------ Edited Label ------------------------ */
         if (!empty($msg["edited"])) {
             echo "<div class='edited-label'>(edited)</div>";
         }
 
-        // Timestamp
+        /* ------------------------ Timestamp ------------------------ */
         echo "<div class='message-time'>$timestamp</div>";
 
-        echo "</div>"; // close message-content
-        echo "</div>"; // close .message
+        echo "</div>"; // close content
+        echo "</div>"; // close message wrapper
     }
 
 } catch (Exception $e) {
