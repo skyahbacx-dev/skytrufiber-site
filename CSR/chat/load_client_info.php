@@ -42,11 +42,17 @@ try {
         ? "<span style='color:green;'>Online</span>" 
         : "<span style='color:gray;'>Offline</span>";
 
-    $lockedStatus = $c["is_locked"] ? "Locked" : "Unlocked";
+    $lockedStatus = ($c["assigned_csr"] !== $currentCSR && !empty($c["assigned_csr"])) 
+                ? "Locked" 
+                : "Unlocked";
+
 
     // === Permission Flags ===
     $isAssignedToMe = ($c["assigned_csr"] === $currentCSR) ? "yes" : "no";
-    $isLocked       = $c["is_locked"] ? "true" : "false";
+    $isLocked = ($c["assigned_csr"] !== $currentCSR && !empty($c["assigned_csr"])) 
+            ? "true" 
+            : "false";
+;
 
     echo "
         <p><strong>Name:</strong> $fullName</p>
