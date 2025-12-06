@@ -80,10 +80,11 @@ $total = count($clients);
             <td><?= htmlspecialchars($c['date_installed']) ?></td>
 
             <td>
-                <a href="../chat/chat.php?client=<?= urlencode($c['account_number']) ?>" 
+                <a href="../dashboard/csr_dashboard.php?tab=chat&client=<?= urlencode($c['account_number']) ?>" 
                    class="chat-btn">
                    💬 Chat
                 </a>
+
             </td>
         </tr>
     <?php endforeach; ?>
