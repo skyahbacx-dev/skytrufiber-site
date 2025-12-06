@@ -17,24 +17,27 @@ $date_from  = $_GET['date_from'] ?? '';
 $date_to    = $_GET['date_to'] ?? '';
 
 $sort   = $_GET['sort'] ?? 'created_at';
-$dir    = (isset($_GET['dir']) && strtolower($_GET['dir'])==='asc') ? 'ASC' : 'DESC';
+$dir    = (isset($_GET['dir']) && strtolower($_GET['dir']) === 'asc') ? 'ASC' : 'DESC';
 
 $allowed = ["client_name","account_number","email","district","location","feedback","created_at"];
-if (!in_array($sort,$allowed)) $sort="created_at";
+if (!in_array($sort, $allowed)) $sort = "created_at";
 
 $where = "WHERE 1=1";
 $params = [];
 
+/* Search filter */
 if ($search !== "") {
     $where .= " AND (client_name ILIKE :s OR account_number ILIKE :s OR email ILIKE :s OR district ILIKE :s OR location ILIKE :s)";
     $params[':s'] = "%$search%";
 }
 
+/* District filter */
 if ($district !== "") {
     $where .= " AND district = :d";
     $params[':d'] = $district;
 }
 
+/* Date range filters */
 if ($date_from !== "") {
     $where .= " AND created_at::date >= :df";
     $params[':df'] = $date_from;
@@ -48,13 +51,13 @@ if ($date_to !== "") {
 /* Pagination */
 $limit = 10;
 $page = max(1, intval($_GET['page'] ?? 1));
-$offset = ($page-1)*$limit;
+$offset = ($page - 1) * $limit;
 
 /* Count */
 $countStmt = $conn->prepare("SELECT COUNT(*) FROM survey_responses $where");
 $countStmt->execute($params);
 $totalRows = $countStmt->fetchColumn();
-$totalPages = ceil($totalRows/$limit);
+$totalPages = ceil($totalRows / $limit);
 
 /* Fetch */
 $query = "
@@ -76,67 +79,70 @@ $dList = $conn->query("SELECT DISTINCT district FROM survey_responses ORDER BY d
 
 <!-- SUB TABS -->
 <div class="survey-tabs">
-    <a href="?tab=survey&view=responses" class="<?= $view==='responses'?'active':'' ?>">📝 Responses</a>
-    <a href="?tab=survey&view=analytics" class="<?= $view==='analytics'?'active':'' ?>">📊 Analytics</a>
+    <a href="?tab=survey&view=responses" class="<?= $view==='responses' ? 'active' : '' ?>">📝 Responses</a>
+    <a href="?tab=survey&view=analytics" class="<?= $view==='analytics' ? 'active' : '' ?>">📊 Analytics</a>
 </div>
 
 <!-- FILTERS -->
 <form method="GET" class="filter-bar">
     <input type="hidden" name="tab" value="survey">
 
-    <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search...">
+    <input type="text" name="search" value="<?= htmlspecialchars($search ?? '') ?>" placeholder="Search...">
 
     <select name="district">
         <option value="">All Districts</option>
-        <?php foreach($dList as $d): ?>
-            <option value="<?= htmlspecialchars($d) ?>" <?= $district==$d?'selected':'' ?>>
-                <?= htmlspecialchars($d) ?>
+        <?php foreach ($dList as $d): ?>
+            <option value="<?= htmlspecialchars($d ?? '') ?>" <?= $district == $d ? 'selected' : '' ?>>
+                <?= htmlspecialchars($d ?? '') ?>
             </option>
         <?php endforeach; ?>
     </select>
 
     <label>Date:</label>
-    <input type="date" name="date_from" value="<?= $date_from ?>">
-    <input type="date" name="date_to" value="<?= $date_to ?>">
+    <input type="date" name="date_from" value="<?= htmlspecialchars($date_from ?? '') ?>">
+    <input type="date" name="date_to" value="<?= htmlspecialchars($date_to ?? '') ?>">
 
     <button>Apply</button>
 </form>
 
 <!-- TABLE -->
 <div class="table-wrapper">
-<table class="styled-table">
-    <thead>
-        <tr>
-            <th onclick="sortBy('client_name')">Client</th>
-            <th onclick="sortBy('account_number')">Account #</th>
-            <th onclick="sortBy('email')">Email</th>
-            <th onclick="sortBy('district')">District</th>
-            <th onclick="sortBy('location')">Location</th>
-            <th onclick="sortBy('feedback')">Feedback</th>
-            <th onclick="sortBy('created_at')">Date</th>
-        </tr>
-    </thead>
-    <tbody>
-    <?php foreach($rows as $r): ?>
-        <tr>
-            <td><?= htmlspecialchars($r['client_name']) ?></td>
-            <td><?= htmlspecialchars($r['account_number']) ?></td>
-            <td><?= htmlspecialchars($r['email']) ?></td>
-            <td><?= htmlspecialchars($r['district']) ?></td>
-            <td><?= htmlspecialchars($r['location']) ?></td>
-            <td><?= htmlspecialchars($r['feedback']) ?></td>
-            <td><?= date("Y-m-d", strtotime($r['created_at'])) ?></td>
-        </tr>
-    <?php endforeach ?>
-    </tbody>
-</table>
+    <table class="styled-table">
+        <thead>
+            <tr>
+                <th onclick="sortBy('client_name')">Client</th>
+                <th onclick="sortBy('account_number')">Account #</th>
+                <th onclick="sortBy('email')">Email</th>
+                <th onclick="sortBy('district')">District</th>
+                <th onclick="sortBy('location')">Location</th>
+                <th onclick="sortBy('feedback')">Feedback</th>
+                <th onclick="sortBy('created_at')">Date</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($rows as $r): ?>
+            <tr>
+                <td><?= htmlspecialchars($r['client_name'] ?? '') ?></td>
+                <td><?= htmlspecialchars($r['account_number'] ?? '') ?></td>
+                <td><?= htmlspecialchars($r['email'] ?? '') ?></td>
+                <td><?= htmlspecialchars($r['district'] ?? '') ?></td>
+                <td><?= htmlspecialchars($r['location'] ?? '') ?></td>
+                <td><?= htmlspecialchars($r['feedback'] ?? '') ?></td>
+                <td>
+                    <?= !empty($r['created_at']) ? date("Y-m-d", strtotime($r['created_at'])) : '' ?>
+                </td>
+            </tr>
+        <?php endforeach ?>
+        </tbody>
+    </table>
 </div>
 
 <!-- PAGINATION -->
 <div class="pagination">
-<?php for($i=1;$i<=$totalPages;$i++): ?>
-    <a class="<?= $i==$page?'active':'' ?>"
-       href="?tab=survey&page=<?= $i ?>&search=<?= urlencode($search) ?>&district=<?= urlencode($district) ?>&date_from=<?= $date_from ?>&date_to=<?= $date_to ?>&sort=<?= $sort ?>&dir=<?= $dir ?>">
+<?php for ($i = 1; $i <= $totalPages; $i++): ?>
+    <a class="<?= $i == $page ? 'active' : '' ?>"
+       href="?tab=survey&page=<?= $i ?>&search=<?= urlencode($search) ?>&district=<?= urlencode($district) ?>
+       &date_from=<?= urlencode($date_from) ?>&date_to=<?= urlencode($date_to) ?>&sort=<?= urlencode($sort) ?>&dir=<?= urlencode($dir) ?>">
        <?= $i ?>
     </a>
 <?php endfor ?>
@@ -146,7 +152,7 @@ $dList = $conn->query("SELECT DISTINCT district FROM survey_responses ORDER BY d
 function sortBy(col){
     const url = new URL(window.location.href);
     url.searchParams.set("sort", col);
-    url.searchParams.set("dir", url.searchParams.get("dir")==="ASC"?"DESC":"ASC");
+    url.searchParams.set("dir", url.searchParams.get("dir") === "ASC" ? "DESC" : "ASC");
     window.location.href = url.toString();
 }
 </script>
