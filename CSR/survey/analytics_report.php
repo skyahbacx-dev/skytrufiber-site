@@ -2,31 +2,48 @@
 require_once("../../vendor/autoload.php");
 include "../../db_connect.php";
 
-/* WEEKLY? */
+/* -------------------------
+   HANDLE WEEKLY MODE
+-------------------------- */
 $weekly = isset($_GET['weekly']);
 
 if ($weekly) {
     $start = date("Y-m-d", strtotime("monday this week"));
     $end   = date("Y-m-d");
 
-    $where = "WHERE created_at::date BETWEEN '$start' AND '$end'";
+    $where = "WHERE created_at::date BETWEEN :start AND :end";
+    $params = [":start" => $start, ":end" => $end];
+    $title = "Weekly Survey Report ($start to $end)";
 } else {
     $where = "";
+    $params = [];
+    $title = "Full Survey Analytics Report";
 }
 
-/* Totals */
-$total = $conn->query("SELECT COUNT(*) FROM survey_responses $where")->fetchColumn();
+/* -------------------------
+   TOTALS
+-------------------------- */
+$stmt = $conn->prepare("SELECT COUNT(*) FROM survey_responses $where");
+$stmt->execute($params);
+$total = $stmt->fetchColumn() ?? 0;
 
-/* Districts */
-$districts = $conn->query("
-    SELECT district, COUNT(*) AS total 
+/* -------------------------
+   DISTRICT COUNTS
+-------------------------- */
+$districtStmt = $conn->prepare("
+    SELECT COALESCE(district, 'Unknown') AS district, COUNT(*) AS total
     FROM survey_responses
     $where
-    GROUP BY district ORDER BY district
-")->fetchAll(PDO::FETCH_ASSOC);
+    GROUP BY district
+    ORDER BY district
+");
+$districtStmt->execute($params);
+$districts = $districtStmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* Sentiment */
-$feedback = $conn->query("
+/* -------------------------
+   SENTIMENT ANALYSIS
+-------------------------- */
+$sentimentStmt = $conn->prepare("
     SELECT
         CASE 
             WHEN feedback ILIKE '%good%' OR feedback ILIKE '%fast%' THEN 'Positive'
@@ -37,29 +54,74 @@ $feedback = $conn->query("
     FROM survey_responses
     $where
     GROUP BY label
-")->fetchAll(PDO::FETCH_ASSOC);
+    ORDER BY label
+");
+$sentimentStmt->execute($params);
+$sentiments = $sentimentStmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* PDF BUILD */
-$mpdf = new \Mpdf\Mpdf();
-$html = "<h1>Survey Analytics Report</h1>";
+/* -------------------------
+   BUILD PDF HTML
+-------------------------- */
 
-if ($weekly) {
-    $html .= "<h3>Weekly Report (" . $start . " to " . $end . ")</h3>";
+$html = "
+<style>
+body { font-family: sans-serif; }
+h1 { text-align: center; margin-bottom: 10px; }
+h2 { margin-top: 25px; color:#05702e; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { border: 1px solid #ccc; padding: 8px; }
+th { background: #05702e; color: white; }
+.section { margin-top: 25px; }
+.count-box {
+    background: #e9f7ee;
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 5px solid #05702e;
+    font-size: 16px;
+    font-weight: bold;
 }
+</style>
 
-$html .= "<p><b>Total Responses:</b> $total</p>";
+<h1>$title</h1>
 
-$html .= "<h3>District Breakdown</h3><ul>";
+<div class='count-box'>
+Total Survey Responses: <b>$total</b>
+</div>
+
+<h2>District Breakdown</h2>
+<table>
+    <tr><th>District</th><th>Total Responses</th></tr>";
+
 foreach ($districts as $d) {
-    $html .= "<li>{$d['district']}: {$d['total']}</li>";
+    $dist = htmlspecialchars($d['district'] ?? '');
+    $count = htmlspecialchars($d['total'] ?? 0);
+    $html .= "<tr><td>$dist</td><td>$count</td></tr>";
 }
-$html .= "</ul>";
 
-$html .= "<h3>Feedback Sentiment</h3><ul>";
-foreach ($feedback as $f) {
-    $html .= "<li>{$f['label']}: {$f['total']}</li>";
+$html .= "</table>";
+
+$html .= "
+<h2>Feedback Sentiment</h2>
+<table>
+    <tr><th>Sentiment</th><th>Total Responses</th></tr>";
+
+foreach ($sentiments as $s) {
+    $label = htmlspecialchars($s['label'] ?? 'Neutral');
+    $count = htmlspecialchars($s['total'] ?? 0);
+    $html .= "<tr><td>$label</td><td>$count</td></tr>";
 }
-$html .= "</ul>";
+
+$html .= "</table>";
+
+/* -------------------------
+   OUTPUT PDF
+-------------------------- */
+
+$mpdf = new \Mpdf\Mpdf([
+    'default_font_size' => 11,
+    'default_font' => 'dejavusans'
+]);
 
 $mpdf->WriteHTML($html);
-$mpdf->Output("survey_analytics.pdf","I");
+$mpdf->Output("survey_analytics_report.pdf","I");
+exit;
