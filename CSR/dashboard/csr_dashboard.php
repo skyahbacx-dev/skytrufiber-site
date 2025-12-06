@@ -67,7 +67,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
         <button class="nav-btn <?= $tab==='survey'?'active':'' ?>" 
             onclick="navigate('survey')">📄 SURVEY</button>
 
-        <a href="../../csr_logout.php" class="logout-btn">Logout</a>
+        <a href="../csr_logout.php" class="logout-btn">Logout</a>
     </div>
 </div>
 
