@@ -16,7 +16,9 @@ let editing = false;
 let allMedia = [];
 let currentSlide = 0;
 
-// ---------------- DOCUMENT READY ----------------
+// ============================================================
+// DOCUMENT READY
+// ============================================================
 $(document).ready(function () {
 
     loadClients();
@@ -49,21 +51,23 @@ $(document).ready(function () {
 
         currentClientID = $(this).data("id");
         $("#chat-client-name").text($(this).data("name"));
-
         $("#chat-messages").html("");
         lastMessageID = 0;
 
         loadClientInfo(currentClientID);
         loadMessages(true);
 
-        // FIX: STOP PREVIOUS POLLING LOOP
-        if (messageInterval) { clearInterval(messageInterval); messageInterval = null; }
+        // stop previous polling loop
+        if (messageInterval) clearInterval(messageInterval);
 
-        // Start new interval
+        // Start polling
         messageInterval = setInterval(fetchNewMessages, 1500);
+
+        // Always show input bar (fix for unassigned clients)
+        $(".chat-input-area").css("display", "flex");
     });
 
-    // Scroll button visibility
+    // Scroll button
     $("#chat-messages").on("scroll", function () {
         const dist = this.scrollHeight - this.scrollTop - this.clientHeight;
         $("#scroll-bottom-btn").toggleClass("show", dist > 80);
@@ -74,11 +78,11 @@ $(document).ready(function () {
     // Close popup
     $(document).on("click", function (e) {
         if (!$(e.target).closest("#msg-action-popup, .more-btn").length) {
-            $("#msg-action-popup").hide();
+            $("#msg-action-popup").removeClass("show").hide();
         }
     });
 
-    // Lightbox keyboard shortcuts
+    // Lightbox keyboard controls
     $(document).on("keydown", function(e){
         if ($("#lightbox-overlay").is(":visible")) {
             if (e.key === "Escape") closeLightbox();
@@ -88,17 +92,17 @@ $(document).ready(function () {
     });
 });
 
-/* ============================================================
-   SCROLL
-============================================================ */
+// ============================================================
+// SCROLL
+// ============================================================
 function scrollToBottom() {
     const box = $("#chat-messages");
-    box.stop().animate({ scrollTop: box[0].scrollHeight }, 220);
+    box.stop().animate({ scrollTop: box[0].scrollHeight }, 200);
 }
 
-/* ============================================================
-   LOAD CLIENTS + INFO
-============================================================ */
+// ============================================================
+// LOAD CLIENTS + INFO
+// ============================================================
 function loadClients() {
     $.post("../chat/load_clients.php", html => $("#client-list").html(html));
 }
@@ -109,9 +113,9 @@ function loadClientInfo(id) {
     });
 }
 
-/* ============================================================
-   LOAD MESSAGES (FULL)
-============================================================ */
+// ============================================================
+// LOAD FULL MESSAGES
+// ============================================================
 function loadMessages(scrollBottom = false) {
 
     if (!currentClientID) return;
@@ -119,7 +123,6 @@ function loadMessages(scrollBottom = false) {
     $.post("../chat/load_messages.php", { client_id: currentClientID }, function (html) {
 
         $("#chat-messages").html(html);
-
         bindActionButtons();
         assignMediaIndex();
         attachMediaEvents();
@@ -131,9 +134,9 @@ function loadMessages(scrollBottom = false) {
     });
 }
 
-/* ============================================================
-   POLLING — FETCH NEW MESSAGES ONLY
-============================================================ */
+// ============================================================
+// POLLING — New Messages Only
+// ============================================================
 function fetchNewMessages() {
 
     if (!currentClientID) return;
@@ -144,11 +147,8 @@ function fetchNewMessages() {
         const incoming = temp.find(".message");
 
         incoming.each(function () {
-
             const id = $(this).data("msg-id");
-
             if ($(`.message[data-msg-id='${id}']`).length) return;
-
             $("#chat-messages").append($(this));
         });
 
@@ -158,14 +158,13 @@ function fetchNewMessages() {
 
         const box = $("#chat-messages")[0];
         const dist = box.scrollHeight - box.scrollTop - box.clientHeight;
-
         if (dist < 150) scrollToBottom();
     });
 }
 
-/* ============================================================
-   SMOOTH FETCH — REPLACE TEMP BUBBLE
-============================================================ */
+// ============================================================
+// SMOOTH FETCH
+// ============================================================
 function fetchNewMessagesSmooth() {
 
     $.post("../chat/load_messages.php", { client_id: currentClientID }, function (html) {
@@ -176,7 +175,6 @@ function fetchNewMessagesSmooth() {
         incoming.each(function () {
 
             const id = $(this).data("msg-id");
-
             let tempBubble = $(".temp-msg");
 
             if (tempBubble.length) {
@@ -194,9 +192,9 @@ function fetchNewMessagesSmooth() {
     });
 }
 
-/* ============================================================
-   SEND MESSAGE (Smooth)
-============================================================ */
+// ============================================================
+// SEND MESSAGE
+// ============================================================
 function sendMessage() {
 
     const msg = $("#chat-input").val().trim();
@@ -212,20 +210,20 @@ function sendMessage() {
     })
     .done(() => {
         $("#chat-input").val("");
-        fetchNewMessagesSmooth();   // ⭐ smooth version
+        fetchNewMessagesSmooth();
     })
     .fail(() => {
         $(".temp-msg .message-time").text("Failed");
     });
 }
 
-/* ============================================================
-   TEMP BUBBLE
-============================================================ */
+// ============================================================
+// TEMP BUBBLE
+// ============================================================
 function appendTempBubble(msg) {
     $("#chat-messages").append(`
         <div class="message sent temp-msg">
-            <div class="message-content" style="max-width:300px;">
+            <div class="message-content">
                 <div class="message-bubble">${msg}</div>
                 <div class="message-time">Sending...</div>
             </div>
@@ -234,9 +232,9 @@ function appendTempBubble(msg) {
     scrollToBottom();
 }
 
-/* ============================================================
-   MEDIA PREVIEW
-============================================================ */
+// ============================================================
+// MEDIA PREVIEW
+// ============================================================
 function previewMultiple(files) {
     $("#preview-files").html("");
 
@@ -258,13 +256,12 @@ $(document).on("click", ".preview-remove", function () {
     selectedFiles.length ? previewMultiple(selectedFiles) : $("#preview-inline").slideUp(200);
 });
 
-/* ============================================================
-   UPLOAD MEDIA
-============================================================ */
+// ============================================================
+// UPLOAD MEDIA
+// ============================================================
 function uploadMedia(files, msg = "") {
 
     const form = new FormData();
-
     form.append("client_id", currentClientID);
     form.append("message", msg);
     files.forEach(f => form.append("media[]", f));
@@ -281,13 +278,13 @@ function uploadMedia(files, msg = "") {
     })
     .done(() => {
         $("#chat-input").val("");
-        fetchNewMessagesSmooth();   // ⭐ smooth update
+        fetchNewMessagesSmooth();
     });
 }
 
-/* ============================================================
-   ACTION POPUP
-============================================================ */
+// ============================================================
+// ACTION POPUP — FIXED & AUTO-FLIP
+// ============================================================
 function bindActionButtons() {
 
     $(".more-btn").off("click").on("click", function (e) {
@@ -304,41 +301,39 @@ function openActionPopup(id, anchor) {
     const bubble = $(anchor).closest(".message-content");
     const bubbleOffset = bubble.offset();
     const bubbleWidth = bubble.outerWidth();
-
     const chatOffset = $(".chat-wrapper").offset();
 
-    // Initial position ABOVE and RIGHT aligned
+    // Base position: above bubble, aligned to right edge
     let top = bubbleOffset.top - chatOffset.top - popup.outerHeight() - 10;
     let left = bubbleOffset.left - chatOffset.left + bubbleWidth - popup.outerWidth();
 
-    // Apply base position
-    popup.css({ display: "block", top, left });
+    popup.css({ top, left, display: "block" });
 
-    // --- AUTO-FLIP LOGIC ---
-    const popupWidth = popup.outerWidth();
+    // Auto-flip if hitting right edge
     const viewportWidth = $(window).width();
+    const popupWidth = popup.outerWidth();
 
     popup.removeClass("flip-left");
 
-    // If popup goes outside the right edge → flip to left side
     if (left + popupWidth > viewportWidth - 20) {
-        left = bubbleOffset.left - chatOffset.left; // move to left side
+        left = bubbleOffset.left - chatOffset.left;
         popup.css({ left });
         popup.addClass("flip-left");
     }
 
-    // Show animation class
     popup.addClass("show");
 }
 
-
+// ============================================================
+// CLOSE POPUP
+// ============================================================
 function closeActionPopup() {
-    $("#msg-action-popup").hide();
+    $("#msg-action-popup").removeClass("show").hide();
 }
 
-/* ============================================================
-   EDIT MESSAGE
-============================================================ */
+// ============================================================
+// EDIT MESSAGE
+// ============================================================
 $(document).on("click", ".action-edit", function () {
     const id = $("#msg-action-popup").data("msg-id");
     startCSRMessageEdit(id);
@@ -346,7 +341,6 @@ $(document).on("click", ".action-edit", function () {
 });
 
 function startCSRMessageEdit(id) {
-
     editing = true;
 
     const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
@@ -376,9 +370,9 @@ $(document).on("click", ".edit-cancel", function () {
     loadMessages(false);
 });
 
-/* ============================================================
-   DELETE / UNSEND
-============================================================ */
+// ============================================================
+// DELETE / UNSEND
+// ============================================================
 $(document).on("click", ".action-unsend, .action-delete", function () {
 
     const id = $("#msg-action-popup").data("msg-id");
@@ -390,9 +384,9 @@ $(document).on("click", ".action-unsend, .action-delete", function () {
     closeActionPopup();
 });
 
-/* ============================================================
-   MEDIA INDEXING
-============================================================ */
+// ============================================================
+// MEDIA INDEXING
+// ============================================================
 function assignMediaIndex() {
     let index = 0;
     $(".fullview-item").each(function () {
@@ -401,28 +395,23 @@ function assignMediaIndex() {
     });
 }
 
-/* ============================================================
-   LIGHTBOX — COLLECT MEDIA
-============================================================ */
+// ============================================================
+// LIGHTBOX
+// ============================================================
 function collectAllMedia() {
 
     allMedia = [];
 
     $(".fullview-item").each(function () {
-
         let src = $(this).attr("data-full") || $(this).attr("src");
         let type = this.tagName.toLowerCase() === "video" ? "video" : "image";
         let index = parseInt($(this).attr("data-media-index"));
-
         allMedia.push({ src, type, index });
     });
 
     allMedia.sort((a, b) => a.index - b.index);
 }
 
-/* ============================================================
-   LIGHTBOX OPEN
-============================================================ */
 function attachMediaEvents() {
 
     $(document).off("click", ".fullview-item");
@@ -430,17 +419,13 @@ function attachMediaEvents() {
     $(document).on("click", ".fullview-item", function () {
 
         collectAllMedia();
-
         currentSlide = parseInt($(this).attr("data-media-index"));
-        $("#lightbox-overlay").fadeIn(150);
 
+        $("#lightbox-overlay").fadeIn(150);
         showSlide(currentSlide);
     });
 }
 
-/* ============================================================
-   SHOW SLIDE
-============================================================ */
 function showSlide(i) {
 
     const item = allMedia[i];
@@ -459,12 +444,10 @@ function showSlide(i) {
     rebuildThumbs();
 }
 
-/* ============================================================
-   NEXT / PREV
-============================================================ */
 function showNext() {
     if (currentSlide < allMedia.length - 1) showSlide(currentSlide + 1);
 }
+
 function showPrev() {
     if (currentSlide > 0) showSlide(currentSlide - 1);
 }
@@ -472,9 +455,6 @@ function showPrev() {
 $("#lightbox-next").click(showNext);
 $("#lightbox-prev").click(showPrev);
 
-/* ============================================================
-   THUMBNAIL STRIP
-============================================================ */
 function rebuildThumbs() {
 
     $("#lightbox-thumbs").html("");
@@ -493,9 +473,6 @@ $(document).on("click", ".thumb", function () {
     showSlide(parseInt($(this).data("i")));
 });
 
-/* ============================================================
-   CLOSE LIGHTBOX
-============================================================ */
 function closeLightbox() {
     $("#lightbox-overlay").fadeOut(150);
     $("#lightbox-video").trigger("pause");
@@ -507,9 +484,9 @@ $("#lightbox-close, #lightbox-overlay").click(function (e) {
     }
 });
 
-/* ============================================================
-   CLIENT ASSIGN
-============================================================ */
+// ============================================================
+// CLIENT ASSIGN
+// ============================================================
 function assignClient(id) {
     $.post("../chat/assign_client.php", { client_id: id }, () => {
         loadClients();
