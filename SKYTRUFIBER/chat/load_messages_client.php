@@ -2,7 +2,6 @@
 ini_set("log_errors", 1);
 ini_set("error_log", __DIR__ . "/php_errors.log");
 
-
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
@@ -37,7 +36,7 @@ $stmt = $conn->prepare("
 $stmt->execute([$client_id]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Prepared media query
+// Media query
 $mstmt = $conn->prepare("
     SELECT id, media_type
     FROM chat_media
@@ -45,7 +44,7 @@ $mstmt = $conn->prepare("
 ");
 
 // -----------------------------
-// RENDER EACH MESSAGE
+// RENDER MESSAGES
 // -----------------------------
 foreach ($messages as $msg) {
 
@@ -55,16 +54,16 @@ foreach ($messages as $msg) {
 
     echo "<div class='message $sender' data-msg-id='$id'>";
 
-    // Avatar ONLY for CSR/received messages
+    // Avatar for CSR messages
     if ($sender === "received") {
         echo "<div class='message-avatar'><img src='/upload/default-avatar.png'></div>";
     }
 
     echo "<div class='message-content'>";
 
-    // ------------------------------------------------
-    // MEDIA GRID (images/videos/files)
-    // ------------------------------------------------
+    // --------------------------
+    // MEDIA GRID
+    // --------------------------
     $mstmt->execute([$id]);
     $media = $mstmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -89,9 +88,9 @@ foreach ($messages as $msg) {
         echo "</div>";
     }
 
-    // ------------------------------------------------
-    // TEXT BUBBLE OR REMOVED TEXT
-    // ------------------------------------------------
+    // --------------------------
+    // TEXT / REMOVED
+    // --------------------------
     if (!$msg["deleted"]) {
 
         $text = trim($msg["message"]);
@@ -105,16 +104,16 @@ foreach ($messages as $msg) {
         echo "<div class='message-bubble removed-text'>Message removed</div>";
     }
 
-    // ------------------------------------------------
-    // TIME + (edited)
-    // ------------------------------------------------
+    // --------------------------
+    // TIME + EDITED LABEL
+    // --------------------------
     echo "<div class='message-time'>$time";
     if ($msg["edited"]) echo " <span class='edited-label'>(edited)</span>";
     echo "</div>";
 
-    // ------------------------------------------------
-    // REACTIONS BELOW MESSAGE
-    // ------------------------------------------------
+    // --------------------------
+    // EXISTING REACTIONS DISPLAY (NO BUTTON)
+    // --------------------------
     $r = $conn->prepare("
         SELECT emoji, COUNT(*) AS total
         FROM chat_reactions
@@ -133,20 +132,19 @@ foreach ($messages as $msg) {
         echo "</div>";
     }
 
-    // ------------------------------------------------
-    // ACTION TOOLBAR (dynamic JS popup)
-    // ------------------------------------------------
-    echo "<div class='action-toolbar'>
-            <button class='react-btn' data-msg-id='$id'>☺︎</button>";
+    // --------------------------
+    // ACTION TOOLBAR (NO REACT BUTTON)
+    // --------------------------
+    echo "<div class='action-toolbar'>";
 
-    // Only user-sent messages get "more" actions
+    // Only user-sent messages have more actions
     if ($sender === "sent" && !$msg["deleted"]) {
         echo "<button class='more-btn' data-id='$id'>⋯</button>";
     }
 
     echo "</div>";
 
-    echo "</div>";  // message-content
-    echo "</div>";  // message wrapper
+    echo "</div>"; // message-content
+    echo "</div>"; // message wrapper
 }
 ?>
