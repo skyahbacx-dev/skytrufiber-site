@@ -301,13 +301,20 @@ function openActionPopup(id, anchor) {
     const popup = $("#msg-action-popup");
     popup.data("msg-id", id);
 
-    const offsetMsg = $(anchor).offset();
-    const offsetChat = $(".chat-wrapper").offset();
+    const bubble = $(anchor).closest(".message-content");
+    const bubbleOffset = bubble.offset();
+    const bubbleWidth = bubble.outerWidth();
+
+    const chatOffset = $(".chat-wrapper").offset();
 
     popup.css({
         display: "block",
-        top: offsetMsg.top - offsetChat.top + 30,
-        left: offsetMsg.left - offsetChat.left - popup.outerWidth() + 40
+
+        // Position ABOVE the bubble
+        top: bubbleOffset.top - chatOffset.top - popup.outerHeight() - 10,
+
+        // Align RIGHT above bubble
+        left: bubbleOffset.left - chatOffset.left + bubbleWidth - popup.outerWidth()
     });
 }
 
