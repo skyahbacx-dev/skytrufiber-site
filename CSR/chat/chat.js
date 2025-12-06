@@ -42,7 +42,6 @@ $(document).ready(function () {
 
     // MEDIA UPLOAD
     $("#upload-btn").click(() => $("#chat-upload-media").click());
-
     $("#chat-upload-media").change(function () {
         if (!currentClientID) return;
         selectedFiles = Array.from(this.files);
@@ -61,13 +60,14 @@ $(document).ready(function () {
         loadClientInfo(currentClientID);
         loadMessages(true);
 
-        if (messageInterval) clearInterval(messageInterval);
+        // FIXED: STOP PREVIOUS INTERVAL
+        if (messageInterval) {
+            clearInterval(messageInterval);
+            messageInterval = null;
+        }
 
-        messageInterval = setInterval(() => {
-            if (!editing && !$("#preview-inline").is(":visible")) {
-                fetchNewMessages();
-            }
-        }, 1200);
+        // Start new interval (ONLY ONE)
+        messageInterval = setInterval(fetchNewMessages, 1500);
     });
 
     // SCROLL BUTTON VISIBILITY
@@ -120,7 +120,7 @@ function loadClientInfo(id) {
 }
 
 /* ============================================================
-   LOAD MESSAGES
+   LOAD FULL MESSAGE LIST
 ============================================================ */
 function loadMessages(scrollBottom = false) {
 
@@ -142,9 +142,11 @@ function loadMessages(scrollBottom = false) {
 }
 
 /* ============================================================
-   FETCH ONLY NEW MESSAGES
+   FETCH NEW MESSAGES ONLY  (AUTO-POLLING)
 ============================================================ */
 function fetchNewMessages() {
+
+    if (!currentClientID) return;
 
     $.post("../chat/load_messages.php", { client_id: currentClientID }, function (html) {
 
@@ -152,8 +154,12 @@ function fetchNewMessages() {
         const incoming = temp.find(".message");
 
         incoming.each(function () {
+
             const id = $(this).data("msg-id");
+
+            // Already exists? Skip
             if ($(`.message[data-msg-id='${id}']`).length) return;
+
             $("#chat-messages").append($(this));
         });
 
@@ -161,9 +167,9 @@ function fetchNewMessages() {
         assignMediaIndex();
         attachMediaEvents();
 
+        // Auto-scroll only if user is near bottom
         const box = $("#chat-messages")[0];
         const dist = box.scrollHeight - box.scrollTop - box.clientHeight;
-
         if (dist < 150) scrollToBottom();
     });
 }
@@ -175,6 +181,7 @@ function sendMessage() {
 
     const msg = $("#chat-input").val().trim();
 
+    // Sending media instead
     if (selectedFiles.length > 0) {
         uploadMedia(selectedFiles, msg);
         return;
@@ -187,15 +194,19 @@ function sendMessage() {
     $.post("../chat/send_message.php", {
         client_id: currentClientID,
         message: msg
-    }, () => {
+    })
+    .done(() => {
         $(".temp-msg").remove();
         $("#chat-input").val("");
         loadMessages(true);
-    }, "json");
+    })
+    .fail(() => {
+        $(".temp-msg .message-time").text("Failed to send");
+    });
 }
 
 /* ============================================================
-   TEMPORARY MESSAGE BUBBLE
+   TEMPORARY BUBBLE UI
 ============================================================ */
 function appendTempBubble(msg) {
     $("#chat-messages").append(`
@@ -229,6 +240,7 @@ function previewMultiple(files) {
 }
 
 $(document).on("click", ".preview-remove", function () {
+
     selectedFiles.splice($(this).data("i"), 1);
 
     if (selectedFiles.length) previewMultiple(selectedFiles);
@@ -244,6 +256,7 @@ function uploadMedia(files, msg = "") {
 
     form.append("client_id", currentClientID);
     form.append("message", msg);
+
     files.forEach(f => form.append("media[]", f));
 
     $("#preview-inline").slideUp(150);
@@ -254,11 +267,11 @@ function uploadMedia(files, msg = "") {
         type: "POST",
         data: form,
         contentType: false,
-        processData: false,
-        success: () => {
-            $("#chat-input").val("");
-            loadMessages(true);
-        }
+        processData: false
+    })
+    .done(() => {
+        $("#chat-input").val("");
+        loadMessages(true);
     });
 }
 
@@ -268,9 +281,7 @@ function uploadMedia(files, msg = "") {
 function bindActionButtons() {
 
     $(".more-btn").off("click").on("click", function (e) {
-
         e.stopPropagation();
-
         openActionPopup($(this).data("id"), this);
     });
 }
@@ -350,7 +361,7 @@ $(document).on("click", ".action-unsend, .action-delete", function () {
 });
 
 /* ============================================================
-   MEDIA INDEX ASSIGNMENT
+   MEDIA INDEXING
 ============================================================ */
 function assignMediaIndex() {
 
