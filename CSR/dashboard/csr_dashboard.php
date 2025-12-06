@@ -90,7 +90,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 <?php
     switch ($tab) {
         case 'clients':   include "../my_clients.php"; break;
-        case 'reminders': include "../reminders.php"; break;
+        case 'reminders': include "../reminders/reminders.php"; break;
         case 'survey':    include "../survey/survey_responses.php"; break;
 
         default:
