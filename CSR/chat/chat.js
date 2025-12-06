@@ -11,7 +11,6 @@ let clientRefreshInterval = null;
 let selectedFiles = [];
 let lastMessageID = 0;
 let editing = false;
-let activePopup = null;
 
 // Global Lightbox State
 let allMedia = [];
@@ -34,10 +33,7 @@ $(document).ready(function () {
     // SEND MESSAGE
     $("#send-btn").click(sendMessage);
     $("#chat-input").keypress(function (e) {
-        if (e.which === 13) {
-            e.preventDefault();
-            sendMessage();
-        }
+        if (e.which === 13) { e.preventDefault(); sendMessage(); }
     });
 
     // MEDIA UPLOAD
@@ -45,7 +41,7 @@ $(document).ready(function () {
     $("#chat-upload-media").change(function () {
         if (!currentClientID) return;
         selectedFiles = Array.from(this.files);
-        if (selectedFiles.length) previewMultiple(selectedFiles);
+        previewMultiple(selectedFiles);
     });
 
     // SELECT CLIENT
@@ -60,33 +56,29 @@ $(document).ready(function () {
         loadClientInfo(currentClientID);
         loadMessages(true);
 
-        // FIXED: STOP PREVIOUS INTERVAL
-        if (messageInterval) {
-            clearInterval(messageInterval);
-            messageInterval = null;
-        }
+        // FIX: STOP PREVIOUS POLLING LOOP
+        if (messageInterval) { clearInterval(messageInterval); messageInterval = null; }
 
-        // Start new interval (ONLY ONE)
+        // Start new interval
         messageInterval = setInterval(fetchNewMessages, 1500);
     });
 
-    // SCROLL BUTTON VISIBILITY
+    // Scroll button visibility
     $("#chat-messages").on("scroll", function () {
         const dist = this.scrollHeight - this.scrollTop - this.clientHeight;
-        if (dist > 80) $("#scroll-bottom-btn").addClass("show");
-        else $("#scroll-bottom-btn").removeClass("show");
+        $("#scroll-bottom-btn").toggleClass("show", dist > 80);
     });
 
     $("#scroll-bottom-btn").click(scrollToBottom);
 
-    // CLOSE POPUP
+    // Close popup
     $(document).on("click", function (e) {
         if (!$(e.target).closest("#msg-action-popup, .more-btn").length) {
-            closeActionPopup();
+            $("#msg-action-popup").hide();
         }
     });
 
-    // LIGHTBOX KEYBOARD SHORTCUTS
+    // Lightbox keyboard shortcuts
     $(document).on("keydown", function(e){
         if ($("#lightbox-overlay").is(":visible")) {
             if (e.key === "Escape") closeLightbox();
@@ -97,7 +89,7 @@ $(document).ready(function () {
 });
 
 /* ============================================================
-   SCROLL TO BOTTOM
+   SCROLL
 ============================================================ */
 function scrollToBottom() {
     const box = $("#chat-messages");
@@ -108,19 +100,17 @@ function scrollToBottom() {
    LOAD CLIENTS + INFO
 ============================================================ */
 function loadClients() {
-    $.post("../chat/load_clients.php", function (html) {
-        $("#client-list").html(html);
-    });
+    $.post("../chat/load_clients.php", html => $("#client-list").html(html));
 }
 
 function loadClientInfo(id) {
-    $.post("../chat/load_client_info.php", { client_id: id }, function (html) {
+    $.post("../chat/load_client_info.php", { client_id: id }, html => {
         $("#client-info-content").html(html);
     });
 }
 
 /* ============================================================
-   LOAD FULL MESSAGE LIST
+   LOAD MESSAGES (FULL)
 ============================================================ */
 function loadMessages(scrollBottom = false) {
 
@@ -142,7 +132,7 @@ function loadMessages(scrollBottom = false) {
 }
 
 /* ============================================================
-   FETCH NEW MESSAGES ONLY  (AUTO-POLLING)
+   POLLING — FETCH NEW MESSAGES ONLY
 ============================================================ */
 function fetchNewMessages() {
 
@@ -157,7 +147,6 @@ function fetchNewMessages() {
 
             const id = $(this).data("msg-id");
 
-            // Already exists? Skip
             if ($(`.message[data-msg-id='${id}']`).length) return;
 
             $("#chat-messages").append($(this));
@@ -167,26 +156,52 @@ function fetchNewMessages() {
         assignMediaIndex();
         attachMediaEvents();
 
-        // Auto-scroll only if user is near bottom
         const box = $("#chat-messages")[0];
         const dist = box.scrollHeight - box.scrollTop - box.clientHeight;
+
         if (dist < 150) scrollToBottom();
     });
 }
 
 /* ============================================================
-   SEND MESSAGE
+   SMOOTH FETCH — REPLACE TEMP BUBBLE
+============================================================ */
+function fetchNewMessagesSmooth() {
+
+    $.post("../chat/load_messages.php", { client_id: currentClientID }, function (html) {
+
+        const temp = $("<div>").html(html);
+        const incoming = temp.find(".message");
+
+        incoming.each(function () {
+
+            const id = $(this).data("msg-id");
+
+            let tempBubble = $(".temp-msg");
+
+            if (tempBubble.length) {
+                tempBubble.replaceWith($(this));
+            } else {
+                if (!$(`.message[data-msg-id='${id}']`).length)
+                    $("#chat-messages").append($(this));
+            }
+        });
+
+        bindActionButtons();
+        assignMediaIndex();
+        attachMediaEvents();
+        scrollToBottom();
+    });
+}
+
+/* ============================================================
+   SEND MESSAGE (Smooth)
 ============================================================ */
 function sendMessage() {
 
     const msg = $("#chat-input").val().trim();
 
-    // Sending media instead
-    if (selectedFiles.length > 0) {
-        uploadMedia(selectedFiles, msg);
-        return;
-    }
-
+    if (selectedFiles.length > 0) return uploadMedia(selectedFiles, msg);
     if (!msg || !currentClientID) return;
 
     appendTempBubble(msg);
@@ -196,17 +211,16 @@ function sendMessage() {
         message: msg
     })
     .done(() => {
-        $(".temp-msg").remove();
         $("#chat-input").val("");
-        loadMessages(true);
+        fetchNewMessagesSmooth();   // ⭐ smooth version
     })
     .fail(() => {
-        $(".temp-msg .message-time").text("Failed to send");
+        $(".temp-msg .message-time").text("Failed");
     });
 }
 
 /* ============================================================
-   TEMPORARY BUBBLE UI
+   TEMP BUBBLE
 ============================================================ */
 function appendTempBubble(msg) {
     $("#chat-messages").append(`
@@ -221,7 +235,7 @@ function appendTempBubble(msg) {
 }
 
 /* ============================================================
-   MEDIA PREVIEW BAR
+   MEDIA PREVIEW
 ============================================================ */
 function previewMultiple(files) {
     $("#preview-files").html("");
@@ -240,11 +254,8 @@ function previewMultiple(files) {
 }
 
 $(document).on("click", ".preview-remove", function () {
-
     selectedFiles.splice($(this).data("i"), 1);
-
-    if (selectedFiles.length) previewMultiple(selectedFiles);
-    else $("#preview-inline").slideUp(200);
+    selectedFiles.length ? previewMultiple(selectedFiles) : $("#preview-inline").slideUp(200);
 });
 
 /* ============================================================
@@ -256,7 +267,6 @@ function uploadMedia(files, msg = "") {
 
     form.append("client_id", currentClientID);
     form.append("message", msg);
-
     files.forEach(f => form.append("media[]", f));
 
     $("#preview-inline").slideUp(150);
@@ -271,7 +281,7 @@ function uploadMedia(files, msg = "") {
     })
     .done(() => {
         $("#chat-input").val("");
-        loadMessages(true);
+        fetchNewMessagesSmooth();   // ⭐ smooth update
     });
 }
 
@@ -331,7 +341,6 @@ function startCSRMessageEdit(id) {
 }
 
 $(document).on("click", ".edit-save", function () {
-
     const id = $(this).data("id");
     const newText = $(this).closest(".message-bubble").find("textarea").val().trim();
 
@@ -364,9 +373,7 @@ $(document).on("click", ".action-unsend, .action-delete", function () {
    MEDIA INDEXING
 ============================================================ */
 function assignMediaIndex() {
-
     let index = 0;
-
     $(".fullview-item").each(function () {
         $(this).attr("data-media-index", index);
         index++;
@@ -435,12 +442,10 @@ function showSlide(i) {
    NEXT / PREV
 ============================================================ */
 function showNext() {
-    if (currentSlide < allMedia.length - 1)
-        showSlide(currentSlide + 1);
+    if (currentSlide < allMedia.length - 1) showSlide(currentSlide + 1);
 }
 function showPrev() {
-    if (currentSlide > 0)
-        showSlide(currentSlide - 1);
+    if (currentSlide > 0) showSlide(currentSlide - 1);
 }
 
 $("#lightbox-next").click(showNext);
@@ -456,7 +461,9 @@ function rebuildThumbs() {
     allMedia.forEach((m, i) => {
 
         $("#lightbox-thumbs").append(`
-            <img src="${m.src}" class="thumb ${i === currentSlide ? "thumb-active" : ""}" data-i="${i}">
+            <img src="${m.src}"
+                 class="thumb ${i === currentSlide ? "thumb-active" : ""}"
+                 data-i="${i}">
         `);
     });
 }
@@ -483,14 +490,14 @@ $("#lightbox-close, #lightbox-overlay").click(function (e) {
    CLIENT ASSIGN
 ============================================================ */
 function assignClient(id) {
-    $.post("../chat/assign_client.php", { client_id: id }, function () {
+    $.post("../chat/assign_client.php", { client_id: id }, () => {
         loadClients();
         if (id === currentClientID) loadClientInfo(id);
     });
 }
 
 function unassignClient(id) {
-    $.post("../chat/unassign_client.php", { client_id: id }, function () {
+    $.post("../chat/unassign_client.php", { client_id: id }, () => {
         loadClients();
         if (id === currentClientID)
             $("#client-info-content").html("<p>Select a client.</p>");
