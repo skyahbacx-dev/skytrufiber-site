@@ -19,7 +19,7 @@ $tab = $_GET['tab'] ?? 'chat';
 
 <!-- CSS -->
 <link rel="stylesheet" href="../csr_dashboard.css">
-<link rel="stylesheet" href="../../chat/chat.css">
+<link rel="stylesheet" href="../chat/chat.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <!-- jQuery -->
@@ -90,7 +90,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
         case 'survey':    include "../survey/survey_responses.php"; break;
 
         default:
-        case 'chat':      include "../../chat/chat.php"; break;
+        case 'chat':      include "../chat/chat.php"; break;
     }
 ?>
 </div>
