@@ -8,8 +8,6 @@ if (!isset($_SESSION['csr_user'])) {
 
 $csrUser     = $_SESSION["csr_user"];
 $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
-
-// Detect module (chat = default)
 $tab = $_GET['tab'] ?? 'chat';
 ?>
 <!DOCTYPE html>
@@ -19,7 +17,7 @@ $tab = $_GET['tab'] ?? 'chat';
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CSR Dashboard — <?= htmlspecialchars($csrFullName) ?></title>
 
-<!-- Styles -->
+<!-- CSS -->
 <link rel="stylesheet" href="../csr_dashboard.css">
 <link rel="stylesheet" href="../../chat/chat.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -27,16 +25,21 @@ $tab = $_GET['tab'] ?? 'chat';
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<!-- Chat Script -->
+<!-- Chat System -->
 <script src="../../chat/chat.js"></script>
 
 <script>
-    const csrUser     = "<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>";
-    const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
+const csrUser     = "<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>";
+const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 </script>
-
 </head>
+
 <body>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay">
+    <div class="spinner"></div>
+</div>
 
 <!-- TOP NAV -->
 <div class="topnav">
@@ -48,81 +51,65 @@ $tab = $_GET['tab'] ?? 'chat';
     </div>
 
     <div class="nav-buttons">
+        <button class="nav-btn <?= $tab==='chat'?'active':'' ?>" 
+            onclick="navigate('chat')">💬 CHAT</button>
 
-        <button class="nav-btn <?= $tab === 'chat' ? 'active' : '' ?>"
-            onclick="window.location='csr_dashboard.php?tab=chat'">💬 CHAT DASHBOARD</button>
+        <button class="nav-btn <?= $tab==='clients'?'active':'' ?>" 
+            onclick="navigate('clients')">👥 MY CLIENTS</button>
 
-        <button class="nav-btn <?= $tab === 'clients' ? 'active' : '' ?>"
-            onclick="window.location='csr_dashboard.php?tab=clients'">👥 MY CLIENTS</button>
+        <button class="nav-btn <?= $tab==='reminders'?'active':'' ?>" 
+            onclick="navigate('reminders')">⏱ REMINDERS</button>
 
-        <button class="nav-btn <?= $tab === 'reminders' ? 'active' : '' ?>"
-            onclick="window.location='csr_dashboard.php?tab=reminders'">⏱ REMINDERS</button>
-
-        <button class="nav-btn <?= $tab === 'survey' ? 'active' : '' ?>"
-            onclick="window.location='csr_dashboard.php?tab=survey'">📄 SURVEY</button>
-
-        <button class="nav-btn"
-            onclick="window.location='../../update_profile.php'">👤 PROFILE</button>
+        <button class="nav-btn <?= $tab==='survey'?'active':'' ?>" 
+            onclick="navigate('survey')">📄 SURVEY</button>
 
         <a href="../../csr_logout.php" class="logout-btn">Logout</a>
     </div>
 </div>
 
-<!-- SIDE MENU -->
+<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
     <div class="side-title">MENU</div>
 
-    <button class="side-item <?= $tab === 'chat' ? 'active' : '' ?>"
-        onclick="window.location='csr_dashboard.php?tab=chat'">💬 Chat Dashboard</button>
-
-    <button class="side-item <?= $tab === 'clients' ? 'active' : '' ?>"
-        onclick="window.location='csr_dashboard.php?tab=clients'">👥 My Clients</button>
-
-    <button class="side-item <?= $tab === 'reminders' ? 'active' : '' ?>"
-        onclick="window.location='csr_dashboard.php?tab=reminders'">⏱ Reminders</button>
-
-    <button class="side-item <?= $tab === 'survey' ? 'active' : '' ?>"
-        onclick="window.location='csr_dashboard.php?tab=survey'">📄 Survey Responses</button>
-
-    <button class="side-item"
-        onclick="window.location='../../update_profile.php'">👤 Edit Profile</button>
-
-    <button class="side-item logout"
-        onclick="window.location='../../csr_logout.php'">🚪 Logout</button>
+    <button class="side-item <?= $tab==='chat'?'active':'' ?>" onclick="navigate('chat')">💬 Chat Dashboard</button>
+    <button class="side-item <?= $tab==='clients'?'active':'' ?>" onclick="navigate('clients')">👥 My Clients</button>
+    <button class="side-item <?= $tab==='reminders'?'active':'' ?>" onclick="navigate('reminders')">⏱ Reminders</button>
+    <button class="side-item <?= $tab==='survey'?'active':'' ?>" onclick="navigate('survey')">📄 Survey Responses</button>
+    
+    <button class="side-item logout" onclick="window.location='../../csr_logout.php'">🚪 Logout</button>
 </div>
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
 <!-- MAIN CONTENT -->
 <div class="dashboard-container">
-    <?php
-        switch ($tab) {
+<?php
+    switch ($tab) {
+        case 'clients':   include "../my_clients.php"; break;
+        case 'reminders': include "../reminders.php"; break;
+        case 'survey':    include "../survey/survey_responses.php"; break;
 
-            case 'clients':
-                include "../my_clients.php";
-                break;
-
-            case 'reminders':
-                include "../reminders.php";
-                break;
-
-            case 'survey':
-                include "../survey/survey_responses.php";  // MODULE
-                break;
-
-            default:
-            case 'chat':
-                include "../../chat/chat.php";  // DEFAULT MODULE
-                break;
-        }
-    ?>
+        default:
+        case 'chat':      include "../../chat/chat.php"; break;
+    }
+?>
 </div>
 
 <script>
+function navigate(tab) {
+    showLoader();
+    window.location = "csr_dashboard.php?tab=" + tab;
+}
+
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('active');
     document.querySelector('.sidebar-overlay').classList.toggle('active');
 }
+
+/* LOADER */
+function showLoader(){ document.getElementById("loadingOverlay").style.display="flex"; }
+function hideLoader(){ document.getElementById("loadingOverlay").style.display="none"; }
+window.onload = hideLoader;
 </script>
 
 </body>
