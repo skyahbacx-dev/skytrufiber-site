@@ -10,10 +10,13 @@ if (!$csr || !$client_id) {
 }
 
 try {
+    // Only unassign if THIS CSR currently owns the client
     $stmt = $conn->prepare("
         UPDATE users
-        SET assigned_csr = NULL, is_locked = FALSE
-        WHERE id = :cid AND assigned_csr = :csr
+        SET assigned_csr = NULL,
+            is_locked = TRUE   -- lock client once unassigned
+        WHERE id = :cid
+        AND assigned_csr = :csr
     ");
     $stmt->execute([
         ":csr" => $csr,
@@ -23,5 +26,5 @@ try {
     echo "OK";
 
 } catch (PDOException $e) {
-    echo "DB Error: " . $e->getMessage();
+    echo "DB Error: " . htmlspecialchars($e->getMessage());
 }
