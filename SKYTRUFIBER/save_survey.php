@@ -39,16 +39,17 @@ try {
   }
 
   // Write to survey_responses
-  $conn->prepare("
-    INSERT INTO survey_responses (client_name, account_name, district, location, feedback, created_at)
-    VALUES (:c, :a, :d, :l, :f, NOW())
-  ")->execute([
-    ':c'=>$client_name,
-    ':a'=>$account_number,   // store account number for reference
-    ':d'=>$district,
-    ':l'=>$location,
-    ':f'=>$feedback
-  ]);
+ $conn->prepare("
+  INSERT INTO survey_responses (client_name, account_number, email, district, location, feedback, created_at)
+  VALUES (:c, :a, :e, :d, :l, :f, NOW())
+")->execute([
+  ':c' => $client_name,
+  ':a' => $account_number,
+  ':e' => $email,          // <-- added email here
+  ':d' => $district,
+  ':l' => $location,
+  ':f' => $feedback
+]);
 
   $conn->commit();
   echo "<script>alert('✅ Thank you! Your registration & feedback were submitted.'); window.location.href='skytrufiber.php';</script>";
