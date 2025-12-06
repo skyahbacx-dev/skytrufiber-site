@@ -463,3 +463,8 @@ document.addEventListener("keydown", e => {
     if (e.key === "ArrowRight") navigateGallery(1);
     if (e.key === "Escape") closeLightbox();
 });
+$(document).on("click", "#logout-btn", function () {
+    if (confirm("Are you sure you want to log out?")) {
+        window.location.href = "../logout.php";
+    }
+});
