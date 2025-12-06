@@ -31,8 +31,17 @@ try {
         exit("Client not found.");
     }
 
+    // SAFE ESCAPED VALUES
+    $fullName  = htmlspecialchars($c['full_name']);
+    $email     = htmlspecialchars($c['email']);
+    $district  = htmlspecialchars($c['district']);
+    $barangay  = htmlspecialchars($c['barangay']);
+
     // Status formatting
-    $onlineStatus = $c["is_online"] ? "<span style='color:green;'>Online</span>" : "<span style='color:gray;'>Offline</span>";
+    $onlineStatus = $c["is_online"] 
+        ? "<span style='color:green;'>Online</span>" 
+        : "<span style='color:gray;'>Offline</span>";
+
     $lockedStatus = $c["is_locked"] ? "Locked" : "Unlocked";
 
     // === Permission Flags ===
@@ -40,17 +49,17 @@ try {
     $isLocked       = $c["is_locked"] ? "true" : "false";
 
     echo "
-        <p><strong>Name:</strong> {$c['full_name']}</p>
-        <p><strong>Email:</strong> {$c['email']}</p>
-        <p><strong>District:</strong> {$c['district']}</p>
-        <p><strong>Barangay:</strong> {$c['barangay']}</p>
+        <p><strong>Name:</strong> $fullName</p>
+        <p><strong>Email:</strong> $email</p>
+        <p><strong>District:</strong> $district</p>
+        <p><strong>Barangay:</strong> $barangay</p>
         <p><strong>Status:</strong> $onlineStatus</p>
         <p><strong>Lock State:</strong> $lockedStatus</p>
 
         <!-- Hidden Meta: CSR Permissions -->
         <div id='client-meta'
-            data-assigned='$isAssignedToMe'
-            data-locked='$isLocked'>
+             data-assigned='$isAssignedToMe'
+             data-locked='$isLocked'>
         </div>
     ";
 
