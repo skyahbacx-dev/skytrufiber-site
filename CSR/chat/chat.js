@@ -176,7 +176,15 @@ function loadMessages(scrollBottom = false) {
 
     $.post("../chat/load_messages.php", { client_id: currentClientID }, function (html) {
 
-        $("#chat-messages").html(html);
+        $("#chat-messages")
+            .removeClass("chat-slide-in")
+            .html(html);
+
+        // trigger animation
+        setTimeout(() => {
+            $("#chat-messages").addClass("chat-slide-in");
+        }, 10);
+
         bindActionButtons();
         assignMediaIndex();
         attachMediaEvents();
