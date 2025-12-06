@@ -1,0 +1,100 @@
+h1 {
+    margin-bottom: 20px;
+    color: #05702e;
+}
+
+/* Search Section */
+.reminder-search {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.reminder-search input {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    min-width: 200px;
+}
+
+.reminder-search button {
+    padding: 8px 14px;
+    background: #05702e;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+}
+
+.today-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Card Layout */
+.reminder-container {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.no-reminders {
+    text-align: center;
+    padding: 15px;
+    background: #f2f2f2;
+    border-radius: 12px;
+}
+
+.reminder-card {
+    background: white;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+}
+
+.reminder-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.reminder-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #05702e;
+}
+
+.reminder-body p {
+    margin: 5px 0;
+}
+
+.reminder-footer {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+
+.status-badge.sent {
+    background: #c6f5d3;
+    border: 1px solid #05702e;
+    color: #05702e;
+}
+
+.status-badge.failed {
+    background: #ffd4d4;
+    border: 1px solid #d40000;
+    color: #d40000;
+}
+
+.timestamp {
+    color: #888;
+}
