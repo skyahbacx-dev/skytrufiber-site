@@ -600,3 +600,11 @@ function unassignClient(id) {
         }
     });
 }
+document.addEventListener("DOMContentLoaded", () => {
+    const url = new URL(window.location.href);
+    const client = url.searchParams.get("client");
+
+    if (client) {
+        loadClient(client);  // your existing function
+    }
+});
