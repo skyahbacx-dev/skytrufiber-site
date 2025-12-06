@@ -18,7 +18,7 @@ $tab = $_GET['tab'] ?? 'chat';
 <title>CSR Dashboard — <?= htmlspecialchars($csrFullName) ?></title>
 
 <!-- CSS -->
-<link rel="stylesheet" href="../csr_dashboard.css">
+<link rel="stylesheet" href="csr_dashboard.css">
 <link rel="stylesheet" href="../chat/chat.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
