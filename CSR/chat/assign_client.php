@@ -10,7 +10,8 @@ if (!$csr || !$client_id) {
 }
 
 try {
-    // Assign client to CSR and UNLOCK it
+
+    // Assign CSR but DO NOT lock them out
     $stmt = $conn->prepare("
         UPDATE users
         SET assigned_csr = :csr,
@@ -25,5 +26,6 @@ try {
     echo "OK";
 
 } catch (PDOException $e) {
-    echo "DB Error: " . htmlspecialchars($e->getMessage());
+    echo "DB Error: " . $e->getMessage();
 }
+?>
