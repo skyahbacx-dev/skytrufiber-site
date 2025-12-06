@@ -1,77 +1,107 @@
 <?php
+if (!isset($_SESSION)) session_start();
+if (!isset($_SESSION['csr_user'])) {
+    header("Location: ../csr_login.php");
+    exit;
+}
+
 include "../../db_connect.php";
 
 $csrUser = $_SESSION["csr_user"];
-
-// Search filters
-$search = trim($_GET['search'] ?? '');
-
-// Count clients assigned to CSR
-$countStmt = $conn->prepare("
-    SELECT COUNT(*) 
-    FROM users 
-    WHERE assigned_csr = :csr
-      AND (full_name ILIKE :s OR account_number ILIKE :s OR email ILIKE :s)
-");
-$countStmt->execute([
-    ":csr" => $csrUser,
-    ":s"   => "%$search%"
-]);
-$totalClients = $countStmt->fetchColumn();
-
-// Fetch list of clients assigned
-$stmt = $conn->prepare("
-    SELECT id, account_number, full_name, email, district, barangay, date_installed
-    FROM users
-    WHERE assigned_csr = :csr
-      AND (full_name ILIKE :s OR account_number ILIKE :s OR email ILIKE :s)
-    ORDER BY full_name ASC
-");
-$stmt->execute([
-    ":csr" => $csrUser,
-    ":s"   => "%$search%"
-]);
-$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+$search = trim($_GET["search"] ?? "");
 ?>
 
-<link rel="stylesheet" href="../clients/my_clients.css">
+<link rel="stylesheet" href="my_clients.css">
 
 <h1>👥 My Clients</h1>
 
-<div class="client-summary">
-    <strong>Total Assigned Clients:</strong> <?= $totalClients ?>
-</div>
-
+<!-- SEARCH BAR -->
 <form method="GET" class="search-bar">
     <input type="hidden" name="tab" value="clients">
-    <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search by name, account #, or email...">
+    <input type="text" name="search" placeholder="Search clients..."
+           value="<?= htmlspecialchars($search) ?>">
     <button>Search</button>
 </form>
 
-<div class="table-wrapper">
-    <table class="styled-table">
-        <thead>
-            <tr>
-                <th>Account #</th>
-                <th>Client Name</th>
-                <th>Email</th>
-                <th>District</th>
-                <th>Barangay</th>
-                <th>Date Installed</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach($rows as $r): ?>
-            <tr>
-                <td><?= htmlspecialchars($r['account_number']) ?></td>
-                <td><?= htmlspecialchars($r['full_name']) ?></td>
-                <td><?= htmlspecialchars($r['email']) ?></td>
-                <td><?= htmlspecialchars($r['district']) ?></td>
-                <td><?= htmlspecialchars($r['barangay']) ?></td>
-                <td><?= htmlspecialchars($r['date_installed']) ?></td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+<?php
+// FETCH ASSIGNED CLIENTS
+$query = "
+    SELECT id, account_number, full_name, email, district, barangay, date_installed
+    FROM users
+    WHERE assigned_csr = :csr
+";
+
+$params = [":csr" => $csrUser];
+
+if ($search !== "") {
+    $query .= " AND (full_name ILIKE :s OR account_number ILIKE :s OR email ILIKE :s)";
+    $params[":s"] = "%$search%";
+}
+
+$query .= " ORDER BY full_name ASC";
+
+$stmt = $conn->prepare($query);
+$stmt->execute($params);
+$clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$total = count($clients);
+?>
+
+<div class="client-summary">
+    <strong>Total Assigned Clients:</strong> <?= $total ?>
 </div>
+
+<!-- CLIENT TABLE -->
+<div class="table-wrapper">
+<table class="styled-table">
+    <thead>
+        <tr>
+            <th>Account #</th>
+            <th>Client Name</th>
+            <th>Email</th>
+            <th>District</th>
+            <th>Barangay</th>
+            <th>Date Installed</th>
+            <th>Chat</th>
+        </tr>
+    </thead>
+    <tbody>
+
+    <?php if ($total == 0): ?>
+        <tr><td colspan="7" style="text-align:center;">No clients found</td></tr>
+    <?php endif; ?>
+
+    <?php foreach ($clients as $c): ?>
+        <tr>
+            <td><?= htmlspecialchars($c['account_number']) ?></td>
+            <td><?= htmlspecialchars($c['full_name']) ?></td>
+            <td><?= htmlspecialchars($c['email']) ?></td>
+            <td><?= htmlspecialchars($c['district']) ?></td>
+            <td><?= htmlspecialchars($c['barangay']) ?></td>
+            <td><?= htmlspecialchars($c['date_installed']) ?></td>
+
+            <td>
+                <a href="../chat/chat.php?client=<?= urlencode($c['account_number']) ?>" 
+                   class="chat-btn">
+                   💬 Chat
+                </a>
+            </td>
+        </tr>
+    <?php endforeach; ?>
+
+    </tbody>
+</table>
+</div>
+
+<style>
+.chat-btn {
+    background: #05702e;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+}
+.chat-btn:hover {
+    background: #045a24;
+}
+</style>
