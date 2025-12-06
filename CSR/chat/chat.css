@@ -331,9 +331,25 @@
   display: flex;
   gap: 10px;
   align-items: center;
-   opacity: 0.4;
-    pointer-events: none;
+
+  /* ❌ BAD (removed)
+     opacity: 0.4;
+     pointer-events: none;
+  */
 }
+
+/* ✅ Correct disabled state */
+.chat-input-area.disabled {
+  opacity: 0.4;
+  filter: blur(1px);
+  pointer-events: none;     /* disables input & buttons */
+}
+
+/* ✅ Enabled state override */
+.chat-input-area:not(.disabled) {
+  opacity: 1 !important;
+  filter: none !important;
+  pointer-events: auto !important;
 }
 
 .upload-btn {
@@ -341,12 +357,14 @@
   font-size: 22px; cursor: pointer;
   opacity: 0.7;
 }
+
 .chat-input-box {
   flex: 1;
   border: 1px solid #ccc;
   border-radius: 20px;
   padding: 12px 15px;
 }
+
 .chat-input-box input {
   width: 100%; border: none; outline: none;
 }
@@ -358,7 +376,10 @@
   border: none;
   cursor: pointer;
 }
+
 .chat-send-btn i { color: white; font-size: 20px; }
+
+/* FIXED ERROR — a stray "}" was here in your CSS */
 
 /* ===========================================================
    SCROLL TO BOTTOM BUTTON
