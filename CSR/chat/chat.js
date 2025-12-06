@@ -1,7 +1,10 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — 2025 Full Stable Build
-// Messenger Grid • Lightbox Carousel • Thumbnail Strip
-// Edit • Delete • Unsend • Smooth Polling
+// SkyTruFiber CSR Chat System — Updated 2025 Stable Build
+// Includes:
+// - Permission Fix
+// - Smooth Assign Animation (+ → -)
+// - Auto-switch to Assigned View
+// - Bubble Improvements
 // ============================================================
 
 // ---------------- GLOBAL STATE ----------------
@@ -49,7 +52,11 @@ $(document).ready(function () {
     // SELECT CLIENT
     $(document).on("click", ".client-item", function () {
 
+        $(".client-item").removeClass("active-client");
+        $(this).addClass("active-client");
+
         currentClientID = $(this).data("id");
+
         $("#chat-client-name").text($(this).data("name"));
         $("#chat-messages").html("");
         lastMessageID = 0;
@@ -57,10 +64,7 @@ $(document).ready(function () {
         loadClientInfo(currentClientID);
         loadMessages(true);
 
-        // stop previous polling loop
         if (messageInterval) clearInterval(messageInterval);
-
-        // Start polling
         messageInterval = setInterval(fetchNewMessages, 1500);
     });
 
@@ -75,11 +79,11 @@ $(document).ready(function () {
     // Close popup
     $(document).on("click", function (e) {
         if (!$(e.target).closest("#msg-action-popup, .more-btn").length) {
-            $("#msg-action-popup").removeClass("show").hide();
+            closeActionPopup();
         }
     });
 
-    // Lightbox keyboard controls
+    // Lightbox keys
     $(document).on("keydown", function(e){
         if ($("#lightbox-overlay").is(":visible")) {
             if (e.key === "Escape") closeLightbox();
@@ -98,12 +102,22 @@ function scrollToBottom() {
 }
 
 // ============================================================
-// LOAD CLIENTS + INFO
+// LOAD CLIENTS
 // ============================================================
 function loadClients() {
-    $.post("../chat/load_clients.php", html => $("#client-list").html(html));
+    $.post("../chat/load_clients.php", html => {
+        $("#client-list").html(html);
+
+        // Keep highlight on selected client
+        if (currentClientID) {
+            $(`.client-item[data-id='${currentClientID}']`).addClass("active-client");
+        }
+    });
 }
 
+// ============================================================
+// LOAD CLIENT INFO
+// ============================================================
 function loadClientInfo(id) {
     $.post("../chat/load_client_info.php", { client_id: id }, html => {
         $("#client-info-content").html(html);
@@ -112,29 +126,27 @@ function loadClientInfo(id) {
 
         if (meta.length) {
             const isAssignedToMe = meta.data("assigned") === "yes";
-            const isLocked = meta.data("locked") === true || meta.data("locked") === "true";
+            const isLocked = String(meta.data("locked")) === "true";
 
             handleChatPermission(isAssignedToMe, isLocked);
         } else {
-            // No meta = should NOT disable chat. Most likely client was just selected.
+            // Fallback: enable chat
             handleChatPermission(true, false);
         }
     });
 }
 
-
 // ============================================================
-// ENABLE / DISABLE CHAT INPUT PERMISSIONS
+// ENABLE / DISABLE CHAT INPUT
 // ============================================================
 function handleChatPermission(isAssignedToMe, isLocked) {
 
-    const bar       = $(".chat-input-area");
-    const input     = $("#chat-input");
-    const sendBtn   = $("#send-btn");
+    const bar = $(".chat-input-area");
+    const input = $("#chat-input");
+    const sendBtn = $("#send-btn");
     const uploadBtn = $("#upload-btn");
 
     if (!isAssignedToMe || isLocked) {
-
         bar.addClass("disabled");
         input.prop("disabled", true);
         sendBtn.prop("disabled", true);
@@ -147,8 +159,7 @@ function handleChatPermission(isAssignedToMe, isLocked) {
         );
 
     } else {
-
-        bar.removeClass("disabled");   // ✅ fixes blur!
+        bar.removeClass("disabled");
         input.prop("disabled", false);
         sendBtn.prop("disabled", false);
         uploadBtn.prop("disabled", false);
@@ -156,11 +167,8 @@ function handleChatPermission(isAssignedToMe, isLocked) {
     }
 }
 
-
-
-
 // ============================================================
-// LOAD FULL MESSAGES
+// LOAD MESSAGES
 // ============================================================
 function loadMessages(scrollBottom = false) {
 
@@ -181,7 +189,7 @@ function loadMessages(scrollBottom = false) {
 }
 
 // ============================================================
-// POLLING — New Messages Only
+// POLLING — NEW MESSAGES
 // ============================================================
 function fetchNewMessages() {
 
@@ -205,36 +213,6 @@ function fetchNewMessages() {
         const box = $("#chat-messages")[0];
         const dist = box.scrollHeight - box.clientHeight - box.scrollTop;
         if (dist < 150) scrollToBottom();
-    });
-}
-
-// ============================================================
-// SMOOTH FETCH
-// ============================================================
-function fetchNewMessagesSmooth() {
-
-    $.post("../chat/load_messages.php", { client_id: currentClientID }, function (html) {
-
-        const temp = $("<div>").html(html);
-        const incoming = temp.find(".message");
-
-        incoming.each(function () {
-
-            const id = $(this).data("msg-id");
-            let tempBubble = $(".temp-msg");
-
-            if (tempBubble.length) {
-                tempBubble.replaceWith($(this));
-            } else {
-                if (!$(`.message[data-msg-id='${id}']`).length)
-                    $("#chat-messages").append($(this));
-            }
-        });
-
-        bindActionButtons();
-        assignMediaIndex();
-        attachMediaEvents();
-        scrollToBottom();
     });
 }
 
@@ -273,13 +251,12 @@ function appendTempBubble(msg) {
                 <div class="message-bubble">${msg}</div>
                 <div class="message-time">Sending...</div>
             </div>
-        </div>
-    `);
+        </div>`);
     scrollToBottom();
 }
 
 // ============================================================
-// MEDIA PREVIEW
+// MEDIA PREVIEW & UPLOAD
 // ============================================================
 function previewMultiple(files) {
     $("#preview-files").html("");
@@ -290,8 +267,7 @@ function previewMultiple(files) {
             <div class="preview-item">
                 <img src="${url}" class="preview-thumb">
                 <button class="preview-remove" data-i="${index}">&times;</button>
-            </div>
-        `);
+            </div>`);
     });
 
     $("#preview-inline").slideDown(180);
@@ -302,9 +278,6 @@ $(document).on("click", ".preview-remove", function () {
     selectedFiles.length ? previewMultiple(selectedFiles) : $("#preview-inline").slideUp(200);
 });
 
-// ============================================================
-// UPLOAD MEDIA
-// ============================================================
 function uploadMedia(files, msg = "") {
 
     const form = new FormData();
@@ -329,7 +302,7 @@ function uploadMedia(files, msg = "") {
 }
 
 // ============================================================
-// ACTION POPUP — FIXED & AUTO-FLIP
+// ACTION POPUP
 // ============================================================
 function bindActionButtons() {
 
@@ -349,18 +322,17 @@ function openActionPopup(id, anchor) {
     const bubbleWidth = bubble.outerWidth();
     const chatOffset = $(".chat-wrapper").offset();
 
-    // Base position: above bubble, aligned to right edge
     let top = bubbleOffset.top - chatOffset.top - popup.outerHeight() - 10;
     let left = bubbleOffset.left - chatOffset.left + bubbleWidth - popup.outerWidth();
 
     popup.css({ top, left, display: "block" });
 
-    // Auto-flip if hitting right edge
     const viewportWidth = $(window).width();
     const popupWidth = popup.outerWidth();
 
     popup.removeClass("flip-left");
 
+    // Flip if overflow
     if (left + popupWidth > viewportWidth - 20) {
         left = bubbleOffset.left - chatOffset.left;
         popup.css({ left });
@@ -370,9 +342,6 @@ function openActionPopup(id, anchor) {
     popup.addClass("show");
 }
 
-// ============================================================
-// CLOSE POPUP
-// ============================================================
 function closeActionPopup() {
     $("#msg-action-popup").removeClass("show").hide();
 }
@@ -387,6 +356,7 @@ $(document).on("click", ".action-edit", function () {
 });
 
 function startCSRMessageEdit(id) {
+
     editing = true;
 
     const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
@@ -397,8 +367,7 @@ function startCSRMessageEdit(id) {
         <div class="edit-actions">
             <button class="edit-save" data-id="${id}">Save</button>
             <button class="edit-cancel">Cancel</button>
-        </div>
-    `);
+        </div>`);
 }
 
 $(document).on("click", ".edit-save", function () {
@@ -417,7 +386,7 @@ $(document).on("click", ".edit-cancel", function () {
 });
 
 // ============================================================
-// DELETE / UNSEND
+// DELETE MESSAGE
 // ============================================================
 $(document).on("click", ".action-unsend, .action-delete", function () {
 
@@ -431,19 +400,15 @@ $(document).on("click", ".action-unsend, .action-delete", function () {
 });
 
 // ============================================================
-// MEDIA INDEXING
+// MEDIA INDEXING + LIGHTBOX
 // ============================================================
 function assignMediaIndex() {
     let index = 0;
     $(".fullview-item").each(function () {
-        $(this).attr("data-media-index", index);
-        index++;
+        $(this).attr("data-media-index", index++);
     });
 }
 
-// ============================================================
-// LIGHTBOX
-// ============================================================
 function collectAllMedia() {
 
     allMedia = [];
@@ -506,12 +471,10 @@ function rebuildThumbs() {
     $("#lightbox-thumbs").html("");
 
     allMedia.forEach((m, i) => {
-
         $("#lightbox-thumbs").append(`
             <img src="${m.src}"
                  class="thumb ${i === currentSlide ? "thumb-active" : ""}"
-                 data-i="${i}">
-        `);
+                 data-i="${i}">`);
     });
 }
 
@@ -531,19 +494,71 @@ $("#lightbox-close, #lightbox-overlay").click(function (e) {
 });
 
 // ============================================================
-// CLIENT ASSIGN
+// CLIENT ASSIGN + UNASSIGN (WITH ANIMATION & AUTO-SELECT)
 // ============================================================
-function assignClient(id) {
-    $.post("../chat/assign_client.php", { client_id: id }, () => {
-        loadClients();
-        if (id === currentClientID) loadClientInfo(id);
-    });
-}
+$(document).on("click", ".add-client", function (e) {
+    e.stopPropagation();
 
-function unassignClient(id) {
-    $.post("../chat/unassign_client.php", { client_id: id }, () => {
+    let id = $(this).data("id");
+    let btn = $(this);
+
+    // smooth shrink
+    btn.addClass("animating");
+
+    assignClient(id);
+
+    // update list visually
+    setTimeout(() => {
         loadClients();
-        if (id === currentClientID)
+
+        // auto-switch to this client
+        currentClientID = id;
+
+        const row = $(`.client-item[data-id='${id}']`);
+        row.addClass("active-client");
+
+        $("#chat-client-name").text(row.data("name"));
+
+        loadClientInfo(id);
+        loadMessages(true);
+
+        // fade in new (-) button
+        setTimeout(() => {
+            $(".client-item[data-id='" + id + "'] .client-action-btn")
+                .addClass("fade-in");
+        }, 100);
+
+    }, 200);
+});
+
+
+$(document).on("click", ".remove-client", function (e) {
+    e.stopPropagation();
+
+    let id = $(this).data("id");
+    let btn = $(this);
+
+    btn.addClass("animating");
+
+    unassignClient(id);
+
+    setTimeout(() => {
+        loadClients();
+
+        // If this CSR unassigned the current client → reset chat
+        if (currentClientID === id) {
+            currentClientID = null;
+            $("#chat-client-name").text("Select a Client");
+            $("#chat-messages").html("");
             $("#client-info-content").html("<p>Select a client.</p>");
-    });
-}
+        }
+
+        setTimeout(() => {
+            $(".client-item[data-id='" + id + "'] .client-action-btn")
+                .addClass("fade-in");
+        }, 100);
+
+    }, 200);
+});
+
+// END OF FILE
