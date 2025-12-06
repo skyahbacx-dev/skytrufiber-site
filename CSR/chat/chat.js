@@ -108,19 +108,20 @@ function loadClientInfo(id) {
     $.post("../chat/load_client_info.php", { client_id: id }, html => {
         $("#client-info-content").html(html);
 
-        // ===== Permission control based on hidden meta =====
         const meta = $("#client-meta");
+
         if (meta.length) {
             const isAssignedToMe = meta.data("assigned") === "yes";
-            // make sure we treat string "true" as true
-            const isLocked = String(meta.data("locked")) === "true";
+            const isLocked = meta.data("locked") === true || meta.data("locked") === "true";
+
             handleChatPermission(isAssignedToMe, isLocked);
         } else {
-            // Fallback: disable just to be safe if no meta
-            handleChatPermission(false, false);
+            // No meta = should NOT disable chat. Most likely client was just selected.
+            handleChatPermission(true, false);
         }
     });
 }
+
 
 // ============================================================
 // ENABLE / DISABLE CHAT INPUT PERMISSIONS
@@ -143,18 +144,20 @@ function handleChatPermission(isAssignedToMe, isLocked) {
         if (isLocked) {
             input.attr("placeholder", "Client is locked — you can't send messages.");
         } else {
-            input.attr("placeholder", "Client is assigned to another CSR or unassigned — you can't send messages.");
+            input.attr("placeholder", "Not assigned — you can't send messages.");
         }
 
     } else {
 
         bar.removeClass("disabled");
-        input.prop("disabled", false);   // ✅ FIXED
+        input.prop("disabled", false);   // ✅ fixed enabling logic
         sendBtn.prop("disabled", false);
         uploadBtn.prop("disabled", false);
+
         input.attr("placeholder", "Type a message...");
     }
 }
+
 
 
 // ============================================================
