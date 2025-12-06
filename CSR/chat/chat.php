@@ -49,10 +49,12 @@ $csrUser = $_SESSION["csr_user"];
             </div>
 
             <!-- INPUT AREA -->
-            <div class="chat-input-area">
-
-                <input type="file" id="chat-upload-media"
-                       accept="image/*,video/*,application/pdf" multiple hidden>
+            <div id="chat-input-wrapper" class="chat-input-area">
+                
+                <input type="file" 
+                       id="chat-upload-media"
+                       accept="image/*,video/*,application/pdf"
+                       multiple hidden>
 
                 <button id="upload-btn" class="upload-btn">
                     <i class="fa fa-paperclip"></i>
@@ -96,7 +98,6 @@ $csrUser = $_SESSION["csr_user"];
 
 <!-- Hidden: Logged in CSR username -->
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
-
 
 <!-- =============================
      GLOBAL LIGHTBOX (updated)
