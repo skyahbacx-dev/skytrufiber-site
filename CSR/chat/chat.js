@@ -307,16 +307,30 @@ function openActionPopup(id, anchor) {
 
     const chatOffset = $(".chat-wrapper").offset();
 
-    popup.css({
-        display: "block",
+    // Initial position ABOVE and RIGHT aligned
+    let top = bubbleOffset.top - chatOffset.top - popup.outerHeight() - 10;
+    let left = bubbleOffset.left - chatOffset.left + bubbleWidth - popup.outerWidth();
 
-        // Position ABOVE the bubble
-        top: bubbleOffset.top - chatOffset.top - popup.outerHeight() - 10,
+    // Apply base position
+    popup.css({ display: "block", top, left });
 
-        // Align RIGHT above bubble
-        left: bubbleOffset.left - chatOffset.left + bubbleWidth - popup.outerWidth()
-    });
+    // --- AUTO-FLIP LOGIC ---
+    const popupWidth = popup.outerWidth();
+    const viewportWidth = $(window).width();
+
+    popup.removeClass("flip-left");
+
+    // If popup goes outside the right edge → flip to left side
+    if (left + popupWidth > viewportWidth - 20) {
+        left = bubbleOffset.left - chatOffset.left; // move to left side
+        popup.css({ left });
+        popup.addClass("flip-left");
+    }
+
+    // Show animation class
+    popup.addClass("show");
 }
+
 
 function closeActionPopup() {
     $("#msg-action-popup").hide();
