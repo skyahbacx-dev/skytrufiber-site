@@ -5,7 +5,7 @@ require_once "../../db_connect.php";
 $clientID = $_POST["client_id"] ?? null;
 if (!$clientID) exit("No client selected.");
 
-$csrUser = $_SESSION["csr_user"]; // Current CSR username
+$csrUser = $_SESSION["csr_user"]; // Logged CSR
 
 $stmt = $conn->prepare("
     SELECT 
@@ -26,7 +26,6 @@ $c = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$c) exit("Client not found.");
 
-// Determine permissions
 $isAssignedToMe = ($c["assigned_csr"] === $csrUser) ? "yes" : "no";
 $isLocked       = $c["is_locked"] ? "true" : "false";
 
@@ -38,7 +37,6 @@ echo "
     <p><strong>Status:</strong> " . ($c['is_online'] ? "Online" : "Offline") . "</p>
     <p><strong>Lock State:</strong> " . ($c['is_locked'] ? "Locked" : "Unlocked") . "</p>
 
-    <!-- CRITICAL: META FOR CHAT PERMISSIONS -->
     <div id='client-meta'
          data-assigned='$isAssignedToMe'
          data-locked='$isLocked'>
