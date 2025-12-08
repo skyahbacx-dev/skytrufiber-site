@@ -19,27 +19,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
             if ($user && password_verify($password, $user['password'])) {
 
-                // Check last ticket status
+                // Retrieve latest ticket for the user
                 $ticketStmt = $conn->prepare("SELECT id, status FROM tickets WHERE client_id = :cid ORDER BY created_at DESC LIMIT 1");
                 $ticketStmt->execute([':cid' => $user['id']]);
                 $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
 
-                if (!$lastTicket || $lastTicket['status'] === 'resolved') {
-                    // Create new ticket
+                if (!$lastTicket) {
+                    // No ticket exists → create one using user's ticket_status
+                    $status = $user['ticket_status'] ?? 'unresolved';
+                    $newTicket = $conn->prepare("INSERT INTO tickets (client_id, status, created_at) VALUES (:cid, :status, NOW())");
+                    $newTicket->execute([
+                        ':cid' => $user['id'],
+                        ':status' => $status
+                    ]);
+                    $ticketId = $conn->lastInsertId();
+                } else if ($lastTicket['status'] === 'resolved') {
+                    // Last ticket resolved → create new ticket
                     $newTicket = $conn->prepare("INSERT INTO tickets (client_id, status, created_at) VALUES (:cid, 'unresolved', NOW())");
                     $newTicket->execute([':cid' => $user['id']]);
                     $ticketId = $conn->lastInsertId();
-
-                    // Delete old chat messages for resolved tickets
-                    if ($lastTicket) {
-                        $del = $conn->prepare("DELETE FROM chat WHERE ticket_id = :tid");
-                        $del->execute([':tid' => $lastTicket['id']]);
-                    }
                 } else {
                     $ticketId = $lastTicket['id'];
                 }
 
-                // Set session
+                // Set session variables
                 $_SESSION['client_id'] = $user['id'];
                 $_SESSION['client_name'] = $user['full_name'];
                 $_SESSION['email'] = $user['email'];
