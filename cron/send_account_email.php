@@ -1,39 +1,50 @@
 <?php
-include __DIR__ . '/../db_connect.php';
 require __DIR__ . '/../vendor/autoload.php'; // Composer autoload
+include '../db_connect.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Read from environment variables
-$token = getenv('EMAIL_TOKEN') ?: '';
-$email = getenv('EMAIL_TO') ?: '';
-$smtpPassword = getenv('SMTP_PASSWORD') ?: '';
+// Read environment variables from GitHub Actions
+$token = $_ENV['TOKEN'] ?? '';
+$email = $_ENV['EMAIL_TO'] ?? '';
+$smtpUser = $_ENV['SMTP_USERNAME'] ?? '';
+$smtpPass = $_ENV['SMTP_PASSWORD'] ?? '';
 
-if ($token !== 'YOUR_SECRET_TOKEN') {
+// Security token check
+if ($token !== 'AE92JF83HF82HSLA29FD') {
     http_response_code(403);
-    exit('Unauthorized');
+    exit('Unauthorized: invalid token');
 }
 
-if (!$email) exit('No email provided');
+if (!$email) {
+    http_response_code(400);
+    exit('No email provided');
+}
 
+// Fetch user from database
 $stmt = $conn->prepare("SELECT full_name, account_number FROM users WHERE email = :email LIMIT 1");
 $stmt->execute([':email' => $email]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
-if (!$user) exit('No user found');
 
+if (!$user) {
+    http_response_code(404);
+    exit('No user found');
+}
+
+// Send email via PHPMailer
 $mail = new PHPMailer(true);
 
 try {
     $mail->isSMTP();
     $mail->Host = 'smtp.gmail.com';
     $mail->SMTPAuth = true;
-    $mail->Username = 'skytrufiberbilling@gmail.com';
-    $mail->Password = $smtpPassword; // from GitHub secret
+    $mail->Username = $smtpUser;
+    $mail->Password = $smtpPass;
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port = 587;
 
-    $mail->setFrom('skytrufiberbilling@gmail.com', 'SkyTruFiber Support');
+    $mail->setFrom($smtpUser, 'SkyTruFiber Support');
     $mail->addAddress($user['email'], $user['full_name']);
 
     $mail->isHTML(true);
@@ -46,7 +57,8 @@ try {
     ";
 
     $mail->send();
-    echo 'Email sent successfully!';
+    echo "Email sent successfully!";
 } catch (Exception $e) {
-    echo 'Error: ' . $mail->ErrorInfo;
+    http_response_code(500);
+    echo "Mailer Error: " . $mail->ErrorInfo;
 }
