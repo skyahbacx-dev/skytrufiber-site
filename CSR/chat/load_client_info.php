@@ -32,39 +32,65 @@ try {
         exit("Client not found.");
     }
 
-    // SAFE ESCAPED VALUES
+    // Escape values safely
     $fullName  = htmlspecialchars($c['full_name']);
     $email     = htmlspecialchars($c['email']);
     $district  = htmlspecialchars($c['district']);
     $barangay  = htmlspecialchars($c['barangay']);
 
-    // Status formatting
-    $onlineStatus = $c["is_online"] 
-        ? "<span style='color:green;'>Online</span>" 
+    // Online / Offline badge
+    $onlineStatus = $c["is_online"]
+        ? "<span style='color:green;'>Online</span>"
         : "<span style='color:gray;'>Offline</span>";
 
-    $lockedStatus = ($c["assigned_csr"] !== $currentCSR && !empty($c["assigned_csr"])) 
-        ? "Locked" 
+    // Lock State
+    $lockedStatus = ($c["assigned_csr"] !== $currentCSR && !empty($c["assigned_csr"]))
+        ? "Locked"
         : "Unlocked";
 
-    // === Ticket Status ===
-    $ticketStatus = $c["ticket_status"] ?? "unresolved";
-
-    if ($ticketStatus === "resolved") {
-        $ticketLabel = "<span style='color:green;font-weight:bold;'>Resolved</span>";
-        $ticketBtn = "<button class='ticket-btn' data-id='{$c['id']}' data-status='unresolved'>Mark Unresolved</button>";
-    } else {
-        $ticketLabel = "<span style='color:red;font-weight:bold;'>Unresolved</span>";
-        $ticketBtn = "<button class='ticket-btn' data-id='{$c['id']}' data-status='resolved'>Resolve Ticket</button>";
-    }
-
-    // === Permission Flags ===
+    // Permission Flags
     $isAssignedToMe = ($c["assigned_csr"] === $currentCSR) ? "yes" : "no";
-    $isLocked = ($c["assigned_csr"] !== $currentCSR && !empty($c["assigned_csr"])) 
-        ? "true" 
+    $isLocked       = ($c["assigned_csr"] !== $currentCSR && !empty($c["assigned_csr"]))
+        ? "true"
         : "false";
 
+    // =============================
+    // TICKET STATUS (Dropdown Version)
+    // =============================
+    $ticketValue = $c["ticket_status"] ?? "unresolved";
+
+    $ticketDropdown = "
+        <select id='ticket-status-dropdown' data-id='{$c['id']}' style='padding:6px;width:150px;'>
+            <option value='unresolved' " . ($ticketValue === "unresolved" ? "selected" : "") . ">Unresolved</option>
+            <option value='resolved' "   . ($ticketValue === "resolved"   ? "selected" : "") . ">Resolved</option>
+        </select>
+    ";
+
+    // Label
+    $ticketLabel = $ticketValue === "resolved"
+        ? "<span style='color:green;font-weight:bold;'>Resolved</span>"
+        : "<span style='color:red;font-weight:bold;'>Unresolved</span>";
+
+    // Disable dropdown if CSR is NOT assigned
+    $dropdownDisabled = ($isAssignedToMe === "yes") ? "" : "disabled";
+
+    // =============================
+    // QUICK SUGGESTION BUTTONS
+    // =============================
+    $quickReplies = "
+        <div style='margin-top:15px;'>
+            <p><strong>Quick Replies:</strong></p>
+            <button class='qs-btn' style='padding:6px;margin:3px;'>No Internet</button>
+            <button class='qs-btn' style='padding:6px;margin:3px;'>Slow Connection</button>
+            <button class='qs-btn' style='padding:6px;margin:3px;'>Router Restart</button>
+            <button class='qs-btn' style='padding:6px;margin:3px;'>Checking Line</button>
+            <button class='qs-btn' style='padding:6px;margin:3px;'>Please wait, verifying...</button>
+        </div>
+    ";
+
+    // =============================
     // OUTPUT PANEL
+    // =============================
     echo "
         <p><strong>Name:</strong> $fullName</p>
         <p><strong>Email:</strong> $email</p>
@@ -76,9 +102,16 @@ try {
         <hr>
 
         <p><strong>Ticket Status:</strong> $ticketLabel</p>
-        <div>$ticketBtn</div>
+        <div>
+            <select id='ticket-status-dropdown' data-id='{$c['id']}' style='padding:6px;width:150px;' $dropdownDisabled>
+                <option value='unresolved' " . ($ticketValue === "unresolved" ? "selected" : "") . ">Unresolved</option>
+                <option value='resolved'   " . ($ticketValue === "resolved"   ? "selected" : "") . ">Resolved</option>
+            </select>
+        </div>
 
-        <!-- Hidden Meta: CSR Permissions -->
+        $quickReplies
+
+        <!-- Hidden Meta -->
         <div id='client-meta'
              data-assigned='$isAssignedToMe'
              data-locked='$isLocked'>
