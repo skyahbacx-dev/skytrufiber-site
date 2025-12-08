@@ -4,12 +4,12 @@ require_once "../../db_connect.php";
 
 header("Content-Type: application/json; charset=utf-8");
 
-$id      = (int)($_POST["id"] ?? 0);
+$id     = (int)($_POST["id"] ?? 0);
+$ticket = (int)($_POST["ticket"] ?? 0);
 $message = trim($_POST["message"] ?? "");
-$username = trim($_POST["username"] ?? "");
 
-if ($id <= 0) {
-    echo json_encode(["status" => "error", "msg" => "Invalid message ID"]);
+if ($id <= 0 || $ticket <= 0) {
+    echo json_encode(["status" => "error", "msg" => "Invalid parameters"]);
     exit;
 }
 
@@ -18,42 +18,17 @@ if ($message === "") {
     exit;
 }
 
-if ($username === "") {
-    echo json_encode(["status" => "error", "msg" => "Missing username"]);
-    exit;
-}
-
 /* -------------------------------------------------
-   1) Identify the client by email or full name
-------------------------------------------------- */
-$stmt = $conn->prepare("
-    SELECT id 
-    FROM users
-    WHERE email ILIKE ?
-       OR full_name ILIKE ?
-    LIMIT 1
-");
-$stmt->execute([$username, $username]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if (!$user) {
-    echo json_encode(["status" => "error", "msg" => "User not found"]);
-    exit;
-}
-
-$client_id = (int)$user["id"];
-
-/* -------------------------------------------------
-   2) Validate the message belongs to this client
+   1) Validate message belongs to this ticket
       AND was sent by the client
 ------------------------------------------------- */
 $stmt = $conn->prepare("
     SELECT sender_type, deleted
     FROM chat
-    WHERE id = ? AND client_id = ?
+    WHERE id = ? AND ticket_id = ?
     LIMIT 1
 ");
-$stmt->execute([$id, $client_id]);
+$stmt->execute([$id, $ticket]);
 $msg = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$msg) {
@@ -72,7 +47,7 @@ if ($msg["deleted"]) {
 }
 
 /* -------------------------------------------------
-   3) Update the message text
+   2) Update the message text
 ------------------------------------------------- */
 $update = $conn->prepare("
     UPDATE chat
@@ -83,3 +58,4 @@ $update->execute([$message, $id]);
 
 echo json_encode(["status" => "success"]);
 exit;
+?>
