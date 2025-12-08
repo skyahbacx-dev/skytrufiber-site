@@ -9,6 +9,10 @@ if (!$clientID) {
 
 $currentCSR = $_SESSION["csr_user"] ?? "";
 
+// Ensure safe string for comparison (prevents deprecated warnings)
+$currentCSR = $currentCSR ?? "";
+$currentCSR = trim($currentCSR);
+
 try {
 
     $stmt = $conn->prepare("
@@ -41,8 +45,8 @@ try {
     $district  = htmlspecialchars($c['district']);
     $barangay  = htmlspecialchars($c['barangay']);
 
-    // Normalize assigned CSR (avoid NULL issues)
-    $assignedCSR = $c["assigned_csr"] ?? "";
+    // Normalize assigned CSR to avoid NULL warnings
+    $assignedCSR = trim($c["assigned_csr"] ?? "");
 
     // --------------------------------------------------------
     // ONLINE STATUS
@@ -52,14 +56,14 @@ try {
         : "<span style='color:gray;'>Offline</span>";
 
     // --------------------------------------------------------
-    // LOCK STATE (safe comparisons)
+    // LOCK STATUS
     // --------------------------------------------------------
     $lockedStatus = ($assignedCSR !== "" && $assignedCSR !== $currentCSR)
         ? "Locked"
         : "Unlocked";
 
     // --------------------------------------------------------
-    // ASSIGNMENT FLAGS (safe strcasecmp)
+    // ASSIGNMENT FLAGS — Safe string comparison
     // --------------------------------------------------------
     $isAssignedToMe = ($assignedCSR !== "" && strcasecmp($assignedCSR, $currentCSR) === 0)
         ? "yes"
@@ -106,7 +110,7 @@ try {
             </select>
         </div>
 
-        <!-- Hidden metadata for chat.js -->
+        <!-- META for chat.js -->
         <div id='client-meta'
             data-assigned='$isAssignedToMe'
             data-locked='$isLocked'
