@@ -1,6 +1,6 @@
 <?php
 if (!isset($_SESSION)) session_start();
-include '../db_connect.php';
+include '../../db_connect.php';
 
 // Redirect if no session or ticket
 if (!isset($_SESSION['client_id'], $_SESSION['ticket_id'])) {
