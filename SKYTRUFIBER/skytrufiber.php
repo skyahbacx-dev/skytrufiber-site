@@ -2,67 +2,108 @@
 session_start();
 include '../db_connect.php';
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require '../PHPMailer/src/Exception.php';
+require '../PHPMailer/src/PHPMailer.php';
+require '../PHPMailer/src/SMTP.php';
+
 $message = '';
+$forgotMessage = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// FORGOT PASSWORD POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['forgot_email'])) {
+    $email = trim($_POST['forgot_email']);
 
-    // Normal login POST
-    if (isset($_POST['full_name']) && isset($_POST['password'])) {
-
-        $email_or_name = trim($_POST['full_name'] ?? '');
-        $password = $_POST['password'] ?? '';
-        $concern = trim($_POST['concern'] ?? '');
-
-        if ($email_or_name && $password) {
+    if (!empty($email)) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $forgotMessage = "Invalid email format.";
+        } else {
             try {
-                $stmt = $conn->prepare("SELECT * FROM users WHERE email = :input OR full_name = :input LIMIT 1");
-                $stmt->execute([':input' => $email_or_name]);
+                $stmt = $conn->prepare("SELECT full_name, email, account_number FROM users WHERE email = :email LIMIT 1");
+                $stmt->execute([':email' => $email]);
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                if ($user && password_verify($password, $user['password'])) {
+                if ($user) {
+                    $mail = new PHPMailer(true);
+                    try {
+                        $mail->isSMTP();
+                        $mail->Host = 'smtp.gmail.com';
+                        $mail->SMTPAuth = true;
+                        $mail->Username = 'skytrufiberbilling@gmail.com';
+                        $mail->Password = 'hmmt suww lpyt oheo';
+                        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                        $mail->Port = 587;
 
-                    // Reset ticket_status when logging in again (NEW TICKET)
-                    $updateTicket = $conn->prepare("
-                        UPDATE users SET ticket_status = 'unresolved'
-                        WHERE id = :cid
-                    ");
-                    $updateTicket->execute([':cid' => $user['id']]);
+                        $mail->setFrom('skytrufiberbilling@gmail.com', 'SkyTruFiber Support');
+                        $mail->addAddress($user['email'], $user['full_name']);
 
-                    // SET SESSION
-                    $_SESSION['client_id']   = $user['id'];
-                    $_SESSION['client_name'] = $user['full_name'];
-                    $_SESSION['email']       = $user['email'];
+                        $mail->isHTML(true);
+                        $mail->Subject = 'Your SkyTruFiber Account Number';
+                        $mail->Body = "
+                            <p>Hello <b>{$user['full_name']}</b>,</p>
+                            <p>Your account number is: <strong>{$user['account_number']}</strong></p>
+                            <p>This serves as your login password.</p>
+                            <p>Regards,<br>SkyTruFiber Support Team</p>
+                        ";
 
-                    // INSERT first concern message
-                    if (!empty($concern)) {
-                        $insert = $conn->prepare("
-                            INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
-                            VALUES (:cid, 'client', :msg, false, false, NOW())
-                        ");
-                        $insert->execute([
-                            ':cid' => $user['id'],
-                            ':msg' => $concern
-                        ]);
+                        $mail->send();
+                        $forgotMessage = "Email sent successfully!";
+                    } catch (Exception $e) {
+                        $forgotMessage = "Failed to send email. Error: " . $mail->ErrorInfo;
                     }
-
-                    header("Location: chat/chat_support.php?username=" . urlencode($user['full_name']));
-                    exit;
-
                 } else {
-                    $message = "❌ Invalid email/full name or password.";
+                    $forgotMessage = "No user found with that email.";
+                }
+            } catch (PDOException $e) {
+                $forgotMessage = "Database error: " . htmlspecialchars($e->getMessage());
+            }
+        }
+    } else {
+        $forgotMessage = "Please enter your email.";
+    }
+}
+
+// NORMAL LOGIN POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name']) && isset($_POST['password'])) {
+    $email_or_name = trim($_POST['full_name']);
+    $password = $_POST['password'] ?? '';
+    $concern = trim($_POST['concern'] ?? '');
+
+    if ($email_or_name && $password) {
+        try {
+            $stmt = $conn->prepare("SELECT * FROM users WHERE email = :input OR full_name = :input LIMIT 1");
+            $stmt->execute([':input' => $email_or_name]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($user && password_verify($password, $user['password'])) {
+                $updateTicket = $conn->prepare("UPDATE users SET ticket_status = 'unresolved' WHERE id = :cid");
+                $updateTicket->execute([':cid' => $user['id']]);
+
+                $_SESSION['client_id']   = $user['id'];
+                $_SESSION['client_name'] = $user['full_name'];
+                $_SESSION['email']       = $user['email'];
+
+                if (!empty($concern)) {
+                    $insert = $conn->prepare("INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at) VALUES (:cid, 'client', :msg, false, false, NOW())");
+                    $insert->execute([':cid' => $user['id'], ':msg' => $concern]);
                 }
 
-            } catch (PDOException $e) {
-                $message = "⚠ Database error: " . htmlspecialchars($e->getMessage());
+                header("Location: chat/chat_support.php?username=" . urlencode($user['full_name']));
+                exit;
+            } else {
+                $message = "❌ Invalid email/full name or password.";
             }
-
-        } else {
-            $message = "⚠ Please fill in all fields.";
+        } catch (PDOException $e) {
+            $message = "⚠ Database error: " . htmlspecialchars($e->getMessage());
         }
-
+    } else {
+        $message = "⚠ Please fill in all fields.";
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -72,47 +113,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 body {
   font-family:"Segoe UI", Arial, sans-serif;
   background:linear-gradient(to bottom right, #cceeff, #e6f7ff);
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  min-height:100vh; margin:0;
+  display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0;
 }
-
-@keyframes slideLogo { from { opacity:0; transform:translateY(-60px); } to { opacity:1; transform:translateY(0); } }
-.logo { animation: slideLogo .9s ease-out forwards; }
 
 form {
   background:rgba(255,255,255,0.45);
-  padding:25px;
-  border-radius:20px;
-  width:380px;
-  backdrop-filter:blur(12px);
-  box-shadow:0 8px 25px rgba(0,0,0,0.15);
-  opacity:0;
-  transform:translateY(40px);
+  padding:25px; border-radius:20px; width:380px;
+  backdrop-filter:blur(12px); box-shadow:0 8px 25px rgba(0,0,0,0.15);
 }
-.showForm { animation:fadeSlide .6s ease forwards; }
 
-@keyframes fadeSlide { from { opacity:0; transform:translateY(40px); } to { opacity:1; transform:translateY(0); } }
-
-input, textarea {
-  width:100%; padding:10px; margin-top:5px;
-  border-radius:10px; border:1px solid #ccc; box-sizing:border-box;
-}
+input, textarea { width:100%; padding:10px; margin-top:5px; border-radius:10px; border:1px solid #ccc; box-sizing:border-box; }
 textarea { height:80px; resize:none; }
 
-button { width:100%; padding:12px; background:#00a6b6; color:white; border:none;
-  border-radius:50px; cursor:pointer; font-weight:bold; font-size:16px; margin-top:15px; }
+button { width:100%; padding:12px; background:#00a6b6; color:white; border:none; border-radius:50px; cursor:pointer; font-weight:bold; font-size:16px; margin-top:15px; }
 button:hover { background:#008c96; transform:translateY(-2px); }
 button:active { transform:scale(.97); }
 
-label { display:block; margin-top:10px; color:#004466; font-weight:600; }
+.forgot-form { max-height:0; overflow:hidden; transition:max-height 0.5s ease, padding 0.5s ease; }
+.forgot-form.active { max-height:180px; padding-top:10px; }
+
+.message { color:red; font-size:0.9em; margin-bottom:10px; }
+.success { color:green; }
+
+a { font-size:0.9em; text-decoration:none; color:#0077a3; }
+a:hover { text-decoration:underline; }
+
+.logo { width:150px; border-radius:50%; display:block; margin:0 auto 15px; }
 </style>
 </head>
-
 <body>
 
-<img src="../SKYTRUFIBER.png" class="logo" style="width:150px; border-radius:50%; margin-bottom:15px;">
+<div>
+<img src="../SKYTRUFIBER.png" class="logo">
 
-<form id="supportForm" method="POST">
+<form method="POST">
   <h2 style="text-align:center; color:#004466;">Customer Service Portal</h2>
 
   <label>Email or Full Name:</label>
@@ -130,52 +164,29 @@ label { display:block; margin-top:10px; color:#004466; font-weight:600; }
     <p style="color:red; text-align:center;"><?= htmlspecialchars($message) ?></p>
   <?php endif; ?>
 
-  <p style="text-align:center; margin-top:10px;">
-    <a href="#" id="forgotPasswordLink">Forgot Password?</a>
-  </p>
+  <p style="text-align:center; margin-top:10px;"><a href="#" id="forgotPasswordLink">Forgot Password?</a></p>
 
-  <div id="forgotPasswordBox" style="display:none; margin-top:10px; text-align:center;">
-      <input type="email" id="forgotEmail" placeholder="Enter your email"
-             style="width:90%; padding:8px; border-radius:8px;">
-      <button type="button" id="sendForgot"
-              style="margin-top:10px; padding:8px 20px; border-radius:20px;">
-          Send my account number
-      </button>
+  <div class="forgot-form" id="forgotPasswordBox">
+    <?php if($forgotMessage): ?>
+        <p class="message <?= strpos($forgotMessage, 'success') !== false ? 'success' : '' ?>"><?= htmlspecialchars($forgotMessage) ?></p>
+    <?php endif; ?>
+    <form method="POST">
+        <input type="email" name="forgot_email" placeholder="Enter your email" required>
+        <button type="submit">Send my account number</button>
+    </form>
   </div>
 
-  <p style="text-align:center; margin-top:10px;">
-      No account yet? <a href="consent.php">Register here</a>
-  </p>
-
+  <p style="text-align:center; margin-top:10px;">No account yet? <a href="consent.php">Register here</a></p>
 </form>
+</div>
 
 <script>
-document.getElementById("supportForm").classList.add("showForm");
-
-// SHOW FORGOT PASSWORD FIELD
-document.getElementById("forgotPasswordLink").addEventListener("click", function(e) {
+document.getElementById("forgotPasswordLink").addEventListener("click", function(e){
     e.preventDefault();
-    document.getElementById("forgotPasswordBox").style.display = "block";
-});
-
-// SEND FORGOT PASSWORD REQUEST
-document.getElementById("sendForgot").addEventListener("click", function () {
-    const email = document.getElementById("forgotEmail").value.trim();
-    if (!email) {
-        alert("Please enter your email.");
-        return;
+    document.getElementById("forgotPasswordBox").classList.toggle("active");
+    if(document.getElementById("forgotPasswordBox").classList.contains("active")){
+        document.getElementById("forgotPasswordBox").scrollIntoView({behavior:"smooth"});
     }
-
-    fetch("forgot_password.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "email=" + encodeURIComponent(email)
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert(data.message);
-    })
-    .catch(err => console.error(err));
 });
 </script>
 
