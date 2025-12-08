@@ -25,6 +25,6 @@ jobs:
       - name: Send Account Email
         env:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          EMAIL_TOKEN: YOUR_SECRET_TOKEN
+          EMAIL_TOKEN: AE92JF83HF82HSLA29FD
           EMAIL_TO: test@example.com
         run: php cron/send_account_email.php
