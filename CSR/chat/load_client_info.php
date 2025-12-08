@@ -19,7 +19,8 @@ try {
             barangay, 
             is_online, 
             assigned_csr,
-            is_locked
+            is_locked,
+            ticket_status
         FROM users
         WHERE id = :cid
         LIMIT 1
@@ -43,17 +44,27 @@ try {
         : "<span style='color:gray;'>Offline</span>";
 
     $lockedStatus = ($c["assigned_csr"] !== $currentCSR && !empty($c["assigned_csr"])) 
-                ? "Locked" 
-                : "Unlocked";
+        ? "Locked" 
+        : "Unlocked";
 
+    // === Ticket Status ===
+    $ticketStatus = $c["ticket_status"] ?? "unresolved";
+
+    if ($ticketStatus === "resolved") {
+        $ticketLabel = "<span style='color:green;font-weight:bold;'>Resolved</span>";
+        $ticketBtn = "<button class='ticket-btn' data-id='{$c['id']}' data-status='unresolved'>Mark Unresolved</button>";
+    } else {
+        $ticketLabel = "<span style='color:red;font-weight:bold;'>Unresolved</span>";
+        $ticketBtn = "<button class='ticket-btn' data-id='{$c['id']}' data-status='resolved'>Resolve Ticket</button>";
+    }
 
     // === Permission Flags ===
     $isAssignedToMe = ($c["assigned_csr"] === $currentCSR) ? "yes" : "no";
     $isLocked = ($c["assigned_csr"] !== $currentCSR && !empty($c["assigned_csr"])) 
-            ? "true" 
-            : "false";
-;
+        ? "true" 
+        : "false";
 
+    // OUTPUT PANEL
     echo "
         <p><strong>Name:</strong> $fullName</p>
         <p><strong>Email:</strong> $email</p>
@@ -61,6 +72,11 @@ try {
         <p><strong>Barangay:</strong> $barangay</p>
         <p><strong>Status:</strong> $onlineStatus</p>
         <p><strong>Lock State:</strong> $lockedStatus</p>
+
+        <hr>
+
+        <p><strong>Ticket Status:</strong> $ticketLabel</p>
+        <div>$ticketBtn</div>
 
         <!-- Hidden Meta: CSR Permissions -->
         <div id='client-meta'
