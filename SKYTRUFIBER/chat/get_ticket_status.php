@@ -2,29 +2,32 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-// Username passed from chat_support.js
-$username = $_POST["username"] ?? null;
+$username = trim($_POST["username"] ?? "");
 
-if (!$username) {
+if ($username === "") {
     echo "unresolved";
     exit;
 }
 
-// Get the client's database record
+// Find user by email or full name
 $stmt = $conn->prepare("
-    SELECT ticket_status 
-    FROM users 
-    WHERE username = :u 
+    SELECT ticket_status
+    FROM users
+    WHERE email ILIKE ? 
+       OR full_name ILIKE ?
     LIMIT 1
 ");
-$stmt->execute([":u" => $username]);
+$stmt->execute([$username, $username]);
 
-$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$row) {
+// If user not found → default unresolved
+if (!$user) {
     echo "unresolved";
     exit;
 }
 
-// Return “resolved” or “unresolved”
-echo $row["ticket_status"] === "resolved" ? "resolved" : "unresolved";
+// Return normalized ticket status
+$ticket = strtolower($user["ticket_status"] ?? "unresolved");
+
+echo ($ticket === "resolved") ? "resolved" : "unresolved";
