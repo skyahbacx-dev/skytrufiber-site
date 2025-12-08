@@ -8,14 +8,13 @@ if (!$csr) {
     exit("Unauthorized");
 }
 
-// Filter from chat.js (all / resolved / unresolved)
 $filter = $_POST["filter"] ?? "all";
 
 try {
 
-    // ------------------------------------------
-    // WHERE CLAUSE
-    // ------------------------------------------
+    /* ==========================================================
+       BUILD FILTER CLAUSE
+    ========================================================== */
     $where = "WHERE assigned_csr = :csr";
     $params = [":csr" => $csr];
 
@@ -26,24 +25,34 @@ try {
         $where .= " AND ticket_status = 'unresolved'";
     }
 
-    // ------------------------------------------
-    // QUERY CLIENT LIST
-    // ------------------------------------------
+    /* ==========================================================
+       QUERY CLIENT LIST (includes last message + account number)
+    ========================================================== */
     $stmt = $conn->prepare("
         SELECT
             u.id,
             u.full_name,
             u.email,
+            u.account_number,
             u.is_online,
             u.assigned_csr,
             u.is_locked,
             u.ticket_status,
+
             COALESCE(
-                (SELECT message FROM chat
-                 WHERE client_id = u.id
-                 ORDER BY created_at DESC LIMIT 1),
+                (
+                    SELECT CASE 
+                        WHEN deleted = TRUE THEN 'Message removed'
+                        ELSE message 
+                    END
+                    FROM chat
+                    WHERE client_id = u.id
+                    ORDER BY id DESC
+                    LIMIT 1
+                ),
                 ''
             ) AS last_message
+
         FROM users u
         $where
         ORDER BY u.full_name ASC
@@ -56,53 +65,75 @@ try {
         exit;
     }
 
-    // ------------------------------------------
-    // RENDER CLIENT ENTRIES
-    // ------------------------------------------
+    /* ==========================================================
+       RENDER CLIENT LIST
+    ========================================================== */
     foreach ($clients as $c) {
 
-        $id        = (int)$c["id"];
-        $name      = htmlspecialchars($c["full_name"], ENT_QUOTES);
-        $email     = htmlspecialchars($c["email"]);
-        $lastMsg   = htmlspecialchars($c["last_message"]);
-        $online    = $c["is_online"] ? "online" : "offline";
-        $ticket    = $c["ticket_status"] ?? "unresolved";
-        $assigned  = $c["assigned_csr"];
-        $locked    = $c["is_locked"];
+        $id      = (int)$c["id"];
+        $name    = htmlspecialchars($c["full_name"], ENT_QUOTES);
+        $email   = htmlspecialchars($c["email"]);
+        $acct    = htmlspecialchars($c["account_number"] ?? "N/A");
+        $lastMsg = htmlspecialchars($c["last_message"]);
+        $online  = $c["is_online"] ? "online" : "offline";
 
-        // -------------------------------
-        // TICKET ICON
-        // -------------------------------
+        $ticket  = $c["ticket_status"] ?? "unresolved";
+        $assigned = $c["assigned_csr"];
+
+        /* ------------------------------------------------------
+           TICKET STATUS COLOR DOT
+        ------------------------------------------------------ */
         $ticketIcon = ($ticket === "resolved")
             ? "<span class='ticket-dot resolved'>✔</span>"
             : "<span class='ticket-dot unresolved'>●</span>";
 
-        // -------------------------------
-        // ASSIGN / REMOVE / LOCK BUTTONS
-        // -------------------------------
-        $showAdd      = empty($assigned);
-        $showRemove   = ($assigned === $csr);
-        $showLockIcon = (!empty($assigned) && $assigned !== $csr);
+        /* ------------------------------------------------------
+           ACTION BUTTONS (ADD / REMOVE / LOCK)
+        ------------------------------------------------------ */
+        $showAdd    = empty($assigned);
+        $showRemove = ($assigned === $csr);
+        $showLock   = (!empty($assigned) && $assigned !== $csr);
 
-        $addBtn    = $showAdd      ? "<button class='client-action-btn add-client' data-id='$id'><i class='fa fa-plus'></i></button>" : "";
-        $removeBtn = $showRemove   ? "<button class='client-action-btn remove-client' data-id='$id'><i class='fa fa-minus'></i></button>" : "";
-        $lockBtn   = $showLockIcon ? "<button class='client-action-btn lock-client' disabled><i class='fa fa-lock'></i></button>" : "";
+        $addBtn = $showAdd 
+            ? "<button class='client-action-btn add-client' data-id='$id'>
+                    <i class='fa fa-plus'></i>
+               </button>"
+            : "";
 
-        // -------------------------------
-        // OUTPUT
-        // -------------------------------
+        $removeBtn = $showRemove
+            ? "<button class='client-action-btn remove-client' data-id='$id'>
+                    <i class='fa fa-minus'></i>
+               </button>"
+            : "";
+
+        $lockBtn = $showLock
+            ? "<button class='client-action-btn lock-client' disabled>
+                    <i class='fa fa-lock'></i>
+               </button>"
+            : "";
+
+        /* ------------------------------------------------------
+           OUTPUT CLIENT ENTRY
+        ------------------------------------------------------ */
         echo "
-        <div class='client-item' 
-             data-id='$id' 
+        <div class='client-item'
+             data-id='$id'
              data-name=\"$name\"
              data-ticket='$ticket'>
 
             <div class='client-status $online'></div>
 
             <div class='client-info'>
-                <strong class='client-name'>$name $ticketIcon</strong>
+                <strong class='client-name'>
+                    $name $ticketIcon
+                </strong>
+
                 <small>$email</small>
-                <small class='last-msg'>$lastMsg</small>
+                <small>Acct: $acct</small>
+
+                <small class='last-msg'>
+                    $lastMsg
+                </small>
             </div>
 
             <div class='client-icons'>
@@ -110,12 +141,11 @@ try {
                 $removeBtn
                 $lockBtn
             </div>
-
         </div>
         ";
     }
 
 } catch (PDOException $e) {
-    echo 'DB ERROR: ' . htmlspecialchars($e->getMessage());
+    echo "DB ERROR: " . htmlspecialchars($e->getMessage());
 }
 ?>
