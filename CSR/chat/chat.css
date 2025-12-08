@@ -10,13 +10,43 @@
 }
 
 /* ===========================================================
-   LEFT PANEL — CLIENT LIST
+   LEFT PANEL — CLIENT LIST + FILTERS
 =========================================================== */
 .chat-left-panel {
   background: #ffffff;
   border-right: 1px solid #dcdcdc;
   overflow-y: auto;
   padding-bottom: 12px;
+}
+
+/* Ticket Filter Buttons */
+.ticket-filter-buttons {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px 0 12px;
+  gap: 6px;
+}
+
+.ticket-filter {
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: #fafafa;
+  padding: 6px 2px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.ticket-filter:hover {
+  background: #e8ffed;
+}
+
+.ticket-filter.active {
+  background: #00aa44;
+  color: white;
+  border-color: #008f38;
+  font-weight: bold;
 }
 
 #client-search {
@@ -29,6 +59,7 @@
   font-size: 14px;
 }
 
+/* Client List Items */
 .client-item {
   display: flex;
   align-items: center;
@@ -60,6 +91,18 @@
   color: #888;
 }
 
+/* Ticket Dot on Left Panel */
+.ticket-dot {
+  font-size: 12px;
+  margin-left: 6px;
+}
+.ticket-dot.resolved {
+  color: green;
+}
+.ticket-dot.unresolved {
+  color: red;
+}
+
 /* ===========================================================
    CLIENT ACTION BUTTONS
 =========================================================== */
@@ -87,7 +130,7 @@
 }
 
 /* ===========================================================
-   HEADER
+   HEADER + Ticket Dropdown
 =========================================================== */
 .chat-header {
   padding: 14px 20px;
@@ -96,6 +139,21 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+#ticket-status-dropdown {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  background: #fdfdfd;
+  cursor: pointer;
+}
+
+#ticket-status-dropdown:disabled {
+  background: #f3f3f3;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .chat-with {
@@ -166,9 +224,7 @@
   flex-direction: row-reverse;
 }
 
-.message-content {
-  position: relative;
-}
+.message-content { position: relative; }
 
 .message-bubble {
   padding: 12px 18px;
@@ -199,6 +255,7 @@
   margin-top: 4px;
 }
 
+/* Avatar */
 .message-avatar {
   width: 38px;
   height: 38px;
@@ -212,9 +269,7 @@
   object-fit: cover;
 }
 
-/* ===========================================================
-   DELETED MESSAGE PLACEHOLDER
-=========================================================== */
+/* Deleted message text */
 .deleted-text {
   color: #777;
   font-style: italic;
@@ -222,7 +277,7 @@
 }
 
 /* ===========================================================
-   ACTION TOOLBAR (⋮)
+   ACTION POPUP + BUTTON
 =========================================================== */
 .more-btn {
   width: 26px;
@@ -251,9 +306,6 @@
   opacity: 1;
 }
 
-/* ===========================================================
-   ACTION POPUP
-=========================================================== */
 #msg-action-popup {
   position: absolute;
   z-index: 99999;
@@ -279,7 +331,7 @@
 }
 
 /* ===========================================================
-   INPUT AREA (NO MEDIA BUTTON)
+   CHAT INPUT (TEXT ONLY)
 =========================================================== */
 .chat-input-area {
   padding: 14px;
@@ -353,7 +405,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Smooth panel slide when switching clients */
 .chat-slide-in {
   animation: chatSlideIn 0.35s ease both;
 }
