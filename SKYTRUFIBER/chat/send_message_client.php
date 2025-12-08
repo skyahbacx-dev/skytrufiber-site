@@ -80,6 +80,7 @@ if ($exists) {
 // ----------------------------------------------------------
 // INSERT CLIENT MESSAGE
 // ----------------------------------------------------------
+// PostgreSQL booleans require TRUE/FALSE, not 1/0
 $insert = $conn->prepare("
     INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
     VALUES (?, ?, 'client', ?, TRUE, FALSE, NOW())
@@ -87,4 +88,5 @@ $insert = $conn->prepare("
 $insert->execute([$ticketId, $client_id, $message]);
 
 echo json_encode(["status" => "ok"]);
+exit;
 ?>
