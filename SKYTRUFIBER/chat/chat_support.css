@@ -428,3 +428,143 @@ body {
     opacity: 1;
     pointer-events: auto;
 }
+/* ============================================================
+   MOBILE COMPACT MODE — ACTIVATES BELOW 768px
+============================================================ */
+@media (max-width: 768px) {
+
+    /* Reduce modal padding and remove rounded corners */
+    .chat-modal {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+    }
+
+    /* Smaller header */
+    .chat-header {
+        height: 66px;
+        padding: 10px 14px;
+    }
+
+    .chat-header-logo {
+        width: 38px;
+        height: 38px;
+    }
+
+    .chat-header-left h2 {
+        font-size: 17px;
+    }
+
+    .ticket-label {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    /* Messages compact spacing */
+    #chat-messages {
+        padding: 14px;
+        gap: 12px;
+    }
+
+    .message-content {
+        max-width: 85%;
+    }
+
+    .message-bubble {
+        padding: 10px 14px;
+        font-size: 14px;
+        border-radius: 16px;
+    }
+
+    .message.sent .message-bubble {
+        border-radius: 16px 16px 4px 16px;
+    }
+    .message.received .message-bubble {
+        border-radius: 16px 16px 16px 4px;
+    }
+
+    .message-avatar img {
+        width: 28px;
+        height: 28px;
+    }
+
+    /* System message compact */
+    .system-message {
+        font-size: 14px;
+        padding: 10px;
+        border-radius: 10px;
+        max-width: 90%;
+    }
+
+    /* Action toolbar smaller */
+    .more-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 14px;
+    }
+
+    .action-toolbar {
+        right: -32px;
+        top: 4px;
+    }
+    .message.sent .action-toolbar {
+        left: -32px;
+        right: auto;
+    }
+
+    /* Popup menu sizing */
+    #msg-action-popup {
+        width: 160px;
+        padding: 4px 0;
+    }
+    #msg-action-popup button {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+    /* Quick Suggestions Bar */
+    .quick-suggestions {
+        gap: 6px;
+        padding: 8px;
+    }
+    .quick-suggestions button {
+        padding: 4px 10px;
+        font-size: 12px;
+    }
+
+    /* Input area compact */
+    .chat-input-area {
+        padding: 10px;
+        gap: 8px;
+    }
+    .chat-input-box {
+        padding: 8px 12px;
+    }
+    .chat-input-box input {
+        font-size: 14px;
+    }
+
+    /* Send button smaller */
+    #send-btn {
+        width: 42px;
+        height: 42px;
+        font-size: 18px;
+    }
+
+    /* Scroll button relocated */
+    .scroll-bottom-btn {
+        bottom: 80px;
+        right: 14px;
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    /* Popup alignment fix on small screens */
+    #msg-action-popup {
+        max-width: 70vw;
+        left: 50% !important;
+        transform: translateX(-50%);
+    }
+}
+
