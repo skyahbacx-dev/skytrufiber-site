@@ -2,47 +2,69 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$id      = $_POST["id"] ?? null;
-$csr     = $_SESSION["csr_user"] ?? null;
-$client  = $_POST["username"] ?? null;
+header("Content-Type: application/json; charset=utf-8");
 
-if (!$id) exit("Missing ID");
+$id      = (int)($_POST["id"] ?? 0);
+$message = trim($_POST["message"] ?? "");
+$csrUser = $_SESSION["csr_user"] ?? null;
 
-/* ============================================================
-   Identify sender type (CSR or Client)
-============================================================ */
-if ($csr) {
-    $senderType = "csr";
-    $identifier = $csr;
-} else {
-    $senderType = "client";
-    $identifier = $client;
+if ($id <= 0) {
+    echo json_encode(["status" => "error", "msg" => "Invalid ID"]);
+    exit;
 }
 
-/* ============================================================
-   Validate the message belongs to the sender
-============================================================ */
+if ($message === "") {
+    echo json_encode(["status" => "error", "msg" => "Message cannot be empty"]);
+    exit;
+}
+
+if (!$csrUser) {
+    echo json_encode(["status" => "error", "msg" => "CSR not logged in"]);
+    exit;
+}
+
+/* -------------------------------------------------
+   1) Fetch the message and validate ownership
+------------------------------------------------- */
 $stmt = $conn->prepare("
-    SELECT id FROM chat 
-    WHERE id = ? AND sender_type = ?
+    SELECT c.sender_type, c.deleted, u.assigned_csr
+    FROM chat c
+    JOIN users u ON c.client_id = u.id
+    WHERE c.id = ?
+    LIMIT 1
 ");
-$stmt->execute([$id, $senderType]);
+$stmt->execute([$id]);
+$msg = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$stmt->fetch()) {
-    exit("Permission denied");
+if (!$msg) {
+    echo json_encode(["status" => "error", "msg" => "Message not found"]);
+    exit;
 }
 
-/* ============================================================
-   SOFT DELETE (unsend)
-   - Removes text
-   - Marks message as deleted
-============================================================ */
-$del = $conn->prepare("
+if ($msg["sender_type"] !== "csr") {
+    echo json_encode(["status" => "error", "msg" => "Cannot edit client messages"]);
+    exit;
+}
+
+if ($msg["deleted"]) {
+    echo json_encode(["status" => "error", "msg" => "Cannot edit deleted message"]);
+    exit;
+}
+
+if ($msg["assigned_csr"] !== $csrUser) {
+    echo json_encode(["status" => "error", "msg" => "Not authorized (client not assigned to you)"]);
+    exit;
+}
+
+/* -------------------------------------------------
+   2) Update the message
+------------------------------------------------- */
+$update = $conn->prepare("
     UPDATE chat
-    SET message = '', deleted = TRUE, edited = FALSE
+    SET message = ?, edited = TRUE, updated_at = NOW()
     WHERE id = ?
 ");
-$del->execute([$id]);
+$update->execute([$message, $id]);
 
-echo "OK";
-?>
+echo json_encode(["status" => "success"]);
+exit;
