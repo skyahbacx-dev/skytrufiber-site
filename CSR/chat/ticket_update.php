@@ -37,17 +37,18 @@ if (!$info) {
 $currentStatus = $info["ticket_status"];
 $assignedCSR   = $info["assigned_csr"];
 
-// Block edits if CSR is not assigned
+// Block update if this CSR is not assigned
 if ($assignedCSR !== $csrUser) {
     echo "NOT_ASSIGNED";
     exit;
 }
 
 // ============================================================
-// UPDATE TICKET STATUS (only if changed)
+// IF STATUS CHANGED → UPDATE & LOG
 // ============================================================
 if ($currentStatus !== $status) {
 
+    // Update users table
     $stmt = $conn->prepare("
         UPDATE users 
         SET ticket_status = :s
@@ -58,24 +59,22 @@ if ($currentStatus !== $status) {
         ":id" => $clientID
     ]);
 
-    // ========================================================
-    // LOG THE CHANGE in ticket_logs
-    // ========================================================
+    // LOG INTO ticket_logs (CORRECTED COLUMN NAMES)
     $log = $conn->prepare("
-        INSERT INTO ticket_logs (client_id, csr_user, action, timestamp)
-        VALUES (?, ?, ?, NOW())
+        INSERT INTO ticket_logs (client_id, new_status, changed_by, changed_at)
+        VALUES (:cid, :st, :csr, NOW())
     ");
     $log->execute([
-        $clientID,
-        $csrUser,
-        $status  // action = 'resolved' or 'unresolved'
+        ":cid" => $clientID,
+        ":st"  => $status,   // 'resolved' or 'unresolved'
+        ":csr" => $csrUser
     ]);
 }
 
 // ============================================================
-// OPTIONAL: Auto-Unlock Client When Resolved
+// OPTIONAL AUTOMATIC UNLOCK WHEN RESOLVED
 // ============================================================
-// Remove this feature by deleting this block
+// Remove this block if you do NOT want auto-unlock.
 if ($status === "resolved") {
     $unlock = $conn->prepare("
         UPDATE users
