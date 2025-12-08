@@ -61,31 +61,12 @@
 }
 
 /* ===========================================================
-   CLIENT ACTION BUTTONS ( + / - / lock )
+   CLIENT ACTION BUTTONS
 =========================================================== */
-
 .client-icons button {
   opacity: 1;
   transform: scale(1);
   transition: 0.2s ease;
-}
-
-.client-icons button.fade-in {
-  opacity: 0;
-  transform: scale(0.4);
-  animation: fadeInAssignBtn 0.25s forwards ease;
-}
-
-@keyframes fadeInAssignBtn {
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.client-icons button.animating {
-  transform: scale(0.6);
-  opacity: 0.2;
 }
 
 /* ===========================================================
@@ -218,25 +199,27 @@
   margin-top: 4px;
 }
 
-/* TEMP SENDING */
-.temp-msg {
-  opacity: 0.65;
-  animation: fadeInUp 0.25s ease, fadeOutTemp 0.2s ease forwards;
-}
-
-@keyframes fadeOutTemp {
-  100% {
-    opacity: 0.3;
-    transform: scale(0.98);
-  }
-}
 .message-avatar {
-  width: 38px; height: 38px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
 }
-.message-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.message-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ===========================================================
+   DELETED MESSAGE PLACEHOLDER
+=========================================================== */
+.deleted-text {
+  color: #777;
+  font-style: italic;
+  opacity: 0.7;
+}
 
 /* ===========================================================
    ACTION TOOLBAR (⋮)
@@ -283,7 +266,6 @@
   box-shadow: 0 6px 20px rgba(0,0,0,0.25);
 }
 
-/* Buttons */
 #msg-action-popup button {
   width: 100%;
   border: none;
@@ -297,7 +279,7 @@
 }
 
 /* ===========================================================
-   INPUT AREA
+   INPUT AREA (NO MEDIA BUTTON)
 =========================================================== */
 .chat-input-area {
   padding: 14px;
@@ -312,20 +294,6 @@
   opacity: 0.4;
   filter: blur(1px);
   pointer-events: none;
-}
-
-.chat-input-area:not(.disabled) {
-  opacity: 1 !important;
-  filter: none !important;
-  pointer-events: auto !important;
-}
-
-.upload-btn {
-  border: none;
-  background: none;
-  font-size: 22px;
-  cursor: pointer;
-  opacity: 0.7;
 }
 
 .chat-input-box {
@@ -378,176 +346,19 @@
 }
 
 /* ===========================================================
-   LIGHTBOX
-=========================================================== */
-#lightbox-overlay {
-  position: fixed;
-  inset: 0;
-  display: none;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  background: rgba(0,0,0,0.88);
-  z-index: 999999;
-}
-
-#lightbox-main-wrapper {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.lb-media {
-  max-width: 88vw;
-  max-height: 80vh;
-  border-radius: 12px;
-  display: none;
-}
-
-.lb-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(255,255,255,0.22);
-  border: none;
-  padding: 14px;
-  font-size: 42px;
-  border-radius: 50%;
-  cursor: pointer;
-  color: white;
-  transition: 0.2s;
-}
-
-.lb-arrow:hover {
-  background: rgba(255,255,255,0.35);
-}
-
-#lightbox-prev {
-  left: -70px;
-}
-#lightbox-next {
-  right: -70px;
-}
-
-/* THUMBNAILS */
-#lightbox-thumbs {
-  display: flex;
-  gap: 8px;
-  margin-top: 14px;
-  padding: 4px 12px;
-  overflow-x: auto;
-  max-width: 90vw;
-}
-
-#lightbox-thumbs .thumb {
-  width: 70px;
-  height: 70px;
-  object-fit: cover;
-  border-radius: 8px;
-  opacity: 0.6;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-#lightbox-thumbs .thumb-active {
-  opacity: 1;
-  outline: 3px solid #00aaff;
-}
-
-/* ===========================================================
    ANIMATIONS
 =========================================================== */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-
-/* ===========================================================
-   MEDIA GRID (MESSENGER STYLE)
-=========================================================== */
-.media-grid {
-  display: grid;
-  gap: 6px;
-  width: 100%;
-  margin-top: 6px;
-  overflow: hidden;
-}
-
-.media-grid img,
-.media-grid video {
-  width: 100%;
-  height: 140px;
-  object-fit: cover;
-  border-radius: 12px;
-  cursor: pointer;
-}
-
-.media-1 { grid-template-columns: 1fr; }
-.media-1 img, .media-1 video { height: 260px; }
-
-.media-2 {
-  grid-template-columns: 1fr 1fr;
-}
-.media-2 img, .media-2 video { height: 200px; }
-
-.media-3 {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 130px 150px;
-}
-.media-3 > :nth-child(1),
-.media-3 > :nth-child(2) { height: 130px; }
-.media-3 > :nth-child(3) {
-  grid-column: span 2;
-  height: 170px;
-}
-
-.media-4 {
-  grid-template-columns: 1fr 1fr;
-}
-.media-4 img, .media-4 video { height: 150px; }
-
-.media-5 {
-  grid-template-columns: 1fr 1fr;
-}
-.media-5 img, .media-5 video { height: 150px; }
-
-.media-more-overlay {
-  position: relative;
-}
-.media-more-overlay::after {
-  content: attr(data-more);
-  position: absolute;
-  inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(0,0,0,0.55);
-  color: #fff;
-  font-size: 32px;
-  border-radius: 12px;
-}
-/* ===========================================================
-   SMOOTH SLIDE-IN WHEN SWITCHING CLIENTS
-=========================================================== */
+/* Smooth panel slide when switching clients */
 .chat-slide-in {
   animation: chatSlideIn 0.35s ease both;
 }
 
 @keyframes chatSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
 }
