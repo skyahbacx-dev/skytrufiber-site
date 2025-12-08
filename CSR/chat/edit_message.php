@@ -2,51 +2,69 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$id      = $_POST["id"] ?? null;
+header("Content-Type: application/json; charset=utf-8");
+
+$id      = (int)($_POST["id"] ?? 0);
 $message = trim($_POST["message"] ?? "");
-$csr     = $_SESSION["csr_user"] ?? null;
-$client  = $_POST["username"] ?? null;
+$csrUser = $_SESSION["csr_user"] ?? null;
 
-if (!$id) exit("Missing ID");
+if ($id <= 0) {
+    echo json_encode(["status" => "error", "msg" => "Invalid ID"]);
+    exit;
+}
 
-// Prevent empty edited message
 if ($message === "") {
-    exit("Message cannot be empty");
+    echo json_encode(["status" => "error", "msg" => "Message cannot be empty"]);
+    exit;
 }
 
-/* ============================================================
-   Determine sender who is editing the message
-============================================================ */
-if ($csr) {
-    $senderType = "csr";
-    $identifier = $csr;
-} else {
-    $senderType = "client";
-    $identifier = $client;
+if (!$csrUser) {
+    echo json_encode(["status" => "error", "msg" => "CSR not logged in"]);
+    exit;
 }
 
-/* ============================================================
-   Validate that this sender OWNS the message
-============================================================ */
+/* -------------------------------------------------
+   1) Fetch the message and validate ownership
+------------------------------------------------- */
 $stmt = $conn->prepare("
-    SELECT id FROM chat 
-    WHERE id = ? AND sender_type = ?
+    SELECT c.sender_type, c.deleted, u.assigned_csr
+    FROM chat c
+    JOIN users u ON c.client_id = u.id
+    WHERE c.id = ?
+    LIMIT 1
 ");
-$stmt->execute([$id, $senderType]);
+$stmt->execute([$id]);
+$msg = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$stmt->fetch()) {
-    exit("Permission denied");
+if (!$msg) {
+    echo json_encode(["status" => "error", "msg" => "Message not found"]);
+    exit;
 }
 
-/* ============================================================
-   UPDATE the text message
-============================================================ */
+if ($msg["sender_type"] !== "csr") {
+    echo json_encode(["status" => "error", "msg" => "Cannot edit client messages"]);
+    exit;
+}
+
+if ($msg["deleted"]) {
+    echo json_encode(["status" => "error", "msg" => "Cannot edit deleted message"]);
+    exit;
+}
+
+if ($msg["assigned_csr"] !== $csrUser) {
+    echo json_encode(["status" => "error", "msg" => "Not authorized (client not assigned to you)"]);
+    exit;
+}
+
+/* -------------------------------------------------
+   2) Update the message
+------------------------------------------------- */
 $update = $conn->prepare("
     UPDATE chat
-    SET message = ?, edited = TRUE
+    SET message = ?, edited = TRUE, updated_at = NOW()
     WHERE id = ?
 ");
 $update->execute([$message, $id]);
 
-echo "OK";
-?>
+echo json_encode(["status" => "success"]);
+exit;
