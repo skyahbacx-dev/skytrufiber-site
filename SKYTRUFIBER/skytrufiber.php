@@ -66,39 +66,51 @@ const forgotLink = document.getElementById('forgotLink');
 const backToLogin = document.getElementById('backToLogin');
 const forgotMessage = document.getElementById('forgotMessage');
 
-// Show forgot password form
 forgotLink.addEventListener('click', function(e){
     e.preventDefault();
     loginForm.classList.add('hidden');
     forgotForm.classList.remove('hidden');
 });
 
-// Back to login
 backToLogin.addEventListener('click', function(e){
     e.preventDefault();
     forgotForm.classList.add('hidden');
     loginForm.classList.remove('hidden');
 });
 
-// AJAX submit to remote PHP script
+// GitHub Actions dispatch instead of direct PHP email
 forgotForm.addEventListener('submit', function(e){
     e.preventDefault();
     const email = forgotForm.forgot_email.value.trim();
     if(!email) return;
 
     forgotMessage.textContent = "Sending...";
-    fetch('https://ahbadevt.com/cron/send_account_email.php?token=AE92JF83HF82HSLA29FD&email=' + encodeURIComponent(email))
-    .then(res => res.text())
-    .then(data => {
-        if(data.includes("success")) {
-            forgotMessage.textContent = "Email sent successfully!";
+    forgotMessage.className = 'message';
+
+    fetch('https://api.github.com/repos/skyahbacx-dev/skytrufiber-site/actions/workflows/send-cron.yml/dispatches', {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/vnd.github+json',
+            'Authorization': 'Bearer YOUR_GITHUB_TOKEN',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            ref: 'main',
+            inputs: {
+                EMAIL_TO: email
+            }
+        })
+    })
+    .then(res => {
+        if(res.ok) {
+            forgotMessage.textContent = "Email sent successfully via GitHub Actions!";
             forgotMessage.className = 'message success';
         } else {
-            forgotMessage.textContent = data;
+            forgotMessage.textContent = "Failed to trigger email workflow.";
             forgotMessage.className = 'message error';
         }
     })
-    .catch(err=>{
+    .catch(err => {
         forgotMessage.textContent = "Error sending request.";
         forgotMessage.className = 'message error';
         console.error(err);
