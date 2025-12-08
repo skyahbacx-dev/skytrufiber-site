@@ -1,18 +1,7 @@
 <?php
+// This file can now act purely as an AJAX handler if needed, 
+// but we are keeping all logic in the front-end using GitHub Actions.
+// You can optionally leave this empty or return a JSON response.
 header('Content-Type: application/json');
-
-$email = $_POST['email'] ?? '';
-if (!$email) {
-    echo json_encode(['success'=>false,'message'=>'Please enter your email.']);
-    exit;
-}
-
-$token = 'AE92JF83HF82HSLA29FD';
-$url = "https://ahbadevt.com/cron/send_account_email.php?token=$token&email=".urlencode($email);
-
-$response = file_get_contents($url);
-if($response && strpos($response,'success')!==false){
-    echo json_encode(['success'=>true,'message'=>'Email sent successfully!']);
-} else {
-    echo json_encode(['success'=>false,'message'=>$response ?: 'Error sending email.']);
-}
+echo json_encode(['message' => 'This page is deprecated. Use skytrufiber.php forgot password form.']);
+exit;
