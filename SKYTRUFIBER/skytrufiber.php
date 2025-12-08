@@ -12,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
     if ($emailOrName && $password) {
         try {
+            // Fetch user by email or full name
             $stmt = $conn->prepare("SELECT * FROM users WHERE email = :input OR full_name = :input LIMIT 1");
             $stmt->execute([':input' => $emailOrName]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -19,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
             if ($user && password_verify($password, $user['password'])) {
 
                 // Check last ticket status
-                $ticketStmt = $conn->prepare("SELECT status FROM tickets WHERE client_id = :cid ORDER BY created_at DESC LIMIT 1");
+                $ticketStmt = $conn->prepare("SELECT id, status FROM tickets WHERE client_id = :cid ORDER BY created_at DESC LIMIT 1");
                 $ticketStmt->execute([':cid' => $user['id']]);
                 $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -28,8 +29,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                     $newTicket = $conn->prepare("INSERT INTO tickets (client_id, status, created_at) VALUES (:cid, 'unresolved', NOW())");
                     $newTicket->execute([':cid' => $user['id']]);
                     $ticketId = $conn->lastInsertId();
+
+                    // Delete old chat messages for resolved tickets
+                    if ($lastTicket) {
+                        $del = $conn->prepare("DELETE FROM chat WHERE ticket_id = :tid");
+                        $del->execute([':tid' => $lastTicket['id']]);
+                    }
                 } else {
-                    $ticketId = $ticketStmt->fetchColumn() ?? null;
+                    $ticketId = $lastTicket['id'];
                 }
 
                 // Set session
@@ -63,7 +70,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
     }
 }
 ?>
+
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -91,29 +100,32 @@ a:hover { text-decoration:underline; }
     <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
     <h2>Customer Service Portal</h2>
 
-    <?php if ($message): ?>
-        <p class="message error"><?= htmlspecialchars($message) ?></p>
-    <?php endif; ?>
+```
+<?php if ($message): ?>
+    <p class="message error"><?= htmlspecialchars($message) ?></p>
+<?php endif; ?>
 
-    <!-- LOGIN FORM -->
-    <form id="loginForm" method="POST">
-        <input type="text" name="full_name" placeholder="Email or Full Name" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <textarea name="concern" placeholder="Concern / Inquiry"></textarea>
-        <button type="submit">Submit</button>
-        <a id="forgotLink">Forgot Password?</a>
-    </form>
+<!-- LOGIN FORM -->
+<form id="loginForm" method="POST">
+    <input type="text" name="full_name" placeholder="Email or Full Name" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <textarea name="concern" placeholder="Concern / Inquiry"></textarea>
+    <button type="submit">Submit</button>
+    <a id="forgotLink">Forgot Password?</a>
+</form>
 
-    <!-- FORGOT PASSWORD FORM -->
-    <form id="forgotForm" class="hidden">
-        <p>Enter your email to receive your account number:</p>
-        <input type="email" name="forgot_email" placeholder="Email" required>
-        <button type="submit">Send my account number</button>
-        <p class="message" id="forgotMessage"></p>
-        <a id="backToLogin">Back to Login</a>
-    </form>
+<!-- FORGOT PASSWORD FORM -->
+<form id="forgotForm" class="hidden">
+    <p>Enter your email to receive your account number:</p>
+    <input type="email" name="forgot_email" placeholder="Email" required>
+    <button type="submit">Send my account number</button>
+    <p class="message" id="forgotMessage"></p>
+    <a id="backToLogin">Back to Login</a>
+</form>
 
-    <p>No account yet? <a href="consent.php">Register here</a></p>
+<p>No account yet? <a href="consent.php">Register here</a></p>
+```
+
 </div>
 
 <script>
@@ -172,5 +184,6 @@ forgotForm.addEventListener('submit', e => {
     });
 });
 </script>
+
 </body>
 </html>
