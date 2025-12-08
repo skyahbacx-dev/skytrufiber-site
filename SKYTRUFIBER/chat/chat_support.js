@@ -1,359 +1,353 @@
 /* ============================================================
-   SkyTruFiber Client Chat System — FINAL VERSION (2025)
-   + Auto Logout on Resolved
-   + Auto Greeting
-   + Smart Assistant Bubble Suggestions
-   + Mobile Optimized
-============================================================ */
+SkyTruFiber Client Chat System — UPDATED 2025
+
+* Uses tickets table for ticket status
+* Auto Logout on Resolved
+* Auto Greeting & Smart Assistant Bubble
+* Mobile Optimized
+  ============================================================ */
 
 /* ---------------- GLOBAL STATE ---------------- */
 let editing = false;
 let activePopup = null;
-const username = new URLSearchParams(window.location.search).get("username");
+const ticketId = new URLSearchParams(window.location.search).get("ticket");
 let suggestionShown = false;
 
 /* ============================================================
-   INIT
+INIT
 ============================================================ */
 $(document).ready(() => {
 
-    if (!username) {
-        $("#chat-messages").html(`
-            <p style="text-align:center;padding:20px;color:#777;">
-                Invalid user.
-            </p>
-        `);
-        return;
+```
+if (!ticketId) {
+    $("#chat-messages").html(`
+        <p style="text-align:center;padding:20px;color:#777;">
+            Invalid ticket.
+        </p>
+    `);
+    return;
+}
+
+// Move popup inside modal
+const staticPopup = $("#msg-action-popup");
+if (staticPopup.length) $(".chat-modal").append(staticPopup.detach());
+
+// Load chat → then check greeting
+loadMessages(true, () => checkFirstTimeGreeting());
+
+// Check ticket status initially
+checkTicketStatus();
+
+// Poll server for new messages & ticket status
+setInterval(() => {
+    if (!editing && !activePopup) {
+        fetchNewMessages();
+        checkTicketStatus();
     }
+}, 3500);
 
-    // Move popup inside modal
-    const staticPopup = $("#msg-action-popup");
-    if (staticPopup.length) $(".chat-modal").append(staticPopup.detach());
+// Send message
+$("#send-btn").click(sendMessage);
+$("#message-input").keypress(e => {
+    if (e.which === 13) { e.preventDefault(); sendMessage(); }
+});
 
-    // Load chat → then check if suggestions should appear
-    loadMessages(true, () => {
-        checkFirstTimeGreeting();
-    });
+// Theme toggle
+$("#theme-toggle").click(toggleTheme);
+```
 
-    // Check ticket status
-    checkTicketStatus();
-
-    // Poll server
-    setInterval(() => {
-        if (!editing && !activePopup) {
-            fetchNewMessages();
-            checkTicketStatus();
-        }
-    }, 3500);
-
-    /* SEND MESSAGE */
-    $("#send-btn").click(sendMessage);
-    $("#message-input").keypress(e => {
-        if (e.which === 13) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
-
-    /* THEME */
-    $("#theme-toggle").click(toggleTheme);
 });
 
 /* ============================================================
-   THEME TOGGLE
+THEME TOGGLE
 ============================================================ */
 function toggleTheme() {
-    const root = document.documentElement;
-    const dark = root.getAttribute("data-theme") === "dark";
-    root.setAttribute("data-theme", dark ? "light" : "dark");
+const root = document.documentElement;
+const dark = root.getAttribute("data-theme") === "dark";
+root.setAttribute("data-theme", dark ? "light" : "dark");
 }
 
 /* ============================================================
-   SMART ASSISTANT SUGGESTION BUBBLE
+SMART ASSISTANT SUGGESTION BUBBLE
 ============================================================ */
 function insertSuggestionBubble() {
 
-    if (suggestionShown) return; // prevent duplicates
-    suggestionShown = true;
+```
+if (suggestionShown) return;
+suggestionShown = true;
 
-    const bubble = `
-        <div class="message received system-suggest" data-msg-id="suggest-1">
-            <div class="message-avatar">
-                <img src="../../SKYTRUFIBER.png">
-            </div>
-
-            <div class="message-content">
-                <div class="message-bubble" style="
-                    background:#e8f3ff;
-                    color:#003c75;
-                ">
-                    <strong>SkyTru Smart Assistant</strong><br>
-                    Please select an option below:
-                    <div class="suggest-buttons" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px;">
-                        <button class="suggest-btn">I am experiencing no internet.</button>
-                        <button class="suggest-btn">My connection is slow.</button>
-                        <button class="suggest-btn">My router is blinking red.</button>
-                        <button class="suggest-btn">I already restarted my router.</button>
-                        <button class="suggest-btn">Please assist me. Thank you.</button>
-                    </div>
-                </div>
-                <div class="message-time">Now</div>
-            </div>
+const bubble = `
+    <div class="message received system-suggest" data-msg-id="suggest-1">
+        <div class="message-avatar">
+            <img src="../../SKYTRUFIBER.png">
         </div>
-    `;
+        <div class="message-content">
+            <div class="message-bubble" style="background:#e8f3ff;color:#003c75;">
+                <strong>SkyTru Smart Assistant</strong><br>
+                Please select an option below:
+                <div class="suggest-buttons" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px;">
+                    <button class="suggest-btn">I am experiencing no internet.</button>
+                    <button class="suggest-btn">My connection is slow.</button>
+                    <button class="suggest-btn">My router is blinking red.</button>
+                    <button class="suggest-btn">I already restarted my router.</button>
+                    <button class="suggest-btn">Please assist me. Thank you.</button>
+                </div>
+            </div>
+            <div class="message-time">Now</div>
+        </div>
+    </div>
+`;
+$("#chat-messages").append(bubble);
+scrollToBottom();
+```
 
-    $("#chat-messages").append(bubble);
-    scrollToBottom();
 }
 
-// When a suggestion is clicked → auto-send
+// Suggestion clicked → auto-send
 $(document).on("click", ".suggest-btn", function () {
+const text = $(this).text();
+$(".system-suggest").remove();
+const tempId = appendClientBubble(text);
 
-    const text = $(this).text();
+```
+$.post("send_message_client.php", { ticket: ticketId, message: text }, () => {
+    $(`.message[data-msg-id='${tempId}']`).remove();
+    fetchNewMessages();
+});
+```
 
-    // Remove suggestion bubble
-    $(".system-suggest").remove();
-
-    const tempId = appendClientBubble(text);
-
-    $.post("send_message_client.php", { username, message: text }, () => {
-        $(`.message[data-msg-id='${tempId}']`).remove();
-        fetchNewMessages();
-    });
 });
 
 /* ============================================================
-   AUTO GREETING + Suggestion Trigger
+AUTO GREETING
 ============================================================ */
 function checkFirstTimeGreeting() {
-    $.post("check_first_message.php", { username }, function (res) {
-
-        if (res.trim() === "empty") {
-
-            // Auto greeting
-            $.post("send_message_client.php", {
-                username,
-                message: "Good day! How may we assist you today?"
-            });
-
-            // Show assistant options bubble
-            insertSuggestionBubble();
-
-        }
-    });
+$.post("check_first_message.php", { ticket: ticketId }, function (res) {
+if (res.trim() === "empty") {
+$.post("send_message_client.php", {
+ticket: ticketId,
+message: "Good day! How may we assist you today?"
+});
+insertSuggestionBubble();
+}
+});
 }
 
 /* ============================================================
-   TICKET STATUS CONTROL
+TICKET STATUS CONTROL
 ============================================================ */
 function checkTicketStatus() {
-    $.post("get_ticket_status.php", { username }, function (status) {
-        applyTicketStatus(status.trim());
-    });
+$.post("get_ticket_status.php", { ticket: ticketId }, function (status) {
+applyTicketStatus(status.trim());
+});
 }
 
 function applyTicketStatus(status) {
 
-    const msgBox = $("#message-input");
-    const sendBtn = $("#send-btn");
+```
+const msgBox = $("#message-input");
+const sendBtn = $("#send-btn");
 
-    if (status === "resolved") {
+if (status === "resolved") {
 
-        msgBox.prop("disabled", true);
-        sendBtn.prop("disabled", true);
+    msgBox.prop("disabled", true);
+    sendBtn.prop("disabled", true);
 
-        $(".system-suggest").remove();
+    $(".system-suggest").remove();
 
-        $("#chat-messages").html(`
-            <div class="system-message">
-                Your ticket has been marked as 
-                <strong style="color:green;">RESOLVED</strong>.<br><br>
-                Thank you for contacting SkyTruFiber Support!<br><br>
-                <span style="font-size:13px;color:#888;">
-                    You will be logged out automatically in 5 seconds...
-                </span>
-            </div>
-        `);
+    $("#chat-messages").html(`
+        <div class="system-message">
+            Your ticket has been marked as 
+            <strong style="color:green;">RESOLVED</strong>.<br><br>
+            Thank you for contacting SkyTruFiber Support!<br><br>
+            <span style="font-size:13px;color:#888;">
+                You will be logged out automatically in 5 seconds...
+            </span>
+        </div>
+    `);
 
-        setTimeout(() => {
-            window.location.href = "../chat/logout.php";
-        }, 5000);
+    setTimeout(() => window.location.href = "../chat/logout.php", 5000);
+    return;
+}
 
-        return;
-    }
+msgBox.prop("disabled", false);
+sendBtn.prop("disabled", false);
+```
 
-    msgBox.prop("disabled", false);
-    sendBtn.prop("disabled", false);
 }
 
 /* ============================================================
-   SEND MESSAGE
+SEND MESSAGE
 ============================================================ */
 function sendMessage() {
+const msg = $("#message-input").val().trim();
+if (!msg) return;
+$(".system-suggest").remove();
 
-    const msg = $("#message-input").val().trim();
-    if (!msg) return;
+```
+const tempId = appendClientBubble(msg);
+$("#message-input").val("");
 
-    // Remove suggestions as soon as user sends something
-    $(".system-suggest").remove();
+$.post("send_message_client.php", { ticket: ticketId, message: msg }, () => {
+    $(`.message[data-msg-id='${tempId}']`).remove();
+    fetchNewMessages();
+});
+```
 
-    const tempId = appendClientBubble(msg);
-    $("#message-input").val("");
-
-    $.post("send_message_client.php", { username, message: msg }, () => {
-        $(`.message[data-msg-id='${tempId}']`).remove();
-        fetchNewMessages();
-    });
 }
 
 function appendClientBubble(msg) {
-    const id = "temp-" + Date.now();
-    $("#chat-messages").append(`
-        <div class="message sent no-avatar" data-msg-id="${id}">
-            <div class="message-content">
-                <div class="message-bubble">${msg}</div>
-                <div class="message-time">Sending...</div>
-            </div>
-        </div>
+const id = "temp-" + Date.now();
+$("#chat-messages").append(`         <div class="message sent no-avatar" data-msg-id="${id}">             <div class="message-content">                 <div class="message-bubble">${msg}</div>                 <div class="message-time">Sending...</div>             </div>         </div>
     `);
-    scrollToBottom();
-    return id;
+scrollToBottom();
+return id;
 }
 
 /* ============================================================
-   LOAD MESSAGES
+LOAD MESSAGES
 ============================================================ */
 function loadMessages(scrollBottom = false, callback = null) {
+$.post("load_messages_client.php", { ticket: ticketId }, html => {
 
-    $.post("load_messages_client.php", { username }, html => {
+```
+    const wasEmpty = $("#chat-messages").children().length === 0;
 
-        const wasEmpty = $("#chat-messages").children().length === 0;
+    $("#chat-messages").html(html);
+    bindActionToolbar();
 
-        $("#chat-messages").html(html);
-        bindActionToolbar();
+    if (!wasEmpty) $(".system-suggest").remove();
 
-        // Chat not empty? → Hide suggestions
-        if (!wasEmpty) $(".system-suggest").remove();
+    if (scrollBottom) scrollToBottom();
+    if (callback) callback();
+});
+```
 
-        if (scrollBottom) scrollToBottom();
-        if (callback) callback();
-    });
 }
 
 /* ============================================================
-   FETCH NEW MESSAGES
+FETCH NEW MESSAGES
 ============================================================ */
 function fetchNewMessages() {
-    $.post("load_messages_client.php", { username }, html => {
+$.post("load_messages_client.php", { ticket: ticketId }, html => {
 
-        const temp = $("<div>").html(html);
-        const incoming = temp.find(".message");
+```
+    const temp = $("<div>").html(html);
+    const incoming = temp.find(".message");
 
-        incoming.each(function () {
-            const id = $(this).data("msg-id");
-            if ($(`.message[data-msg-id='${id}']`).length) return;
-            $("#chat-messages").append($(this));
-        });
-
-        bindActionToolbar();
+    incoming.each(function () {
+        const id = $(this).data("msg-id");
+        if ($(`.message[data-msg-id='${id}']`).length) return;
+        $("#chat-messages").append($(this));
     });
+
+    bindActionToolbar();
+});
+```
+
 }
 
 /* ============================================================
-   SCROLL TO BOTTOM
+SCROLL TO BOTTOM
 ============================================================ */
 function scrollToBottom() {
-    const m = $("#chat-messages");
-    m.stop().animate({ scrollTop: m[0].scrollHeight }, 230);
+const m = $("#chat-messages");
+m.stop().animate({ scrollTop: m[0].scrollHeight }, 230);
 }
 
 $("#scroll-bottom-btn").click(scrollToBottom);
 
 /* ============================================================
-   ACTION TOOLBAR (Edit / Delete)
+ACTION TOOLBAR (Edit / Delete)
 ============================================================ */
 function bindActionToolbar() {
-    $(".more-btn").off("click").on("click", function (e) {
-        e.stopPropagation();
-        openPopup($(this).data("id"), this);
-    });
+$(".more-btn").off("click").on("click", function (e) {
+e.stopPropagation();
+openPopup($(this).data("id"), this);
+});
 }
 
 function openPopup(id, anchor) {
+const popup = $("#msg-action-popup");
+const modal = $(".chat-modal");
 
-    const popup = $("#msg-action-popup");
-    const modal = $(".chat-modal");
+```
+popup.data("msgId", id).show();
 
-    popup.data("msgId", id).show();
+const a = $(anchor).offset();
+const m = modal.offset();
 
-    const a = $(anchor).offset();
-    const m = modal.offset();
+popup.css({
+    top: a.top - m.top + 32,
+    left: a.left - m.left - popup.outerWidth() + 20
+});
 
-    popup.css({
-        top: a.top - m.top + 32,
-        left: a.left - m.left - popup.outerWidth() + 20
-    });
+activePopup = popup;
+```
 
-    activePopup = popup;
 }
 
 function closePopup() {
-    $("#msg-action-popup").hide();
-    activePopup = null;
+$("#msg-action-popup").hide();
+activePopup = null;
 }
 
 /* POPUP ACTIONS */
 $(document).on("click", ".action-edit", function () {
-    startEdit($("#msg-action-popup").data("msgId"));
-    closePopup();
+startEdit($("#msg-action-popup").data("msgId"));
+closePopup();
 });
 
 $(document).on("click", ".action-unsend, .action-delete", function () {
-    const id = $("#msg-action-popup").data("msgId");
-    $.post("delete_message_client.php", { id, username }, () => loadMessages(false));
-    closePopup();
+const id = $("#msg-action-popup").data("msgId");
+$.post("delete_message_client.php", { id, ticket: ticketId }, () => loadMessages(false));
+closePopup();
 });
 
 /* ============================================================
-   EDIT MESSAGE
+EDIT MESSAGE
 ============================================================ */
 function startEdit(id) {
+editing = true;
 
-    editing = true;
+```
+const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
+const old = bubble.text();
 
-    const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
-    const old = bubble.text();
+bubble.html(`
+    <textarea class="edit-textarea">${old}</textarea>
+    <div class="edit-actions">
+        <button class="edit-save" data-id="${id}">Save</button>
+        <button class="edit-cancel">Cancel</button>
+    </div>
+`);
+```
 
-    bubble.html(`
-        <textarea class="edit-textarea">${old}</textarea>
-        <div class="edit-actions">
-            <button class="edit-save" data-id="${id}">Save</button>
-            <button class="edit-cancel">Cancel</button>
-        </div>
-    `);
 }
 
 $(document).on("click", ".edit-save", function () {
+const id = $(this).data("id");
+const newText = $(this).closest(".message-bubble").find("textarea").val().trim();
 
-    const id = $(this).data("id");
-    const newText = $(this).closest(".message-bubble").find("textarea").val().trim();
+```
+$.post("edit_message_client.php", { id, message: newText }, () => {
+    editing = false;
+    loadMessages(true);
+});
+```
 
-    $.post("edit_message_client.php", { id, message: newText }, () => {
-        editing = false;
-        loadMessages(true);
-    });
 });
 
 $(document).on("click", ".edit-cancel", () => {
-    editing = false;
-    loadMessages(false);
+editing = false;
+loadMessages(false);
 });
 
 /* ============================================================
-   LOGOUT
+LOGOUT
 ============================================================ */
 $(document).on("click", "#logout-btn", function () {
-    if (confirm("Are you sure you want to log out?")) {
-        window.location.href = "../chat/logout.php";
-    }
+if (confirm("Are you sure you want to log out?")) {
+window.location.href = "../chat/logout.php";
+}
 });
