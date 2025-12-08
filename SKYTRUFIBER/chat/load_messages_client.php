@@ -5,26 +5,26 @@ ini_set("error_log", __DIR__ . "/php_errors.log");
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$username = trim($_POST["username"] ?? "");
-if (!$username) exit("");
+$ticketId = trim($_POST["ticket"] ?? "");
+if (!$ticketId) exit("");
 
 // --------------------------------------------------
-// FIND CLIENT BY EMAIL OR FULL NAME
+// FETCH TICKET & CLIENT
 // --------------------------------------------------
 $stmt = $conn->prepare("
-    SELECT id, full_name, ticket_status
-    FROM users
-    WHERE email ILIKE ?
-       OR full_name ILIKE ?
+    SELECT t.id AS ticket_id, t.status, t.client_id, u.full_name
+    FROM tickets t
+    JOIN users u ON u.id = t.client_id
+    WHERE t.id = ?
     LIMIT 1
 ");
-$stmt->execute([$username, $username]);
-$client = $stmt->fetch(PDO::FETCH_ASSOC);
+$stmt->execute([$ticketId]);
+$ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$client) exit("");
+if (!$ticket) exit("");
 
-$client_id      = (int)$client["id"];
-$ticket_status  = $client["ticket_status"] ?? "unresolved";
+$ticket_status = $ticket['status'] ?? 'unresolved';
+$client_id = (int)$ticket['client_id'];
 
 // --------------------------------------------------
 // If RESOLVED → return nothing (JS handles logout + message)
@@ -39,10 +39,10 @@ if ($ticket_status === "resolved") {
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted, edited
     FROM chat
-    WHERE client_id = ?
+    WHERE ticket_id = ?
     ORDER BY id ASC
 ");
-$stmt->execute([$client_id]);
+$stmt->execute([$ticketId]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // --------------------------------------------------
@@ -50,7 +50,6 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 // --------------------------------------------------
 $is_first_time = (count($messages) === 0);
 
-// If first-time user → return system suggestion bubble
 if ($is_first_time) {
 
     echo "
@@ -63,11 +62,11 @@ if ($is_first_time) {
                 Welcome to SkyTruFiber Support! 😊<br>
                 Here are some quick answers you might be looking for:
                 <div class='suggest-buttons'>
-                    <button class='suggest-btn' data-msg='I am experiencing no internet.'>No internet</button>
-                    <button class='suggest-btn' data-msg='My connection is slow.'>Slow connection</button>
-                    <button class='suggest-btn' data-msg='My router is blinking red.'>Router blinking red</button>
-                    <button class='suggest-btn' data-msg='I already restarted my router.'>Restarted router</button>
-                    <button class='suggest-btn' data-msg='Please assist me. Thank you.'>Need assistance</button>
+                    <button class='suggest-btn'>I am experiencing no internet.</button>
+                    <button class='suggest-btn'>My connection is slow.</button>
+                    <button class='suggest-btn'>My router is blinking red.</button>
+                    <button class='suggest-btn'>I already restarted my router.</button>
+                    <button class='suggest-btn'>Please assist me. Thank you.</button>
                 </div>
             </div>
             <div class='message-time'>Just now</div>
@@ -102,13 +101,10 @@ foreach ($messages as $msg) {
     // MESSAGE BUBBLE
     // --------------------------
     if (!$msg["deleted"]) {
-
         $text = trim($msg["message"]);
-
         echo "<div class='message-bubble'>";
         echo nl2br(htmlspecialchars($text));
         echo "</div>";
-
     } else {
         echo "<div class='message-bubble removed-text'>Message removed</div>";
     }
@@ -132,5 +128,4 @@ foreach ($messages as $msg) {
     echo "</div>"; // content
     echo "</div>"; // wrapper
 }
-
-?>
+?> 
