@@ -43,22 +43,10 @@ $csrUser = $_SESSION["csr_user"];
                 <i class="fa fa-arrow-down"></i>
             </button>
 
-            <!-- MEDIA PREVIEW BAR -->
-            <div id="preview-inline" class="preview-inline">
-                <div id="preview-files" class="preview-files"></div>
-            </div>
-
             <!-- INPUT AREA -->
             <div id="chat-input-wrapper" class="chat-input-area">
-                
-                <input type="file" 
-                       id="chat-upload-media"
-                       accept="image/*,video/*,application/pdf"
-                       multiple hidden>
 
-                <button id="upload-btn" class="upload-btn">
-                    <i class="fa fa-paperclip"></i>
-                </button>
+                <!-- REMOVED FILE UPLOAD + PREVIEW -->
 
                 <div class="chat-input-box">
                     <input type="text" id="chat-input"
@@ -74,7 +62,7 @@ $csrUser = $_SESSION["csr_user"];
 
         </div> <!-- /chat-wrapper -->
 
-        <!-- ACTION MENU POPUP -->
+        <!-- ACTION MENU POPUP (still used for text) -->
         <div id="msg-action-popup" class="msg-action-popup">
             <button class="action-edit"><i class="fa fa-pen"></i> Edit</button>
             <button class="action-unsend"><i class="fa fa-ban"></i> Unsend</button>
@@ -95,38 +83,9 @@ $csrUser = $_SESSION["csr_user"];
 
 </div> <!-- /chat-container -->
 
-
-<!-- Hidden: Logged in CSR username -->
+<!-- CSR username -->
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
 
-<!-- =============================
-     GLOBAL LIGHTBOX (updated)
-============================= -->
-<div id="lightbox-overlay">
-
-    <!-- Close X -->
-    <span id="lightbox-close">&times;</span>
-
-    <!-- MAIN CENTERED VIEW -->
-    <div id="lightbox-main-wrapper">
-
-        <button id="lightbox-prev" class="lb-arrow">&#10094;</button>
-
-        <img id="lightbox-image" class="lb-media">
-        <video id="lightbox-video" class="lb-media" controls></video>
-
-        <button id="lightbox-next" class="lb-arrow">&#10095;</button>
-    </div>
-
-    <!-- DOWNLOAD BUTTON -->
-    <a id="lightbox-download" class="lightbox-download" download>
-        <i class="fa fa-download"></i>
-    </a>
-
-    <!-- THUMBNAIL BAR -->
-    <div id="lightbox-thumbs"></div>
-
-</div>
-
+<!-- REMOVED LIGHTBOX ENTIRELY -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
