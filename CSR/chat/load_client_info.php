@@ -7,19 +7,18 @@ if (!$clientID) {
     exit("No client selected.");
 }
 
-$currentCSR = $_SESSION["csr_user"] ?? "";
-$currentCSR = trim((string)$currentCSR);
+$currentCSR = $_SESSION["csr_user"] ?? null;
 
 try {
     $stmt = $conn->prepare("
         SELECT 
-            id, 
-            full_name, 
-            email, 
-            district, 
-            barangay, 
-            account_number,     -- ✅ NEW FIELD
-            is_online, 
+            id,
+            full_name,
+            email,
+            account_number,
+            district,
+            barangay,
+            is_online,
             assigned_csr,
             is_locked,
             ticket_status
@@ -34,45 +33,49 @@ try {
         exit("Client not found.");
     }
 
-    /* ---------------- SAFE VALUES ---------------- */
-    $assignedCSR   = trim((string)$c["assigned_csr"]);
-    $ticketValue   = trim((string)$c["ticket_status"] ?? "unresolved");
-    $accountNumber = htmlspecialchars($c["account_number"] ?? "N/A"); // ✅ Safe escaping
+    // Escape values safely
+    $fullName  = htmlspecialchars($c['full_name']);
+    $email     = htmlspecialchars($c['email']);
+    $acctNum   = htmlspecialchars($c['account_number']);  // ⭐ New
+    $district  = htmlspecialchars($c['district']);
+    $barangay  = htmlspecialchars($c['barangay']);
 
-    $fullName = htmlspecialchars($c["full_name"]);
-    $email    = htmlspecialchars($c["email"]);
-    $district = htmlspecialchars($c["district"]);
-    $barangay = htmlspecialchars($c["barangay"]);
-
-    /* ---------------- Online Status ---------------- */
+    // Online / Offline badge
     $onlineStatus = $c["is_online"]
         ? "<span style='color:green;'>Online</span>"
         : "<span style='color:gray;'>Offline</span>";
 
-    /* ---------------- Lock State Logic ---------------- */
-    if ($assignedCSR !== "" && strcasecmp($assignedCSR, $currentCSR) !== 0) {
-        $lockedStatus = "Locked";
-        $isLocked = "true";
-    } else {
-        $lockedStatus = "Unlocked";
-        $isLocked = "false";
-    }
+    // Lock state
+    $lockedStatus = ($c["assigned_csr"] !== $currentCSR && !empty($c["assigned_csr"]))
+        ? "Locked"
+        : "Unlocked";
 
-    /* ---------------- Assignment Check ---------------- */
-    $isAssignedToMe = (strcasecmp($assignedCSR, $currentCSR) === 0) ? "yes" : "no";
+    // Assigned state
+    $isAssignedToMe = (strcasecmp($c["assigned_csr"], $currentCSR) === 0) ? "yes" : "no";
 
-    /* ---------------- Ticket Status ---------------- */
+    $isLocked = (!empty($c["assigned_csr"]) && strcasecmp($c["assigned_csr"], $currentCSR) !== 0)
+        ? "true"
+        : "false";
+
+    // ==========================================
+    // TICKET STATUS
+    // ==========================================
+    $ticketValue = $c["ticket_status"] ?? "unresolved";
+
     $ticketLabel = ($ticketValue === "resolved")
         ? "<span style='color:green;font-weight:bold;'>Resolved</span>"
         : "<span style='color:red;font-weight:bold;'>Unresolved</span>";
 
+    // Dropdown enable only if CSR is assigned
     $dropdownDisabled = ($isAssignedToMe === "yes") ? "" : "disabled";
 
-    /* ---------------- OUTPUT ---------------- */
+    // ==========================================
+    // OUTPUT PANEL (WITH ACCOUNT NUMBER)
+    // ==========================================
     echo "
         <p><strong>Name:</strong> $fullName</p>
         <p><strong>Email:</strong> $email</p>
-        <p><strong>Account Number:</strong> $accountNumber</p>   <!-- ✅ Added -->
+        <p><strong>Account Number:</strong> $acctNum</p>   <!-- ⭐ ADDED -->
         <p><strong>District:</strong> $district</p>
         <p><strong>Barangay:</strong> $barangay</p>
         <p><strong>Status:</strong> $onlineStatus</p>
@@ -88,10 +91,11 @@ try {
                     style='padding:6px;width:150px;'
                     $dropdownDisabled>
                 <option value='unresolved' " . ($ticketValue === "unresolved" ? "selected" : "") . ">Unresolved</option>
-                <option value='resolved' " . ($ticketValue === "resolved" ? "selected" : "") . ">Resolved</option>
+                <option value='resolved'   " . ($ticketValue === "resolved"   ? "selected" : "") . ">Resolved</option>
             </select>
         </div>
 
+        <!-- META FOR chat.js -->
         <div id='client-meta'
              data-assigned='$isAssignedToMe'
              data-locked='$isLocked'
