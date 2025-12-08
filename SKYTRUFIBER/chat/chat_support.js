@@ -1,6 +1,8 @@
 /* ============================================================
-   SkyTruFiber Client Chat System — CLEAN VERSION (No Media, No Reactions)
-   + AUTO-DISABLE CHAT WHEN RESOLVED
+   SkyTruFiber Client Chat System — FINAL VERSION
+   + Auto Logout on Resolved
+   + Auto Greeting
+   + Quick Suggestions
 ============================================================ */
 
 /* ---------------- GLOBAL STATE ---------------- */
@@ -22,17 +24,23 @@ $(document).ready(() => {
         return;
     }
 
-    // Move static popup inside modal
+    // Move popup
     const staticPopup = $("#msg-action-popup");
     if (staticPopup.length) {
         $(".chat-modal").append(staticPopup.detach());
     }
 
-    // Initial load
-    loadMessages(true);
+    // Insert QUICK SUGGESTIONS (client-side version)
+    addQuickSuggestions();
+
+    // Load chat
+    loadMessages(true, () => {
+        checkFirstTimeGreeting(); // Send greeting if needed
+    });
+
     checkTicketStatus();
 
-    // Poll server every 3.5s
+    // Poll server
     setInterval(() => {
         if (!editing && !activePopup) {
             fetchNewMessages();
@@ -63,6 +71,57 @@ function toggleTheme() {
 }
 
 /* ============================================================
+   QUICK SUGGESTIONS
+============================================================ */
+function addQuickSuggestions() {
+
+    const bar = `
+        <div id="quick-suggest" style="
+            padding:10px;
+            background:#f3f3f3;
+            border-top:1px solid #ccc;
+            display:flex;
+            gap:8px;
+            flex-wrap:wrap;
+        ">
+            <button class="qs-btn">I am experiencing no internet.</button>
+            <button class="qs-btn">My connection is slow.</button>
+            <button class="qs-btn">My router is blinking red.</button>
+            <button class="qs-btn">I already restarted my router.</button>
+            <button class="qs-btn">Please assist me. Thank you.</button>
+        </div>
+    `;
+
+    $(".chat-input-area").before(bar);
+
+    $(document).on("click", ".qs-btn", function () {
+        $("#message-input").val($(this).text());
+        $("#message-input").focus();
+    });
+}
+
+/* ============================================================
+   AUTO GREETING — FIRST TIME USER
+============================================================ */
+function checkFirstTimeGreeting() {
+
+    $.post("check_first_message.php", { username }, function (res) {
+
+        if (res.trim() === "empty") {
+
+            // Send greeting message automatically
+            $.post("send_message_client.php", {
+                username,
+                message: "Good day! How may we assist you today?"
+            }, () => {
+                fetchNewMessages();
+            });
+
+        }
+    });
+}
+
+/* ============================================================
    TICKET STATUS CONTROL
 ============================================================ */
 function checkTicketStatus() {
@@ -75,11 +134,9 @@ function applyTicketStatus(status) {
 
     if (status === "resolved") {
 
-        // Disable sending
         $("#message-input").prop("disabled", true);
         $("#send-btn").prop("disabled", true);
 
-        // Clear chat so client cannot spam CSR anymore
         $("#chat-messages").html(`
             <div class="system-message" style="
                 text-align:center;
@@ -87,15 +144,23 @@ function applyTicketStatus(status) {
                 color:#444;
                 font-size:15px;
             ">
-                Your ticket has been marked as <strong style="color:green;">RESOLVED</strong>.<br><br>
-                Thank you for contacting SkyTruFiber Support!
+                Your ticket has been marked as 
+                <strong style="color:green;">RESOLVED</strong>.<br><br>
+                Thank you for contacting SkyTruFiber Support!<br><br>
+                <span style="font-size:13px;color:#888;">
+                    You will be logged out automatically in 5 seconds...
+                </span>
             </div>
         `);
+
+        // AUTO LOGOUT IN 5 SECONDS
+        setTimeout(() => {
+            window.location.href = "../chat/logout.php";
+        }, 5000);
 
         return;
     }
 
-    // If unresolved → allow chat
     $("#message-input").prop("disabled", false);
     $("#send-btn").prop("disabled", false);
 }
@@ -136,7 +201,7 @@ function appendClientBubble(msg) {
 /* ============================================================
    LOAD MESSAGES
 ============================================================ */
-function loadMessages(scrollBottom = false) {
+function loadMessages(scrollBottom = false, callback = null) {
 
     $.post("load_messages_client.php", { username }, html => {
 
@@ -144,6 +209,7 @@ function loadMessages(scrollBottom = false) {
         bindActionToolbar();
 
         if (scrollBottom) scrollToBottom();
+        if (callback) callback();
     });
 }
 
@@ -173,22 +239,13 @@ function fetchNewMessages() {
    SCROLLING
 ============================================================ */
 function scrollToBottom() {
-    const box = $("#chat-messages");
-    box.stop().animate({ scrollTop: box[0].scrollHeight }, 230);
+    $("#chat-messages").stop().animate({ scrollTop: $("#chat-messages")[0].scrollHeight }, 230);
 }
 
 $("#scroll-bottom-btn").click(scrollToBottom);
 
-$("#chat-messages").on("scroll", function () {
-    const box = this;
-    const dist = box.scrollHeight - box.scrollTop - box.clientHeight;
-
-    if (dist > 120) $("#scroll-bottom-btn").addClass("show");
-    else $("#scroll-bottom-btn").removeClass("show");
-});
-
 /* ============================================================
-   ACTION TOOLBAR (Edit / Delete)
+   ACTION TOOLBAR
 ============================================================ */
 function bindActionToolbar() {
     $(".more-btn").off("click").on("click", function (e) {
@@ -201,8 +258,7 @@ function openPopup(id, anchor) {
     const popup = $("#msg-action-popup");
     const modal = $(".chat-modal");
 
-    popup.data("msgId", id);
-    popup.show();
+    popup.data("msgId", id).show();
 
     const aOffset = $(anchor).offset();
     const mOffset = modal.offset();
@@ -220,18 +276,15 @@ function closePopup() {
     activePopup = null;
 }
 
-/* ----------- Popup Button Actions ----------- */
+/* POPUP ACTIONS */
 $(document).on("click", ".action-edit", function () {
-    const id = $("#msg-action-popup").data("msgId");
-    startEdit(id);
+    startEdit($("#msg-action-popup").data("msgId"));
     closePopup();
 });
 
 $(document).on("click", ".action-unsend, .action-delete", function () {
     const id = $("#msg-action-popup").data("msgId");
-
     $.post("delete_message_client.php", { id, username }, () => loadMessages(false));
-
     closePopup();
 });
 
@@ -239,6 +292,7 @@ $(document).on("click", ".action-unsend, .action-delete", function () {
    EDIT MESSAGE
 ============================================================ */
 function startEdit(id) {
+
     editing = true;
 
     const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
@@ -270,7 +324,7 @@ $(document).on("click", ".edit-cancel", function () {
 });
 
 /* ============================================================
-   LOGOUT
+   LOGOUT BUTTON
 ============================================================ */
 $(document).on("click", "#logout-btn", function () {
     if (confirm("Are you sure you want to log out?")) {
