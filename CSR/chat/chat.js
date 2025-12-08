@@ -81,6 +81,7 @@ $(document).ready(function () {
     // TICKET STATUS CHANGE
     // ============================
     $(document).on("change", "#ticket-status-dropdown", function () {
+
         const newStatus = $(this).val();
 
         if (!currentClientID) return;
@@ -121,13 +122,23 @@ function loadClients() {
 
 // ============================================================
 // LOAD CLIENT INFO (RIGHT PANEL)
+// + APPLY CHAT BORDER COLOR BY TICKET STATUS
 // ============================================================
 function loadClientInfo(id) {
+
     $.post("../chat/load_client_info.php", { client_id: id }, html => {
 
         $("#client-info-content").html(html);
 
         const meta = $("#client-meta");
+
+        // Extract ticket status for highlighting
+        const ticketStatus = meta.data("ticket"); // "resolved" or "unresolved"
+
+        // Apply border highlight to middle chat panel
+        $("#ticket-border-panel")
+            .removeClass("resolved unresolved")
+            .addClass(ticketStatus);
 
         if (meta.length) {
             const isAssignedToMe = meta.data("assigned") === "yes";
