@@ -1,52 +1,89 @@
 <?php
-header("Content-Type: application/json");
-include "../db_connect.php";
+session_start();
+include '../db_connect.php';
 
-$email = trim($_POST["email"] ?? "");
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-if (empty($email)) {
-    echo json_encode(["status" => "error", "message" => "Email is required."]);
-    exit;
-}
+require '../PHPMailer/src/Exception.php';
+require '../PHPMailer/src/PHPMailer.php';
+require '../PHPMailer/src/SMTP.php';
 
-try {
-    // Find user
-    $stmt = $conn->prepare("SELECT id, full_name, email, account_number FROM users WHERE email = :email LIMIT 1");
-    $stmt->execute([":email" => $email]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+$message = '';
 
-    if (!$user) {
-        echo json_encode(["status" => "error", "message" => "No account found with that email."]);
-        exit;
-    }
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email'] ?? '');
 
-    // Prepare email content
-    $to      = $user["email"];
-    $subject = "SkyTruFiber - Your Account Number (Password Recovery)";
-    $message = "
-Hello {$user['full_name']},
+    if (!empty($email)) {
+        try {
+            // Check user
+            $stmt = $conn->prepare("SELECT full_name, email, account_number FROM users WHERE email = :email LIMIT 1");
+            $stmt->execute([':email' => $email]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-You requested to retrieve your password.
+            if ($user) {
+                // Send email using Gmail SMTP
+                $mail = new PHPMailer(true);
 
-Your Account Number is: **{$user['account_number']}**
+                try {
+                    $mail->isSMTP();
+                    $mail->Host = 'smtp.gmail.com';
+                    $mail->SMTPAuth = true;
+                    $mail->Username = 'skytrufiberbilling@gmail.com'; // <-- your Gmail
+                    $mail->Password = 'hmmt suww lpyt oheo';    // <-- 16-digit Google app password
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                    $mail->Port = 587;
 
-You may now use this as your password to log in.
+                    $mail->setFrom('skytrufiberbilling@gmail.com', 'SkyTruFiber Support');
+                    $mail->addAddress($user['email'], $user['full_name']);
 
-Best regards,
-SkyTruFiber Support
-";
+                    $mail->isHTML(true);
+                    $mail->Subject = 'Your SkyTruFiber Account Number';
+                    $mail->Body = "
+                        Hello <b>{$user['full_name']}</b>,<br><br>
+                        Your account number is:<br>
+                        <h2>{$user['account_number']}</h2>
+                        This serves as your login password.<br><br>
+                        Regards,<br>
+                        SkyTruFiber Support Team
+                    ";
 
-    $headers = "From: no-reply@skytrufiber.com\r\n";
-    $headers .= "Reply-To: support@skytrufiber.com\r\n";
+                    $mail->send();
+                    header("Location: skytrufiber.php?msg=success");
+                    exit;
 
-    // Send mail
-    if (mail($to, $subject, $message, $headers)) {
-        echo json_encode(["status" => "success", "message" => "Your account number has been sent to your email."]);
+                } catch (Exception $e) {
+                    $message = "Failed to send email. Error: " . $mail->ErrorInfo;
+                }
+
+            } else {
+                $message = "No user found with that email.";
+            }
+        } catch (PDOException $e) {
+            $message = "Database error: " . htmlspecialchars($e->getMessage());
+        }
     } else {
-        echo json_encode(["status" => "error", "message" => "Failed to send email. Please try again later."]);
+        $message = "Please enter your email.";
     }
-
-} catch (PDOException $e) {
-    echo json_encode(["status" => "error", "message" => "DB Error: " . $e->getMessage()]);
 }
 ?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Forgot Password</title>
+</head>
+<body>
+    <h2>Retrieve Account Number</h2>
+
+    <?php if ($message): ?>
+        <p style="color:red;"><?= $message ?></p>
+    <?php endif; ?>
+
+    <form method="POST">
+        <label>Email:</label><br>
+        <input type="email" name="email" required><br><br>
+
+        <button type="submit">Send Account Number</button>
+    </form>
+</body>
+</html>
