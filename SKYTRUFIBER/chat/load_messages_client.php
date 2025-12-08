@@ -100,7 +100,7 @@ foreach ($messages as $msg) {
     // --------------------------
     // MESSAGE BUBBLE
     // --------------------------
-    if (!$msg["deleted"]) {
+    if (empty($msg["deleted"])) {
         $text = trim($msg["message"]);
         echo "<div class='message-bubble'>";
         echo nl2br(htmlspecialchars($text));
@@ -120,7 +120,7 @@ foreach ($messages as $msg) {
     // ACTION TOOLBAR
     // --------------------------
     echo "<div class='action-toolbar'>";
-    if ($sender === "sent" && !$msg["deleted"]) {
+    if ($sender === "sent" && empty($msg["deleted"])) {
         echo "<button class='more-btn' data-id='$id'>⋯</button>";
     }
     echo "</div>";
@@ -128,4 +128,4 @@ foreach ($messages as $msg) {
     echo "</div>"; // content
     echo "</div>"; // wrapper
 }
-?> 
+?>
