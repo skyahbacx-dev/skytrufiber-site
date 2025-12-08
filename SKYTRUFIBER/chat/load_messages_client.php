@@ -8,11 +8,11 @@ require_once "../../db_connect.php";
 $username = $_POST["username"] ?? "";
 if (!$username) exit("");
 
-// -----------------------------
-// FIND CLIENT
-// -----------------------------
+// ----------------------------------
+// FIND CLIENT BY email OR full name
+// ----------------------------------
 $stmt = $conn->prepare("
-    SELECT id, full_name
+    SELECT id, full_name, ticket_status
     FROM users
     WHERE email ILIKE ?
        OR full_name ILIKE ?
@@ -20,13 +20,23 @@ $stmt = $conn->prepare("
 ");
 $stmt->execute([$username, $username]);
 $client = $stmt->fetch(PDO::FETCH_ASSOC);
+
 if (!$client) exit("");
 
 $client_id = (int)$client["id"];
+$ticket_status = $client["ticket_status"] ?? "unresolved";
 
-// -----------------------------
-// FETCH CHAT MESSAGES
-// -----------------------------
+// ----------------------------------------------------------
+// IMPORTANT: If ticket is resolved → return EMPTY MESSAGES
+// ----------------------------------------------------------
+if ($ticket_status === "resolved") {
+    // Client side script will detect empty messages and clear chat
+    exit("");
+}
+
+// ----------------------------------
+// FETCH CHAT MESSAGES (TEXT ONLY)
+// ----------------------------------
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted, edited
     FROM chat
@@ -36,16 +46,9 @@ $stmt = $conn->prepare("
 $stmt->execute([$client_id]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Media query
-$mstmt = $conn->prepare("
-    SELECT id, media_type
-    FROM chat_media
-    WHERE chat_id = ?
-");
-
-// -----------------------------
-// RENDER MESSAGES
-// -----------------------------
+// ----------------------------------
+// RENDER MESSAGES (NO MEDIA, NO REACTIONS)
+// ----------------------------------
 foreach ($messages as $msg) {
 
     $id      = $msg["id"];
@@ -54,42 +57,17 @@ foreach ($messages as $msg) {
 
     echo "<div class='message $sender' data-msg-id='$id'>";
 
-    // Avatar for CSR messages
+    // CSR avatar
     if ($sender === "received") {
-        echo "<div class='message-avatar'><img src='/upload/default-avatar.png'></div>";
+        echo "<div class='message-avatar'>
+                <img src='/upload/default-avatar.png'>
+              </div>";
     }
 
     echo "<div class='message-content'>";
 
     // --------------------------
-    // MEDIA GRID
-    // --------------------------
-    $mstmt->execute([$id]);
-    $media = $mstmt->fetchAll(PDO::FETCH_ASSOC);
-
-    if ($media) {
-        echo "<div class='media-grid'>";
-        foreach ($media as $m) {
-            $file  = "get_media_client.php?id={$m["id"]}";
-            $thumb = "get_media_client.php?id={$m["id"]}&thumb=1";
-
-            if ($m["media_type"] === "image") {
-                echo "<img src='$thumb' data-full='$file'>";
-            }
-            elseif ($m["media_type"] === "video") {
-                echo "<video muted preload='metadata' data-full='$file'>
-                        <source src='$thumb' type='video/mp4'>
-                      </video>";
-            }
-            else {
-                echo "<a href='$file' download class='file-link'>📎 File</a>";
-            }
-        }
-        echo "</div>";
-    }
-
-    // --------------------------
-    // TEXT / REMOVED
+    // TEXT BUBBLE
     // --------------------------
     if (!$msg["deleted"]) {
 
@@ -105,46 +83,22 @@ foreach ($messages as $msg) {
     }
 
     // --------------------------
-    // TIME + EDITED LABEL
+    // TIME + (edited)
     // --------------------------
     echo "<div class='message-time'>$time";
     if ($msg["edited"]) echo " <span class='edited-label'>(edited)</span>";
     echo "</div>";
 
     // --------------------------
-    // EXISTING REACTIONS DISPLAY (NO BUTTON)
-    // --------------------------
-    $r = $conn->prepare("
-        SELECT emoji, COUNT(*) AS total
-        FROM chat_reactions
-        WHERE chat_id = ?
-        GROUP BY emoji
-        ORDER BY total DESC
-    ");
-    $r->execute([$id]);
-    $react = $r->fetchAll(PDO::FETCH_ASSOC);
-
-    if ($react) {
-        echo "<div class='reaction-bar'>";
-        foreach ($react as $rc) {
-            echo "<span class='reaction-item'>{$rc['emoji']} <span class='reaction-count'>{$rc['total']}</span></span>";
-        }
-        echo "</div>";
-    }
-
-    // --------------------------
-    // ACTION TOOLBAR (NO REACT BUTTON)
+    // ACTION TOOLBAR (NO REACTIONS)
     // --------------------------
     echo "<div class='action-toolbar'>";
-
-    // Only user-sent messages have more actions
     if ($sender === "sent" && !$msg["deleted"]) {
         echo "<button class='more-btn' data-id='$id'>⋯</button>";
     }
-
     echo "</div>";
 
     echo "</div>"; // message-content
-    echo "</div>"; // message wrapper
+    echo "</div>"; // wrapper
 }
 ?>
