@@ -5,49 +5,61 @@ include '../db_connect.php';
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email_or_name = trim($_POST['full_name'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $concern = trim($_POST['concern'] ?? '');
 
-    if ($email_or_name && $password) {
-        try {
-            $stmt = $conn->prepare("SELECT * FROM users WHERE email = :input OR full_name = :input LIMIT 1");
-            $stmt->execute([':input' => $email_or_name]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Normal login POST
+    if (isset($_POST['full_name']) && isset($_POST['password'])) {
 
-            if ($user && password_verify($password, $user['password'])) {
+        $email_or_name = trim($_POST['full_name'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $concern = trim($_POST['concern'] ?? '');
 
-                // SET SESSION
-                $_SESSION['client_id']   = $user['id'];
-                $_SESSION['client_name'] = $user['full_name'];
-                $_SESSION['email']       = $user['email'];
+        if ($email_or_name && $password) {
+            try {
+                $stmt = $conn->prepare("SELECT * FROM users WHERE email = :input OR full_name = :input LIMIT 1");
+                $stmt->execute([':input' => $email_or_name]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                // INSERT first concern message
-                if (!empty($concern)) {
-                    $insert = $conn->prepare("
-                        INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
-                        VALUES (:cid, 'client', :msg, false, false, NOW())
+                if ($user && password_verify($password, $user['password'])) {
+
+                    // Reset ticket_status when logging in again (NEW TICKET)
+                    $updateTicket = $conn->prepare("
+                        UPDATE users SET ticket_status = 'unresolved'
+                        WHERE id = :cid
                     ");
-                    $insert->execute([
-                        ':cid' => $user['id'],
-                        ':msg' => $concern
-                    ]);
+                    $updateTicket->execute([':cid' => $user['id']]);
+
+                    // SET SESSION
+                    $_SESSION['client_id']   = $user['id'];
+                    $_SESSION['client_name'] = $user['full_name'];
+                    $_SESSION['email']       = $user['email'];
+
+                    // INSERT first concern message
+                    if (!empty($concern)) {
+                        $insert = $conn->prepare("
+                            INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
+                            VALUES (:cid, 'client', :msg, false, false, NOW())
+                        ");
+                        $insert->execute([
+                            ':cid' => $user['id'],
+                            ':msg' => $concern
+                        ]);
+                    }
+
+                    header("Location: chat/chat_support.php?username=" . urlencode($user['full_name']));
+                    exit;
+
+                } else {
+                    $message = "❌ Invalid email/full name or password.";
                 }
 
-                // REDIRECT TO CHAT WINDOW (NO DOUBLE PATH)
-                header("Location: chat/chat_support.php?username=" . urlencode($user['full_name']));
-                exit;
-
-            } else {
-                $message = "❌ Invalid email/full name or password.";
+            } catch (PDOException $e) {
+                $message = "⚠ Database error: " . htmlspecialchars($e->getMessage());
             }
 
-        } catch (PDOException $e) {
-            $message = "⚠ Database error: " . htmlspecialchars($e->getMessage());
+        } else {
+            $message = "⚠ Please fill in all fields.";
         }
 
-    } else {
-        $message = "⚠ Please fill in all fields.";
     }
 }
 ?>
@@ -118,11 +130,53 @@ label { display:block; margin-top:10px; color:#004466; font-weight:600; }
     <p style="color:red; text-align:center;"><?= htmlspecialchars($message) ?></p>
   <?php endif; ?>
 
-  <p style="text-align:center; margin-top:10px;">No account yet? <a href="consent.php">Register here</a></p>
+  <p style="text-align:center; margin-top:10px;">
+    <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+  </p>
+
+  <div id="forgotPasswordBox" style="display:none; margin-top:10px; text-align:center;">
+      <input type="email" id="forgotEmail" placeholder="Enter your email"
+             style="width:90%; padding:8px; border-radius:8px;">
+      <button type="button" id="sendForgot"
+              style="margin-top:10px; padding:8px 20px; border-radius:20px;">
+          Send my account number
+      </button>
+  </div>
+
+  <p style="text-align:center; margin-top:10px;">
+      No account yet? <a href="consent.php">Register here</a>
+  </p>
+
 </form>
 
 <script>
 document.getElementById("supportForm").classList.add("showForm");
+
+// SHOW FORGOT PASSWORD FIELD
+document.getElementById("forgotPasswordLink").addEventListener("click", function(e) {
+    e.preventDefault();
+    document.getElementById("forgotPasswordBox").style.display = "block";
+});
+
+// SEND FORGOT PASSWORD REQUEST
+document.getElementById("sendForgot").addEventListener("click", function () {
+    const email = document.getElementById("forgotEmail").value.trim();
+    if (!email) {
+        alert("Please enter your email.");
+        return;
+    }
+
+    fetch("forgot_password.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "email=" + encodeURIComponent(email)
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+    })
+    .catch(err => console.error(err));
+});
 </script>
 
 </body>
