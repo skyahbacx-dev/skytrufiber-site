@@ -56,15 +56,6 @@ $csrUser = $_SESSION["csr_user"];
                 <i class="fa fa-arrow-down"></i>
             </button>
 
-            <!-- QUICK SUGGESTIONS -->
-            <div class="quick-suggestions">
-                <button class="qs-btn">No internet</button>
-                <button class="qs-btn">Slow connection</button>
-                <button class="qs-btn">Router blinking red</button>
-                <button class="qs-btn">Please try restarting the router</button>
-                <button class="qs-btn">Network checking…</button>
-            </div>
-
             <!-- CHAT INPUT -->
             <div id="chat-input-wrapper" class="chat-input-area">
                 <div class="chat-input-box">
