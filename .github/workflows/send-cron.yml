@@ -1,0 +1,16 @@
+name: Send Account Number Email
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: 'User email'
+        required: true
+
+jobs:
+  send-email:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger PHP email script
+        run: |
+          curl -s "https://ahbadevt.com/cron/send_account_email.php?token=YOUR_SECRET_TOKEN&email=${{ github.event.inputs.email }}"
