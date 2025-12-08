@@ -1,40 +1,42 @@
 <?php
+ini_set("log_errors", 1);
+ini_set("error_log", __DIR__ . "/php_errors.log");
+
 if (!isset($_SESSION)) session_start();
 header("Content-Type: application/json");
 
 require_once "../../db_connect.php";
 
-$username = trim($_POST["username"] ?? "");
+$ticketId = trim($_POST["ticket"] ?? "");
 $message  = trim($_POST["message"] ?? "");
 
 // ----------------------------------------------------------
-// VALIDATE USERNAME
+// VALIDATE TICKET
 // ----------------------------------------------------------
-if ($username === "") {
-    echo json_encode(["status" => "error", "msg" => "no username"]);
+if (!$ticketId) {
+    echo json_encode(["status" => "error", "msg" => "no ticket"]);
     exit;
 }
 
 // ----------------------------------------------------------
-// FIND CLIENT ACCOUNT
+// FETCH TICKET & CLIENT
 // ----------------------------------------------------------
 $stmt = $conn->prepare("
-    SELECT id, ticket_status
-    FROM users
-    WHERE email ILIKE ?
-       OR full_name ILIKE ?
+    SELECT t.id AS ticket_id, t.status, t.client_id
+    FROM tickets t
+    WHERE t.id = ?
     LIMIT 1
 ");
-$stmt->execute([$username, $username]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
+$stmt->execute([$ticketId]);
+$ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$user) {
-    echo json_encode(["status" => "error", "msg" => "invalid user"]);
+if (!$ticket) {
+    echo json_encode(["status" => "error", "msg" => "invalid ticket"]);
     exit;
 }
 
-$client_id     = (int)$user["id"];
-$ticket_status = $user["ticket_status"] ?? "unresolved";
+$ticket_status = $ticket['status'] ?? 'unresolved';
+$client_id = (int)$ticket['client_id'];
 
 // ----------------------------------------------------------
 // BLOCK MESSAGE IF TICKET IS RESOLVED
@@ -56,20 +58,18 @@ if ($message === "") {
 }
 
 // ----------------------------------------------------------
-// PREVENT GREETING DUPLICATION
-// If this is the auto-greeting or quick reply text,
-// and the same message exists already → skip.
+// PREVENT DUPLICATE MESSAGE
 // ----------------------------------------------------------
 $check = $conn->prepare("
     SELECT 1
     FROM chat
-    WHERE client_id = ?
+    WHERE ticket_id = ?
       AND sender_type = 'client'
       AND message = ?
       AND deleted = FALSE
     LIMIT 1
 ");
-$check->execute([$client_id, $message]);
+$check->execute([$ticketId, $message]);
 $exists = $check->fetchColumn();
 
 if ($exists) {
@@ -78,12 +78,13 @@ if ($exists) {
 }
 
 // ----------------------------------------------------------
-// INSERT CLIENT TEXT MESSAGE
+// INSERT CLIENT MESSAGE
 // ----------------------------------------------------------
 $insert = $conn->prepare("
-    INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
-    VALUES (?, 'client', ?, TRUE, FALSE, NOW())
+    INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
+    VALUES (?, ?, 'client', ?, TRUE, FALSE, NOW())
 ");
-$insert->execute([$client_id, $message]);
+$insert->execute([$ticketId, $client_id, $message]);
 
 echo json_encode(["status" => "ok"]);
+?>
