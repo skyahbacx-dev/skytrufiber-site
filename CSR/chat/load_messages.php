@@ -20,29 +20,29 @@ $client = $stmt->fetch(PDO::FETCH_ASSOC);
 $ticketStatus = $client["ticket_status"] ?? "unresolved";
 
 // ============================================================
-// GET RESOLVED TIMESTAMP (from ticket_logs table)
+// GET RESOLVED TIMESTAMP FROM ticket_logs (YOUR REAL COLUMN = timestamp)
 // ============================================================
 $resolvedAt = null;
 
 if ($ticketStatus === "resolved") {
     $log = $conn->prepare("
-        SELECT changed_at
+        SELECT timestamp
         FROM ticket_logs
         WHERE client_id = ?
-          AND new_status = 'resolved'
-        ORDER BY changed_at ASC
+          AND action = 'resolved'
+        ORDER BY timestamp ASC
         LIMIT 1
     ");
     $log->execute([$client_id]);
     $row = $log->fetch(PDO::FETCH_ASSOC);
 
     if ($row) {
-        $resolvedAt = $row["changed_at"];
+        $resolvedAt = $row["timestamp"];
     }
 }
 
 // ============================================================
-// FETCH ALL MESSAGES
+// FETCH ALL CHAT MESSAGES
 // ============================================================
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, deleted, edited, created_at
@@ -59,17 +59,18 @@ if (!$rows) {
 }
 
 // ============================================================
-// PREPARE DIVIDER HTML (SHOWN ONLY ONCE AFTER RESOLUTION)
+// PREPARE RESOLVED DIVIDER
 // ============================================================
-$dividerHtml = "";
 $dividerPrinted = false;
+$dividerHtml = "";
 
 if ($ticketStatus === "resolved" && $resolvedAt) {
     $dividerHtml = "
         <div class='system-divider'>
-            <span>Ticket marked as <strong>RESOLVED</strong> on " .
-                date("M j, Y g:i A", strtotime($resolvedAt)) .
-            "</span>
+            <span>
+                Ticket marked as <strong>RESOLVED</strong> on 
+                " . date("M j, Y g:i A", strtotime($resolvedAt)) . "
+            </span>
         </div>
     ";
 }
@@ -79,7 +80,7 @@ if ($ticketStatus === "resolved" && $resolvedAt) {
 // ============================================================
 foreach ($rows as $msg) {
 
-    // Print the divider when reaching messages AFTER resolved timestamp
+    // Insert the divider once AFTER reaching the resolved timestamp
     if (
         !$dividerPrinted &&
         $ticketStatus === "resolved" &&
@@ -105,14 +106,14 @@ foreach ($rows as $msg) {
 
     echo "<div class='message-content'>";
 
-    // More button (edit/delete)
+    // Action button (edit/delete)
     echo "
         <button class='more-btn' data-id='$msgID'>
             <i class='fa-solid fa-ellipsis-vertical'></i>
         </button>
     ";
 
-    // Bubble content
+    // Bubble
     echo "<div class='message-bubble'>";
 
     if ($msg["deleted"]) {
@@ -121,8 +122,9 @@ foreach ($rows as $msg) {
         echo "<div class='msg-text'>" . nl2br(htmlspecialchars($msg["message"])) . "</div>";
     }
 
-    echo "</div>"; // end bubble
+    echo "</div>"; // bubble
 
+    // Edited label
     if ($msg["edited"] && !$msg["deleted"]) {
         echo "<div class='edited-label'>(edited)</div>";
     }
