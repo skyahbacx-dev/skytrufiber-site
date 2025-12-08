@@ -29,7 +29,8 @@ $csrUser = $_SESSION["csr_user"];
     </div>
 
     <!-- MIDDLE CHAT PANEL -->
-    <div class="chat-middle-panel">
+    <!-- ADDED dynamic ticket-border class support -->
+    <div class="chat-middle-panel" id="ticket-border-panel">
         <div class="chat-wrapper">
 
             <!-- CHAT HEADER -->
