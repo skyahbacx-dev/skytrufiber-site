@@ -54,43 +54,21 @@ try {
         ? "true"
         : "false";
 
-    // =============================
-    // TICKET STATUS (Dropdown Version)
-    // =============================
+    // ======================================================
+    // TICKET STATUS
+    // ======================================================
     $ticketValue = $c["ticket_status"] ?? "unresolved";
 
-    $ticketDropdown = "
-        <select id='ticket-status-dropdown' data-id='{$c['id']}' style='padding:6px;width:150px;'>
-            <option value='unresolved' " . ($ticketValue === "unresolved" ? "selected" : "") . ">Unresolved</option>
-            <option value='resolved' "   . ($ticketValue === "resolved"   ? "selected" : "") . ">Resolved</option>
-        </select>
-    ";
-
-    // Label
-    $ticketLabel = $ticketValue === "resolved"
+    $ticketLabel = ($ticketValue === "resolved")
         ? "<span style='color:green;font-weight:bold;'>Resolved</span>"
         : "<span style='color:red;font-weight:bold;'>Unresolved</span>";
 
-    // Disable dropdown if CSR is NOT assigned
+    // Dropdown disabled unless CSR is assigned
     $dropdownDisabled = ($isAssignedToMe === "yes") ? "" : "disabled";
 
-    // =============================
-    // QUICK SUGGESTION BUTTONS
-    // =============================
-    $quickReplies = "
-        <div style='margin-top:15px;'>
-            <p><strong>Quick Replies:</strong></p>
-            <button class='qs-btn' style='padding:6px;margin:3px;'>No Internet</button>
-            <button class='qs-btn' style='padding:6px;margin:3px;'>Slow Connection</button>
-            <button class='qs-btn' style='padding:6px;margin:3px;'>Router Restart</button>
-            <button class='qs-btn' style='padding:6px;margin:3px;'>Checking Line</button>
-            <button class='qs-btn' style='padding:6px;margin:3px;'>Please wait, verifying...</button>
-        </div>
-    ";
-
-    // =============================
-    // OUTPUT PANEL
-    // =============================
+    // ======================================================
+    // OUTPUT PANEL (CLEANED + MATCHES chat.js EXPECTATIONS)
+    // ======================================================
     echo "
         <p><strong>Name:</strong> $fullName</p>
         <p><strong>Email:</strong> $email</p>
@@ -102,23 +80,26 @@ try {
         <hr>
 
         <p><strong>Ticket Status:</strong> $ticketLabel</p>
+
         <div>
-            <select id='ticket-status-dropdown' data-id='{$c['id']}' style='padding:6px;width:150px;' $dropdownDisabled>
+            <select id='ticket-status-dropdown' 
+                    data-id='{$c['id']}' 
+                    style='padding:6px;width:150px;' 
+                    $dropdownDisabled>
                 <option value='unresolved' " . ($ticketValue === "unresolved" ? "selected" : "") . ">Unresolved</option>
                 <option value='resolved'   " . ($ticketValue === "resolved"   ? "selected" : "") . ">Resolved</option>
             </select>
         </div>
 
-        $quickReplies
-
-        <!-- Hidden Meta -->
+        <!-- Hidden Meta for chat.js -->
         <div id='client-meta'
              data-assigned='$isAssignedToMe'
-             data-locked='$isLocked'>
+             data-locked='$isLocked'
+             data-ticket='$ticketValue'>
         </div>
     ";
 
 } catch (PDOException $e) {
-    echo "DB Error: " . htmlspecialchars($e->getMessage());
+    echo 'DB Error: ' . htmlspecialchars($e->getMessage());
 }
 ?>
