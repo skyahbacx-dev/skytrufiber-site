@@ -8,14 +8,14 @@ if (!$csr) {
     exit("Unauthorized");
 }
 
-// Filter from chat.js buttons (all/resolved/unresolved)
+// Filter from chat.js (all / resolved / unresolved)
 $filter = $_POST["filter"] ?? "all";
 
 try {
 
-    // =======================
-    // WHERE clause
-    // =======================
+    // ------------------------------------------
+    // WHERE CLAUSE
+    // ------------------------------------------
     $where = "WHERE assigned_csr = :csr";
     $params = [":csr" => $csr];
 
@@ -26,9 +26,9 @@ try {
         $where .= " AND ticket_status = 'unresolved'";
     }
 
-    // =======================
-    // Main Query
-    // =======================
+    // ------------------------------------------
+    // QUERY CLIENT LIST
+    // ------------------------------------------
     $stmt = $conn->prepare("
         SELECT
             u.id,
@@ -39,8 +39,8 @@ try {
             u.is_locked,
             u.ticket_status,
             COALESCE(
-                (SELECT message FROM chat 
-                 WHERE client_id = u.id 
+                (SELECT message FROM chat
+                 WHERE client_id = u.id
                  ORDER BY created_at DESC LIMIT 1),
                 ''
             ) AS last_message
@@ -56,9 +56,9 @@ try {
         exit;
     }
 
-    // =======================
-    // Render Each Client
-    // =======================
+    // ------------------------------------------
+    // RENDER CLIENT ENTRIES
+    // ------------------------------------------
     foreach ($clients as $c) {
 
         $id        = (int)$c["id"];
@@ -70,16 +70,16 @@ try {
         $assigned  = $c["assigned_csr"];
         $locked    = $c["is_locked"];
 
-        // =======================
-        // Ticket Status Icon
-        // =======================
+        // -------------------------------
+        // TICKET ICON
+        // -------------------------------
         $ticketIcon = ($ticket === "resolved")
             ? "<span class='ticket-dot resolved'>✔</span>"
             : "<span class='ticket-dot unresolved'>●</span>";
 
-        // =======================
-        // Assign Button Logic
-        // =======================
+        // -------------------------------
+        // ASSIGN / REMOVE / LOCK BUTTONS
+        // -------------------------------
         $showAdd      = empty($assigned);
         $showRemove   = ($assigned === $csr);
         $showLockIcon = (!empty($assigned) && $assigned !== $csr);
@@ -88,12 +88,15 @@ try {
         $removeBtn = $showRemove   ? "<button class='client-action-btn remove-client' data-id='$id'><i class='fa fa-minus'></i></button>" : "";
         $lockBtn   = $showLockIcon ? "<button class='client-action-btn lock-client' disabled><i class='fa fa-lock'></i></button>" : "";
 
-        // =======================
-        // OUTPUT ITEM
-        // =======================
+        // -------------------------------
+        // OUTPUT
+        // -------------------------------
         echo "
-        <div class='client-item' data-id='$id' data-name=\"$name\">
-            
+        <div class='client-item' 
+             data-id='$id' 
+             data-name=\"$name\"
+             data-ticket='$ticket'>
+
             <div class='client-status $online'></div>
 
             <div class='client-info'>
