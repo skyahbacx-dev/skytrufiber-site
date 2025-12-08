@@ -4,10 +4,13 @@ require_once "../../db_connect.php";
 
 header("Content-Type: application/json; charset=utf-8");
 
-$id     = (int)($_POST["id"] ?? 0);
-$ticket = (int)($_POST["ticket"] ?? 0);
+$id      = (int)($_POST["id"] ?? 0);
+$ticket  = (int)($_POST["ticket"] ?? 0);
 $message = trim($_POST["message"] ?? "");
 
+// ----------------------------------------------------------
+// VALIDATE INPUT
+// ----------------------------------------------------------
 if ($id <= 0 || $ticket <= 0) {
     echo json_encode(["status" => "error", "msg" => "Invalid parameters"]);
     exit;
@@ -18,10 +21,9 @@ if ($message === "") {
     exit;
 }
 
-/* -------------------------------------------------
-   1) Validate message belongs to this ticket
-      AND was sent by the client
-------------------------------------------------- */
+// ----------------------------------------------------------
+// VALIDATE MESSAGE BELONGS TO THIS TICKET AND IS CLIENT-SENT
+// ----------------------------------------------------------
 $stmt = $conn->prepare("
     SELECT sender_type, deleted
     FROM chat
@@ -46,9 +48,9 @@ if ($msg["deleted"]) {
     exit;
 }
 
-/* -------------------------------------------------
-   2) Update the message text
-------------------------------------------------- */
+// ----------------------------------------------------------
+// UPDATE MESSAGE
+// ----------------------------------------------------------
 $update = $conn->prepare("
     UPDATE chat
     SET message = ?, edited = TRUE, updated_at = NOW()
