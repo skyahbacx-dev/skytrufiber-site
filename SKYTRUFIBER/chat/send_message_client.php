@@ -7,13 +7,16 @@ require_once "../../db_connect.php";
 $username = trim($_POST["username"] ?? "");
 $message  = trim($_POST["message"] ?? "");
 
-if (!$username) {
+// ----------------------------------------------------------
+// VALIDATE USERNAME
+// ----------------------------------------------------------
+if ($username === "") {
     echo json_encode(["status" => "error", "msg" => "no username"]);
     exit;
 }
 
 // ----------------------------------------------------------
-// Find client by email or full name
+// FIND CLIENT ACCOUNT
 // ----------------------------------------------------------
 $stmt = $conn->prepare("
     SELECT id, ticket_status
@@ -34,7 +37,7 @@ $client_id     = (int)$user["id"];
 $ticket_status = $user["ticket_status"] ?? "unresolved";
 
 // ----------------------------------------------------------
-// BLOCK SENDING IF TICKET IS RESOLVED
+// BLOCK MESSAGE IF TICKET IS RESOLVED
 // ----------------------------------------------------------
 if ($ticket_status === "resolved") {
     echo json_encode([
@@ -45,7 +48,7 @@ if ($ticket_status === "resolved") {
 }
 
 // ----------------------------------------------------------
-// Prevent empty messages
+// PREVENT EMPTY MESSAGE
 // ----------------------------------------------------------
 if ($message === "") {
     echo json_encode(["status" => "ok", "msg" => "empty skipped"]);
@@ -53,7 +56,29 @@ if ($message === "") {
 }
 
 // ----------------------------------------------------------
-// Insert plain text message
+// PREVENT GREETING DUPLICATION
+// If this is the auto-greeting or quick reply text,
+// and the same message exists already → skip.
+// ----------------------------------------------------------
+$check = $conn->prepare("
+    SELECT 1
+    FROM chat
+    WHERE client_id = ?
+      AND sender_type = 'client'
+      AND message = ?
+      AND deleted = FALSE
+    LIMIT 1
+");
+$check->execute([$client_id, $message]);
+$exists = $check->fetchColumn();
+
+if ($exists) {
+    echo json_encode(["status" => "duplicate", "msg" => "message already exists"]);
+    exit;
+}
+
+// ----------------------------------------------------------
+// INSERT CLIENT TEXT MESSAGE
 // ----------------------------------------------------------
 $insert = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
