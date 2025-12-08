@@ -8,7 +8,9 @@ $client  = $_POST["username"] ?? null;
 
 if (!$id) exit("Missing ID");
 
-// Determine sender type
+/* ============================================================
+   Identify sender type (CSR or Client)
+============================================================ */
 if ($csr) {
     $senderType = "csr";
     $identifier = $csr;
@@ -17,7 +19,9 @@ if ($csr) {
     $identifier = $client;
 }
 
-// Validate sender owns this message
+/* ============================================================
+   Validate the message belongs to the sender
+============================================================ */
 $stmt = $conn->prepare("
     SELECT id FROM chat 
     WHERE id = ? AND sender_type = ?
@@ -28,10 +32,14 @@ if (!$stmt->fetch()) {
     exit("Permission denied");
 }
 
-// Soft delete (unsend)
+/* ============================================================
+   SOFT DELETE (unsend)
+   - Removes text
+   - Marks message as deleted
+============================================================ */
 $del = $conn->prepare("
     UPDATE chat
-    SET message = '', deleted = TRUE
+    SET message = '', deleted = TRUE, edited = FALSE
     WHERE id = ?
 ");
 $del->execute([$id]);
