@@ -32,26 +32,24 @@
     <div class="chat-modal">
 
         <!-- ======================================================
-             HEADER AREA
+             HEADER 
         ======================================================= -->
         <div class="chat-header">
 
             <div class="chat-header-left">
                 <img src="../../SKYTRUFIBER.png" class="chat-header-logo">
+
                 <div>
                     <h2>SkyTruFiber Support</h2>
 
                     <span class="status active">Support Team Active</span>
 
                     <!-- Live Ticket Status Label -->
-                    <span id="ticket-status-label" class="ticket-label" style="
-                        display:block;
-                        margin-top:4px;
-                        font-size:13px;
-                        color:#fff;
-                        opacity:.9;
-                    ">Checking ticket...</span>
-
+                    <span id="ticket-status-label" 
+                          class="ticket-label"
+                          style="display:block;margin-top:4px;font-size:13px;color:#fff;opacity:.9;">
+                          Checking ticket...
+                    </span>
                 </div>
             </div>
 
@@ -67,43 +65,51 @@
                 <button id="logout-btn" class="logout-btn">
                     <i class="fa-solid fa-right-from-bracket"></i> Logout
                 </button>
-
             </div>
 
         </div>
 
         <!-- ======================================================
-             CHAT MESSAGES
+             CHAT MESSAGES AREA
         ======================================================= -->
         <div id="chat-messages" class="chat-messages"></div>
 
+        <!-- Scroll to Bottom -->
         <button id="scroll-bottom-btn" class="scroll-bottom-btn">
             <i class="fa-solid fa-arrow-down"></i>
         </button>
 
+
         <!-- ======================================================
-             INPUT AREA (MEDIA & REACTIONS REMOVED)
+             FLOATING QUICK REPLIES (Shown only on first chat)
+        ======================================================= -->
+        <div id="quick-replies" class="quick-replies hidden">
+            <button class="qr-btn">I am experiencing no internet.</button>
+            <button class="qr-btn">My connection is slow.</button>
+            <button class="qr-btn">My router is blinking red.</button>
+            <button class="qr-btn">I already restarted my router.</button>
+            <button class="qr-btn">Please assist me. Thank you.</button>
+        </div>
+
+
+        <!-- ======================================================
+             INPUT BAR
         ======================================================= -->
         <div class="chat-input-area">
 
-            <!-- CLIENT TEXT INPUT -->
             <div class="chat-input-box">
                 <input id="message-input" type="text" placeholder="Type a message..." autocomplete="off">
             </div>
 
-            <!-- SEND BUTTON -->
             <button id="send-btn" class="chat-send-btn">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
 
         </div>
 
-        <!-- QUICK SUGGESTIONS BAR
-             (Injected by JS above input bar)
-        -->
 
         <!-- ======================================================
-             MESSAGE ACTION POPUP
+             ACTION POPUP (Edit / Delete / Unsend)
         ======================================================= -->
         <div id="msg-action-popup" class="msg-action-popup">
             <button class="action-edit"><i class="fa-solid fa-pen"></i> Edit</button>
@@ -112,8 +118,8 @@
             <button class="action-cancel">Cancel</button>
         </div>
 
-    </div> <!-- END CHAT MODAL -->
-</div> <!-- END CHAT OVERLAY -->
+    </div> <!-- chat-modal -->
+</div> <!-- chat-overlay -->
 
 </body>
 </html>
