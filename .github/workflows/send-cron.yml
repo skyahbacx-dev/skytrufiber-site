@@ -1,16 +1,22 @@
-name: Send Account Number Email
+name: Send Account Email Cron
 
 on:
   workflow_dispatch:
-    inputs:
-      email:
-        description: 'User email'
-        required: true
 
 jobs:
   send-email:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger PHP email script
-        run: |
-          curl -s "https://ahbadevt.com/cron/send_account_email.php?token=YOUR_SECRET_TOKEN&email=${{ github.event.inputs.email }}"
+      - uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, mysqli
+
+      - name: Install Composer dependencies
+        run: composer install
+
+      - name: Send account email
+        run: php cron/send_account_email.php --email="exbyahyah03@gmail.com" --token="YOUR_SECRET_TOKEN"
