@@ -2,44 +2,23 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$username = trim($_POST["username"] ?? "");
+$ticketId = (int)($_POST["ticket"] ?? 0);
 
-if (!$username) {
+if (!$ticketId) {
     echo "unresolved";
     exit;
 }
 
 // --------------------------------------------------
-// FETCH CLIENT
-// --------------------------------------------------
-$stmt = $conn->prepare("
-    SELECT id
-    FROM users
-    WHERE email ILIKE :u
-       OR full_name ILIKE :u
-    LIMIT 1
-");
-$stmt->execute([":u" => $username]);
-$client = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if (!$client) {
-    echo "unresolved";
-    exit;
-}
-
-$client_id = (int)$client['id'];
-
-// --------------------------------------------------
-// FETCH LATEST TICKET STATUS
+// FETCH TICKET STATUS
 // --------------------------------------------------
 $stmt = $conn->prepare("
     SELECT status
     FROM tickets
-    WHERE client_id = ?
-    ORDER BY created_at DESC
+    WHERE id = ?
     LIMIT 1
 ");
-$stmt->execute([$client_id]);
+$stmt->execute([$ticketId]);
 $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$ticket) {
