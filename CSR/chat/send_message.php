@@ -8,13 +8,11 @@ $csrUser  = $_SESSION["csr_user"] ?? null;
 $clientID = $_POST["client_id"] ?? null;
 $message  = trim($_POST["message"] ?? "");
 
-// Validate input
 if (!$csrUser || !$clientID) {
     echo json_encode(["status" => "error", "msg" => "Missing credentials"]);
     exit;
 }
 
-// Prevent sending empty message
 if ($message === "") {
     echo json_encode(["status" => "error", "msg" => "Message empty"]);
     exit;
@@ -22,9 +20,6 @@ if ($message === "") {
 
 try {
 
-    /* ============================================================
-       INSERT TEXT MESSAGE ONLY
-    ============================================================ */
     $stmt = $conn->prepare("
         INSERT INTO chat (client_id, sender_type, message, deleted, edited, delivered, seen, created_at)
         VALUES (:cid, 'csr', :msg, FALSE, FALSE, FALSE, FALSE, NOW())
@@ -35,11 +30,8 @@ try {
         ":msg" => $message
     ]);
 
-    $chatID = $conn->lastInsertId();
-
     echo json_encode([
-        "status" => "ok",
-        "chat_id" => $chatID
+        "status" => "ok"
     ]);
     exit;
 
