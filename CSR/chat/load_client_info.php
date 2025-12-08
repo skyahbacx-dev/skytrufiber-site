@@ -7,9 +7,10 @@ if (!$clientID) {
     exit("No client selected.");
 }
 
-$currentCSR = $_SESSION["csr_user"] ?? null;
+$currentCSR = $_SESSION["csr_user"] ?? "";
 
 try {
+
     $stmt = $conn->prepare("
         SELECT 
             id,
@@ -36,46 +37,56 @@ try {
     // Escape values safely
     $fullName  = htmlspecialchars($c['full_name']);
     $email     = htmlspecialchars($c['email']);
-    $acctNum   = htmlspecialchars($c['account_number']);  // ⭐ New
+    $acctNum   = htmlspecialchars($c['account_number']);
     $district  = htmlspecialchars($c['district']);
     $barangay  = htmlspecialchars($c['barangay']);
 
-    // Online / Offline badge
+    // Normalize assigned CSR (avoid NULL issues)
+    $assignedCSR = $c["assigned_csr"] ?? "";
+
+    // --------------------------------------------------------
+    // ONLINE STATUS
+    // --------------------------------------------------------
     $onlineStatus = $c["is_online"]
         ? "<span style='color:green;'>Online</span>"
         : "<span style='color:gray;'>Offline</span>";
 
-    // Lock state
-    $lockedStatus = ($c["assigned_csr"] !== $currentCSR && !empty($c["assigned_csr"]))
+    // --------------------------------------------------------
+    // LOCK STATE (safe comparisons)
+    // --------------------------------------------------------
+    $lockedStatus = ($assignedCSR !== "" && $assignedCSR !== $currentCSR)
         ? "Locked"
         : "Unlocked";
 
-    // Assigned state
-    $isAssignedToMe = (strcasecmp($c["assigned_csr"], $currentCSR) === 0) ? "yes" : "no";
+    // --------------------------------------------------------
+    // ASSIGNMENT FLAGS (safe strcasecmp)
+    // --------------------------------------------------------
+    $isAssignedToMe = ($assignedCSR !== "" && strcasecmp($assignedCSR, $currentCSR) === 0)
+        ? "yes"
+        : "no";
 
-    $isLocked = (!empty($c["assigned_csr"]) && strcasecmp($c["assigned_csr"], $currentCSR) !== 0)
+    $isLocked = ($assignedCSR !== "" && strcasecmp($assignedCSR, $currentCSR) !== 0)
         ? "true"
         : "false";
 
-    // ==========================================
+    // --------------------------------------------------------
     // TICKET STATUS
-    // ==========================================
+    // --------------------------------------------------------
     $ticketValue = $c["ticket_status"] ?? "unresolved";
 
     $ticketLabel = ($ticketValue === "resolved")
         ? "<span style='color:green;font-weight:bold;'>Resolved</span>"
         : "<span style='color:red;font-weight:bold;'>Unresolved</span>";
 
-    // Dropdown enable only if CSR is assigned
     $dropdownDisabled = ($isAssignedToMe === "yes") ? "" : "disabled";
 
-    // ==========================================
-    // OUTPUT PANEL (WITH ACCOUNT NUMBER)
-    // ==========================================
+    // --------------------------------------------------------
+    // OUTPUT
+    // --------------------------------------------------------
     echo "
         <p><strong>Name:</strong> $fullName</p>
         <p><strong>Email:</strong> $email</p>
-        <p><strong>Account Number:</strong> $acctNum</p>   <!-- ⭐ ADDED -->
+        <p><strong>Account Number:</strong> $acctNum</p>
         <p><strong>District:</strong> $district</p>
         <p><strong>Barangay:</strong> $barangay</p>
         <p><strong>Status:</strong> $onlineStatus</p>
@@ -87,19 +98,19 @@ try {
 
         <div>
             <select id='ticket-status-dropdown'
-                    data-id='{$c['id']}'
-                    style='padding:6px;width:150px;'
-                    $dropdownDisabled>
+                data-id='{$c['id']}'
+                style='padding:6px;width:150px;'
+                $dropdownDisabled>
                 <option value='unresolved' " . ($ticketValue === "unresolved" ? "selected" : "") . ">Unresolved</option>
-                <option value='resolved'   " . ($ticketValue === "resolved"   ? "selected" : "") . ">Resolved</option>
+                <option value='resolved' " . ($ticketValue === "resolved" ? "selected" : "") . ">Resolved</option>
             </select>
         </div>
 
-        <!-- META FOR chat.js -->
+        <!-- Hidden metadata for chat.js -->
         <div id='client-meta'
-             data-assigned='$isAssignedToMe'
-             data-locked='$isLocked'
-             data-ticket='$ticketValue'>
+            data-assigned='$isAssignedToMe'
+            data-locked='$isLocked'
+            data-ticket='$ticketValue'>
         </div>
     ";
 
