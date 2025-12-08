@@ -9,7 +9,14 @@ $client  = $_POST["username"] ?? null;
 
 if (!$id) exit("Missing ID");
 
-// Determine sender who is editing
+// Prevent empty edited message
+if ($message === "") {
+    exit("Message cannot be empty");
+}
+
+/* ============================================================
+   Determine sender who is editing the message
+============================================================ */
 if ($csr) {
     $senderType = "csr";
     $identifier = $csr;
@@ -18,7 +25,9 @@ if ($csr) {
     $identifier = $client;
 }
 
-// Validate sender owns the message
+/* ============================================================
+   Validate that this sender OWNS the message
+============================================================ */
 $stmt = $conn->prepare("
     SELECT id FROM chat 
     WHERE id = ? AND sender_type = ?
@@ -29,10 +38,12 @@ if (!$stmt->fetch()) {
     exit("Permission denied");
 }
 
-// Apply text update
+/* ============================================================
+   UPDATE the text message
+============================================================ */
 $update = $conn->prepare("
-    UPDATE chat 
-    SET message = ?, edited = TRUE 
+    UPDATE chat
+    SET message = ?, edited = TRUE
     WHERE id = ?
 ");
 $update->execute([$message, $id]);
