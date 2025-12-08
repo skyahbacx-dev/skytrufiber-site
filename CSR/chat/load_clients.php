@@ -13,7 +13,9 @@ $filter = $_POST["filter"] ?? "all";
 
 try {
 
-    // Build WHERE conditions
+    // =======================
+    // WHERE clause
+    // =======================
     $where = "WHERE assigned_csr = :csr";
     $params = [":csr" => $csr];
 
@@ -24,7 +26,9 @@ try {
         $where .= " AND ticket_status = 'unresolved'";
     }
 
+    // =======================
     // Main Query
+    // =======================
     $stmt = $conn->prepare("
         SELECT
             u.id,
@@ -52,24 +56,30 @@ try {
         exit;
     }
 
+    // =======================
+    // Render Each Client
+    // =======================
     foreach ($clients as $c) {
 
-        // Clean values
         $id        = (int)$c["id"];
-        $name      = htmlspecialchars($c["full_name"]);
+        $name      = htmlspecialchars($c["full_name"], ENT_QUOTES);
         $email     = htmlspecialchars($c["email"]);
         $lastMsg   = htmlspecialchars($c["last_message"]);
         $online    = $c["is_online"] ? "online" : "offline";
+        $ticket    = $c["ticket_status"] ?? "unresolved";
         $assigned  = $c["assigned_csr"];
         $locked    = $c["is_locked"];
-        $ticket    = $c["ticket_status"] ?? "unresolved";
 
-        // ======== TICKET ICON ========
+        // =======================
+        // Ticket Status Icon
+        // =======================
         $ticketIcon = ($ticket === "resolved")
             ? "<span class='ticket-dot resolved'>✔</span>"
             : "<span class='ticket-dot unresolved'>●</span>";
 
-        // ======== ASSIGN BUTTON LOGIC ========
+        // =======================
+        // Assign Button Logic
+        // =======================
         $showAdd      = empty($assigned);
         $showRemove   = ($assigned === $csr);
         $showLockIcon = (!empty($assigned) && $assigned !== $csr);
@@ -78,14 +88,16 @@ try {
         $removeBtn = $showRemove   ? "<button class='client-action-btn remove-client' data-id='$id'><i class='fa fa-minus'></i></button>" : "";
         $lockBtn   = $showLockIcon ? "<button class='client-action-btn lock-client' disabled><i class='fa fa-lock'></i></button>" : "";
 
-        // ======== OUTPUT CLIENT ITEM ========
+        // =======================
+        // OUTPUT ITEM
+        // =======================
         echo "
         <div class='client-item' data-id='$id' data-name=\"$name\">
             
             <div class='client-status $online'></div>
-            
+
             <div class='client-info'>
-                <strong>$name $ticketIcon</strong>
+                <strong class='client-name'>$name $ticketIcon</strong>
                 <small>$email</small>
                 <small class='last-msg'>$lastMsg</small>
             </div>
@@ -95,6 +107,7 @@ try {
                 $removeBtn
                 $lockBtn
             </div>
+
         </div>
         ";
     }
