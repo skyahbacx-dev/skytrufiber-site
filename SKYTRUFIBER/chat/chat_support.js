@@ -1,17 +1,11 @@
 /* ============================================================
-   SkyTruFiber Chat System — FINAL JS (Popup + Toolbar FIXED)
+   SkyTruFiber Client Chat System — CLEAN VERSION (No Media, No Reactions)
+   + AUTO-DISABLE CHAT WHEN RESOLVED
 ============================================================ */
 
 /* ---------------- GLOBAL STATE ---------------- */
-let selectedFiles = [];
 let editing = false;
 let activePopup = null;
-let reactingToMsgId = null;
-
-let galleryItems = [];
-let currentIndex = 0;
-
-const reactionChoices = ["👍", "❤️", "😂", "😮", "😢", "😡"];
 const username = new URLSearchParams(window.location.search).get("username");
 
 /* ============================================================
@@ -20,9 +14,11 @@ const username = new URLSearchParams(window.location.search).get("username");
 $(document).ready(() => {
 
     if (!username) {
-        $("#chat-messages").html(`<p style="text-align:center;padding:20px;color:#777;">
-            Invalid user.
-        </p>`);
+        $("#chat-messages").html(`
+            <p style="text-align:center;padding:20px;color:#777;">
+                Invalid user.
+            </p>
+        `);
         return;
     }
 
@@ -32,39 +28,24 @@ $(document).ready(() => {
         $(".chat-modal").append(staticPopup.detach());
     }
 
+    // Initial load
     loadMessages(true);
+    checkTicketStatus();
 
     // Poll server every 3.5s
     setInterval(() => {
-        if (!editing && !activePopup && !$("#preview-inline").is(":visible")) {
+        if (!editing && !activePopup) {
             fetchNewMessages();
+            checkTicketStatus();
         }
     }, 3500);
 
-    /* SEND */
+    /* SEND MESSAGE */
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
         if (e.which === 13) {
             e.preventDefault();
             sendMessage();
-        }
-    });
-
-    /* UPLOAD */
-    $("#upload-btn").click(() => $("#chat-upload-media").click());
-    $("#chat-upload-media").change(function () {
-        selectedFiles = Array.from(this.files);
-        if (selectedFiles.length) previewMultiple();
-    });
-
-    /* GLOBAL CLICK HANDLER */
-    $(document).on("click", function(e) {
-        if (!$(e.target).closest("#msg-action-popup, .more-btn").length) {
-            closePopup();
-        }
-
-        if (!$(e.target).closest("#reaction-picker, .react-btn").length) {
-            $("#reaction-picker").removeClass("show");
         }
     });
 
@@ -82,32 +63,59 @@ function toggleTheme() {
 }
 
 /* ============================================================
+   TICKET STATUS CONTROL
+============================================================ */
+function checkTicketStatus() {
+    $.post("get_ticket_status.php", { username }, function (status) {
+        applyTicketStatus(status.trim());
+    });
+}
+
+function applyTicketStatus(status) {
+
+    if (status === "resolved") {
+
+        // Disable sending
+        $("#message-input").prop("disabled", true);
+        $("#send-btn").prop("disabled", true);
+
+        // Clear chat so client cannot spam CSR anymore
+        $("#chat-messages").html(`
+            <div class="system-message" style="
+                text-align:center;
+                padding:20px;
+                color:#444;
+                font-size:15px;
+            ">
+                Your ticket has been marked as <strong style="color:green;">RESOLVED</strong>.<br><br>
+                Thank you for contacting SkyTruFiber Support!
+            </div>
+        `);
+
+        return;
+    }
+
+    // If unresolved → allow chat
+    $("#message-input").prop("disabled", false);
+    $("#send-btn").prop("disabled", false);
+}
+
+/* ============================================================
    SEND MESSAGE
 ============================================================ */
 function sendMessage() {
 
     const msg = $("#message-input").val().trim();
-    if (!msg && selectedFiles.length === 0) return;
+    if (!msg) return;
 
-    // UPLOAD MEDIA → different handler
-    if (selectedFiles.length > 0) return uploadMedia(msg);
-
-    // 1. Create a temporary bubble
     const tempId = appendClientBubble(msg);
     $("#message-input").val("");
 
-    // 2. Send to server
-    $.post("send_message_client.php", { username, message: msg }, response => {
-
-        // Remove temporary bubble
+    $.post("send_message_client.php", { username, message: msg }, () => {
         $(`.message[data-msg-id='${tempId}']`).remove();
-
-        // Reload REAL messages from server
         fetchNewMessages();
-
     });
 }
-
 
 function appendClientBubble(msg) {
     const tempId = "temp-" + Date.now();
@@ -122,68 +130,17 @@ function appendClientBubble(msg) {
     `);
 
     scrollToBottom();
-    return tempId; // return the temporary bubble ID
-}
-
-
-/* ============================================================
-   PREVIEW MULTIPLE
-============================================================ */
-function previewMultiple() {
-    $("#preview-inline").slideDown(150);
-    $("#preview-files").html("");
-
-    selectedFiles.forEach((file, i) => {
-        const url = URL.createObjectURL(file);
-        $("#preview-files").append(`
-            <div class="preview-item">
-                <img src="${url}" class="preview-thumb">
-                <button class="preview-remove" data-i="${i}">&times;</button>
-            </div>
-        `);
-    });
-}
-
-$(document).on("click", ".preview-remove", function () {
-    selectedFiles.splice($(this).data("i"), 1);
-    selectedFiles.length ? previewMultiple() : $("#preview-inline").slideUp(200);
-});
-
-/* ============================================================
-   UPLOAD MEDIA
-============================================================ */
-function uploadMedia(msg) {
-    const form = new FormData();
-    form.append("username", username);
-    form.append("message", msg);
-
-    selectedFiles.forEach(f => form.append("media[]", f));
-
-    $.ajax({
-        url: "upload_media_client.php",
-        method: "POST",
-        data: form,
-        processData: false,
-        contentType: false,
-        success: () => {
-            selectedFiles = [];
-            $("#preview-inline").slideUp(200);
-            $("#message-input").val("");
-            fetchNewMessages();
-        }
-    });
+    return tempId;
 }
 
 /* ============================================================
    LOAD MESSAGES
 ============================================================ */
 function loadMessages(scrollBottom = false) {
+
     $.post("load_messages_client.php", { username }, html => {
 
         $("#chat-messages").html(html);
-
-        attachMediaEvents();
-        bindReactionButtons();
         bindActionToolbar();
 
         if (scrollBottom) scrollToBottom();
@@ -191,28 +148,23 @@ function loadMessages(scrollBottom = false) {
 }
 
 /* ============================================================
-   FETCH NEW MESSAGES (No Duplicates)
+   FETCH NEW MESSAGES
 ============================================================ */
 function fetchNewMessages() {
+
     $.post("load_messages_client.php", { username }, html => {
+
         const temp = $("<div>").html(html);
         const newMsgs = temp.find(".message");
 
-        const container = $("#chat-messages");
-        const currentLastId = container.find(".message:last").data("msg-id") || 0;
-
         newMsgs.each(function () {
-        const id = $(this).data("msg-id");
 
-        // Skip if already exists in DOM
-        if ($(`.message[data-msg-id='${id}']`).length) return;
+            const id = $(this).data("msg-id");
+            if ($(`.message[data-msg-id='${id}']`).length) return;
 
-       container.append($(this));
-      });
+            $("#chat-messages").append($(this));
+        });
 
-
-        attachMediaEvents();
-        bindReactionButtons();
         bindActionToolbar();
     });
 }
@@ -236,7 +188,7 @@ $("#chat-messages").on("scroll", function () {
 });
 
 /* ============================================================
-   ACTION TOOLBAR + POPUP
+   ACTION TOOLBAR (Edit / Delete)
 ============================================================ */
 function bindActionToolbar() {
     $(".more-btn").off("click").on("click", function (e) {
@@ -268,7 +220,7 @@ function closePopup() {
     activePopup = null;
 }
 
-/* Popup Button Actions */
+/* ----------- Popup Button Actions ----------- */
 $(document).on("click", ".action-edit", function () {
     const id = $("#msg-action-popup").data("msgId");
     startEdit(id);
@@ -302,6 +254,7 @@ function startEdit(id) {
 }
 
 $(document).on("click", ".edit-save", function () {
+
     const id = $(this).data("id");
     const newText = $(this).closest(".message-bubble").find("textarea").val().trim();
 
@@ -317,152 +270,8 @@ $(document).on("click", ".edit-cancel", function () {
 });
 
 /* ============================================================
-   REACTIONS
+   LOGOUT
 ============================================================ */
-function ensureReactionPicker() {
-    let picker = $("#reaction-picker");
-    if (!picker.length) {
-        $("body").append(`
-            <div id="reaction-picker">
-                ${reactionChoices.map(emoji =>
-                    `<button class="reaction-choice" data-emoji="${emoji}">${emoji}</button>`
-                ).join("")}
-            </div>
-        `);
-        picker = $("#reaction-picker");
-    }
-    return picker;
-}
-
-function bindReactionButtons() {
-    $(".react-btn").off("click").on("click", function (e) {
-
-        e.stopPropagation();
-        reactingToMsgId = $(this).data("msg-id");
-
-        const picker = ensureReactionPicker();
-        const pos = $(this).offset();
-
-        picker.css({
-            top: pos.top - picker.outerHeight() - 10,
-            left: pos.left - picker.outerWidth() / 2
-        }).addClass("show");
-    });
-}
-
-$(document).on("click", ".reaction-choice", function () {
-
-    $.post("react_message_client.php", {
-        chat_id: reactingToMsgId,
-        emoji: $(this).data("emoji")
-    }, () => updateReactionBar(reactingToMsgId));
-
-    $("#reaction-picker").removeClass("show");
-});
-
-function updateReactionBar(id) {
-    $.post("load_messages_client.php", { username }, html => {
-        const temp = $("<div>").html(html);
-        const newBar = temp.find(`.message[data-msg-id='${id}'] .reaction-bar`);
-        $(`.message[data-msg-id='${id}'] .reaction-bar`).replaceWith(newBar);
-    });
-}
-
-/* ============================================================
-   LIGHTBOX (Images + Video)
-============================================================ */
-
-const lbOverlay = document.getElementById("lightbox-overlay");
-const lbImage = document.getElementById("lightbox-image");
-const lbVideo = document.getElementById("lightbox-video");
-const lbIndex = document.getElementById("lightbox-index");
-
-let touchStartX = 0;
-
-/* MEDIA THUMB CLICK */
-function attachMediaEvents() {
-
-    $(".media-grid img").off("click").on("click", function () {
-        const src = $(this).data("full");
-
-        const grid = $(this).closest(".media-grid");
-        const imgs = grid.find("img");
-
-        galleryItems = imgs.map((i, el) =>
-            ({ type: "image", src: $(el).data("full") })
-        ).get();
-
-        currentIndex = imgs.index(this);
-        openImage(src);
-    });
-
-    $(".media-grid video").off("click").on("click", function () {
-        const src = $(this).data("full");
-        galleryItems = [{ type: "video", src }];
-        currentIndex = 0;
-        openVideo(src);
-    });
-
-    $("#lightbox-prev").off().click(() => navigateGallery(-1));
-    $("#lightbox-next").off().click(() => navigateGallery(1));
-    $("#lightbox-close").off().click(closeLightbox);
-}
-
-/* OPEN IMAGE */
-function openImage(src) {
-    lbVideo.style.display = "none";
-    lbImage.style.display = "block";
-    lbImage.src = src;
-    lbOverlay.classList.add("show");
-    updateLightboxIndex();
-}
-
-/* OPEN VIDEO */
-function openVideo(src) {
-    lbImage.style.display = "none";
-    lbVideo.style.display = "block";
-    lbVideo.src = src;
-    lbOverlay.classList.add("show");
-}
-
-/* CLOSE */
-function closeLightbox() {
-    lbOverlay.classList.remove("show");
-    lbImage.src = "";
-    lbVideo.src = "";
-}
-
-/* NAVIGATION */
-function navigateGallery(step) {
-    if (galleryItems.length <= 1) return;
-
-    currentIndex = (currentIndex + step + galleryItems.length) % galleryItems.length;
-
-    const item = galleryItems[currentIndex];
-    if (item.type === "image") openImage(item.src);
-    else openVideo(item.src);
-
-    updateLightboxIndex();
-}
-
-/* INDEX */
-function updateLightboxIndex() {
-    if (galleryItems.length > 1) {
-        lbIndex.textContent = `${currentIndex + 1} / ${galleryItems.length}`;
-        lbIndex.style.display = "block";
-    } else {
-        lbIndex.style.display = "none";
-    }
-}
-
-/* KEYBOARD */
-document.addEventListener("keydown", e => {
-    if (!lbOverlay.classList.contains("show")) return;
-
-    if (e.key === "ArrowLeft") navigateGallery(-1);
-    if (e.key === "ArrowRight") navigateGallery(1);
-    if (e.key === "Escape") closeLightbox();
-});
 $(document).on("click", "#logout-btn", function () {
     if (confirm("Are you sure you want to log out?")) {
         window.location.href = "../chat/logout.php";
