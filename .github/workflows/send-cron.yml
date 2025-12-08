@@ -1,22 +1,31 @@
 name: Send Account Email Cron
 
 on:
-  workflow_dispatch:
+schedule:
+- cron: "0 9 * * *"  # Runs daily at 9 AM UTC (adjust if needed)
+workflow_dispatch:      # Allows manual trigger
 
 jobs:
-  send-email:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+send-account-email:
+runs-on: ubuntu-latest
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mbstring, mysqli
+```
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v3
 
-      - name: Install Composer dependencies
-        run: composer install
+  - name: Setup PHP
+    uses: shivammathur/setup-php@v2
+    with:
+      php-version: '8.2'
+      extensions: mbstring, curl, openssl
 
-      - name: Send account email
-        run: php cron/send_account_email.php --email="exbyahyah03@gmail.com" --token="YOUR_SECRET_TOKEN"
+  - name: Install Composer
+    run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+  - name: Run Send Account Email Script
+    env:
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+    run: |
+      php cron/send_account_email.php?token=YOUR_SECRET_TOKEN&email=test@example.com
+```
