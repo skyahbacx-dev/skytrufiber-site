@@ -1,5 +1,5 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — TEXT ONLY VERSION + Ticketing + Suggestions
+// SkyTruFiber CSR Chat System — TEXT ONLY VERSION + Ticketing
 // ============================================================
 
 let currentClientID = null;
@@ -8,7 +8,7 @@ let clientRefreshInterval = null;
 let lastMessageID = 0;
 let editing = false;
 
-let currentTicketFilter = "all"; // NEW — filters: all, resolved, unresolved
+let currentTicketFilter = "all"; // Filters: all, resolved, unresolved
 
 $(document).ready(function () {
 
@@ -96,15 +96,6 @@ $(document).ready(function () {
         });
     });
 
-    // =======================
-    // QUICK SUGGESTIONS
-    // =======================
-    $(document).on("click", ".qs-btn", function () {
-        const text = $(this).text().trim();
-        $("#chat-input").val(text);
-        $("#chat-input").focus();
-    });
-
 });
 
 // ============================================================
@@ -142,7 +133,6 @@ function loadClientInfo(id) {
             const isAssignedToMe = meta.data("assigned") === "yes";
             const isLocked = String(meta.data("locked")) === "true";
 
-            // Enable / Disable ticket dropdown
             $("#ticket-status-dropdown").prop("disabled", !isAssignedToMe);
 
             handleChatPermission(isAssignedToMe, isLocked);
