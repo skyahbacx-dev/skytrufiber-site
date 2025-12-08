@@ -2,15 +2,22 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$msgID = (int)($_POST["id"] ?? 0);
+header("Content-Type: application/json; charset=utf-8");
+
+$msgID    = (int)($_POST["id"] ?? 0);
 $username = trim($_POST["username"] ?? "");
 
-if (!$msgID || !$username)
-    exit(json_encode(["status"=>"error","msg"=>"invalid"]));
+if (!$msgID || $username === "") {
+    echo json_encode(["status" => "error", "msg" => "invalid input"]);
+    exit;
+}
 
-// Find user
+/* -------------------------------------------------
+   1) Find client record by email or full_name
+------------------------------------------------- */
 $stmt = $conn->prepare("
-    SELECT id FROM users
+    SELECT id
+    FROM users
     WHERE email ILIKE ?
        OR full_name ILIKE ?
     LIMIT 1
@@ -18,14 +25,19 @@ $stmt = $conn->prepare("
 $stmt->execute([$username, $username]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$user)
-    exit(json_encode(["status"=>"error","msg"=>"no user"]));
+if (!$user) {
+    echo json_encode(["status" => "error", "msg" => "user not found"]);
+    exit;
+}
 
-$client_id = $user["id"];
+$client_id = (int)$user["id"];
 
-// Fetch message
+/* -------------------------------------------------
+   2) Ensure this message belongs to this client
+      and was sent by the client
+------------------------------------------------- */
 $stmt = $conn->prepare("
-    SELECT sender_type, created_at, deleted
+    SELECT id, sender_type, deleted
     FROM chat
     WHERE id = ? AND client_id = ?
     LIMIT 1
@@ -33,30 +45,33 @@ $stmt = $conn->prepare("
 $stmt->execute([$msgID, $client_id]);
 $msg = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$msg)
-    exit(json_encode(["status"=>"error","msg"=>"missing msg"]));
-
-if ($msg["deleted"])
-    exit(json_encode(["status"=>"ok","type"=>"already-deleted"]));
-
-$isClient = ($msg["sender_type"] === "client");
-$age = (time() - strtotime($msg["created_at"])) / 60;
-
-// UNSEND (<10 min)
-if ($isClient && $age <= 10) {
-
-    $del = $conn->prepare("
-        UPDATE chat
-        SET deleted = TRUE, deleted_at = NOW(), message = '', edited = FALSE
-        WHERE id = ?
-    ");
-    $del->execute([$msgID]);
-
-    $rm = $conn->prepare("DELETE FROM chat_reactions WHERE chat_id = ?");
-    $rm->execute([$msgID]);
-
-    exit(json_encode(["status"=>"ok","type"=>"unsent"]));
+if (!$msg) {
+    echo json_encode(["status" => "error", "msg" => "message not found"]);
+    exit;
 }
 
-// SELF-DELETE ONLY
-exit(json_encode(["status"=>"ok","type"=>"self-delete"]));
+// Only allow client to delete their own messages
+if ($msg["sender_type"] !== "client") {
+    echo json_encode(["status" => "error", "msg" => "not your message"]);
+    exit;
+}
+
+// Already deleted → nothing to do
+if (!empty($msg["deleted"])) {
+    echo json_encode(["status" => "ok", "type" => "already-deleted"]);
+    exit;
+}
+
+/* -------------------------------------------------
+   3) Soft delete: clear text, mark deleted
+   (load_messages_client.php will show placeholder)
+------------------------------------------------- */
+$upd = $conn->prepare("
+    UPDATE chat
+    SET message = '', deleted = TRUE, edited = FALSE
+    WHERE id = ? AND client_id = ? AND sender_type = 'client'
+");
+$upd->execute([$msgID, $client_id]);
+
+echo json_encode(["status" => "ok", "type" => "deleted"]);
+exit;
