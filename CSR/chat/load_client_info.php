@@ -49,10 +49,11 @@ try {
         : "Unlocked";
 
     // Permission Flags
-    $isAssignedToMe = ($c["assigned_csr"] === $currentCSR) ? "yes" : "no";
-    $isLocked       = ($c["assigned_csr"] !== $currentCSR && !empty($c["assigned_csr"]))
-        ? "true"
-        : "false";
+    $isAssignedToMe = (strcasecmp($c["assigned_csr"], $currentCSR) === 0) ? "yes" : "no";
+    $isLocked = (!empty($c["assigned_csr"]) && strcasecmp($c["assigned_csr"], $currentCSR) !== 0)
+    ? "true"
+    : "false";
+
 
     // ======================================================
     // TICKET STATUS
