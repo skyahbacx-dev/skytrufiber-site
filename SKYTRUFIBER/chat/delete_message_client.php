@@ -7,15 +7,17 @@ header("Content-Type: application/json; charset=utf-8");
 $msgID  = (int)($_POST["id"] ?? 0);
 $ticket = (int)($_POST["ticket"] ?? 0);
 
+// ----------------------------------------------------------
+// VALIDATE INPUT
+// ----------------------------------------------------------
 if (!$msgID || !$ticket) {
     echo json_encode(["status" => "error", "msg" => "Invalid input"]);
     exit;
 }
 
-/* -------------------------------------------------
-   1) Ensure this message belongs to this ticket
-      and was sent by the client
-------------------------------------------------- */
+// ----------------------------------------------------------
+// VALIDATE MESSAGE BELONGS TO THIS TICKET AND IS CLIENT-SENT
+// ----------------------------------------------------------
 $stmt = $conn->prepare("
     SELECT id, sender_type, deleted
     FROM chat
@@ -30,7 +32,6 @@ if (!$msg) {
     exit;
 }
 
-// Only allow client to delete their own messages
 if ($msg["sender_type"] !== "client") {
     echo json_encode(["status" => "error", "msg" => "Not your message"]);
     exit;
@@ -42,10 +43,9 @@ if (!empty($msg["deleted"])) {
     exit;
 }
 
-/* -------------------------------------------------
-   2) Soft delete: clear text, mark deleted
-   (load_messages_client.php will show placeholder)
-------------------------------------------------- */
+// ----------------------------------------------------------
+// SOFT DELETE MESSAGE (clear text, mark deleted)
+// ----------------------------------------------------------
 $upd = $conn->prepare("
     UPDATE chat
     SET message = '', deleted = TRUE, edited = FALSE
