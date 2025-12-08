@@ -2,7 +2,7 @@
    SkyTruFiber Client Chat System — FINAL VERSION (2025)
    + Auto Logout on Resolved
    + Auto Greeting
-   + Floating Quick Suggestions (Auto-Send on Click)
+   + Smart Assistant Bubble Suggestions
    + Mobile Optimized
 ============================================================ */
 
@@ -10,6 +10,7 @@
 let editing = false;
 let activePopup = null;
 const username = new URLSearchParams(window.location.search).get("username");
+let suggestionShown = false;
 
 /* ============================================================
    INIT
@@ -25,22 +26,19 @@ $(document).ready(() => {
         return;
     }
 
-    // Move popup
+    // Move popup inside modal
     const staticPopup = $("#msg-action-popup");
     if (staticPopup.length) $(".chat-modal").append(staticPopup.detach());
 
-    // Floating Quick Reply Buttons
-    insertQuickReplies();
-
-    // Load chat then auto-greet if first time
+    // Load chat → then check if suggestions should appear
     loadMessages(true, () => {
         checkFirstTimeGreeting();
     });
 
-    // Ticket status polling
+    // Check ticket status
     checkTicketStatus();
 
-    // Poll server every 3.5 seconds
+    // Poll server
     setInterval(() => {
         if (!editing && !activePopup) {
             fetchNewMessages();
@@ -57,7 +55,7 @@ $(document).ready(() => {
         }
     });
 
-    /* THEME TOGGLE */
+    /* THEME */
     $("#theme-toggle").click(toggleTheme);
 });
 
@@ -71,46 +69,77 @@ function toggleTheme() {
 }
 
 /* ============================================================
-   FLOATING QUICK SUGGESTIONS
+   SMART ASSISTANT SUGGESTION BUBBLE
 ============================================================ */
-function insertQuickReplies() {
+function insertSuggestionBubble() {
 
-    const html = `
-        <div id="quick-replies" class="quick-suggestions">
-            <button class="qr-btn">I am experiencing no internet.</button>
-            <button class="qr-btn">My connection is slow.</button>
-            <button class="qr-btn">My router is blinking red.</button>
-            <button class="qr-btn">I already restarted my router.</button>
-            <button class="qr-btn">Please assist me. Thank you.</button>
+    if (suggestionShown) return; // prevent duplicates
+    suggestionShown = true;
+
+    const bubble = `
+        <div class="message received system-suggest" data-msg-id="suggest-1">
+            <div class="message-avatar">
+                <img src="../../SKYTRUFIBER.png">
+            </div>
+
+            <div class="message-content">
+                <div class="message-bubble" style="
+                    background:#e8f3ff;
+                    color:#003c75;
+                ">
+                    <strong>SkyTru Smart Assistant</strong><br>
+                    Please select an option below:
+                    <div class="suggest-buttons" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px;">
+                        <button class="suggest-btn">I am experiencing no internet.</button>
+                        <button class="suggest-btn">My connection is slow.</button>
+                        <button class="suggest-btn">My router is blinking red.</button>
+                        <button class="suggest-btn">I already restarted my router.</button>
+                        <button class="suggest-btn">Please assist me. Thank you.</button>
+                    </div>
+                </div>
+                <div class="message-time">Now</div>
+            </div>
         </div>
     `;
 
-    $(html).insertBefore(".chat-input-area");
+    $("#chat-messages").append(bubble);
+    scrollToBottom();
+}
 
-    // AUTO-SEND QUICK REPLY
-    $(document).on("click", ".qr-btn", function () {
-        const text = $(this).text();
-        $("#message-input").val(text);
-        sendMessage(); // sends immediately
+// When a suggestion is clicked → auto-send
+$(document).on("click", ".suggest-btn", function () {
+
+    const text = $(this).text();
+
+    // Remove suggestion bubble
+    $(".system-suggest").remove();
+
+    const tempId = appendClientBubble(text);
+
+    $.post("send_message_client.php", { username, message: text }, () => {
+        $(`.message[data-msg-id='${tempId}']`).remove();
+        fetchNewMessages();
     });
-}
-
-// Hide quick replies on first message sent
-function hideQuickReplies() {
-    $("#quick-replies").slideUp(200);
-}
+});
 
 /* ============================================================
-   AUTO GREETING — FIRST TIME USER
+   AUTO GREETING + Suggestion Trigger
 ============================================================ */
 function checkFirstTimeGreeting() {
     $.post("check_first_message.php", { username }, function (res) {
-        if (res.trim() !== "empty") return;
 
-        $.post("send_message_client.php", {
-            username,
-            message: "Good day! How may we assist you today?"
-        }, () => fetchNewMessages());
+        if (res.trim() === "empty") {
+
+            // Auto greeting
+            $.post("send_message_client.php", {
+                username,
+                message: "Good day! How may we assist you today?"
+            });
+
+            // Show assistant options bubble
+            insertSuggestionBubble();
+
+        }
     });
 }
 
@@ -132,7 +161,8 @@ function applyTicketStatus(status) {
 
         msgBox.prop("disabled", true);
         sendBtn.prop("disabled", true);
-        $("#quick-replies").remove();
+
+        $(".system-suggest").remove();
 
         $("#chat-messages").html(`
             <div class="system-message">
@@ -145,7 +175,6 @@ function applyTicketStatus(status) {
             </div>
         `);
 
-        // AUTO LOGOUT
         setTimeout(() => {
             window.location.href = "../chat/logout.php";
         }, 5000);
@@ -165,7 +194,8 @@ function sendMessage() {
     const msg = $("#message-input").val().trim();
     if (!msg) return;
 
-    hideQuickReplies(); // hide suggestions after first message
+    // Remove suggestions as soon as user sends something
+    $(".system-suggest").remove();
 
     const tempId = appendClientBubble(msg);
     $("#message-input").val("");
@@ -178,7 +208,6 @@ function sendMessage() {
 
 function appendClientBubble(msg) {
     const id = "temp-" + Date.now();
-
     $("#chat-messages").append(`
         <div class="message sent no-avatar" data-msg-id="${id}">
             <div class="message-content">
@@ -187,7 +216,6 @@ function appendClientBubble(msg) {
             </div>
         </div>
     `);
-
     scrollToBottom();
     return id;
 }
@@ -204,8 +232,8 @@ function loadMessages(scrollBottom = false, callback = null) {
         $("#chat-messages").html(html);
         bindActionToolbar();
 
-        // If CSR sent something first, hide suggestions
-        if (!wasEmpty) hideQuickReplies();
+        // Chat not empty? → Hide suggestions
+        if (!wasEmpty) $(".system-suggest").remove();
 
         if (scrollBottom) scrollToBottom();
         if (callback) callback();
@@ -224,7 +252,6 @@ function fetchNewMessages() {
         incoming.each(function () {
             const id = $(this).data("msg-id");
             if ($(`.message[data-msg-id='${id}']`).length) return;
-
             $("#chat-messages").append($(this));
         });
 
@@ -233,7 +260,7 @@ function fetchNewMessages() {
 }
 
 /* ============================================================
-   SCROLLING
+   SCROLL TO BOTTOM
 ============================================================ */
 function scrollToBottom() {
     const m = $("#chat-messages");
@@ -243,7 +270,7 @@ function scrollToBottom() {
 $("#scroll-bottom-btn").click(scrollToBottom);
 
 /* ============================================================
-   ACTION TOOLBAR (EDIT / DELETE)
+   ACTION TOOLBAR (Edit / Delete)
 ============================================================ */
 function bindActionToolbar() {
     $(".more-btn").off("click").on("click", function (e) {
@@ -275,7 +302,7 @@ function closePopup() {
     activePopup = null;
 }
 
-/* Popup actions */
+/* POPUP ACTIONS */
 $(document).on("click", ".action-edit", function () {
     startEdit($("#msg-action-popup").data("msgId"));
     closePopup();
@@ -323,7 +350,7 @@ $(document).on("click", ".edit-cancel", () => {
 });
 
 /* ============================================================
-   LOGOUT BUTTON
+   LOGOUT
 ============================================================ */
 $(document).on("click", "#logout-btn", function () {
     if (confirm("Are you sure you want to log out?")) {
