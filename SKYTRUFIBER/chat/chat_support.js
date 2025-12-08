@@ -1,8 +1,9 @@
 /* ============================================================
-   SkyTruFiber Client Chat System — FINAL VERSION
+   SkyTruFiber Client Chat System — FINAL VERSION (2025)
    + Auto Logout on Resolved
    + Auto Greeting
-   + Quick Suggestions
+   + Floating Quick Suggestions (Auto-Send on Click)
+   + Mobile Optimized
 ============================================================ */
 
 /* ---------------- GLOBAL STATE ---------------- */
@@ -26,21 +27,20 @@ $(document).ready(() => {
 
     // Move popup
     const staticPopup = $("#msg-action-popup");
-    if (staticPopup.length) {
-        $(".chat-modal").append(staticPopup.detach());
-    }
+    if (staticPopup.length) $(".chat-modal").append(staticPopup.detach());
 
-    // Insert QUICK SUGGESTIONS (client-side version)
-    addQuickSuggestions();
+    // Floating Quick Reply Buttons
+    insertQuickReplies();
 
-    // Load chat
+    // Load chat then auto-greet if first time
     loadMessages(true, () => {
-        checkFirstTimeGreeting(); // Send greeting if needed
+        checkFirstTimeGreeting();
     });
 
+    // Ticket status polling
     checkTicketStatus();
 
-    // Poll server
+    // Poll server every 3.5 seconds
     setInterval(() => {
         if (!editing && !activePopup) {
             fetchNewMessages();
@@ -57,7 +57,7 @@ $(document).ready(() => {
         }
     });
 
-    /* THEME */
+    /* THEME TOGGLE */
     $("#theme-toggle").click(toggleTheme);
 });
 
@@ -66,58 +66,51 @@ $(document).ready(() => {
 ============================================================ */
 function toggleTheme() {
     const root = document.documentElement;
-    const isDark = root.getAttribute("data-theme") === "dark";
-    root.setAttribute("data-theme", isDark ? "light" : "dark");
+    const dark = root.getAttribute("data-theme") === "dark";
+    root.setAttribute("data-theme", dark ? "light" : "dark");
 }
 
 /* ============================================================
-   QUICK SUGGESTIONS
+   FLOATING QUICK SUGGESTIONS
 ============================================================ */
-function addQuickSuggestions() {
+function insertQuickReplies() {
 
-    const bar = `
-        <div id="quick-suggest" style="
-            padding:10px;
-            background:#f3f3f3;
-            border-top:1px solid #ccc;
-            display:flex;
-            gap:8px;
-            flex-wrap:wrap;
-        ">
-            <button class="qs-btn">I am experiencing no internet.</button>
-            <button class="qs-btn">My connection is slow.</button>
-            <button class="qs-btn">My router is blinking red.</button>
-            <button class="qs-btn">I already restarted my router.</button>
-            <button class="qs-btn">Please assist me. Thank you.</button>
+    const html = `
+        <div id="quick-replies" class="quick-suggestions">
+            <button class="qr-btn">I am experiencing no internet.</button>
+            <button class="qr-btn">My connection is slow.</button>
+            <button class="qr-btn">My router is blinking red.</button>
+            <button class="qr-btn">I already restarted my router.</button>
+            <button class="qr-btn">Please assist me. Thank you.</button>
         </div>
     `;
 
-    $(".chat-input-area").before(bar);
+    $(html).insertBefore(".chat-input-area");
 
-    $(document).on("click", ".qs-btn", function () {
-        $("#message-input").val($(this).text());
-        $("#message-input").focus();
+    // AUTO-SEND QUICK REPLY
+    $(document).on("click", ".qr-btn", function () {
+        const text = $(this).text();
+        $("#message-input").val(text);
+        sendMessage(); // sends immediately
     });
+}
+
+// Hide quick replies on first message sent
+function hideQuickReplies() {
+    $("#quick-replies").slideUp(200);
 }
 
 /* ============================================================
    AUTO GREETING — FIRST TIME USER
 ============================================================ */
 function checkFirstTimeGreeting() {
-
     $.post("check_first_message.php", { username }, function (res) {
+        if (res.trim() !== "empty") return;
 
-        if (res.trim() === "empty") {
-
-            // Send greeting message automatically
-            $.post("send_message_client.php", {
-                username,
-                message: "Good day! How may we assist you today?"
-            }, () => {
-                fetchNewMessages();
-            });
-
-        }
+        $.post("send_message_client.php", {
+            username,
+            message: "Good day! How may we assist you today?"
+        }, () => fetchNewMessages());
     });
 }
 
@@ -132,18 +125,17 @@ function checkTicketStatus() {
 
 function applyTicketStatus(status) {
 
+    const msgBox = $("#message-input");
+    const sendBtn = $("#send-btn");
+
     if (status === "resolved") {
 
-        $("#message-input").prop("disabled", true);
-        $("#send-btn").prop("disabled", true);
+        msgBox.prop("disabled", true);
+        sendBtn.prop("disabled", true);
+        $("#quick-replies").remove();
 
         $("#chat-messages").html(`
-            <div class="system-message" style="
-                text-align:center;
-                padding:20px;
-                color:#444;
-                font-size:15px;
-            ">
+            <div class="system-message">
                 Your ticket has been marked as 
                 <strong style="color:green;">RESOLVED</strong>.<br><br>
                 Thank you for contacting SkyTruFiber Support!<br><br>
@@ -153,7 +145,7 @@ function applyTicketStatus(status) {
             </div>
         `);
 
-        // AUTO LOGOUT IN 5 SECONDS
+        // AUTO LOGOUT
         setTimeout(() => {
             window.location.href = "../chat/logout.php";
         }, 5000);
@@ -161,8 +153,8 @@ function applyTicketStatus(status) {
         return;
     }
 
-    $("#message-input").prop("disabled", false);
-    $("#send-btn").prop("disabled", false);
+    msgBox.prop("disabled", false);
+    sendBtn.prop("disabled", false);
 }
 
 /* ============================================================
@@ -172,6 +164,8 @@ function sendMessage() {
 
     const msg = $("#message-input").val().trim();
     if (!msg) return;
+
+    hideQuickReplies(); // hide suggestions after first message
 
     const tempId = appendClientBubble(msg);
     $("#message-input").val("");
@@ -183,10 +177,10 @@ function sendMessage() {
 }
 
 function appendClientBubble(msg) {
-    const tempId = "temp-" + Date.now();
+    const id = "temp-" + Date.now();
 
     $("#chat-messages").append(`
-        <div class="message sent no-avatar" data-msg-id="${tempId}">
+        <div class="message sent no-avatar" data-msg-id="${id}">
             <div class="message-content">
                 <div class="message-bubble">${msg}</div>
                 <div class="message-time">Sending...</div>
@@ -195,7 +189,7 @@ function appendClientBubble(msg) {
     `);
 
     scrollToBottom();
-    return tempId;
+    return id;
 }
 
 /* ============================================================
@@ -205,8 +199,13 @@ function loadMessages(scrollBottom = false, callback = null) {
 
     $.post("load_messages_client.php", { username }, html => {
 
+        const wasEmpty = $("#chat-messages").children().length === 0;
+
         $("#chat-messages").html(html);
         bindActionToolbar();
+
+        // If CSR sent something first, hide suggestions
+        if (!wasEmpty) hideQuickReplies();
 
         if (scrollBottom) scrollToBottom();
         if (callback) callback();
@@ -217,14 +216,12 @@ function loadMessages(scrollBottom = false, callback = null) {
    FETCH NEW MESSAGES
 ============================================================ */
 function fetchNewMessages() {
-
     $.post("load_messages_client.php", { username }, html => {
 
         const temp = $("<div>").html(html);
-        const newMsgs = temp.find(".message");
+        const incoming = temp.find(".message");
 
-        newMsgs.each(function () {
-
+        incoming.each(function () {
             const id = $(this).data("msg-id");
             if ($(`.message[data-msg-id='${id}']`).length) return;
 
@@ -239,13 +236,14 @@ function fetchNewMessages() {
    SCROLLING
 ============================================================ */
 function scrollToBottom() {
-    $("#chat-messages").stop().animate({ scrollTop: $("#chat-messages")[0].scrollHeight }, 230);
+    const m = $("#chat-messages");
+    m.stop().animate({ scrollTop: m[0].scrollHeight }, 230);
 }
 
 $("#scroll-bottom-btn").click(scrollToBottom);
 
 /* ============================================================
-   ACTION TOOLBAR
+   ACTION TOOLBAR (EDIT / DELETE)
 ============================================================ */
 function bindActionToolbar() {
     $(".more-btn").off("click").on("click", function (e) {
@@ -255,17 +253,18 @@ function bindActionToolbar() {
 }
 
 function openPopup(id, anchor) {
+
     const popup = $("#msg-action-popup");
     const modal = $(".chat-modal");
 
     popup.data("msgId", id).show();
 
-    const aOffset = $(anchor).offset();
-    const mOffset = modal.offset();
+    const a = $(anchor).offset();
+    const m = modal.offset();
 
     popup.css({
-        top: aOffset.top - mOffset.top + 32,
-        left: aOffset.left - mOffset.left - popup.outerWidth() + 20
+        top: a.top - m.top + 32,
+        left: a.left - m.left - popup.outerWidth() + 20
     });
 
     activePopup = popup;
@@ -276,7 +275,7 @@ function closePopup() {
     activePopup = null;
 }
 
-/* POPUP ACTIONS */
+/* Popup actions */
 $(document).on("click", ".action-edit", function () {
     startEdit($("#msg-action-popup").data("msgId"));
     closePopup();
@@ -296,10 +295,10 @@ function startEdit(id) {
     editing = true;
 
     const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
-    const oldText = bubble.text();
+    const old = bubble.text();
 
     bubble.html(`
-        <textarea class="edit-textarea">${oldText}</textarea>
+        <textarea class="edit-textarea">${old}</textarea>
         <div class="edit-actions">
             <button class="edit-save" data-id="${id}">Save</button>
             <button class="edit-cancel">Cancel</button>
@@ -318,7 +317,7 @@ $(document).on("click", ".edit-save", function () {
     });
 });
 
-$(document).on("click", ".edit-cancel", function () {
+$(document).on("click", ".edit-cancel", () => {
     editing = false;
     loadMessages(false);
 });
