@@ -6,20 +6,25 @@ $message = '';
 
 // Handle login POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['password'])) {
-    $emailOrName = trim($_POST['full_name']);
+    $input = trim($_POST['full_name']);
     $password = $_POST['password'];
     $concern = trim($_POST['concern'] ?? '');
 
-    if ($emailOrName && $password) {
+    if ($input && $password) {
         try {
-            // Fetch user by email only (more secure)
-            $stmt = $conn->prepare("SELECT * FROM users WHERE email = :input LIMIT 1");
-            $stmt->execute([':input' => $emailOrName]);
+            // Fetch user by email OR full_name, limit 1 to prevent ambiguity
+            $stmt = $conn->prepare("
+                SELECT * FROM users 
+                WHERE email = :input OR full_name = :input
+                ORDER BY id ASC
+                LIMIT 1
+            ");
+            $stmt->execute([':input' => $input]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user && password_verify($password, $user['password'])) {
 
-                // Regenerate session ID for security
+                // Regenerate session ID
                 session_regenerate_id(true);
 
                 // Retrieve latest ticket for the user
@@ -27,17 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 $ticketStmt->execute([':cid' => $user['id']]);
                 $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
 
-                if (!$lastTicket) {
-                    // No ticket exists → create new ticket
-                    $status = $user['ticket_status'] ?? 'unresolved';
-                    $newTicket = $conn->prepare("INSERT INTO tickets (client_id, status, created_at) VALUES (:cid, :status, NOW())");
-                    $newTicket->execute([
-                        ':cid' => $user['id'],
-                        ':status' => $status
-                    ]);
-                    $ticketId = $conn->lastInsertId();
-                } else if ($lastTicket['status'] === 'resolved') {
-                    // Last ticket resolved → create new ticket
+                if (!$lastTicket || $lastTicket['status'] === 'resolved') {
+                    // Create new ticket if none exists or last ticket resolved
                     $newTicket = $conn->prepare("INSERT INTO tickets (client_id, status, created_at) VALUES (:cid, 'unresolved', NOW())");
                     $newTicket->execute([':cid' => $user['id']]);
                     $ticketId = $conn->lastInsertId();
@@ -51,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 $_SESSION['email'] = $user['email'];
                 $_SESSION['ticket_id'] = $ticketId;
 
-                // Insert first concern message if provided
+                // Insert initial concern message if provided
                 if (!empty($concern)) {
                     $insert = $conn->prepare("
                         INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
@@ -64,12 +60,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                     ]);
                 }
 
-                // Redirect to chat support page
+                // Redirect to chat support
                 header("Location: chat/chat_support.php?ticket=" . $ticketId);
                 exit;
 
             } else {
-                $message = "❌ Invalid email or password.";
+                $message = "❌ Invalid email/full name or password.";
             }
         } catch (PDOException $e) {
             $message = "⚠ Database error: " . htmlspecialchars($e->getMessage());
@@ -117,17 +113,13 @@ a:hover { text-decoration:underline; }
 
 <?php endif; ?>
 
-<!-- LOGIN FORM -->
-
 <form id="loginForm" method="POST">
-    <input type="text" name="full_name" placeholder="Email" required>
+    <input type="text" name="full_name" placeholder="Email or Full Name" required>
     <input type="password" name="password" placeholder="Password" required>
     <textarea name="concern" placeholder="Concern / Inquiry"></textarea>
     <button type="submit">Submit</button>
     <a id="forgotLink">Forgot Password?</a>
 </form>
-
-<!-- FORGOT PASSWORD FORM -->
 
 <form id="forgotForm" class="hidden">
     <p>Enter your email to receive your account number:</p>
@@ -159,7 +151,6 @@ backToLogin.addEventListener('click', e => {
     loginForm.classList.remove('hidden');
 });
 
-// GitHub Actions dispatch for sending account email
 forgotForm.addEventListener('submit', e => {
     e.preventDefault();
     const email = forgotForm.forgot_email.value.trim();
