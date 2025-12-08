@@ -1,335 +1,105 @@
-// ============================================================
-// SkyTruFiber CSR Chat System — TEXT ONLY VERSION + Ticketing
-// ============================================================
-
-let currentClientID = null;
-let messageInterval = null;
-let clientRefreshInterval = null;
-let lastMessageID = 0;
-let editing = false;
-
-$(document).ready(function () {
-
-    loadClients();
-    clientRefreshInterval = setInterval(loadClients, 4000);
-
-    // SEARCH CLIENT
-    $("#client-search").on("keyup", function () {
-        const q = $(this).val().toLowerCase();
-        $("#client-list .client-item").each(function () {
-            $(this).toggle($(this).text().toLowerCase().includes(q));
-        });
-    });
-
-    // SEND MESSAGE
-    $("#send-btn").click(sendMessage);
-    $("#chat-input").keypress(function (e) {
-        if (e.which === 13) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
-
-    // SELECT CLIENT
-    $(document).on("click", ".client-item", function () {
-
-        $(".client-item").removeClass("active-client");
-        $(this).addClass("active-client");
-
-        currentClientID = $(this).data("id");
-
-        $("#chat-client-name").text($(this).data("name"));
-        $("#chat-messages").html("");
-        lastMessageID = 0;
-
-        loadClientInfo(currentClientID);
-        loadMessages(true);
-
-        if (messageInterval) clearInterval(messageInterval);
-        messageInterval = setInterval(fetchNewMessages, 1200);
-    });
-
-    // SCROLL BUTTON
-    $("#chat-messages").on("scroll", function () {
-        const box = this;
-        const dist = box.scrollHeight - box.clientHeight - box.scrollTop;
-        $("#scroll-bottom-btn").toggleClass("show", dist > 80);
-    });
-
-    $("#scroll-bottom-btn").click(scrollToBottom);
-
-    // Close popup if clicked outside
-    $(document).on("click", function (e) {
-        if (!$(e.target).closest("#msg-action-popup, .more-btn").length) {
-            closeActionPopup();
-        }
-    });
-
-    // ============================
-    // Ticket Status Button Handler
-    // ============================
-    $(document).on("click", ".ticket-btn", function () {
-        const newStatus = $(this).data("status");
-        const clientID = $(this).data("id");
-
-        $.post("../chat/ticket_update.php", {
-            client_id: clientID,
-            status: newStatus
-        }, function (response) {
-            if (response === "OK") {
-                loadClientInfo(clientID); // Refresh right panel
-                loadClients();            // Refresh left list
-            }
-        });
-    });
-
-});
-
-// ============================================================
-// SCROLL
-// ============================================================
-function scrollToBottom() {
-    const box = $("#chat-messages");
-    box.stop().animate({ scrollTop: box[0].scrollHeight }, 200);
+<?php
+if (!isset($_SESSION)) session_start();
+if (!isset($_SESSION['csr_user'])) {
+    header("Location: ../csr_login.php");
+    exit;
 }
+$csrUser = $_SESSION["csr_user"];
+?>
 
-// ============================================================
-// LOAD CLIENTS
-// ============================================================
-function loadClients() {
-    $.post("../chat/load_clients.php", html => {
-        $("#client-list").html(html);
+<div id="chat-container">
 
-        if (currentClientID) {
-            $(`.client-item[data-id='${currentClientID}']`).addClass("active-client");
-        }
-    });
-}
+    <!-- LEFT PANEL -->
+    <div class="chat-left-panel">
 
-// ============================================================
-// LOAD CLIENT INFO
-// ============================================================
-function loadClientInfo(id) {
-    $.post("../chat/load_client_info.php", { client_id: id }, html => {
-        $("#client-info-content").html(html);
+        <div class="left-header">
+            <h3>Clients</h3>
 
-        const meta = $("#client-meta");
-
-        if (meta.length) {
-            const isAssignedToMe = meta.data("assigned") === "yes";
-            const isLocked = String(meta.data("locked")) === "true";
-
-            handleChatPermission(isAssignedToMe, isLocked);
-        } else {
-            handleChatPermission(true, false);
-        }
-    });
-}
-
-// ============================================================
-// ENABLE / DISABLE CHAT
-// ============================================================
-function handleChatPermission(isAssignedToMe, isLocked) {
-
-    const bar = $(".chat-input-area");
-    const input = $("#chat-input");
-    const sendBtn = $("#send-btn");
-
-    if (!isAssignedToMe || isLocked) {
-        bar.addClass("disabled");
-        input.prop("disabled", true);
-        sendBtn.prop("disabled", true);
-
-        input.attr("placeholder",
-            isLocked ?
-            "Client is locked — you can't send messages." :
-            "Client is assigned to another CSR — you can't send messages."
-        );
-
-    } else {
-        bar.removeClass("disabled");
-        input.prop("disabled", false);
-        sendBtn.prop("disabled", false);
-        input.attr("placeholder", "Type a message...");
-    }
-}
-
-// ============================================================
-// LOAD MESSAGES
-// ============================================================
-function loadMessages(scrollBottom = false) {
-
-    if (!currentClientID) return;
-
-    $.post("../chat/load_messages.php", { client_id: currentClientID }, function (html) {
-
-        $("#chat-messages")
-            .removeClass("chat-slide-in")
-            .html(html);
-
-        setTimeout(() => {
-            $("#chat-messages").addClass("chat-slide-in");
-        }, 10);
-
-        bindActionButtons();
-
-        const last = $("#chat-messages .message:last").data("msg-id");
-        if (last) lastMessageID = last;
-
-        if (scrollBottom) scrollToBottom();
-    });
-}
-
-// ============================================================
-// POLLING — NEW MESSAGES
-// ============================================================
-function fetchNewMessages() {
-
-    if (!currentClientID) return;
-
-    $.post("../chat/load_messages.php", { client_id: currentClientID }, function (html) {
-
-        const temp = $("<div>").html(html);
-        const incoming = temp.find(".message");
-
-        incoming.each(function () {
-            const id = $(this).data("msg-id");
-            if ($(`.message[data-msg-id='${id}']`).length) return;
-            $("#chat-messages").append($(this));
-        });
-
-        bindActionButtons();
-
-        const box = $("#chat-messages")[0];
-        const dist = box.scrollHeight - box.clientHeight - box.scrollTop;
-        if (dist < 150) scrollToBottom();
-    });
-}
-
-// ============================================================
-// SEND MESSAGE
-// ============================================================
-function sendMessage() {
-
-    const msg = $("#chat-input").val().trim();
-
-    if (!msg || !currentClientID) return;
-
-    appendTempBubble(msg);
-
-    $.post("../chat/send_message.php", {
-        client_id: currentClientID,
-        message: msg
-    })
-    .done(() => {
-        $("#chat-input").val("");
-        fetchNewMessagesSmooth();
-    })
-    .fail(() => {
-        $(".temp-msg .message-time").text("Failed");
-    });
-}
-
-function fetchNewMessagesSmooth() {
-    setTimeout(fetchNewMessages, 200);
-}
-
-// ============================================================
-// TEMP BUBBLE
-// ============================================================
-function appendTempBubble(msg) {
-    $("#chat-messages").append(`
-        <div class="message sent temp-msg">
-            <div class="message-content">
-                <div class="message-bubble">${msg}</div>
-                <div class="message-time">Sending...</div>
+            <!-- Ticket Filters -->
+            <div class="ticket-filter-buttons">
+                <button class="ticket-filter" data-filter="all">All</button>
+                <button class="ticket-filter" data-filter="unresolved">Unresolved</button>
+                <button class="ticket-filter" data-filter="resolved">Resolved</button>
             </div>
-        </div>`);
-    scrollToBottom();
-}
 
-// ============================================================
-// ACTION POPUP
-// ============================================================
-function bindActionButtons() {
+            <input type="text" id="client-search" placeholder="Search clients...">
+        </div>
 
-    $(".more-btn").off("click").on("click", function (e) {
-        e.stopPropagation();
-        openActionPopup($(this).data("id"), this);
-    });
-}
+        <div id="client-list" class="client-list"></div>
+    </div>
 
-function openActionPopup(id, anchor) {
+    <!-- MIDDLE CHAT PANEL -->
+    <div class="chat-middle-panel">
+        <div class="chat-wrapper">
 
-    const popup = $("#msg-action-popup");
-    popup.data("msg-id", id);
+            <!-- CHAT HEADER -->
+            <div class="chat-header">
+                <div class="chat-with">
+                    <h3 id="chat-client-name">Select a Client</h3>
+                    <span id="client-status" class="status-dot offline"></span>
+                </div>
 
-    const bubble = $(anchor).closest(".message-content");
-    const bubbleOffset = bubble.offset();
-    const bubbleWidth = bubble.outerWidth();
-    const chatOffset = $(".chat-wrapper").offset();
+                <!-- Ticket Status Selector -->
+                <div class="ticket-status-control">
+                    <select id="ticket-status-dropdown" disabled>
+                        <option value="unresolved">Unresolved</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                </div>
+            </div>
 
-    let top = bubbleOffset.top - chatOffset.top - popup.outerHeight() - 10;
-    let left = bubbleOffset.left - chatOffset.left + bubbleWidth - popup.outerWidth();
+            <!-- CHAT MESSAGES -->
+            <div id="chat-messages" class="chat-messages"></div>
 
-    popup.css({ top, left, display: "block" });
+            <!-- SCROLL TO BOTTOM BUTTON -->
+            <button id="scroll-bottom-btn" class="scroll-bottom-btn">
+                <i class="fa fa-arrow-down"></i>
+            </button>
 
-    popup.addClass("show");
-}
+            <!-- QUICK SUGGESTIONS -->
+            <div class="quick-suggestions">
+                <button class="qs-btn">No internet</button>
+                <button class="qs-btn">Slow connection</button>
+                <button class="qs-btn">Router blinking red</button>
+                <button class="qs-btn">Please try restarting the router</button>
+                <button class="qs-btn">Network checking…</button>
+            </div>
 
-function closeActionPopup() {
-    $("#msg-action-popup").removeClass("show").hide();
-}
+            <!-- CHAT INPUT -->
+            <div id="chat-input-wrapper" class="chat-input-area">
+                <div class="chat-input-box">
+                    <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
+                </div>
 
-// ============================================================
-// EDIT MESSAGE
-// ============================================================
-$(document).on("click", ".action-edit", function () {
-    const id = $("#msg-action-popup").data("msg-id");
-    startCSRMessageEdit(id);
-    closeActionPopup();
-});
+                <button id="send-btn" class="chat-send-btn">
+                    <i class="fa fa-paper-plane"></i>
+                </button>
+            </div>
 
-function startCSRMessageEdit(id) {
+        </div> <!-- /chat-wrapper -->
 
-    editing = true;
+        <!-- ACTION MENU POPUP -->
+        <div id="msg-action-popup" class="msg-action-popup">
+            <button class="action-edit"><i class="fa fa-pen"></i> Edit</button>
+            <button class="action-unsend"><i class="fa fa-ban"></i> Unsend</button>
+            <button class="action-delete"><i class="fa fa-trash"></i> Delete</button>
+            <button class="action-cancel">Cancel</button>
+        </div>
 
-    const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
-    const oldText = bubble.text().trim();
+    </div> <!-- /chat-middle-panel -->
 
-    bubble.html(`
-        <textarea class="edit-textarea">${oldText}</textarea>
-        <div class="edit-actions">
-            <button class="edit-save" data-id="${id}">Save</button>
-            <button class="edit-cancel">Cancel</button>
-        </div>`);
-}
+    <!-- RIGHT PANEL -->
+    <div class="chat-right-panel">
+        <div class="client-info-panel">
+            <h3>Client Details</h3>
+            <p>Select a client to view details</p>
+            <div id="client-info-content"></div>
+        </div>
+    </div>
 
-$(document).on("click", ".edit-save", function () {
-    const id = $(this).data("id");
-    const newText = $(this).closest(".message-bubble").find("textarea").val().trim();
+</div> <!-- /chat-container -->
 
-    $.post("../chat/edit_message.php", { id, message: newText }, () => {
-        editing = false;
-        loadMessages(true);
-    });
-});
+<!-- Hidden CSR username -->
+<input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
 
-$(document).on("click", ".edit-cancel", function () {
-    editing = false;
-    loadMessages(false);
-});
-
-// ============================================================
-// DELETE MESSAGE (UNSEND)
-// ============================================================
-$(document).on("click", ".action-delete, .action-unsend", function () {
-
-    const id = $("#msg-action-popup").data("msg-id");
-
-    $.post("../chat/delete_message.php", { id }, () => {
-        loadMessages(false);
-    });
-
-    closeActionPopup();
-});
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
