@@ -1,5 +1,5 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — TEXT ONLY VERSION
+// SkyTruFiber CSR Chat System — TEXT ONLY VERSION + Ticketing
 // ============================================================
 
 let currentClientID = null;
@@ -63,6 +63,24 @@ $(document).ready(function () {
         if (!$(e.target).closest("#msg-action-popup, .more-btn").length) {
             closeActionPopup();
         }
+    });
+
+    // ============================
+    // Ticket Status Button Handler
+    // ============================
+    $(document).on("click", ".ticket-btn", function () {
+        const newStatus = $(this).data("status");
+        const clientID = $(this).data("id");
+
+        $.post("../chat/ticket_update.php", {
+            client_id: clientID,
+            status: newStatus
+        }, function (response) {
+            if (response === "OK") {
+                loadClientInfo(clientID); // Refresh right panel
+                loadClients();            // Refresh left list
+            }
+        });
     });
 
 });
