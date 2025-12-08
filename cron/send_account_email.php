@@ -1,17 +1,20 @@
 <?php
-include '../db_connect.php';
+include __DIR__ . '/../db_connect.php';
 require __DIR__ . '/../vendor/autoload.php'; // Composer autoload
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Security token
-if ($_GET['token'] ?? '' !== 'YOUR_SECRET_TOKEN') {
+// Read from environment variables
+$token = getenv('EMAIL_TOKEN') ?: '';
+$email = getenv('EMAIL_TO') ?: '';
+$smtpPassword = getenv('SMTP_PASSWORD') ?: '';
+
+if ($token !== 'YOUR_SECRET_TOKEN') {
     http_response_code(403);
     exit('Unauthorized');
 }
 
-$email = $_GET['email'] ?? '';
 if (!$email) exit('No email provided');
 
 $stmt = $conn->prepare("SELECT full_name, account_number FROM users WHERE email = :email LIMIT 1");
@@ -26,7 +29,7 @@ try {
     $mail->Host = 'smtp.gmail.com';
     $mail->SMTPAuth = true;
     $mail->Username = 'skytrufiberbilling@gmail.com';
-    $mail->Password = 'YOUR_APP_PASSWORD';
+    $mail->Password = $smtpPassword; // from GitHub secret
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port = 587;
 
