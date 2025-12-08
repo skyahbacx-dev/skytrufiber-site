@@ -19,13 +19,16 @@
     --input-bg: #ffffff;
     --input-border: #ccc;
 
-    --preview-bg: #fff;
-
-    --lightbox-bg: rgba(0,0,0,0.92);
-    --scroll-btn-bg: #0084ff;
-
     --disabled-bg: #f4f4f4;
     --disabled-text: #999;
+
+    --scroll-btn-bg: #0084ff;
+
+    --ticket-resolved: #27ae60;
+    --ticket-unresolved: #ff4747;
+
+    --system-msg-bg: #e9f5ff;
+    --system-msg-text: #004b8d;
 }
 
 :root[data-theme="dark"] {
@@ -46,11 +49,11 @@
     --input-bg: #1b1b1b;
     --input-border: #333;
 
-    --preview-bg: #1b1b1b;
-    --scroll-btn-bg: #1a73e8;
-
     --disabled-bg: #202020;
     --disabled-text: #777;
+
+    --system-msg-bg: #1a2838;
+    --system-msg-text: #7dc1ff;
 }
 
 /* ============================================================
@@ -101,7 +104,7 @@ body {
    HEADER
 ============================================================ */
 .chat-header {
-    height: 82px;
+    height: 92px;
     padding: 14px 20px;
     background: var(--header-bg);
     color: var(--header-text);
@@ -122,6 +125,26 @@ body {
     border-radius: 50%;
 }
 
+/* TICKET LABEL */
+.ticket-label {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 8px;
+    font-size: 12px;
+    border-radius: 8px;
+}
+
+.ticket-resolved {
+    background: var(--ticket-resolved);
+    color: #fff;
+}
+
+.ticket-unresolved {
+    background: var(--ticket-unresolved);
+    color: #fff;
+}
+
+/* Logout */
 .logout-btn {
     margin-left: 14px;
     background: #ff4040;
@@ -179,6 +202,18 @@ body {
     border-radius: 4px;
 }
 
+/* SYSTEM MESSAGE */
+.system-message {
+    background: var(--system-msg-bg);
+    padding: 14px;
+    border-radius: 12px;
+    color: var(--system-msg-text);
+    font-size: 15px;
+    text-align: center;
+    margin: 10px auto;
+    max-width: 80%;
+}
+
 /* ============================================================
    MESSAGE BUBBLES
 ============================================================ */
@@ -209,7 +244,6 @@ body {
 .message-content {
     max-width: 70%;
     position: relative;
-    z-index: 10;
 }
 
 .message-bubble {
@@ -238,7 +272,7 @@ body {
 }
 
 /* ============================================================
-   ACTION TOOLBAR — REACT REMOVED
+   ACTION TOOLBAR
 ============================================================ */
 .action-toolbar {
     position: absolute;
@@ -296,8 +330,37 @@ body {
     text-align: left;
 }
 
+#msg-action-popup button:hover {
+    background: rgba(0,0,0,0.06);
+}
+
 /* ============================================================
-   INPUT AREA — MEDIA REMOVED
+   QUICK SUGGESTIONS
+============================================================ */
+.quick-suggestions {
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--input-border);
+    overflow-x: auto;
+}
+
+.quick-suggestions button {
+    background: #e8e8e8;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.quick-suggestions button:hover {
+    background: #d6d6d6;
+}
+
+/* ============================================================
+   INPUT AREA
 ============================================================ */
 .chat-input-area {
     padding: 14px;
@@ -336,10 +399,11 @@ body {
     border: none;
     background: var(--bubble-sent);
     color: white;
+    cursor: pointer;
 }
 
 /* ============================================================
-   SCROLL BUTTON
+   SCROLL TO BOTTOM
 ============================================================ */
 .scroll-bottom-btn {
     position: absolute;
@@ -359,12 +423,8 @@ body {
     pointer-events: none;
     transition: all .25s;
 }
+
 .scroll-bottom-btn.show {
     opacity: 1;
     pointer-events: auto;
 }
-
-/* ============================================================
-   LIGHTBOX (unchanged)
-============================================================ */
-/* (Left as-is because media browsing still works for CSR uploads) */
