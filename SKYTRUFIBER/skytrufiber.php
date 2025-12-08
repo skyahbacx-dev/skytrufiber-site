@@ -12,12 +12,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
     if ($emailOrName && $password) {
         try {
-            // Fetch user by email or full name
-            $stmt = $conn->prepare("SELECT * FROM users WHERE email = :input OR full_name = :input LIMIT 1");
+            // Fetch user by email only (more secure)
+            $stmt = $conn->prepare("SELECT * FROM users WHERE email = :input LIMIT 1");
             $stmt->execute([':input' => $emailOrName]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user && password_verify($password, $user['password'])) {
+
+                // Regenerate session ID for security
+                session_regenerate_id(true);
 
                 // Retrieve latest ticket for the user
                 $ticketStmt = $conn->prepare("SELECT id, status FROM tickets WHERE client_id = :cid ORDER BY created_at DESC LIMIT 1");
@@ -25,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
 
                 if (!$lastTicket) {
-                    // No ticket exists → create one using user's ticket_status
+                    // No ticket exists → create new ticket
                     $status = $user['ticket_status'] ?? 'unresolved';
                     $newTicket = $conn->prepare("INSERT INTO tickets (client_id, status, created_at) VALUES (:cid, :status, NOW())");
                     $newTicket->execute([
@@ -48,9 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 $_SESSION['email'] = $user['email'];
                 $_SESSION['ticket_id'] = $ticketId;
 
-                // Insert first concern message
+                // Insert first concern message if provided
                 if (!empty($concern)) {
-                    $insert = $conn->prepare("INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at) VALUES (:tid, :cid, 'client', :msg, 0, 0, NOW())");
+                    $insert = $conn->prepare("
+                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
+                        VALUES (:tid, :cid, 'client', :msg, TRUE, FALSE, NOW())
+                    ");
                     $insert->execute([
                         ':tid' => $ticketId,
                         ':cid' => $user['id'],
@@ -63,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 exit;
 
             } else {
-                $message = "❌ Invalid email/full name or password.";
+                $message = "❌ Invalid email or password.";
             }
         } catch (PDOException $e) {
             $message = "⚠ Database error: " . htmlspecialchars($e->getMessage());
@@ -103,14 +109,18 @@ a:hover { text-decoration:underline; }
     <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
     <h2>Customer Service Portal</h2>
 
-```
 <?php if ($message): ?>
-    <p class="message error"><?= htmlspecialchars($message) ?></p>
+
+```
+<p class="message error"><?= htmlspecialchars($message) ?></p>
+```
+
 <?php endif; ?>
 
 <!-- LOGIN FORM -->
+
 <form id="loginForm" method="POST">
-    <input type="text" name="full_name" placeholder="Email or Full Name" required>
+    <input type="text" name="full_name" placeholder="Email" required>
     <input type="password" name="password" placeholder="Password" required>
     <textarea name="concern" placeholder="Concern / Inquiry"></textarea>
     <button type="submit">Submit</button>
@@ -118,6 +128,7 @@ a:hover { text-decoration:underline; }
 </form>
 
 <!-- FORGOT PASSWORD FORM -->
+
 <form id="forgotForm" class="hidden">
     <p>Enter your email to receive your account number:</p>
     <input type="email" name="forgot_email" placeholder="Email" required>
@@ -127,8 +138,6 @@ a:hover { text-decoration:underline; }
 </form>
 
 <p>No account yet? <a href="consent.php">Register here</a></p>
-```
-
 </div>
 
 <script>
