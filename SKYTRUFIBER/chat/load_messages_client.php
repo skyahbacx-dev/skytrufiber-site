@@ -5,12 +5,12 @@ ini_set("error_log", __DIR__ . "/php_errors.log");
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$username = $_POST["username"] ?? "";
+$username = trim($_POST["username"] ?? "");
 if (!$username) exit("");
 
-// ----------------------------------
-// FIND CLIENT BY email OR full name
-// ----------------------------------
+// --------------------------------------------------
+// FIND CLIENT BY EMAIL OR FULL NAME
+// --------------------------------------------------
 $stmt = $conn->prepare("
     SELECT id, full_name, ticket_status
     FROM users
@@ -23,20 +23,19 @@ $client = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$client) exit("");
 
-$client_id = (int)$client["id"];
-$ticket_status = $client["ticket_status"] ?? "unresolved";
+$client_id      = (int)$client["id"];
+$ticket_status  = $client["ticket_status"] ?? "unresolved";
 
-// ----------------------------------------------------------
-// IMPORTANT: If ticket is resolved → return EMPTY MESSAGES
-// ----------------------------------------------------------
+// --------------------------------------------------
+// If RESOLVED → return nothing (JS handles logout + message)
+// --------------------------------------------------
 if ($ticket_status === "resolved") {
-    // Client side script will detect empty messages and clear chat
     exit("");
 }
 
-// ----------------------------------
-// FETCH CHAT MESSAGES (TEXT ONLY)
-// ----------------------------------
+// --------------------------------------------------
+// FETCH CHAT MESSAGES
+//---------------------------------------------------
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted, edited
     FROM chat
@@ -46,18 +45,51 @@ $stmt = $conn->prepare("
 $stmt->execute([$client_id]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// ----------------------------------
-// RENDER MESSAGES (NO MEDIA, NO REACTIONS)
-// ----------------------------------
+// --------------------------------------------------
+// Check if NO messages yet → send Assistant Suggestion Bubble
+// --------------------------------------------------
+$is_first_time = (count($messages) === 0);
+
+// If first-time user → return system suggestion bubble
+if ($is_first_time) {
+
+    echo "
+    <div class='message received system-suggest'>
+        <div class='message-avatar'>
+            <img src='/upload/default-avatar.png'>
+        </div>
+        <div class='message-content'>
+            <div class='message-bubble'>
+                Welcome to SkyTruFiber Support! 😊<br>
+                Here are some quick answers you might be looking for:
+                <div class='suggest-buttons'>
+                    <button class='suggest-btn' data-msg='I am experiencing no internet.'>No internet</button>
+                    <button class='suggest-btn' data-msg='My connection is slow.'>Slow connection</button>
+                    <button class='suggest-btn' data-msg='My router is blinking red.'>Router blinking red</button>
+                    <button class='suggest-btn' data-msg='I already restarted my router.'>Restarted router</button>
+                    <button class='suggest-btn' data-msg='Please assist me. Thank you.'>Need assistance</button>
+                </div>
+            </div>
+            <div class='message-time'>Just now</div>
+        </div>
+    </div>
+    ";
+
+    exit(); // Stop here — no user messages exist yet
+}
+
+// --------------------------------------------------
+// RENDER EXISTING CHAT MESSAGES
+//--------------------------------------------------
 foreach ($messages as $msg) {
 
-    $id      = $msg["id"];
-    $sender  = ($msg["sender_type"] === "csr") ? "received" : "sent";
-    $time    = date("g:i A", strtotime($msg["created_at"]));
+    $id     = $msg["id"];
+    $sender = ($msg["sender_type"] === "csr") ? "received" : "sent";
+    $time   = date("g:i A", strtotime($msg["created_at"]));
 
     echo "<div class='message $sender' data-msg-id='$id'>";
 
-    // CSR avatar
+    // CSR Avatar
     if ($sender === "received") {
         echo "<div class='message-avatar'>
                 <img src='/upload/default-avatar.png'>
@@ -67,30 +99,29 @@ foreach ($messages as $msg) {
     echo "<div class='message-content'>";
 
     // --------------------------
-    // TEXT BUBBLE
+    // MESSAGE BUBBLE
     // --------------------------
     if (!$msg["deleted"]) {
 
         $text = trim($msg["message"]);
-        if ($text !== "") {
-            echo "<div class='message-bubble'>";
-            echo nl2br(htmlspecialchars($text));
-            echo "</div>";
-        }
+
+        echo "<div class='message-bubble'>";
+        echo nl2br(htmlspecialchars($text));
+        echo "</div>";
 
     } else {
         echo "<div class='message-bubble removed-text'>Message removed</div>";
     }
 
     // --------------------------
-    // TIME + (edited)
+    // TIME + EDITED
     // --------------------------
     echo "<div class='message-time'>$time";
     if ($msg["edited"]) echo " <span class='edited-label'>(edited)</span>";
     echo "</div>";
 
     // --------------------------
-    // ACTION TOOLBAR (NO REACTIONS)
+    // ACTION TOOLBAR
     // --------------------------
     echo "<div class='action-toolbar'>";
     if ($sender === "sent" && !$msg["deleted"]) {
@@ -98,7 +129,8 @@ foreach ($messages as $msg) {
     }
     echo "</div>";
 
-    echo "</div>"; // message-content
+    echo "</div>"; // content
     echo "</div>"; // wrapper
 }
+
 ?>
