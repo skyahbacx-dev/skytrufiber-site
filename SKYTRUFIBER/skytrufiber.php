@@ -1,55 +1,6 @@
 <?php
 session_start();
 include '../db_connect.php';
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-
-$message = '';
-$forgotMessage = '';
-
-// LOGIN POST
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'])) {
-    $email_or_name = trim($_POST['full_name']);
-    $password = $_POST['password'] ?? '';
-    $concern = trim($_POST['concern'] ?? '');
-
-    if ($email_or_name && $password) {
-        try {
-            $stmt = $conn->prepare("SELECT * FROM users WHERE email = :input OR full_name = :input LIMIT 1");
-            $stmt->execute([':input' => $email_or_name]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($user && password_verify($password, $user['password'])) {
-                // Reset ticket_status
-                $updateTicket = $conn->prepare("UPDATE users SET ticket_status = 'unresolved' WHERE id = :cid");
-                $updateTicket->execute([':cid' => $user['id']]);
-
-                // SET SESSION
-                $_SESSION['client_id']   = $user['id'];
-                $_SESSION['client_name'] = $user['full_name'];
-                $_SESSION['email']       = $user['email'];
-
-                // INSERT first concern
-                if (!empty($concern)) {
-                    $insert = $conn->prepare("INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at) VALUES (:cid, 'client', :msg, false, false, NOW())");
-                    $insert->execute([':cid'=>$user['id'], ':msg'=>$concern]);
-                }
-
-                header("Location: chat/chat_support.php?username=" . urlencode($user['full_name']));
-                exit;
-            } else {
-                $message = "❌ Invalid email/full name or password.";
-            }
-
-        } catch (PDOException $e) {
-            $message = "⚠ Database error: " . htmlspecialchars($e->getMessage());
-        }
-    } else {
-        $message = "⚠ Please fill in all fields.";
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -65,18 +16,18 @@ body {
 .container {
   background:rgba(255,255,255,0.5); padding:30px; border-radius:20px;
   backdrop-filter:blur(12px); box-shadow:0 8px 25px rgba(0,0,0,0.15);
-  width:380px; text-align:center;
+  width:380px; text-align:center; position: relative; overflow: hidden;
 }
 .container img { width:150px; border-radius:50%; margin-bottom:15px; }
+form { transition: opacity 0.6s ease, transform 0.6s ease; }
+.hidden { opacity:0; transform: translateY(-20px); pointer-events:none; position:absolute; top:0; left:0; width:100%; }
 input, textarea { width:100%; padding:10px; margin:8px 0; border-radius:10px; border:1px solid #ccc; box-sizing:border-box; }
 textarea { height:80px; resize:none; }
 button { width:100%; padding:12px; background:#00a6b6; color:white; border:none; border-radius:50px; cursor:pointer; font-weight:bold; font-size:16px; margin-top:10px; }
 button:hover { background:#008c96; transform:translateY(-2px); }
 button:active { transform:scale(.97); }
-a { display:block; margin-top:10px; color:#0077a3; text-decoration:none; }
+a { display:block; margin-top:10px; color:#0077a3; text-decoration:none; cursor:pointer; }
 a:hover { text-decoration:underline; }
-.forgot-form { max-height:0; overflow:hidden; transition:max-height 0.5s ease, padding 0.5s ease; margin-top:10px; }
-.forgot-form.active { max-height:150px; padding-top:10px; }
 .message { font-size:0.9em; margin-bottom:8px; }
 .message.success { color:green; }
 .message.error { color:red; }
@@ -88,41 +39,70 @@ a:hover { text-decoration:underline; }
     <h2>Customer Service Portal</h2>
 
     <!-- LOGIN FORM -->
-    <form method="POST">
+    <form id="loginForm" method="POST" action="login.php">
         <input type="text" name="full_name" placeholder="Email or Full Name" required>
         <input type="password" name="password" placeholder="Password" required>
         <textarea name="concern" placeholder="Concern / Inquiry"></textarea>
         <button type="submit">Submit</button>
+        <a id="forgotLink">Forgot Password?</a>
     </form>
-    <?php if($message): ?>
-        <p class="message error"><?= htmlspecialchars($message) ?></p>
-    <?php endif; ?>
-
-    <a href="#" id="forgotLink">Forgot Password?</a>
 
     <!-- FORGOT PASSWORD FORM -->
-    <div class="forgot-form" id="forgotForm">
-        <?php if($forgotMessage): ?>
-            <p class="message <?= strpos($forgotMessage,'success')!==false?'success':'error' ?>"><?= htmlspecialchars($forgotMessage) ?></p>
-        <?php endif; ?>
-        <form method="POST">
-            <input type="email" name="forgot_email" placeholder="Enter your email" required>
-            <button type="submit">Send my account number</button>
-        </form>
-    </div>
+    <form id="forgotForm" class="hidden">
+        <p>Enter your email to receive your account number:</p>
+        <input type="email" name="forgot_email" placeholder="Email" required>
+        <button type="submit">Send my account number</button>
+        <p class="message" id="forgotMessage"></p>
+        <a id="backToLogin">Back to Login</a>
+    </form>
 
     <p>No account yet? <a href="consent.php">Register here</a></p>
 </div>
 
 <script>
-const forgotLink = document.getElementById('forgotLink');
+const loginForm = document.getElementById('loginForm');
 const forgotForm = document.getElementById('forgotForm');
+const forgotLink = document.getElementById('forgotLink');
+const backToLogin = document.getElementById('backToLogin');
+const forgotMessage = document.getElementById('forgotMessage');
+
+// Show forgot password form
 forgotLink.addEventListener('click', function(e){
     e.preventDefault();
-    forgotForm.classList.toggle('active');
-    if(forgotForm.classList.contains('active')){
-        forgotForm.scrollIntoView({behavior:'smooth'});
-    }
+    loginForm.classList.add('hidden');
+    forgotForm.classList.remove('hidden');
+});
+
+// Back to login
+backToLogin.addEventListener('click', function(e){
+    e.preventDefault();
+    forgotForm.classList.add('hidden');
+    loginForm.classList.remove('hidden');
+});
+
+// AJAX submit to remote PHP script
+forgotForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const email = forgotForm.forgot_email.value.trim();
+    if(!email) return;
+
+    forgotMessage.textContent = "Sending...";
+    fetch('https://ahbadevt.com/cron/send_account_email.php?token=AE92JF83HF82HSLA29FD&email=' + encodeURIComponent(email))
+    .then(res => res.text())
+    .then(data => {
+        if(data.includes("success")) {
+            forgotMessage.textContent = "Email sent successfully!";
+            forgotMessage.className = 'message success';
+        } else {
+            forgotMessage.textContent = data;
+            forgotMessage.className = 'message error';
+        }
+    })
+    .catch(err=>{
+        forgotMessage.textContent = "Error sending request.";
+        forgotMessage.className = 'message error';
+        console.error(err);
+    });
 });
 </script>
 </body>
