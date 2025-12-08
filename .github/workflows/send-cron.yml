@@ -27,5 +27,5 @@ steps:
     env:
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
     run: |
-      php cron/send_account_email.php?token=YOUR_SECRET_TOKEN&email=test@example.com
+      php cron/send_account_email.php?token=AE92JF83HF82HSLA29FD"
 ```
