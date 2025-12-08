@@ -2,32 +2,31 @@
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$username = trim($_POST["username"] ?? "");
+$username = $_POST["username"] ?? null;
 
-if ($username === "") {
+if (!$username) {
     echo "unresolved";
     exit;
 }
 
-// Find user by email or full name
+// Get ticket status directly from users table
 $stmt = $conn->prepare("
     SELECT ticket_status
-    FROM users
-    WHERE email ILIKE ? 
-       OR full_name ILIKE ?
+    FROM users 
+    WHERE username = :u
     LIMIT 1
 ");
-$stmt->execute([$username, $username]);
+$stmt->execute([":u" => $username]);
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-// If user not found → default unresolved
-if (!$user) {
+if (!$row) {
     echo "unresolved";
     exit;
 }
 
-// Return normalized ticket status
-$ticket = strtolower($user["ticket_status"] ?? "unresolved");
-
-echo ($ticket === "resolved") ? "resolved" : "unresolved";
+// Return correct status
+if ($row["ticket_status"] === "resolved") {
+    echo "resolved";
+} else {
+    echo "unresolved";
+}
