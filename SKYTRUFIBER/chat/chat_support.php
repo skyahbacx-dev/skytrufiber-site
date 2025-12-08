@@ -40,6 +40,9 @@
                 <div>
                     <h2>SkyTruFiber Support</h2>
                     <span class="status active">Support Team Active</span>
+
+                    <!-- Ticket Status (read-only for clients) -->
+                    <span id="ticket-status-label" class="ticket-label">Loading...</span>
                 </div>
             </div>
 
@@ -66,26 +69,12 @@
         </button>
 
         <!-- =========================
-             PREVIEW AREA
-        ========================== -->
-        <div id="preview-inline" class="preview-inline">
-            <div id="preview-close">&times;</div>
-            <div id="preview-files"></div>
-        </div>
-
-        <!-- =========================
-             INPUT BAR
+             INPUT BAR (MEDIA REMOVED)
         ========================== -->
         <div class="chat-input-area">
 
-            <input type="file" id="chat-upload-media" multiple hidden>
-
-            <button id="upload-btn">
-                <img src="upload_icon.png">
-            </button>
-
             <div class="chat-input-box">
-                <input id="message-input" type="text" placeholder="Type a message...">
+                <input id="message-input" type="text" placeholder="Type a message..." autocomplete="off">
             </div>
 
             <button id="send-btn" class="chat-send-btn">
@@ -96,6 +85,7 @@
 
         <!-- =========================
              MESSAGE ACTION POPUP
+             (EDIT / UNSEND / DELETE)
         ========================== -->
         <div id="msg-action-popup" class="msg-action-popup">
             <button class="action-edit"><i class="fa-solid fa-pen"></i> Edit</button>
@@ -104,31 +94,10 @@
             <button class="action-cancel">Cancel</button>
         </div>
 
-        <!-- REACTION PICKER REMOVED -->
-
     </div> <!-- END CHAT MODAL -->
 </div> <!-- END OVERLAY -->
 
-
-<!-- =========================
-     LIGHTBOX (images / video)
-========================== -->
-<div id="lightbox-overlay" class="lightbox-overlay">
-
-    <span id="lightbox-close" class="lightbox-close">&times;</span>
-
-    <img id="lightbox-image" class="lightbox-image" draggable="false">
-    <video id="lightbox-video" class="lightbox-video" controls></video>
-
-    <button id="lightbox-prev" class="lightbox-nav prev">&#10094;</button>
-    <button id="lightbox-next" class="lightbox-nav next">&#10095;</button>
-
-    <div id="lightbox-index" class="lightbox-index"></div>
-
-    <a id="lightbox-download" class="lightbox-download" download>
-        <i class="fa-solid fa-download"></i>
-    </a>
-</div>
+<!-- Lightbox REMOVED (no media) -->
 
 </body>
 </html>
