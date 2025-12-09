@@ -1,11 +1,11 @@
 /* ============================================================
 SkyTruFiber Client Chat System — FINAL FIXED BUILD (2025)
-• CSR greeting appears first (backend guarantees correct order)
-• First client message appears second
-• Suggestions appear ONLY after the first client message
-• JS NEVER reorders messages
-• JS NEVER duplicates suggestions
-• Scroll button + Action toolbar fully working
+• CSR greeting appears FIRST (backend guaranteed)
+• Client message appears SECOND
+• Suggestions appear ONLY AFTER first client message
+• JS NEVER reorders or duplicates messages
+• Scroll button + action toolbar fully working
+• 100% synced with load_messages_client.php
 ============================================================ */
 
 /* ---------------- GLOBAL STATE ---------------- */
@@ -26,17 +26,17 @@ $(document).ready(() => {
         return;
     }
 
-    // Move popup inside modal
-    const staticPopup = $("#msg-action-popup");
-    if (staticPopup.length) $(".chat-modal").append(staticPopup.detach());
+    // Keep popup inside modal
+    const popup = $("#msg-action-popup");
+    if (popup.length) $(".chat-modal").append(popup.detach());
 
     // Load correct backend-ordered chat
     loadMessages(true);
 
-    // Check ticket status
+    // Get ticket status initially
     checkTicketStatus();
 
-    // Polling (safe merge)
+    // Poll new messages (safe merge)
     setInterval(() => {
         if (!editing && !activePopup) {
             fetchNewMessages();
@@ -44,7 +44,7 @@ $(document).ready(() => {
         }
     }, 3500);
 
-    // Sending
+    // Send message
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
         if (e.which === 13) {
@@ -53,15 +53,15 @@ $(document).ready(() => {
         }
     });
 
-    // Theme switching
+    // Theme
     $("#theme-toggle").click(toggleTheme);
 
-    // Scroll button
+    // Scroll listener
     $("#chat-messages").on("scroll", updateScrollButton);
 });
 
 /* ============================================================
-THEME
+THEME TOGGLE
 ============================================================ */
 function toggleTheme() {
     const root = document.documentElement;
@@ -70,7 +70,7 @@ function toggleTheme() {
 }
 
 /* ============================================================
-SUGGESTIONS — ONLY BACKEND TRIGGERS IT
+BACKEND TRIGGERED SUGGESTION BUBBLE
 ============================================================ */
 function insertSuggestionBubble() {
     if (suggestionShown) return;
@@ -126,12 +126,12 @@ function checkTicketStatus() {
 }
 
 function applyTicketStatus(status) {
-    const msg = $("#message-input");
-    const send = $("#send-btn");
+    const input = $("#message-input");
+    const sendBtn = $("#send-btn");
 
     if (status === "resolved") {
-        msg.prop("disabled", true);
-        send.prop("disabled", true);
+        input.prop("disabled", true);
+        sendBtn.prop("disabled", true);
         $(".system-suggest").remove();
 
         $("#chat-messages").html(`
@@ -149,8 +149,8 @@ function applyTicketStatus(status) {
         return;
     }
 
-    msg.prop("disabled", false);
-    send.prop("disabled", false);
+    input.prop("disabled", false);
+    sendBtn.prop("disabled", false);
 }
 
 /* ============================================================
@@ -172,7 +172,9 @@ function sendMessage() {
         let res = {};
         try { res = JSON.parse(raw); } catch {}
 
-        if (res.first_message === true) insertSuggestionBubble();
+        if (res.first_message === true) {
+            insertSuggestionBubble();
+        }
 
         $(`.message[data-msg-id='${tempId}']`).remove();
         fetchNewMessages();
@@ -182,44 +184,39 @@ function sendMessage() {
 function appendClientBubble(msg) {
     const id = "temp-" + Date.now();
     $("#chat-messages").append(`
-        <div class="message sent no-avatar" data-msg-id="${id}">
+        <div class="message sent" data-msg-id="${id}">
             <div class="message-content">
                 <div class="message-bubble">${msg}</div>
                 <div class="message-time">Sending...</div>
             </div>
         </div>
     `);
-
     scrollToBottom();
     return id;
 }
 
 /* ============================================================
-LOAD MESSAGES (Correct order from backend)
+LOAD MESSAGES — BACKEND CONTROLS ORDER
 ============================================================ */
-function loadMessages(scroll = false, callback = null) {
+function loadMessages(scrollBottom = false) {
     $.post("/SKYTRUFIBER/chat/load_messages_client.php", { ticket: ticketId })
     .done(html => {
-
         $("#chat-messages").html(html);
         bindActionToolbar();
 
-        // Suggestion already consumed
-        if ($("#chat-messages .message").length > 1) {
-            $(".system-suggest").remove();
-        }
+        updateScrollButton();
 
-        if (scroll) scrollToBottom();
-        if (callback) callback();
+        if (scrollBottom) scrollToBottom();
     });
 }
 
 /* ============================================================
-FETCH NEW MESSAGES (NO DUPLICATES)
+FETCH NEW MESSAGES — NO DUPLICATES
 ============================================================ */
 function fetchNewMessages() {
     $.post("/SKYTRUFIBER/chat/load_messages_client.php", { ticket: ticketId })
     .done(html => {
+
         const temp = $("<div>").html(html);
 
         temp.find(".message").each(function () {
@@ -236,11 +233,11 @@ function fetchNewMessages() {
 }
 
 /* ============================================================
-SCROLL HANDLING + BUTTON
+SCROLL + SCROLL BUTTON
 ============================================================ */
 function scrollToBottom() {
     const m = $("#chat-messages");
-    m.stop().animate({ scrollTop: m[0].scrollHeight }, 220);
+    m.stop().animate({ scrollTop: m[0].scrollHeight }, 200);
 }
 
 function updateScrollButton() {
@@ -249,10 +246,10 @@ function updateScrollButton() {
 
     if (!btn.length) return;
 
-    const nearBottom =
-        m.scrollTop() + m.innerHeight() >= m[0].scrollHeight - 50;
+    const isNearBottom =
+        m.scrollTop() + m.innerHeight() >= m[0].scrollHeight - 60;
 
-    if (nearBottom) btn.removeClass("show");
+    if (isNearBottom) btn.removeClass("show");
     else btn.addClass("show");
 }
 
@@ -278,8 +275,8 @@ function openPopup(id, anchor) {
     const m = modal.offset();
 
     popup.css({
-        top: a.top - m.top + 34,
-        left: Math.max(4, a.left - m.left - popup.outerWidth() + 22)
+        top: a.top - m.top + 30,
+        left: Math.max(5, a.left - m.left - popup.outerWidth() + 22)
     });
 
     activePopup = popup;
@@ -290,24 +287,15 @@ function closePopup() {
     activePopup = null;
 }
 
-/* EDIT / DELETE BUTTONS */
-$(document).on("click", ".action-edit", function () {
-    startEdit($("#msg-action-popup").data("msgId"));
-    closePopup();
-});
-
-$(document).on("click", ".action-delete, .action-unsend", function () {
-    $.post("/SKYTRUFIBER/chat/delete_message_client.php", {
-        id: $("#msg-action-popup").data("msgId"),
-        ticket: ticketId
-    }).done(() => loadMessages(false));
-
-    closePopup();
-});
-
 /* ============================================================
-EDIT MODE
+EDIT MESSAGE
 ============================================================ */
+$(document).on("click", ".action-edit", function () {
+    const id = $("#msg-action-popup").data("msgId");
+    startEdit(id);
+    closePopup();
+});
+
 function startEdit(id) {
     editing = true;
     const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
@@ -324,12 +312,12 @@ function startEdit(id) {
 
 $(document).on("click", ".edit-save", function () {
     const id = $(this).data("id");
-    const newText = $(this).closest(".message-bubble").find("textarea").val().trim();
+    const text = $(this).closest(".message-bubble").find("textarea").val().trim();
 
     $.post("/SKYTRUFIBER/chat/edit_message_client.php", {
         id,
         ticket: ticketId,
-        message: newText
+        message: text
     }).done(() => {
         editing = false;
         loadMessages(true);
@@ -344,7 +332,7 @@ $(document).on("click", ".edit-cancel", () => {
 /* ============================================================
 LOGOUT
 ============================================================ */
-$(document).on("click", "#logout-btn", function () {
+$(document).on("click", "#logout-btn", () => {
     if (confirm("Are you sure you want to log out?")) {
         window.location.href = "/SKYTRUFIBER/chat/logout.php";
     }
