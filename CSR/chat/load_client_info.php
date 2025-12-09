@@ -42,16 +42,35 @@ $isAssignedToMe = ($u["assigned_csr"] === $csrUser) ? "yes" : "no";
 $isLocked = ($u["ticket_lock"] == 1 ? "true" : "false");
 
 /* ============================================================
-   META FOR JS
+   FETCH ACTIVE TICKET FOR THIS CLIENT
+   We only want the MOST RECENT unresolved/pending ticket.
+============================================================ */
+$stmt = $conn->prepare("
+    SELECT id, status
+    FROM tickets
+    WHERE client_id = ?
+    ORDER BY created_at DESC
+    LIMIT 1
+");
+$stmt->execute([$clientID]);
+$ticket = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$ticketID = $ticket["id"] ?? 0;
+$ticketStatus = strtolower($ticket["status"] ?? "none");
+
+/* ============================================================
+   OUTPUT META FOR chat.js
 ============================================================ */
 echo "
 <div id='client-meta'
-    data-ticket='{$u["ticket_status"]}'
+    data-ticket='{$ticketStatus}'
+    data-ticket-id='{$ticketID}'
     data-assigned='{$isAssignedToMe}'
     data-locked='{$isLocked}'>
 </div>
 ";
 ?>
+
 <div class="client-info-panel">
     <h3><?= htmlspecialchars($u["full_name"]) ?></h3>
 
@@ -64,9 +83,14 @@ echo "
         <?= $u["assigned_csr"] ? htmlspecialchars($u["assigned_csr"]) : "Unassigned" ?>
     </p>
 
-    <p><strong>Status:</strong> 
-        <span class="ticket-badge <?= strtolower($u["ticket_status"]) ?>">
-            <?= strtoupper($u["ticket_status"]) ?>
+    <!-- Ticket Info -->
+    <p><strong>Current Ticket:</strong>
+        <?= $ticketID ? "#{$ticketID}" : "No Active Ticket" ?>
+    </p>
+
+    <p><strong>Status:</strong>
+        <span class="ticket-badge <?= $ticketStatus ?>">
+            <?= strtoupper($ticketStatus) ?>
         </span>
     </p>
 
