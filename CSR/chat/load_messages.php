@@ -2,12 +2,12 @@
 if (!isset($_SESSION)) session_start();
 require "../../db_connect.php";
 
-$client_id = $_POST["client_id"] ?? null;
-if (!$client_id) exit;
+$client_id = intval($_POST["client_id"] ?? 0);
+if ($client_id <= 0) exit("<p>Invalid client.</p>");
 
-// ============================================================
-// GET CLIENT & TICKET STATUS
-// ============================================================
+/* ============================================================
+   FETCH TICKET STATUS
+============================================================ */
 $stmt = $conn->prepare("
     SELECT ticket_status
     FROM users
@@ -17,33 +17,42 @@ $stmt = $conn->prepare("
 $stmt->execute([$client_id]);
 $client = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$ticketStatus = $client["ticket_status"] ?? "unresolved";
+$ticketStatus = strtolower($client["ticket_status"] ?? "unresolved");
 
-// ============================================================
-// GET RESOLVED TIMESTAMP FROM ticket_logs (YOUR REAL COLUMN = timestamp)
-// ============================================================
+/* ============================================================
+   GET LOG TIMESTAMPS (resolved / pending)
+============================================================ */
+
 $resolvedAt = null;
+$pendingAt  = null;
 
-if ($ticketStatus === "resolved") {
-    $log = $conn->prepare("
-        SELECT timestamp
-        FROM ticket_logs
-        WHERE client_id = ?
-          AND action = 'resolved'
-        ORDER BY timestamp ASC
-        LIMIT 1
-    ");
-    $log->execute([$client_id]);
-    $row = $log->fetch(PDO::FETCH_ASSOC);
+// RESOLVED TIMESTAMP
+$log = $conn->prepare("
+    SELECT timestamp
+    FROM ticket_logs
+    WHERE client_id = ?
+      AND action = 'resolved'
+    ORDER BY timestamp ASC LIMIT 1
+");
+$log->execute([$client_id]);
+$resolvedRow = $log->fetch(PDO::FETCH_ASSOC);
+if ($resolvedRow) $resolvedAt = $resolvedRow["timestamp"];
 
-    if ($row) {
-        $resolvedAt = $row["timestamp"];
-    }
-}
+// PENDING TIMESTAMP
+$log = $conn->prepare("
+    SELECT timestamp
+    FROM ticket_logs
+    WHERE client_id = ?
+      AND action = 'pending'
+    ORDER BY timestamp ASC LIMIT 1
+");
+$log->execute([$client_id]);
+$pendingRow = $log->fetch(PDO::FETCH_ASSOC);
+if ($pendingRow) $pendingAt = $pendingRow["timestamp"];
 
-// ============================================================
-// FETCH ALL CHAT MESSAGES
-// ============================================================
+/* ============================================================
+   FETCH ALL CHAT MESSAGES
+============================================================ */
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, deleted, edited, created_at
     FROM chat
@@ -58,44 +67,67 @@ if (!$rows) {
     exit;
 }
 
-// ============================================================
-// PREPARE RESOLVED DIVIDER
-// ============================================================
-$dividerPrinted = false;
-$dividerHtml = "";
+/* ============================================================
+   SYSTEM DIVIDERS (HTML TEMPLATES)
+============================================================ */
 
-if ($ticketStatus === "resolved" && $resolvedAt) {
-    $dividerHtml = "
-        <div class='system-divider'>
-            <span>
-                Ticket marked as <strong>RESOLVED</strong> on 
-                " . date("M j, Y g:i A", strtotime($resolvedAt)) . "
-            </span>
-        </div>
-    ";
-}
+$resolvedDivider = $resolvedAt ? "
+    <div class='system-divider'>
+        <span>Ticket marked <strong>RESOLVED</strong> on " .
+        date("M j, Y g:i A", strtotime($resolvedAt)) .
+        "</span>
+    </div>
+" : "";
 
-// ============================================================
-// RENDER MESSAGES
-// ============================================================
+$pendingDivider = $pendingAt ? "
+    <div class='system-divider'>
+        <span>Ticket placed <strong>PENDING</strong> / ON HOLD on " .
+        date("M j, Y g:i A", strtotime($pendingAt)) .
+        "</span>
+    </div>
+" : "";
+
+// Flags so each divider appears only once
+$printedResolvedDivider = false;
+$printedPendingDivider  = false;
+
+/* ============================================================
+   RENDER MESSAGES
+============================================================ */
+
 foreach ($rows as $msg) {
 
-    // Insert the divider once AFTER reaching the resolved timestamp
+    $msgTime = strtotime($msg["created_at"]);
+
+    // Insert PENDING divider when needed
     if (
-        !$dividerPrinted &&
-        $ticketStatus === "resolved" &&
-        $resolvedAt &&
-        strtotime($msg["created_at"]) > strtotime($resolvedAt)
+        $pendingAt &&
+        !$printedPendingDivider &&
+        $msgTime > strtotime($pendingAt)
     ) {
-        echo $dividerHtml;
-        $dividerPrinted = true;
+        echo $pendingDivider;
+        $printedPendingDivider = true;
     }
 
-    $msgID = $msg["id"];
-    $sender = ($msg["sender_type"] === "csr") ? "sent" : "received";
-    $timestamp = date("M j g:i A", strtotime($msg["created_at"]));
+    // Insert RESOLVED divider when needed
+    if (
+        $resolvedAt &&
+        !$printedResolvedDivider &&
+        $msgTime > strtotime($resolvedAt)
+    ) {
+        echo $resolvedDivider;
+        $printedResolvedDivider = true;
+    }
 
-    echo "<div class='message $sender' data-msg-id='$msgID'>";
+    /* ===============================
+       Render individual message
+    =============================== */
+
+    $id       = $msg["id"];
+    $sender   = ($msg["sender_type"] === "csr") ? "sent" : "received";
+    $timeText = date("M j g:i A", $msgTime);
+
+    echo "<div class='message $sender' data-msg-id='$id'>";
 
     // Avatar
     echo "
@@ -106,9 +138,9 @@ foreach ($rows as $msg) {
 
     echo "<div class='message-content'>";
 
-    // Action button (edit/delete)
+    // More button
     echo "
-        <button class='more-btn' data-id='$msgID'>
+        <button class='more-btn' data-id='$id'>
             <i class='fa-solid fa-ellipsis-vertical'></i>
         </button>
     ";
@@ -124,12 +156,13 @@ foreach ($rows as $msg) {
 
     echo "</div>"; // bubble
 
-    // Edited label
+    // Edited tag
     if ($msg["edited"] && !$msg["deleted"]) {
         echo "<div class='edited-label'>(edited)</div>";
     }
 
-    echo "<div class='message-time'>$timestamp</div>";
+    // Timestamp
+    echo "<div class='message-time'>$timeText</div>";
 
     echo "</div></div>";
 }
