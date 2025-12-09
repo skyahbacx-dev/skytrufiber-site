@@ -13,8 +13,30 @@ $ticket = (int)($_POST["ticket"] ?? 0);
 // ----------------------------------------------------------
 // VALIDATE INPUT
 // ----------------------------------------------------------
-if (!$msgID || !$ticket) {
+if ($msgID <= 0 || $ticket <= 0) {
     echo json_encode(["status" => "error", "msg" => "Invalid input"]);
+    exit;
+}
+
+// ----------------------------------------------------------
+// VALIDATE TICKET & CHECK STATUS (prevent deleting on resolved)
+// ----------------------------------------------------------
+$ticketCheck = $conn->prepare("
+    SELECT status
+    FROM tickets
+    WHERE id = ?
+    LIMIT 1
+");
+$ticketCheck->execute([$ticket]);
+$ticketRow = $ticketCheck->fetch(PDO::FETCH_ASSOC);
+
+if (!$ticketRow) {
+    echo json_encode(["status" => "error", "msg" => "Ticket not found"]);
+    exit;
+}
+
+if ($ticketRow["status"] === "resolved") {
+    echo json_encode(["status" => "blocked", "msg" => "Cannot delete messages from a resolved ticket"]);
     exit;
 }
 
@@ -22,7 +44,7 @@ if (!$msgID || !$ticket) {
 // VALIDATE MESSAGE BELONGS TO THIS TICKET AND IS CLIENT-SENT
 // ----------------------------------------------------------
 $stmt = $conn->prepare("
-    SELECT id, sender_type, deleted
+    SELECT id, sender_type, deleted, message
     FROM chat
     WHERE id = ? AND ticket_id = ?
     LIMIT 1
@@ -40,18 +62,26 @@ if ($msg["sender_type"] !== "client") {
     exit;
 }
 
-// Already deleted → nothing to do
+// ----------------------------------------------------------
+// Already deleted?
+// ----------------------------------------------------------
 if (!empty($msg["deleted"])) {
     echo json_encode(["status" => "ok", "type" => "already-deleted"]);
     exit;
 }
 
+// Extra safety: avoid re-clearing already empty text
+if (trim($msg["message"]) === "") {
+    echo json_encode(["status" => "ok", "type" => "already-empty"]);
+    exit;
+}
+
 // ----------------------------------------------------------
-// SOFT DELETE MESSAGE (clear text, mark deleted)
+// SOFT DELETE MESSAGE
 // ----------------------------------------------------------
 $upd = $conn->prepare("
     UPDATE chat
-    SET message = '', deleted = TRUE, edited = FALSE
+    SET message = '', deleted = TRUE, edited = FALSE, updated_at = NOW()
     WHERE id = ? AND ticket_id = ? AND sender_type = 'client'
 ");
 $upd->execute([$msgID, $ticket]);
