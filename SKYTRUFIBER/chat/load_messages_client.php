@@ -24,8 +24,6 @@ $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$ticket) exit("");
 
 $ticket_status = $ticket["status"] ?? "unresolved";
-
-// If resolved → let JS handle UI + redirect
 if ($ticket_status === "resolved") exit("");
 
 // --------------------------------------------------
@@ -43,33 +41,83 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $msgCount = count($messages);
 
 // --------------------------------------------------
-// AUTO-GREET RULE (FINAL VERSION)
+// RULE: New ticket (0 messages) => Only CSR greet.
+// Suggestion must appear ONLY after the client first message.
 // --------------------------------------------------
-//
-// We display an auto-greet ONLY when:
-//     ✔ ZERO messages exist (fresh ticket, no concern submitted)
-// OR  ✔ $_SESSION['show_suggestions'] == true
-//
-// Reason:
-//     • First-message CSR greeting is inserted inside send_message_client.php
-//     • Login concern greeting is inserted inside skytrufiber.php
-//     • This file must *not* duplicate those greetings.
-//
-// After showing, unset the session flag so it doesn't repeat.
+$shouldShowGreet = ($msgCount === 0);
+
 // --------------------------------------------------
+// 1️⃣ CSR GREETING (ONLY if ticket is empty)
+// --------------------------------------------------
+if ($shouldShowGreet) {
 
-$shouldShowGreeting = false;
+    echo "
+    <div class='message received'>
+        <div class='message-avatar'>
+            <img src='/upload/default-avatar.png'>
+        </div>
+        <div class='message-content'>
+            <div class='message-bubble'>
+                Good day! How may we assist you today?
+            </div>
+            <div class='message-time'>Just now</div>
+        </div>
+    </div>
+    ";
 
-if ($msgCount === 0) {
-    $shouldShowGreeting = true;
+    // Do NOT show suggestions here —
+    // suggestions appear AFTER the client sends login message.
 }
 
-if (!empty($_SESSION['show_suggestions'])) {
-    $shouldShowGreeting = true;
-    unset($_SESSION['show_suggestions']); // prevent repeating
+// --------------------------------------------------
+// 2️⃣ RENDER CHAT MESSAGES
+// --------------------------------------------------
+$clientFirstMsgPrinted = false;
+
+foreach ($messages as $msg) {
+
+    $id     = $msg["id"];
+    $sender = ($msg["sender_type"] === "csr") ? "received" : "sent";
+    $time   = date("g:i A", strtotime($msg["created_at"]));
+
+    echo "<div class='message $sender' data-msg-id='$id'>";
+
+    if ($sender === "received") {
+        echo "<div class='message-avatar'><img src='/upload/default-avatar.png'></div>";
+    }
+
+    echo "<div class='message-content'>";
+
+    if (empty($msg["deleted"])) {
+        echo "<div class='message-bubble'>" .
+             nl2br(htmlspecialchars(trim($msg["message"]))) .
+             "</div>";
+    } else {
+        echo "<div class='message-bubble removed-text'>Message removed</div>";
+    }
+
+    echo "<div class='message-time'>{$time}";
+    if (!empty($msg["edited"])) echo " <span class='edited-label'>(edited)</span>";
+    echo "</div>";
+
+    if ($sender === "sent" && empty($msg["deleted"])) {
+        echo "<div class='action-toolbar'>
+                <button class='more-btn' data-id='$id'>⋯</button>
+              </div>";
+    }
+
+    echo "</div></div>";
+
+    // Detect first client message
+    if (!$clientFirstMsgPrinted && $msg["sender_type"] === "client") {
+        $clientFirstMsgPrinted = true;
+    }
 }
 
-if ($shouldShowGreeting) {
+// --------------------------------------------------
+// 3️⃣ SHOW SUGGESTIONS ONLY AFTER FIRST CLIENT MESSAGE
+// --------------------------------------------------
+if ($clientFirstMsgPrinted && $msgCount === 1) {
 
     echo "
     <div class='message received system-suggest'>
@@ -78,7 +126,6 @@ if ($shouldShowGreeting) {
         </div>
         <div class='message-content'>
             <div class='message-bubble'>
-                Welcome to SkyTruFiber Support! 😊<br>
                 Here are some quick answers you might be looking for:
                 <div class='suggest-buttons'>
                     <button class='suggest-btn'>I am experiencing no internet.</button>
@@ -92,54 +139,6 @@ if ($shouldShowGreeting) {
         </div>
     </div>
     ";
-}
-
-// --------------------------------------------------
-// RENDER CHAT HISTORY
-// --------------------------------------------------
-foreach ($messages as $msg) {
-
-    $id     = $msg["id"];
-    $sender = ($msg["sender_type"] === "csr") ? "received" : "sent";
-    $time   = date("g:i A", strtotime($msg["created_at"]));
-
-    echo "<div class='message $sender' data-msg-id='$id'>";
-
-    // CSR Avatar
-    if ($sender === "received") {
-        echo "<div class='message-avatar'>
-                <img src='/upload/default-avatar.png'>
-              </div>";
-    }
-
-    echo "<div class='message-content'>";
-
-    // MESSAGE BUBBLE
-    if (empty($msg["deleted"])) {
-        $text = trim($msg["message"]);
-        echo "<div class='message-bubble'>" .
-             nl2br(htmlspecialchars($text)) .
-             "</div>";
-    } else {
-        echo "<div class='message-bubble removed-text'>Message removed</div>";
-    }
-
-    // TIME + EDIT INDICATOR
-    echo "<div class='message-time'>{$time}";
-    if (!empty($msg["edited"])) {
-        echo " <span class='edited-label'>(edited)</span>";
-    }
-    echo "</div>";
-
-    // ACTION TOOLBAR (client only)
-    echo "<div class='action-toolbar'>";
-    if ($sender === "sent" && empty($msg["deleted"])) {
-        echo "<button class='more-btn' data-id='$id'>⋯</button>";
-    }
-    echo "</div>";
-
-    echo "</div>"; // content
-    echo "</div>"; // wrapper
 }
 
 ?>
