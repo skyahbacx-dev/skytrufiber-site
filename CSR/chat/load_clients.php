@@ -2,107 +2,153 @@
 if (!isset($_SESSION)) session_start();
 require "../../db_connect.php";
 
-$filter = $_POST["filter"] ?? "all";
+$filter = $_POST["filter"] ?? "all"; // all | unresolved | pending | resolved
 
 // ============================================================
-// FETCH ALL CLIENTS + THEIR TICKET STATUS
+// FETCH ALL CLIENTS + THEIR LATEST TICKET STATUS
 // ============================================================
-$query = "
+$stmt = $conn->prepare("
     SELECT 
         u.id,
         u.full_name,
+        u.email,
         u.assigned_csr,
         u.ticket_status,
         u.ticket_lock,
-        u.last_message,
-        u.email
+        u.transfer_request,
+        (
+            SELECT message 
+            FROM chat 
+            WHERE client_id = u.id 
+            ORDER BY created_at DESC 
+            LIMIT 1
+        ) AS last_msg,
+        (
+            SELECT created_at 
+            FROM chat 
+            WHERE client_id = u.id 
+            ORDER BY created_at DESC 
+            LIMIT 1
+        ) AS last_msg_time
     FROM users u
-    ORDER BY u.full_name ASC
-";
-$stmt = $conn->query($query);
+    WHERE u.role = 'client'
+    ORDER BY last_msg_time DESC NULLS LAST, u.full_name ASC
+");
+$stmt->execute();
 $clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (!$clients) {
-    echo "<p style='text-align:center;color:#888;margin-top:20px;'>No clients found.</p>";
+    echo "<p style='padding:10px;color:#888;'>No clients found.</p>";
     exit;
 }
 
-foreach ($clients as $c) {
+$currentCSR = $_SESSION["csr_user"] ?? "";
 
-    $id     = $c["id"];
-    $name   = htmlspecialchars($c["full_name"]);
-    $status = strtolower($c["ticket_status"]);
-    $assigned = $c["assigned_csr"] ?: "None";
-    $locked   = $c["ticket_lock"] == 1;
+// ============================================================
+// FILTER CLIENTS
+// ============================================================
+function passFilter($row, $filter) {
+    if ($filter === "all") return true;
+    if ($filter === $row["ticket_status"]) return true;
+    return false;
+}
 
-    // FILTER RULES
-    if ($filter !== "all" && $filter !== $status) {
-        continue;
+// ============================================================
+// RENDER CLIENT LIST
+// ============================================================
+foreach ($clients as $c):
+
+    if (!passFilter($c, $filter)) continue;
+
+    $id         = $c["id"];
+    $name       = htmlspecialchars($c["full_name"]);
+    $status     = $c["ticket_status"];
+    $assigned   = $c["assigned_csr"];
+    $lock       = $c["ticket_lock"];
+    $transfer   = $c["transfer_request"];
+    $lastMsg    = $c["last_msg"] ? htmlspecialchars($c["last_msg"]) : "No messages yet";
+    $isMine     = ($assigned === $currentCSR);
+
+    // CSS classes:
+    $statusDotClass = $status === "resolved" ? "resolved" :
+                      ($status === "pending" ? "pending" : "unresolved");
+
+    $isLockedIcon = $lock ? "🔒" : "🔓";
+
+    // Transfer alert icon
+    $transferIcon = "";
+    if ($transfer && $transfer !== $currentCSR) {
+        $transferIcon = " <span style='color:#e67e22;font-size:13px;'>⚠ Transfer Request</span>";
     }
 
-    // Status Dot Color
-    $statusDot = match ($status) {
-        "resolved"   => "color:#26a65b;",
-        "pending"    => "color:#f5a623;",
-        "unresolved" => "color:#d63031;",
-        default      => "color:#999;"
-    };
+?>
+    <div class="client-item" 
+         data-id="<?= $id ?>" 
+         data-name="<?= $name ?>">
 
-    // Ticket Status Label
-    $statusLabel = ucfirst($status);
+        <!-- Avatar -->
+        <div class="avatar-small">
+            <img src="/upload/default-avatar.png">
+        </div>
 
-    // Last Message Preview
-    $lastMsg = $c["last_message"] 
-        ? htmlspecialchars(substr($c["last_message"], 0, 40)) . "..."
-        : "No messages yet";
+        <!-- Client Info -->
+        <div class="client-info">
+            <strong><?= $name ?></strong>
 
-    // LOCK ICON
-    $lockIcon = $locked 
-        ? "<i class='fa-solid fa-lock' style='color:#ff3b3b;font-size:14px;'></i>"
-        : "<i class='fa-solid fa-lock-open' style='color:#999;font-size:14px;'></i>";
+            <div class="last-msg">
+                <?= $lastMsg ?>
+            </div>
 
-    // ASSIGN / UNASSIGN BUTTON
-    $actionBtn = "";
-    $currentCSR = $_SESSION["csr_user"] ?? "";
+            <div class="ticket-info">
+                <span class="ticket-dot <?= $statusDotClass ?>">
+                    ● <?= ucfirst($status) ?>
+                </span>
 
-    if ($c["assigned_csr"] === NULL) {
-        // Show ADD button for unassigned client
-        $actionBtn = "
-            <button class='assign-btn' data-id='{$id}' title='Assign to me'>
-                <i class='fa-solid fa-user-plus'></i>
-            </button>
-        ";
-    } else {
-        // Assigned to someone → show REMOVE button
-        $actionBtn = "
-            <button class='unassign-btn' data-id='{$id}' title='Unassign CSR'>
-                <i class='fa-solid fa-user-minus'></i>
-            </button>
-        ";
-    }
+                <?php if ($status === "pending"): ?>
+                    <span style="font-size:12px;color:#777;">
+                        (On hold—tech coordination)
+                    </span>
+                <?php endif; ?>
 
-    // BUILD CLIENT ITEM ROW
-    echo "
-    <div class='client-item' data-id='{$id}' data-name='{$name}'>
-        
-        <div class='client-info'>
-            <strong>{$name}</strong>
-            <span class='last-msg'>{$lastMsg}</span>
-            
-            <span class='ticket-dot' style='{$statusDot}'>&#9679;</span>
-            <span style='font-size:12px;color:#555;'> {$statusLabel}</span>
-            
-            <div style='font-size:11px;color:#777;'>
-                Assigned to: <strong>{$assigned}</strong>
-                &nbsp;&nbsp; $lockIcon
+                <?= $transferIcon ?>
+            </div>
+
+            <div class="assigned-info" style="font-size:12px;color:#555;">
+                Assigned: <?= $assigned ? $assigned : "None" ?>
+                &nbsp; <?= $isLockedIcon ?>
             </div>
         </div>
 
-        <div class='client-icons'>
-            $actionBtn
-        </div>
+        <!-- Action Buttons (Assign / Unassign / Lock) -->
+        <div class="client-icons">
 
+            <?php if (!$assigned): ?>
+                <!-- ASSIGN BUTTON -->
+                <button class="assign-btn" 
+                        data-id="<?= $id ?>" 
+                        title="Assign to me">
+                    ➕
+                </button>
+
+            <?php elseif ($isMine): ?>
+                <!-- UNASSIGN BUTTON -->
+                <button class="unassign-btn" 
+                        data-id="<?= $id ?>" 
+                        title="Unassign from me">
+                    ➖
+                </button>
+
+            <?php else: ?>
+                <!-- REQUEST TRANSFER -->
+                <button class="request-transfer-btn"
+                        data-id="<?= $id ?>"
+                        data-current="<?= $assigned ?>"
+                        title="Request transfer">
+                    🔄
+                </button>
+            <?php endif; ?>
+
+        </div>
     </div>
-    ";
-}
-?>
+
+<?php endforeach; ?>
