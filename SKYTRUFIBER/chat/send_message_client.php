@@ -73,7 +73,9 @@ $clientCount = (int)$count["client_count"];
 $csrCount    = (int)$count["csr_count"];
 
 // TRUE only if ticket is 100% empty before this message
-$isFirstLoginMessage = ($clientCount === 0 && $csrCount === 0);
+// FIRST client message AFTER CSR greeting
+$isFirstLoginMessage = ($existingClientCount === 1 && $existingCsrCount === 1);
+
 
 // ----------------------------------------------------------
 // PREVENT DUPLICATE MESSAGE
