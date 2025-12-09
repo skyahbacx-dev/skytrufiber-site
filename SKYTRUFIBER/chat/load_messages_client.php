@@ -8,9 +8,9 @@ require_once "../../db_connect.php";
 $ticketId = intval($_POST["ticket"] ?? 0);
 if ($ticketId <= 0) exit("");
 
-/* --------------------------------------------------
-   FETCH TICKET STATUS + CLIENT
--------------------------------------------------- */
+// ---------------------------------------------
+// FETCH TICKET + CLIENT
+// ---------------------------------------------
 $stmt = $conn->prepare("
     SELECT status, client_id
     FROM tickets
@@ -22,21 +22,22 @@ $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$ticket) exit("");
 
-/* --------------------------------------------------
-   AUTO-LOGOUT ON RESOLVED
--------------------------------------------------- */
+// ---------------------------------------------
+// AUTO-LOGOUT WHEN RESOLVED
+// ---------------------------------------------
 if ($ticket["status"] === "resolved") {
 
-    // Prevent session reuse → force logout on client page
+    // Set flag for JS to read
     $_SESSION["force_logout"] = true;
 
-    echo "<script>window.location.href='/SKYTRUFIBER/logout.php';</script>";
+    // This output is detected by AJAX, NOT rendered in DOM
+    echo "FORCE_LOGOUT";
     exit;
 }
 
-/* --------------------------------------------------
-   FETCH CHAT MESSAGES FOR THIS TICKET ONLY
--------------------------------------------------- */
+// ---------------------------------------------
+// FETCH ALL CHAT MESSAGES FOR THIS TICKET
+// ---------------------------------------------
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted, edited
     FROM chat
@@ -46,9 +47,9 @@ $stmt = $conn->prepare("
 $stmt->execute([$ticketId]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* --------------------------------------------------
-   DETECT GREETING + FIRST CLIENT MESSAGE
--------------------------------------------------- */
+// ---------------------------------------------
+// FIND FIRST CSR MESSAGE + FIRST CLIENT MESSAGE
+// ---------------------------------------------
 $greetingMsgId = null;
 $firstClientMsgId = null;
 
@@ -63,15 +64,15 @@ foreach ($messages as $m) {
     }
 }
 
-/* --------------------------------------------------
-   SUGGESTION TRIGGER FLAG
--------------------------------------------------- */
+// ---------------------------------------------
+// SUGGESTIONS FLAG (set by send_message_client.php)
+// ---------------------------------------------
 $triggerSuggestion = isset($_SESSION["show_suggestions"]);
 unset($_SESSION["show_suggestions"]);
 
-/* --------------------------------------------------
-   OUTPUT CHAT MESSAGES
--------------------------------------------------- */
+// ---------------------------------------------
+// RENDER CHAT MESSAGES
+// ---------------------------------------------
 foreach ($messages as $msg) {
 
     $id       = $msg["id"];
@@ -80,12 +81,12 @@ foreach ($messages as $msg) {
     $text     = nl2br(htmlspecialchars(trim($msg["message"])));
     $time     = date("g:i A", strtotime($msg["created_at"]));
 
-    // Greeting animation only for the first CSR message
+    // Greeting animation for FIRST CSR message
     $extraClass = ($id == $greetingMsgId) ? " csr-greeting animate-in" : "";
 
     echo "<div class='message $sender$extraClass' data-msg-id='$id'>";
 
-    /* CSR AVATAR */
+    // CSR Avatar Only
     if ($isCSR) {
         echo "
         <div class='message-avatar'>
@@ -95,21 +96,21 @@ foreach ($messages as $msg) {
 
     echo "<div class='message-content'>";
 
-    /* MESSAGE BUBBLE */
+    // Bubble (deleted / normal)
     if (empty($msg["deleted"])) {
         echo "<div class='message-bubble'>$text</div>";
     } else {
         echo "<div class='message-bubble removed-text'>Message removed</div>";
     }
 
-    /* TIME + EDITED LABEL */
+    // Time + edited tag
     echo "<div class='message-time'>$time";
     if (!empty($msg["edited"])) {
         echo " <span class='edited-label'>(edited)</span>";
     }
     echo "</div>";
 
-    /* ACTION MENU FOR CLIENT MESSAGES ONLY */
+    // Action toolbar (client can edit THEIR OWN messages)
     if (!$isCSR && empty($msg["deleted"])) {
         echo "
         <div class='action-toolbar'>
@@ -119,9 +120,10 @@ foreach ($messages as $msg) {
 
     echo "</div></div>";
 
-    /* --------------------------------------------------
-       INSERT SUGGESTION BUBBLE (ONLY ONCE)
-    -------------------------------------------------- */
+    // ---------------------------------------------
+    // INSERT SUGGESTIONS PACK — ONLY ONCE
+    // AFTER FIRST CLIENT MESSAGE
+    // ---------------------------------------------
     if (
         $triggerSuggestion &&
         $greetingMsgId !== null &&
@@ -147,9 +149,10 @@ foreach ($messages as $msg) {
                 </div>
                 <div class='message-time'>Just now</div>
             </div>
-        </div>";
+        </div>
+        ";
 
-        $triggerSuggestion = false; // prevent duplication
+        $triggerSuggestion = false;
     }
 }
 
