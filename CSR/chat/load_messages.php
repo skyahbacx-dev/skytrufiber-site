@@ -20,7 +20,7 @@ $client = $stmt->fetch(PDO::FETCH_ASSOC);
 $ticketStatus = strtolower($client["ticket_status"] ?? "unresolved");
 
 /* ============================================================
-   HELPER — GET TIMESTAMP FROM ticket_logs.action
+   HELPERS — FETCH LOG TIMES
 ============================================================ */
 function getLogTime($conn, $client_id, $actionName) {
     $stmt = $conn->prepare("
@@ -51,89 +51,111 @@ $stmt->execute([$client_id]);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (!$rows) {
-    echo "<p style='text-align:center;color:#777;padding:10px;'>No messages yet.</p>";
+    echo "<p style='text-align:center;color:#888;padding:10px;'>No messages yet.</p>";
     exit;
 }
 
 /* ============================================================
-   SYSTEM DIVIDERS HTML
+   DIVIDERS — HTML ONCE ONLY
 ============================================================ */
 $resolvedDividerHTML = $resolvedAt ? "
     <div class='system-divider'>
         <span>Ticket marked <strong>RESOLVED</strong> on " .
-        date('M j, Y g:i A', strtotime($resolvedAt)) .
-        "</span>
+        date("M j, Y g:i A", strtotime($resolvedAt)) . "</span>
     </div>
 " : "";
 
 $pendingDividerHTML = $pendingAt ? "
     <div class='system-divider'>
         <span>Ticket placed <strong>PENDING</strong> on " .
-        date('M j, Y g:i A', strtotime($pendingAt)) .
-        "</span>
+        date("M j, Y g:i A", strtotime($pendingAt)) . "</span>
     </div>
 " : "";
 
-// print once only
-$printedResolved = false;
 $printedPending  = false;
+$printedResolved = false;
 
 /* ============================================================
-   RENDER MESSAGES
+   RENDER CHAT MESSAGES
 ============================================================ */
 foreach ($rows as $msg) {
 
-    $msgTime = strtotime($msg["created_at"]);
-    $timeFormatted = date("M j g:i A", $msgTime);
+    $id        = $msg["id"];
+    $senderRaw = $msg["sender_type"];
+    $msgTime   = strtotime($msg["created_at"]);
+    $timeFmt   = date("M j g:i A", $msgTime);
 
-    // Insert PENDING divider
+    // Divider: PENDING
     if ($pendingAt && !$printedPending && $msgTime > strtotime($pendingAt)) {
         echo $pendingDividerHTML;
         $printedPending = true;
     }
 
-    // Insert RESOLVED divider
+    // Divider: RESOLVED
     if ($resolvedAt && !$printedResolved && $msgTime > strtotime($resolvedAt)) {
         echo $resolvedDividerHTML;
         $printedResolved = true;
     }
 
-    $id     = $msg["id"];
-    $sender = ($msg["sender_type"] === "csr") ? "sent" : "received";
+    /* ============================================================
+       CHOOSE MESSAGE SIDE — CSR = sent (right), client = received (left)
+    ============================================================ */
+    $side = ($senderRaw === "csr") ? "sent" : "received";
 
-    echo "
-    <div class='message $sender' data-msg-id='$id'>
-        <div class='message-avatar'>
-            <img src='/upload/default-avatar.png'>
-        </div>
+    echo "<div class='message $side' data-msg-id='$id'>";
 
-        <div class='message-content'>
+    /* ============================================================
+       AVATAR — show only for received messages
+    ============================================================ */
+    if ($side === "received") {
+        echo "
+            <div class='message-avatar'>
+                <img src='/upload/default-avatar.png'>
+            </div>
+        ";
+    } else {
+        // keep placeholder spacing on CSR messages
+        echo "<div class='message-avatar'></div>";
+    }
+
+    echo "<div class='message-content'>";
+
+    /* ============================================================
+       ACTION MENU BUTTON (CSR can edit only CSR messages)
+    ============================================================ */
+    if ($senderRaw === "csr" && !$msg["deleted"]) {
+        echo "
             <button class='more-btn' data-id='$id'>
                 <i class='fa-solid fa-ellipsis-vertical'></i>
             </button>
+        ";
+    }
 
-            <div class='message-bubble'>
-    ";
+    /* ============================================================
+       MESSAGE BUBBLE
+    ============================================================ */
+    echo "<div class='message-bubble'>";
 
-    // Message content
     if ($msg["deleted"]) {
         echo "<div class='deleted-text'>🗑️ <i>This message was deleted</i></div>";
     } else {
         echo "<div class='msg-text'>" . nl2br(htmlspecialchars($msg["message"])) . "</div>";
     }
 
-    echo "</div>"; // end bubble
+    echo "</div>"; // bubble end
 
-    // Edited tag
+    /* ============================================================
+       EDITED LABEL
+    ============================================================ */
     if ($msg["edited"] && !$msg["deleted"]) {
         echo "<div class='edited-label'>(edited)</div>";
     }
 
-    echo "
-            <div class='message-time'>$timeFormatted</div>
-        </div>
-    </div>
-    ";
-}
+    /* ============================================================
+       TIMESTAMP
+    ============================================================ */
+    echo "<div class='message-time'>$timeFmt</div>";
 
+    echo "</div></div>"; // content + message wrapper end
+}
 ?>
