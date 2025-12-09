@@ -42,11 +42,11 @@ label { display:block; text-align:left; margin-top:12px; font-size:15px; }
   <h2 style="color:#003d66; margin:0;">Data Privacy Notice</h2>
 
   <p style="font-size:15px; text-align:justify;">
-    SkyTruFiber is committed to protecting your personal information under the Data Privacy Act of 2012.
+    SkyTruFiber by AHBA Development is committed to protecting your personal information under the Data Privacy Act of 2012.
     We collect, process and store your data for service installation, support, updates and inquiries.
   </p>
 
-  <label><input type="radio" name="consent" value="yes"> YES, I agree and allow SkyTruFiber to process my information.</label>
+  <label><input type="radio" name="consent" value="yes"> YES, I agree and allow SkyTruFiber by AHBA Developmet to process my information.</label>
   <label><input type="radio" name="consent" value="no"> NO, I do not agree.</label>
 
   <button onclick="nextStep()">Continue</button>
@@ -65,10 +65,7 @@ label { display:block; text-align:left; margin-top:12px; font-size:15px; }
   <h2 style="color:#003d66;">Where did you learn about this site?</h2>
 
   <label><input type="radio" name="source" value="QR Code"> QR Code</label>
-  <label><input type="radio" name="source" value="Facebook"> Facebook</label>
   <label><input type="radio" name="source" value="Gmail"> Gmail</label>
-  <label><input type="radio" name="source" value="Referral"> Referral</label>
-  <label><input type="radio" name="source" value="SOA / Flyers / Posters"> SOA / Flyers / Posters</label>
   <label><input type="radio" name="source" value="Others"> Others</label>
 
   <button onclick="goRegister()">Submit</button>
