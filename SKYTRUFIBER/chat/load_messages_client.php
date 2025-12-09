@@ -26,7 +26,7 @@ if (!$ticket) exit("");
 $ticket_status = $ticket["status"] ?? "unresolved";
 
 // --------------------------------------------------
-// If RESOLVED → return nothing (JS handles logout)
+// If RESOLVED → return nothing (JS handles logout + message)
 // --------------------------------------------------
 if ($ticket_status === "resolved") {
     exit("");
@@ -45,11 +45,12 @@ $stmt->execute([$ticketId]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // --------------------------------------------------
-// AUTO-GREET LOGIC
-// NEW RULE:
-// → Show assistant greeting ONLY IF:
-//     1. No CSR messages exist, AND
-//     2. Only ONE client message exists (the login concern)
+// DETECT LOGIN-FIRST-MESSAGE SCENARIO
+//
+// We show the greeting ONLY if:
+//   • EXACTLY 1 client message exists (the login concern)
+//   • ZERO CSR messages
+//   • No CSR auto-greet was added by send_message_client.php
 // --------------------------------------------------
 $csrCount = 0;
 $clientCount = 0;
@@ -118,7 +119,7 @@ foreach ($messages as $msg) {
     if (!empty($msg["edited"])) echo " <span class='edited-label'>(edited)</span>";
     echo "</div>";
 
-    // ACTION TOOLBAR
+    // ACTION TOOLBAR (only for client’s own messages)
     echo "<div class='action-toolbar'>";
     if ($sender === "sent" && empty($msg["deleted"])) {
         echo "<button class='more-btn' data-id='$id'>⋯</button>";
@@ -128,4 +129,5 @@ foreach ($messages as $msg) {
     echo "</div>"; // message-content
     echo "</div>"; // message wrapper
 }
+
 ?>
