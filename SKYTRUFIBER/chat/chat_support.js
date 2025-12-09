@@ -1,9 +1,9 @@
 /* ============================================================
 SkyTruFiber Client Chat System — UPDATED 2025
-* Auto-greet occurs ONLY after login first message (handled by backend)
+* Auto-greet occurs ONLY after login first message (backend)
+* Greeting from CSR appears ABOVE first client message
 * Improved suggestion bubble logic
-* Updated delete & edit behavior
-* Path, popup, and merge fixes
+* Stable merge behavior for new messages
 ============================================================ */
 
 /* ---------------- GLOBAL STATE ---------------- */
@@ -24,17 +24,17 @@ $(document).ready(() => {
         return;
     }
 
-    // Move action popup inside modal container
+    // Move popup inside modal
     const staticPopup = $("#msg-action-popup");
     if (staticPopup.length) $(".chat-modal").append(staticPopup.detach());
 
-    // Load messages normally (server handles auto-greet)
+    // Load messages — server handles CSR greeting
     loadMessages(true);
 
-    // Initial ticket status check
+    // Initial status check
     checkTicketStatus();
 
-    // Polling system: fetch new messages + status every 3.5s
+    // Polling: new messages + ticket status
     setInterval(() => {
         if (!editing && !activePopup) {
             fetchNewMessages();
@@ -42,7 +42,7 @@ $(document).ready(() => {
         }
     }, 3500);
 
-    // Send message handlers
+    // Send message
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
         if (e.which === 13) {
@@ -60,8 +60,8 @@ THEME TOGGLE
 ============================================================ */
 function toggleTheme() {
     const root = document.documentElement;
-    const dark = root.getAttribute("data-theme") === "dark";
-    root.setAttribute("data-theme", dark ? "light" : "dark");
+    const isDark = root.getAttribute("data-theme") === "dark";
+    root.setAttribute("data-theme", isDark ? "light" : "dark");
 }
 
 /* ============================================================
@@ -92,12 +92,13 @@ function insertSuggestionBubble() {
             </div>
         </div>
     `;
+
     $("#chat-messages").append(bubble);
     scrollToBottom();
 }
 
 /* ============================================================
-SUGGESTION BUTTON HANDLER
+SUGGESTION BUTTON LOGIC
 ============================================================ */
 $(document).on("click", ".suggest-btn", function () {
     const text = $(this).text();
@@ -173,7 +174,7 @@ function sendMessage() {
         let res = {};
         try { res = JSON.parse(raw); } catch {}
 
-        // Backend says this was FIRST EVER CLIENT MESSAGE → show suggestions
+        // FIRST EVER LOGIN MESSAGE → show Smart Assistant
         if (res.first_message === true) {
             insertSuggestionBubble();
         }
@@ -186,6 +187,7 @@ function sendMessage() {
 
 function appendClientBubble(msg) {
     const id = "temp-" + Date.now();
+
     $("#chat-messages").append(`
         <div class="message sent no-avatar" data-msg-id="${id}">
             <div class="message-content">
@@ -194,6 +196,7 @@ function appendClientBubble(msg) {
             </div>
         </div>
     `);
+
     scrollToBottom();
     return id;
 }
@@ -204,12 +207,13 @@ LOAD MESSAGES
 function loadMessages(scrollBottom = false, callback = null) {
     $.post("/SKYTRUFIBER/chat/load_messages_client.php", { ticket: ticketId })
     .done(html => {
-        const wasEmpty = $("#chat-messages").children().length === 0;
+        const isFirstLoad = $("#chat-messages").children().length === 0;
 
         $("#chat-messages").html(html);
         bindActionToolbar();
 
-        if (!wasEmpty) $(".system-suggest").remove();
+        // Remove any older suggestion if messages already exist
+        if (!isFirstLoad) $(".system-suggest").remove();
 
         if (scrollBottom) scrollToBottom();
         if (callback) callback();
@@ -238,7 +242,7 @@ function fetchNewMessages() {
 }
 
 /* ============================================================
-SCROLL
+SCROLL CONTROLS
 ============================================================ */
 function scrollToBottom() {
     const m = $("#chat-messages");
@@ -260,6 +264,7 @@ function bindActionToolbar() {
 function openPopup(id, anchor) {
     const popup = $("#msg-action-popup");
     const modal = $(".chat-modal");
+
     popup.data("msgId", id).show();
 
     const a = $(anchor).offset();
@@ -278,7 +283,7 @@ function closePopup() {
     activePopup = null;
 }
 
-/* POPUP ACTIONS */
+/* EDIT / DELETE ACTIONS */
 $(document).on("click", ".action-edit", function () {
     startEdit($("#msg-action-popup").data("msgId"));
     closePopup();
@@ -314,7 +319,6 @@ function startEdit(id) {
     `);
 }
 
-// Save edited message
 $(document).on("click", ".edit-save", function () {
     const id = $(this).data("id");
     const newText = $(this).closest(".message-bubble").find("textarea").val().trim();
@@ -331,7 +335,6 @@ $(document).on("click", ".edit-save", function () {
     .fail(() => alert("Failed to edit message."));
 });
 
-// Cancel edit
 $(document).on("click", ".edit-cancel", () => {
     editing = false;
     loadMessages(false);
