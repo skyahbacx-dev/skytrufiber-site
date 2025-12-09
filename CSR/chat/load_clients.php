@@ -14,12 +14,13 @@ $query = "
         u.ticket_status,
         u.assigned_csr,
         u.ticket_lock,
+        u.current_ticket_id,
 
-        -- last message text
+        -- last message text (from latest ticket only)
         (
             SELECT message 
             FROM chat 
-            WHERE client_id = u.id AND deleted = FALSE
+            WHERE ticket_id = u.current_ticket_id AND deleted = FALSE
             ORDER BY created_at DESC 
             LIMIT 1
         ) AS last_msg,
@@ -28,7 +29,7 @@ $query = "
         (
             SELECT created_at 
             FROM chat 
-            WHERE client_id = u.id AND deleted = FALSE
+            WHERE ticket_id = u.current_ticket_id AND deleted = FALSE
             ORDER BY created_at DESC 
             LIMIT 1
         ) AS last_time
@@ -54,11 +55,12 @@ function matchFilter($ticketStatus, $filter)
 
 foreach ($clients as $row):
 
-    $cid           = $row["id"];
-    $name          = htmlspecialchars($row["full_name"]);
-    $status        = strtolower($row["ticket_status"] ?? "unresolved");
-    $assignedTo    = $row["assigned_csr"];
-    $isLocked      = intval($row["ticket_lock"]) === 1;
+    $cid        = $row["id"];
+    $ticketID   = $row["current_ticket_id"];  // <-- NEW
+    $name       = htmlspecialchars($row["full_name"]);
+    $status     = strtolower($row["ticket_status"] ?? "unresolved");
+    $assignedTo = $row["assigned_csr"];
+    $isLocked   = intval($row["ticket_lock"]) === 1;
 
     if (!matchFilter($status, $filter)) continue;
 
@@ -78,24 +80,24 @@ foreach ($clients as $row):
     /* ACTION ICON */
     if ($assignedTo === null) {
 
-        // Unassigned → Show + button
         $icon = "<button class='assign-btn' data-id='$cid'>+</button>";
 
     } else if ($assignedTo === $csrUser) {
 
-        // Assigned to ME → Show − button
         $icon = "<button class='unassign-btn' data-id='$cid'>−</button>";
 
     } else {
 
-        // Assigned to another CSR → lock icon
         $icon = "<div class='locked-icon' data-id='$cid' title='Assigned to $assignedTo'>🔒</div>";
     }
 
     $lastMsg = $row["last_msg"] ? htmlspecialchars($row["last_msg"]) : "No messages yet";
 
 ?>
-    <div class="client-item" data-id="<?= $cid ?>" data-name="<?= $name ?>">
+    <div class="client-item"
+         data-id="<?= $cid ?>"
+         data-ticket="<?= $ticketID ?>"   <!-- IMPORTANT -->
+         data-name="<?= $name ?>">
 
         <div class="client-info">
             <strong><?= $name ?></strong>
