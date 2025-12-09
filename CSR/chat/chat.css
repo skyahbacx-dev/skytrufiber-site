@@ -129,6 +129,7 @@
   justify-content: center;
   transition: 0.2s;
 }
+
 .assign-btn:hover {
   transform: scale(1.2);
   background: #008639;
@@ -149,6 +150,7 @@
   align-items: center;
   transition: 0.2s;
 }
+
 .unassign-btn:hover {
   background: #d80000;
   transform: scale(1.2);
@@ -169,6 +171,7 @@
   opacity: 0.85;
   transition: 0.2s;
 }
+
 .locked-icon:hover {
   opacity: 1;
   transform: scale(1.15);
@@ -189,10 +192,12 @@
   background: #ffdddd;
   color: #b10000;
 }
+
 .ticket-badge.pending {
   background: #fff5d0;
   color: #c98200;
 }
+
 .ticket-badge.resolved {
   background: #d6ffe0;
   color: #007a1f;
@@ -270,6 +275,7 @@
 .chat-messages::-webkit-scrollbar {
   width: 6px;
 }
+
 .chat-messages::-webkit-scrollbar-thumb {
   background: #a7d9b7;
   border-radius: 10px;
@@ -300,16 +306,27 @@
   padding: 12px 18px;
   border-radius: 20px;
   font-size: 15px;
-  background: #ececec;
-  color: #222;
 }
-.sent .message-bubble {
-  background: #007bff;
-  color: white;
+
+/* CSR sent message (blue) */
+.message.sent .message-bubble {
+  background: #007bff !important;
+  color: #ffffff !important;
+  border-radius: 20px 20px 4px 20px;
 }
-.received .message-bubble {
-  background: #e8f7e9;
-  color: #103810;
+
+/* Client received message (light green) */
+.message.received .message-bubble {
+  background: #e8f7e9 !important;
+  color: #103810 !important;
+  border-radius: 20px 20px 20px 4px;
+}
+
+/* Deleted message text */
+.deleted-text {
+  color: #777;
+  font-style: italic;
+  opacity: 0.7;
 }
 
 /* ===========================================================
