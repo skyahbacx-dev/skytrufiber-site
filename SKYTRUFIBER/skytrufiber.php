@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
     if ($input && $password) {
         try {
 
-            // Fetch user by email or full_name
+            // Fetch user by email or fullname
             $stmt = $conn->prepare("
                 SELECT *
                 FROM users
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 $ticketStmt->execute([':cid' => $user['id']]);
                 $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
 
-                // Create new ticket if none or if last one was resolved
+                // Create new ticket if none or resolved
                 if (!$lastTicket || $lastTicket['status'] === 'resolved') {
 
                     $newTicket = $conn->prepare("
@@ -72,11 +72,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 $hasExistingMsgs = ($checkMsgs->fetchColumn() > 0);
 
                 // ---------------------------------------------------
-                // INSERT LOGIN CONCERN
+                // CORRECT ORDER FIX:
+                // Insert CSR greeting FIRST if this is a new ticket
+                // ---------------------------------------------------
+                if (!$hasExistingMsgs) {
+
+                    $autoGreet = $conn->prepare("
+                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
+                        VALUES (:tid, :cid, 'csr', 'Good day! How may we assist you today?', TRUE, FALSE, NOW())
+                    ");
+                    $autoGreet->execute([
+                        ':tid' => $ticketId,
+                        ':cid' => $user['id']
+                    ]);
+
+                    // Enable suggestion bubble
+                    $_SESSION['show_suggestions'] = true;
+                }
+
+                // ---------------------------------------------------
+                // INSERT CLIENT'S INITIAL CONCERN (SECOND)
                 // ---------------------------------------------------
                 if (!empty($concern)) {
 
-                    // Insert client concern
                     $insert = $conn->prepare("
                         INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
                         VALUES (:tid, :cid, 'client', :msg, TRUE, FALSE, NOW())
@@ -86,24 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                         ':cid' => $user['id'],
                         ':msg' => $concern
                     ]);
-
-                    // ---------------------------------------------------
-                    // INSERT CSR AUTO-GREET ONLY IF TICKET HAD 0 MESSAGES
-                    // ---------------------------------------------------
-                    if (!$hasExistingMsgs) {
-
-                        $autoGreet = $conn->prepare("
-                            INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
-                            VALUES (:tid, :cid, 'csr', 'Good day! How may we assist you today?', TRUE, FALSE, NOW())
-                        ");
-                        $autoGreet->execute([
-                            ':tid' => $ticketId,
-                            ':cid' => $user['id']
-                        ]);
-
-                        // Trigger suggestion bubble in chat_support.js
-                        $_SESSION['show_suggestions'] = true;
-                    }
                 }
 
                 // Redirect to chat UI
