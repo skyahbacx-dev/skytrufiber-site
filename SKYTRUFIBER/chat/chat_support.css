@@ -137,13 +137,6 @@ body {
     border-radius: 50%;
 }
 
-.ticket-label {
-    display: inline-block;
-    padding: 3px 10px;
-    font-size: 12px;
-    border-radius: 10px;
-}
-
 /* ============================================================
    THEME TOGGLE
 ============================================================ */
@@ -183,6 +176,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 18px;
+    position: relative;
 }
 
 #chat-messages::-webkit-scrollbar { width: 6px; }
@@ -192,24 +186,19 @@ body {
 }
 
 /* ============================================================
-   SYSTEM + AUTO-GREET + SUGGESTION MESSAGES
+   SYSTEM + GREETING + SUGGESTION MSGS
 ============================================================ */
-.system-message,
-.system-suggest .message-bubble {
-    background: var(--system-msg-bg);
-    color: var(--system-msg-text);
-}
-
 .system-message {
     padding: 14px;
     margin: 10px auto;
     border-radius: 12px;
     max-width: 80%;
+    background: var(--system-msg-bg);
+    color: var(--system-msg-text);
     font-size: 15px;
     text-align: center;
 }
 
-/* Suggestion UI refinement */
 .system-suggest .message-bubble {
     background: var(--suggest-bg);
     color: var(--suggest-text);
@@ -230,7 +219,6 @@ body {
     border: 1px solid #d3d3d3;
     cursor: pointer;
     font-size: 13px;
-    transition: 0.2s;
 }
 
 :root[data-theme="dark"] .suggest-btn {
@@ -239,9 +227,7 @@ body {
     color: #ddd;
 }
 
-.suggest-btn:hover {
-    filter: brightness(.9);
-}
+.suggest-btn:hover { filter: brightness(.9); }
 
 /* ============================================================
    MESSAGE BUBBLES
@@ -251,6 +237,7 @@ body {
     display: flex;
     gap: 10px;
     align-items: flex-end;
+    position: relative; /* REQUIRED for action toolbar */
     opacity: 0;
     transform: translateY(6px);
     animation: msgFade .25s ease forwards;
@@ -298,12 +285,12 @@ body {
 }
 
 /* ============================================================
-   ACTION TOOLBAR
+   ACTION TOOLBAR (FIXED)
 ============================================================ */
 .action-toolbar {
     position: absolute;
-    top: 6px;
-    right: -40px;
+    top: 4px;
+    right: -38px;
     opacity: 0;
     pointer-events: none;
     transition: 0.25s;
@@ -311,7 +298,7 @@ body {
 }
 
 .message.sent .action-toolbar {
-    left: -40px;
+    left: -38px;
     right: auto;
 }
 
@@ -393,7 +380,7 @@ body {
 }
 
 /* ============================================================
-   SCROLL-TO-BOTTOM BUTTON
+   SCROLL-TO-BOTTOM BUTTON (FIXED)
 ============================================================ */
 .scroll-bottom-btn {
     position: absolute;
@@ -411,6 +398,7 @@ body {
     pointer-events: none;
     font-size: 18px;
     transition: 0.25s;
+    z-index: 99999;
 }
 
 .scroll-bottom-btn.show {
@@ -419,18 +407,49 @@ body {
 }
 
 /* ============================================================
-   MOBILE RESPONSIVE
+   ANIMATIONS FOR SUGGESTIONS + GREETING
+============================================================ */
+@keyframes slideFade {
+    0% {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-in {
+    animation: slideFade 0.45s ease forwards;
+}
+
+.system-suggest,
+.csr-greeting {
+    opacity: 0;
+    animation: slideFade 0.45s ease forwards;
+}
+
+.suggest-buttons .suggest-btn {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: slideFade 0.35s ease forwards;
+}
+
+.suggest-buttons .suggest-btn:nth-child(1) { animation-delay: 0.05s; }
+.suggest-buttons .suggest-btn:nth-child(2) { animation-delay: 0.10s; }
+.suggest-buttons .suggest-btn:nth-child(3) { animation-delay: 0.15s; }
+.suggest-buttons .suggest-btn:nth-child(4) { animation-delay: 0.20s; }
+.suggest-buttons .suggest-btn:nth-child(5) { animation-delay: 0.25s; }
+
+/* ============================================================
+   RESPONSIVE
 ============================================================ */
 @media (max-width: 768px) {
 
     .chat-header {
         height: 70px;
         padding: 10px 14px;
-    }
-
-    .chat-header-logo {
-        width: 38px;
-        height: 38px;
     }
 
     #chat-messages {
@@ -456,41 +475,3 @@ body {
         transform: translateX(-50%);
     }
 }
-/* ============================================================
-   FADE + SLIDE ANIMATION FOR GREETING & SUGGESTIONS
-============================================================ */
-@keyframes slideFade {
-    0% {
-        opacity: 0;
-        transform: translateY(15px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Generic animation class */
-.animate-in {
-    animation: slideFade 0.45s ease forwards;
-}
-
-/* Apply animation automatically to greeting + suggestions */
-.system-suggest,
-.csr-greeting {
-    opacity: 0; 
-    animation: slideFade 0.45s ease forwards;
-}
-
-/* Extra polish: staggered buttons animation */
-.suggest-buttons .suggest-btn {
-    opacity: 0;
-    transform: translateY(8px);
-    animation: slideFade 0.35s ease forwards;
-}
-
-.suggest-buttons .suggest-btn:nth-child(1) { animation-delay: 0.05s; }
-.suggest-buttons .suggest-btn:nth-child(2) { animation-delay: 0.10s; }
-.suggest-buttons .suggest-btn:nth-child(3) { animation-delay: 0.15s; }
-.suggest-buttons .suggest-btn:nth-child(4) { animation-delay: 0.20s; }
-.suggest-buttons .suggest-btn:nth-child(5) { animation-delay: 0.25s; }
