@@ -5,108 +5,122 @@ ini_set("error_log", __DIR__ . "/php_errors.log");
 if (!isset($_SESSION)) session_start();
 require_once "../../db_connect.php";
 
-$ticketId = trim($_POST["ticket"] ?? "");
-if (!$ticketId) exit("");
+$ticketId = intval($_POST["ticket"] ?? 0);
+if ($ticketId <= 0) exit("");
 
 /* --------------------------------------------------
-   FETCH TICKET
+   FETCH TICKET STATUS + CLIENT
 -------------------------------------------------- */
-$stmt = $conn->prepare("SELECT status FROM tickets WHERE id = ? LIMIT 1");
+$stmt = $conn->prepare("
+    SELECT status, client_id
+    FROM tickets
+    WHERE id = ?
+    LIMIT 1
+");
 $stmt->execute([$ticketId]);
 $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$ticket || $ticket["status"] === "resolved") exit("");
+if (!$ticket) exit("");
 
 /* --------------------------------------------------
-   FETCH CHAT MESSAGES IN ORDER
+   AUTO-LOGOUT ON RESOLVED
+-------------------------------------------------- */
+if ($ticket["status"] === "resolved") {
+
+    // Prevent session reuse → force logout on client page
+    $_SESSION["force_logout"] = true;
+
+    echo "<script>window.location.href='/SKYTRUFIBER/logout.php';</script>";
+    exit;
+}
+
+/* --------------------------------------------------
+   FETCH CHAT MESSAGES FOR THIS TICKET ONLY
 -------------------------------------------------- */
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted, edited
     FROM chat
     WHERE ticket_id = ?
-    ORDER BY id ASC
+    ORDER BY created_at ASC
 ");
 $stmt->execute([$ticketId]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$msgCount = count($messages);
-
 /* --------------------------------------------------
    DETECT GREETING + FIRST CLIENT MESSAGE
 -------------------------------------------------- */
-$firstClientMsgId = null;
 $greetingMsgId = null;
+$firstClientMsgId = null;
 
 foreach ($messages as $m) {
 
-    // First CSR message = greeting
-    if ($m["sender_type"] === "csr" && $greetingMsgId === null) {
+    if ($greetingMsgId === null && $m["sender_type"] === "csr") {
         $greetingMsgId = $m["id"];
     }
 
-    // First client message
-    if ($m["sender_type"] === "client" && $firstClientMsgId === null) {
+    if ($firstClientMsgId === null && $m["sender_type"] === "client") {
         $firstClientMsgId = $m["id"];
     }
 }
 
 /* --------------------------------------------------
-   TRIGGERED SUGGESTION FLAG FROM LOGIN
+   SUGGESTION TRIGGER FLAG
 -------------------------------------------------- */
 $triggerSuggestion = isset($_SESSION["show_suggestions"]);
 unset($_SESSION["show_suggestions"]);
 
 /* --------------------------------------------------
-   RENDER MESSAGES
+   OUTPUT CHAT MESSAGES
 -------------------------------------------------- */
 foreach ($messages as $msg) {
 
     $id       = $msg["id"];
-    $sender   = ($msg["sender_type"] === "csr") ? "received" : "sent";
-    $isClient = ($sender === "sent");
+    $isCSR    = ($msg["sender_type"] === "csr");
+    $sender   = $isCSR ? "received" : "sent";
     $text     = nl2br(htmlspecialchars(trim($msg["message"])));
     $time     = date("g:i A", strtotime($msg["created_at"]));
 
-    // Apply animation class only to greeting + new messages
+    // Greeting animation only for the first CSR message
     $extraClass = ($id == $greetingMsgId) ? " csr-greeting animate-in" : "";
 
     echo "<div class='message $sender$extraClass' data-msg-id='$id'>";
 
-    // Avatar for CSR only
-    if ($sender === "received") {
-        echo "<div class='message-avatar'>
-                <img src='/upload/default-avatar.png'>
-              </div>";
+    /* CSR AVATAR */
+    if ($isCSR) {
+        echo "
+        <div class='message-avatar'>
+            <img src='/upload/default-avatar.png'>
+        </div>";
     }
 
     echo "<div class='message-content'>";
 
-    // Message bubble
+    /* MESSAGE BUBBLE */
     if (empty($msg["deleted"])) {
         echo "<div class='message-bubble'>$text</div>";
     } else {
         echo "<div class='message-bubble removed-text'>Message removed</div>";
     }
 
-    // Timestamp + edited flag
+    /* TIME + EDITED LABEL */
     echo "<div class='message-time'>$time";
-    if (!empty($msg["edited"])) echo " <span class='edited-label'>(edited)</span>";
+    if (!empty($msg["edited"])) {
+        echo " <span class='edited-label'>(edited)</span>";
+    }
     echo "</div>";
 
-    // Action toolbar for client messages only
-    if ($isClient && empty($msg["deleted"])) {
-        echo "<div class='action-toolbar'>
-                <button class='more-btn' data-id='$id'>⋯</button>
-              </div>";
+    /* ACTION MENU FOR CLIENT MESSAGES ONLY */
+    if (!$isCSR && empty($msg["deleted"])) {
+        echo "
+        <div class='action-toolbar'>
+            <button class='more-btn' data-id='$id'>⋯</button>
+        </div>";
     }
 
     echo "</div></div>";
 
     /* --------------------------------------------------
-       INSERT SUGGESTION BUBBLE AFTER FIRST CLIENT MESSAGE:
-       - Only once
-       - Only if greeting exists
-       - Only on login first message trigger
+       INSERT SUGGESTION BUBBLE (ONLY ONCE)
     -------------------------------------------------- */
     if (
         $triggerSuggestion &&
@@ -115,10 +129,11 @@ foreach ($messages as $msg) {
     ) {
 
         echo "
-        <div class='message received system-suggest animate-in' data-msg-id='suggest-1'>
+        <div class='message received system-suggest animate-in'>
             <div class='message-avatar'>
                 <img src='/upload/default-avatar.png'>
             </div>
+
             <div class='message-content'>
                 <div class='message-bubble'>
                     Here are some quick answers you may need:
@@ -132,11 +147,9 @@ foreach ($messages as $msg) {
                 </div>
                 <div class='message-time'>Just now</div>
             </div>
-        </div>
-        ";
+        </div>";
 
-        // Prevent repetition on polling
-        $triggerSuggestion = false;
+        $triggerSuggestion = false; // prevent duplication
     }
 }
 
