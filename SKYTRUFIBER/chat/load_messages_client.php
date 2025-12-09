@@ -8,26 +8,18 @@ require_once "../../db_connect.php";
 $ticketId = trim($_POST["ticket"] ?? "");
 if (!$ticketId) exit("");
 
-// --------------------------------------------------
-// FETCH TICKET
-// --------------------------------------------------
+/* FETCH TICKET */
 $stmt = $conn->prepare("
-    SELECT t.id AS ticket_id, t.status, t.client_id, u.full_name
-    FROM tickets t
-    JOIN users u ON u.id = t.client_id
-    WHERE t.id = ?
-    LIMIT 1
+    SELECT status FROM tickets
+    WHERE id = ? LIMIT 1
 ");
 $stmt->execute([$ticketId]);
 $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$ticket) exit("");
-
 if ($ticket["status"] === "resolved") exit("");
 
-// --------------------------------------------------
-// FETCH CHAT HISTORY
-// --------------------------------------------------
+/* FETCH CHAT MESSAGES */
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted, edited
     FROM chat
@@ -37,38 +29,56 @@ $stmt = $conn->prepare("
 $stmt->execute([$ticketId]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$clientCount = 0;
-$csrCount    = 0;
+$msgCount = count($messages);
 
-// Count messages by type
+/* Detect first client message */
+$firstClientMsg = null;
 foreach ($messages as $m) {
-    if ($m["sender_type"] === "client") $clientCount++;
-    if ($m["sender_type"] === "csr")    $csrCount++;
+    if ($m["sender_type"] === "client") {
+        $firstClientMsg = $m;
+        break;
+    }
 }
 
-// --------------------------------------------------
-// 1️⃣ CSR GREETING APPEARS ONLY WHEN THERE ARE ZERO MESSAGES
-// --------------------------------------------------
-if (count($messages) === 0) {
+/* Detect if CSR greeting exists */
+$csrGreetingExists = false;
+foreach ($messages as $m) {
+    if ($m["sender_type"] === "csr" &&
+        trim($m["message"]) === "Good day! How may we assist you today?") {
+        $csrGreetingExists = true;
+        break;
+    }
+}
+
+/* ------------ PRINT CSR GREETING FIRST ------------ */
+if ($firstClientMsg && $csrGreetingExists) {
     echo "
-    <div class='message received' data-msg-id='greet-1'>
+    <div class='message received'>
         <div class='message-avatar'><img src='/upload/default-avatar.png'></div>
         <div class='message-content'>
-            <div class='message-bubble'>Good day! How may we assist you today?</div>
+            <div class='message-bubble'>
+                Good day! How may we assist you today?
+            </div>
             <div class='message-time'>Just now</div>
         </div>
     </div>
     ";
 }
 
-// --------------------------------------------------
-// 2️⃣ PRINT ALL CHAT HISTORY
-// --------------------------------------------------
+/* ------------ PRINT CHAT MESSAGES (NORMAL) ------------ */
 foreach ($messages as $msg) {
 
-    $id     = $msg["id"];
+    // Skip CSR greeting because we printed it above already
+    if (
+        $msg["sender_type"] === "csr" &&
+        trim($msg["message"]) === "Good day! How may we assist you today?"
+    ) {
+        continue;
+    }
+
+    $id = $msg["id"];
     $sender = ($msg["sender_type"] === "csr") ? "received" : "sent";
-    $time   = date("g:i A", strtotime($msg["created_at"]));
+    $time = date("g:i A", strtotime($msg["created_at"]));
 
     echo "<div class='message $sender' data-msg-id='$id'>";
 
@@ -90,7 +100,6 @@ foreach ($messages as $msg) {
     if (!empty($msg["edited"])) echo " <span class='edited-label'>(edited)</span>";
     echo "</div>";
 
-    // Action buttons for client messages
     if ($sender === "sent" && empty($msg["deleted"])) {
         echo "<div class='action-toolbar'>
                 <button class='more-btn' data-id='$id'>⋯</button>
@@ -100,16 +109,10 @@ foreach ($messages as $msg) {
     echo "</div></div>";
 }
 
-// --------------------------------------------------
-// 3️⃣ SHOW SUGGESTION ONLY ONCE:
-//     WHEN EXACTLY:
-//         1 client message exists AND
-//         1 CSR greet exists
-// --------------------------------------------------
-if ($clientCount === 1 && $csrCount === 1) {
-
+/* ------------ PRINT SUGGESTION AFTER CLIENT FIRST MSG ONLY ------------ */
+if ($firstClientMsg && $msgCount === 2) {
     echo "
-    <div class='message received system-suggest' data-msg-id='suggest-1'>
+    <div class='message received system-suggest'>
         <div class='message-avatar'><img src='/upload/default-avatar.png'></div>
         <div class='message-content'>
             <div class='message-bubble'>
@@ -127,5 +130,4 @@ if ($clientCount === 1 && $csrCount === 1) {
     </div>
     ";
 }
-
 ?>
