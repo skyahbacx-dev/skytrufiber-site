@@ -4,10 +4,10 @@ require "../../db_connect.php";
 
 header("Content-Type: application/json; charset=utf-8");
 
-$csrUser   = $_SESSION["csr_user"] ?? null;
-$clientID  = intval($_POST["client_id"] ?? 0);
-$ticketID  = intval($_POST["ticket_id"] ?? 0);
-$message   = trim($_POST["message"] ?? "");
+$csrUser  = $_SESSION["csr_user"] ?? null;
+$clientID = intval($_POST["client_id"] ?? 0);
+$ticketID = intval($_POST["ticket_id"] ?? 0);
+$message  = trim($_POST["message"] ?? "");
 
 if (!$csrUser) {
     echo json_encode(["status" => "error", "msg" => "CSR not logged in"]);
@@ -27,7 +27,7 @@ if ($message === "") {
 try {
 
     /* ==========================================================
-       1) Validate ticket & check assignment
+       1) Validate ticket belongs to client & assignment
     ========================================================== */
     $stmt = $conn->prepare("
         SELECT 
@@ -47,29 +47,29 @@ try {
         exit;
     }
 
-    $ticketStatus = $ticket["ticket_status"];
+    $ticketStatus = strtolower($ticket["ticket_status"]);
     $assignedCSR  = $ticket["assigned_csr"];
     $dbClientID   = intval($ticket["client_id"]);
 
-    /* Ensure ticket belongs to selected client */
+    /* Ensure correct client–ticket mapping */
     if ($dbClientID !== $clientID) {
         echo json_encode(["status" => "error", "msg" => "Ticket does not belong to this client"]);
         exit;
     }
 
     /* ==========================================================
-       2) Block CSR from messaging in a resolved ticket
+       2) Block messaging in resolved tickets
     ========================================================== */
     if ($ticketStatus === "resolved") {
         echo json_encode([
             "status" => "blocked",
-            "msg"    => "Ticket is already resolved. Messaging disabled."
+            "msg"    => "This ticket is already resolved. Messaging disabled."
         ]);
         exit;
     }
 
     /* ==========================================================
-       3) Enforce assignment rules
+       3) CSR assignment enforcement
     ========================================================== */
     if ($assignedCSR !== $csrUser) {
         echo json_encode([
@@ -80,7 +80,7 @@ try {
     }
 
     /* ==========================================================
-       4) INSERT CSR MESSAGE (Correctly tied to ticket)
+       4) Insert CSR message (linked to ticket_id)
     ========================================================== */
     $insert = $conn->prepare("
         INSERT INTO chat (
@@ -109,6 +109,7 @@ try {
         "msg"    => "Message sent"
     ]);
     exit;
+
 
 } catch (Throwable $e) {
 
