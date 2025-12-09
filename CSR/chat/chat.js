@@ -1,5 +1,5 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — FULL ASSIGNMENT + LOCK + PENDING BUILD
+// SkyTruFiber CSR Chat System — FULL ASSIGN/TRANSFER LOGIC
 // ============================================================
 
 let currentClientID = null;
@@ -8,11 +8,10 @@ let clientRefreshInterval = null;
 let lastMessageID = 0;
 let editing = false;
 
-let currentTicketFilter = "all"; // all | unresolved | resolved | pending
+let currentTicketFilter = "all"; // all | resolved | unresolved | pending
 
 $(document).ready(function () {
 
-    // Load clients always
     loadClients();
     clientRefreshInterval = setInterval(loadClients, 4000);
 
@@ -27,7 +26,7 @@ $(document).ready(function () {
     });
 
     // ------------------------------------------------------------
-    // TICKET FILTER BUTTONS
+    // FILTER BUTTONS
     // ------------------------------------------------------------
     $(document).on("click", ".ticket-filter", function () {
         currentTicketFilter = $(this).data("filter");
@@ -37,18 +36,7 @@ $(document).ready(function () {
     });
 
     // ------------------------------------------------------------
-    // SEND MESSAGE
-    // ------------------------------------------------------------
-    $("#send-btn").click(sendMessage);
-    $("#chat-input").keypress(function (e) {
-        if (e.which === 13) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
-
-    // ------------------------------------------------------------
-    // SELECT A CLIENT
+    // SELECT CLIENT
     // ------------------------------------------------------------
     $(document).on("click", ".client-item", function () {
 
@@ -65,7 +53,18 @@ $(document).ready(function () {
         loadMessages(true);
 
         if (messageInterval) clearInterval(messageInterval);
-        messageInterval = setInterval(fetchNewMessages, 1200);
+        messageInterval = setInterval(fetchNewMessages, 1000);
+    });
+
+    // ------------------------------------------------------------
+    // SEND MESSAGE
+    // ------------------------------------------------------------
+    $("#send-btn").click(sendMessage);
+    $("#chat-input").keypress(e => {
+        if (e.which === 13) {
+            e.preventDefault();
+            sendMessage();
+        }
     });
 
     // ------------------------------------------------------------
@@ -80,16 +79,16 @@ $(document).ready(function () {
     $("#scroll-bottom-btn").click(scrollToBottom);
 
     // ------------------------------------------------------------
-    // CLOSE ACTION POPUP
+    // CLOSE POPUP MENU IF CLICK OUTSIDE
     // ------------------------------------------------------------
-    $(document).on("click", function (e) {
+    $(document).on("click", e => {
         if (!$(e.target).closest("#msg-action-popup, .more-btn").length) {
             closeActionPopup();
         }
     });
 
     // ------------------------------------------------------------
-    // CHANGE TICKET STATUS (unresolved, resolved, pending)
+    // TICKET STATUS CHANGE (Unresolved / Pending / Resolved)
     // ------------------------------------------------------------
     $(document).on("change", "#ticket-status-dropdown", function () {
 
@@ -100,7 +99,7 @@ $(document).ready(function () {
         $.post("../chat/ticket_update.php", {
             client_id: currentClientID,
             status: newStatus
-        }, function (res) {
+        }, res => {
             if (res === "OK") {
                 loadClientInfo(currentClientID);
                 loadClients();
@@ -108,7 +107,120 @@ $(document).ready(function () {
         });
     });
 
+    // ------------------------------------------------------------
+    // ASSIGN BUTTON ( ➕ Assign to me )
+    // ------------------------------------------------------------
+    $(document).on("click", ".assign-btn", function () {
+
+        const id = $(this).data("id");
+
+        $.post("../chat/assign_client.php", {
+            action: "assign",
+            client_id: id
+        }, handleAssignResponse);
+    });
+
+    // ------------------------------------------------------------
+    // UNASSIGN BUTTON ( ➖ )
+    // ------------------------------------------------------------
+    $(document).on("click", ".unassign-btn", function () {
+
+        const id = $(this).data("id");
+
+        $.post("../chat/assign_client.php", {
+            action: "unassign",
+            client_id: id
+        }, res => {
+            alert(res.msg);
+            loadClientInfo(id);
+            loadClients();
+        });
+    });
+
+    // ------------------------------------------------------------
+    // REQUEST TRANSFER 🔒
+    // ------------------------------------------------------------
+    $(document).on("click", ".request-transfer-btn", function () {
+
+        const id = $(this).data("id");
+
+        $.post("../chat/assign_client.php", {
+            action: "request_transfer",
+            client_id: id
+        }, res => {
+            alert(res.msg);
+            loadClientInfo(id);
+            loadClients();
+        });
+    });
+
+    // ------------------------------------------------------------
+    // APPROVE TRANSFER
+    // ------------------------------------------------------------
+    $(document).on("click", ".approve-transfer-btn", function () {
+
+        const id = $(this).data("id");
+
+        $.post("../chat/assign_client.php", {
+            action: "approve_transfer",
+            client_id: id
+        }, res => {
+            alert(res.msg);
+            loadClientInfo(id);
+            loadClients();
+        });
+    });
+
+    // ------------------------------------------------------------
+    // DENY TRANSFER
+    // ------------------------------------------------------------
+    $(document).on("click", ".deny-transfer-btn", function () {
+
+        const id = $(this).data("id");
+
+        $.post("../chat/assign_client.php", {
+            action: "deny_transfer",
+            client_id: id
+        }, res => {
+            alert(res.msg);
+            loadClientInfo(id);
+            loadClients();
+        });
+    });
+
 });
+
+// ============================================================
+// HANDLE ASSIGN RESPONSE
+// ============================================================
+function handleAssignResponse(res) {
+
+    if (res.status === "ok") {
+        alert(res.msg);
+        loadClientInfo(currentClientID);
+        loadClients();
+        return;
+    }
+
+    if (res.status === "transfer_required") {
+
+        if (confirm(`${res.msg}\nAssigned to: ${res.assigned_to}\nRequest transfer?`)) {
+
+            $.post("../chat/assign_client.php", {
+                action: "request_transfer",
+                client_id: currentClientID
+            }, out => {
+                alert(out.msg);
+                loadClientInfo(currentClientID);
+                loadClients();
+            });
+        }
+
+        return;
+    }
+
+    alert(res.msg);
+}
 
 // ============================================================
 // SCROLL TO BOTTOM
@@ -133,11 +245,6 @@ function loadClients() {
 
 // ============================================================
 // LOAD CLIENT INFO PANEL
-// Shows:
-//   ✔ Assigned CSR
-//   ✔ Lock status
-//   ✔ Pending
-//   ✔ Banner message
 // ============================================================
 function loadClientInfo(id) {
 
@@ -150,54 +257,18 @@ function loadClientInfo(id) {
         if (meta.length) {
 
             const ticketStatus   = meta.data("ticket");
-            const assignedCSR    = meta.data("assigned-csr");
-            const myCSR          = meta.data("me");
-            const isLocked       = meta.data("locked") == "1";
-            const transferReq    = meta.data("transfer-request");
+            const isAssignedToMe = meta.data("assigned") === "yes";
+            const isLocked       = String(meta.data("locked")) === "true";
 
-            const isAssignedToMe = (assignedCSR === myCSR);
-
-            updateBanner(assignedCSR, myCSR, transferReq);
-
-            // Chat-panel border color
             $("#ticket-border-panel")
-                .removeClass("resolved pending unresolved")
+                .removeClass("resolved unresolved pending")
                 .addClass(ticketStatus);
 
-            // Enable or disable dropdown
             $("#ticket-status-dropdown").prop("disabled", !isAssignedToMe);
 
-            // Input permission
             handleChatPermission(isAssignedToMe, isLocked, ticketStatus);
         }
     });
-}
-
-// ============================================================
-// HEADER BANNER LOGIC
-// ============================================================
-function updateBanner(assignedCSR, myCSR, transferReq) {
-
-    const banner = $("#chat-header-banner");
-    if (!banner.length) return;
-
-    // Reset
-    banner.hide().text("");
-
-    // Not assigned at all
-    if (!assignedCSR) {
-        banner.text("⚠ This client is unassigned — Click 🔒 to assign.").show();
-        return;
-    }
-
-    // Assigned to me
-    if (assignedCSR === myCSR) {
-        banner.text("✔ You are assigned to this client.").show();
-        return;
-    }
-
-    // Assigned to another CSR
-    banner.text(`🔒 Assigned to ${assignedCSR}. You cannot reply.`).show();
 }
 
 // ============================================================
@@ -209,40 +280,27 @@ function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
     const input = $("#chat-input");
     const sendBtn = $("#send-btn");
 
-    // Not assigned OR locked
     if (!isAssignedToMe || isLocked) {
-
         bar.addClass("disabled");
         input.prop("disabled", true);
         sendBtn.prop("disabled", true);
 
         input.attr("placeholder",
             isLocked
-                ? "Client is locked — cannot send."
-                : "Assigned to another CSR — cannot send."
+                ? "🔒 Ticket is locked."
+                : "Assigned to another CSR — view only."
         );
         return;
     }
 
-    // Ticket resolved
     if (ticketStatus === "resolved") {
         bar.addClass("disabled");
         input.prop("disabled", true);
         sendBtn.prop("disabled", true);
-        input.attr("placeholder", "Ticket is resolved — chat closed.");
+        input.attr("placeholder", "Ticket resolved — chat closed.");
         return;
     }
 
-    // Pending (CSR + Technician)
-    if (ticketStatus === "pending") {
-        bar.removeClass("disabled");
-        input.prop("disabled", false);
-        sendBtn.prop("disabled", false);
-        input.attr("placeholder", "Technician is coordinating — you may update the client.");
-        return;
-    }
-
-    // Full access
     bar.removeClass("disabled");
     input.prop("disabled", false);
     sendBtn.prop("disabled", false);
@@ -296,12 +354,13 @@ function fetchNewMessages() {
 
         const box = $("#chat-messages")[0];
         const dist = box.scrollHeight - box.clientHeight - box.scrollTop;
-        if (dist < 150) scrollToBottom();
+
+        if (dist < 120) scrollToBottom();
     });
 }
 
 // ============================================================
-// SEND MESSAGE
+// SEND MESSAGE (CSR)
 // ============================================================
 function sendMessage() {
 
@@ -320,7 +379,7 @@ function sendMessage() {
 }
 
 // ============================================================
-// TEMP BUBBLE
+// TEMP SENDING BUBBLE
 // ============================================================
 function appendTempBubble(msg) {
     $("#chat-messages").append(`
@@ -392,13 +451,10 @@ function startCSRMessageEdit(id) {
 $(document).on("click", ".edit-save", function () {
 
     const id = $(this).data("id");
-    const newText = $(this)
-        .closest(".message-bubble")
-        .find("textarea")
-        .val()
-        .trim();
+    const newText =
+        $(this).closest(".message-bubble").find("textarea").val().trim();
 
-    $.post("../chat/edit_message.php", { id, message: newText }, function () {
+    $.post("../chat/edit_message.php", { id, message: newText }, () => {
         editing = false;
         loadMessages(true);
     });
@@ -410,7 +466,7 @@ $(document).on("click", ".edit-cancel", function () {
 });
 
 // ============================================================
-// DELETE / UNSEND
+// DELETE / UNSEND MESSAGE
 // ============================================================
 $(document).on("click", ".action-delete, .action-unsend", function () {
 
