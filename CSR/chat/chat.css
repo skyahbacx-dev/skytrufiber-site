@@ -7,6 +7,7 @@
   height: calc(100vh - 55px);
   overflow: hidden;
   background: #f5fbf7;
+  font-family: "Segoe UI", sans-serif;
 }
 
 /* ===========================================================
@@ -110,7 +111,7 @@
 }
 
 /* ===========================================================
-   ASSIGNMENT ICONS (NEW)
+   ASSIGNMENT ICONS
 =========================================================== */
 
 /* Unassigned ➕ */
@@ -129,7 +130,7 @@
   transition: 0.2s;
 }
 .assign-btn:hover {
-  transform: scale(1.15);
+  transform: scale(1.2);
   background: #008639;
 }
 
@@ -149,8 +150,8 @@
   transition: 0.2s;
 }
 .unassign-btn:hover {
-  background: #e00000;
-  transform: scale(1.15);
+  background: #d80000;
+  transform: scale(1.2);
 }
 
 /* Assigned to other CSR 🔒 */
@@ -174,7 +175,7 @@
 }
 
 /* ===========================================================
-   TICKET STATUS BADGES (NEW)
+   TICKET STATUS BADGES
 =========================================================== */
 .ticket-badge {
   padding: 3px 8px;
@@ -188,15 +189,13 @@
   background: #ffdddd;
   color: #b10000;
 }
-
-.ticket-badge.resolved {
-  background: #d6ffe0;
-  color: #007a1f;
-}
-
 .ticket-badge.pending {
   background: #fff5d0;
   color: #c98200;
+}
+.ticket-badge.resolved {
+  background: #d6ffe0;
+  color: #007a1f;
 }
 
 /* ===========================================================
@@ -217,7 +216,7 @@
 }
 
 /* ===========================================================
-   HEADER
+   CHAT HEADER
 =========================================================== */
 .chat-header {
   padding: 14px 20px;
@@ -234,7 +233,6 @@
   gap: 12px;
 }
 
-/* Client Name */
 #chat-client-name {
   font-size: 18px;
   font-weight: bold;
@@ -244,7 +242,6 @@
   gap: 8px;
 }
 
-/* LOCK beside name (assigned to other CSR) */
 .client-locked-label {
   background: #777;
   padding: 4px 10px;
@@ -257,7 +254,7 @@
 }
 
 /* ===========================================================
-   CHAT MESSAGE AREA
+   CHAT MESSAGES
 =========================================================== */
 .chat-messages {
   flex: 1;
@@ -269,7 +266,7 @@
   background: #f7fef8;
 }
 
-/* custom scrollbar */
+/* Scrollbar */
 .chat-messages::-webkit-scrollbar {
   width: 6px;
 }
@@ -279,7 +276,7 @@
 }
 
 /* ===========================================================
-   MESSAGES
+   MESSAGE BUBBLES
 =========================================================== */
 .message {
   display: flex;
@@ -299,7 +296,6 @@
   align-self: flex-start;
 }
 
-/* Message bubble */
 .message-bubble {
   padding: 12px 18px;
   border-radius: 20px;
@@ -317,7 +313,7 @@
 }
 
 /* ===========================================================
-   ASSIGN/LOCK STATES BLOCK CHAT INPUT
+   DISABLED CHAT INPUT
 =========================================================== */
 .chat-input-area.disabled {
   opacity: 0.45;
@@ -338,10 +334,6 @@
   padding: 18px;
 }
 
-.client-info-panel {
-  padding: 10px;
-}
-
 .client-info-panel h3 {
   font-size: 18px;
   color: #003700;
@@ -349,7 +341,7 @@
 }
 
 /* ===========================================================
-   SYSTEM DIVIDER (RESOLVED)
+   SYSTEM DIVIDER
 =========================================================== */
 .system-divider {
   text-align: center;
@@ -357,6 +349,7 @@
   font-size: 13px;
   color: #666;
 }
+
 .system-divider span {
   background: #e7f4ff;
   padding: 6px 14px;
