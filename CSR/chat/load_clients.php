@@ -7,10 +7,6 @@ $filter  = $_POST["filter"] ?? "all";
 
 if (!$csrUser) exit("Session expired.");
 
-
-// ==========================================================
-// FETCH CLIENTS + latest message preview
-// ==========================================================
 $query = "
     SELECT 
         u.id,
@@ -19,16 +15,22 @@ $query = "
         u.assigned_csr,
         u.ticket_lock,
 
-        (SELECT message 
-         FROM chat 
-         WHERE client_id = u.id AND deleted = 0 
-         ORDER BY created_at DESC LIMIT 1
+        -- last message text
+        (
+            SELECT message 
+            FROM chat 
+            WHERE client_id = u.id AND deleted = FALSE
+            ORDER BY created_at DESC 
+            LIMIT 1
         ) AS last_msg,
 
-        (SELECT created_at 
-         FROM chat 
-         WHERE client_id = u.id AND deleted = 0 
-         ORDER BY created_at DESC LIMIT 1
+        -- last message time
+        (
+            SELECT created_at 
+            FROM chat 
+            WHERE client_id = u.id AND deleted = FALSE
+            ORDER BY created_at DESC 
+            LIMIT 1
         ) AS last_time
 
     FROM users u
@@ -44,31 +46,23 @@ if (!$clients) {
     exit;
 }
 
-
-// ==========================================================
-// FILTER LOGIC
-// ==========================================================
 function matchFilter($ticketStatus, $filter)
 {
     if ($filter === "all") return true;
     return strtolower($ticketStatus) === strtolower($filter);
 }
 
-
-// ==========================================================
-// OUTPUT LIST
-// ==========================================================
 foreach ($clients as $row):
 
-    $cid        = $row["id"];
-    $name       = htmlspecialchars($row["full_name"]);
-    $status     = strtolower($row["ticket_status"] ?? "unresolved");
-    $assignedTo = $row["assigned_csr"];
-    $isLocked   = intval($row["ticket_lock"]) === 1;
+    $cid           = $row["id"];
+    $name          = htmlspecialchars($row["full_name"]);
+    $status        = strtolower($row["ticket_status"] ?? "unresolved");
+    $assignedTo    = $row["assigned_csr"];
+    $isLocked      = intval($row["ticket_lock"]) === 1;
 
     if (!matchFilter($status, $filter)) continue;
 
-    // ---- STATUS BADGE ----
+    /* STATUS BADGES */
     switch ($status) {
         case "resolved":
             $badge = "<span class='ticket-badge resolved'>RESOLVED</span>";
@@ -81,49 +75,37 @@ foreach ($clients as $row):
             break;
     }
 
-    // ---- DECIDE ICON ----
-    $icon = "";
-
-    // CASE A — Unassigned → show "+"
+    /* ACTION ICON */
     if ($assignedTo === null) {
+
+        // Unassigned → Show + button
         $icon = "<button class='assign-btn' data-id='$cid'>+</button>";
-    }
 
-    // CASE B — Assigned to me → show "−" ALWAYS
-    else if ($assignedTo === $csrUser) {
+    } else if ($assignedTo === $csrUser) {
+
+        // Assigned to ME → Show − button
         $icon = "<button class='unassign-btn' data-id='$cid'>−</button>";
+
+    } else {
+
+        // Assigned to another CSR → lock icon
+        $icon = "<div class='locked-icon' data-id='$cid' title='Assigned to $assignedTo'>🔒</div>";
     }
 
-    // CASE C — Assigned to another CSR
-    else {
-
-        // If ticket is locked → show locked icon (🔒)
-        if ($isLocked) {
-            $icon = "<div class='locked-icon' data-id='$cid' title='Locked by $assignedTo'>🔒</div>";
-        }
-        // Not locked → still assigned to other CSR → show 🔒
-        else {
-            $icon = "<div class='locked-icon' data-id='$cid' title='Assigned to $assignedTo'>🔒</div>";
-        }
-    }
-
-    // Last message preview
     $lastMsg = $row["last_msg"] ? htmlspecialchars($row["last_msg"]) : "No messages yet";
 
 ?>
+    <div class="client-item" data-id="<?= $cid ?>" data-name="<?= $name ?>">
 
-<div class="client-item" data-id="<?= $cid ?>" data-name="<?= $name ?>">
+        <div class="client-info">
+            <strong><?= $name ?></strong>
+            <div class="last-msg"><?= $lastMsg ?></div>
+        </div>
 
-    <div class="client-info">
-        <strong><?= $name ?></strong>
-        <div class="last-msg"><?= $lastMsg ?></div>
+        <div style="display:flex;flex-direction:column;align-items:end;gap:6px;">
+            <?= $badge ?>
+            <?= $icon ?>
+        </div>
+
     </div>
-
-    <div style="display:flex;flex-direction:column;align-items:end;gap:6px;">
-        <?= $badge ?>
-        <?= $icon ?>
-    </div>
-
-</div>
-
 <?php endforeach; ?>
