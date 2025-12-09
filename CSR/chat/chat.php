@@ -16,10 +16,56 @@ $csrUser = $_SESSION["csr_user"];
 <!-- FIXED FONT AWESOME (FA 6.5.1) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
 
-<!-- Your CSS -->
+<!-- CHAT CSS -->
 <link rel="stylesheet" href="chat.css?v=<?php echo time(); ?>">
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+    /* Fix: ensure chat messages do not overlap the input */
+    .chat-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    /* Ensure input stays visible and fixed inside wrapper */
+    #chat-input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px;
+        border-top: 1px solid #dcdcdc;
+        background: white;
+        z-index: 20;
+    }
+
+    .chat-input-box {
+        flex: 1;
+    }
+
+    #chat-input {
+        width: 100%;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .chat-send-btn {
+        background: #00a246;
+        border: none;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+    .chat-send-btn:hover {
+        background: #008639;
+    }
+</style>
 
 </head>
 
@@ -33,7 +79,6 @@ $csrUser = $_SESSION["csr_user"];
         <div class="left-header">
             <h3>Clients</h3>
 
-            <!-- Ticket Filters -->
             <div class="ticket-filter-buttons">
                 <button class="ticket-filter" data-filter="all">All</button>
                 <button class="ticket-filter" data-filter="unresolved">Unresolved</button>
@@ -48,6 +93,7 @@ $csrUser = $_SESSION["csr_user"];
 
     <!-- MIDDLE CHAT PANEL -->
     <div class="chat-middle-panel" id="ticket-border-panel">
+        
         <div class="chat-wrapper">
 
             <!-- CHAT HEADER -->
@@ -57,16 +103,16 @@ $csrUser = $_SESSION["csr_user"];
                     <span id="client-status" class="status-dot offline"></span>
                 </div>
 
-                <!-- Ticket Status Selector -->
                 <div class="ticket-status-control">
                     <select id="ticket-status-dropdown" disabled>
                         <option value="unresolved">Unresolved</option>
+                        <option value="pending">Pending</option>
                         <option value="resolved">Resolved</option>
                     </select>
                 </div>
             </div>
 
-            <!-- CHAT MESSAGES -->
+            <!-- CHAT MESSAGES (SCROLLABLE) -->
             <div id="chat-messages" class="chat-messages"></div>
 
             <!-- SCROLL TO BOTTOM BUTTON -->
@@ -74,7 +120,7 @@ $csrUser = $_SESSION["csr_user"];
                 <i class="fa-solid fa-arrow-down"></i>
             </button>
 
-            <!-- CHAT INPUT -->
+            <!-- CHAT INPUT AREA -->
             <div id="chat-input-wrapper" class="chat-input-area">
                 <div class="chat-input-box">
                     <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
@@ -87,7 +133,7 @@ $csrUser = $_SESSION["csr_user"];
 
         </div> <!-- /chat-wrapper -->
 
-        <!-- ACTION MENU POPUP -->
+        <!-- ACTION POPUP MENU -->
         <div id="msg-action-popup" class="msg-action-popup">
             <button class="action-edit"><i class="fa-solid fa-pen"></i> Edit</button>
             <button class="action-unsend"><i class="fa-solid fa-ban"></i> Unsend</button>
