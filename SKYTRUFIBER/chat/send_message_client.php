@@ -7,11 +7,14 @@ header("Content-Type: application/json");
 
 require_once "../../db_connect.php";
 
+/* ----------------------------------------------------------
+   INPUTS
+---------------------------------------------------------- */
 $ticketId = (int)($_POST["ticket"] ?? 0);
 $message  = trim($_POST["message"] ?? "");
 
 /* ----------------------------------------------------------
-   BASIC VALIDATION
+   VALIDATE TICKET ID
 ---------------------------------------------------------- */
 if ($ticketId <= 0) {
     echo json_encode(["status" => "error", "msg" => "invalid_ticket"]);
@@ -32,15 +35,34 @@ if (!$ticket) {
     exit;
 }
 
-if ($ticket["status"] === "resolved") {
-    echo json_encode(["status" => "blocked", "msg" => "ticket_resolved"]);
-    exit;
-}
-
 $clientId = (int)$ticket["client_id"];
 
 /* ----------------------------------------------------------
-   PREVENT EMPTY / BLANK MESSAGES
+   SECURITY CHECK:
+   Ensure session client is the SAME owner of this ticket
+---------------------------------------------------------- */
+if (!isset($_SESSION["client_id"]) || $_SESSION["client_id"] != $clientId) {
+    echo json_encode(["status" => "error", "msg" => "not_authorized"]);
+    exit;
+}
+
+/* ----------------------------------------------------------
+   IF TICKET IS RESOLVED → BLOCK MESSAGE & FORCE LOGOUT
+---------------------------------------------------------- */
+if ($ticket["status"] === "resolved") {
+
+    // Mark for logout on next poll so UI resets properly
+    $_SESSION["force_logout"] = true;
+
+    echo json_encode([
+        "status" => "blocked",
+        "msg" => "ticket_resolved"
+    ]);
+    exit;
+}
+
+/* ----------------------------------------------------------
+   PREVENT EMPTY MESSAGES
 ---------------------------------------------------------- */
 if ($message === "" || strlen(trim($message)) === 0) {
     echo json_encode(["status" => "empty"]);
@@ -49,7 +71,7 @@ if ($message === "" || strlen(trim($message)) === 0) {
 
 /* ----------------------------------------------------------
    DETECT IF THIS IS THE FIRST CLIENT MESSAGE
-   (CSR greeting is already created during login)
+   (CSR greeting exists already)
 ---------------------------------------------------------- */
 $check = $conn->prepare("
     SELECT COUNT(*)
@@ -63,7 +85,7 @@ $existingClientCount = (int)$check->fetchColumn();
 $isFirstClientMessage = ($existingClientCount === 0);
 
 /* ----------------------------------------------------------
-   INSERT CLIENT MESSAGE INTO DATABASE
+   INSERT MESSAGE
 ---------------------------------------------------------- */
 $insert = $conn->prepare("
     INSERT INTO chat (
@@ -74,17 +96,15 @@ $insert = $conn->prepare("
         delivered,
         seen,
         created_at
-    ) VALUES (
-        ?, ?, 'client', ?, TRUE, FALSE, NOW()
-    )
+    ) VALUES (?, ?, 'client', ?, TRUE, FALSE, NOW())
 ");
 $insert->execute([$ticketId, $clientId, $message]);
 
 /* ----------------------------------------------------------
-   FIRST CLIENT MESSAGE → TRIGGER SUGGESTION FLAG
+   FIRST MESSAGE → TRIGGER SUGGESTIONS
 ---------------------------------------------------------- */
 if ($isFirstClientMessage) {
-    // Set FLAG so load_messages_client.php will insert suggestions
+
     $_SESSION["show_suggestions"] = true;
 
     echo json_encode([
@@ -95,7 +115,7 @@ if ($isFirstClientMessage) {
 }
 
 /* ----------------------------------------------------------
-   NORMAL CLIENT MESSAGE RESPONSE
+   NORMAL SUCCESS RESPONSE
 ---------------------------------------------------------- */
 echo json_encode(["status" => "ok"]);
 exit;
