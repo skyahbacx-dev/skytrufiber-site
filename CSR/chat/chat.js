@@ -4,7 +4,7 @@
 // ============================================================
 
 let currentClientID = null;
-let currentTicketID = null;   // 🔥 NEW — CRITICAL FIX FOR YOUR SYSTEM
+let currentTicketID = null;   // 🔥 NEW — CRITICAL FIX
 let messageInterval = null;
 let clientRefreshInterval = null;
 let editing = false;
@@ -202,7 +202,7 @@ function loadClients() {
 }
 
 // ============================================================
-// LOAD CLIENT INFO + CRITICAL: GET TICKET ID
+// LOAD CLIENT INFO + UPDATE TICKET ID
 // ============================================================
 function loadClientInfo(id) {
 
@@ -213,19 +213,17 @@ function loadClientInfo(id) {
         const meta = $("#client-meta");
         if (!meta.length) return;
 
-        // 🔥 IMPORTANT: GET CURRENT ACTIVE TICKET
         currentTicketID = parseInt(meta.data("ticket-id")) || null;
 
         const ticketStatus = meta.data("ticket");
-        const isAssignedToMe = String(meta.data("assigned")) === "1";
-        const isLocked = String(meta.data("locked")) === "true";
+        const isAssignedToMe = meta.data("assigned") === "yes";
+        const isLocked = meta.data("locked") === "true";
 
         $("#ticket-status-dropdown").val(ticketStatus);
         $("#ticket-status-dropdown").prop("disabled", !isAssignedToMe);
 
         handleChatPermission(isAssignedToMe, isLocked, ticketStatus);
 
-        // Now load chat using TICKET ID, NOT CLIENT ID
         loadMessages(true);
     });
 }
@@ -264,14 +262,14 @@ function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
 }
 
 // ============================================================
-// LOAD MESSAGES (NOW USING TICKET ID)
+// LOAD MESSAGES (TICKET-BASED)
 // ============================================================
 function loadMessages(scrollBottom = false) {
 
     if (!currentTicketID) return;
 
     $.post("../chat/load_messages.php", {
-        ticket_id: currentTicketID   // 🔥 FIXED
+        ticket_id: currentTicketID
     }, html => {
 
         $("#chat-messages").html(html);
@@ -289,7 +287,7 @@ function fetchNewMessages() {
     if (!currentTicketID) return;
 
     $.post("../chat/load_messages.php", {
-        ticket_id: currentTicketID   // 🔥 FIXED
+        ticket_id: currentTicketID
     }, html => {
 
         const temp = $("<div>").html(html);
@@ -306,7 +304,7 @@ function fetchNewMessages() {
 }
 
 // ============================================================
-// SEND MESSAGE (NOW INCLUDES TICKET ID)
+// SEND MESSAGE — USES BOTH client_id + ticket_id
 // ============================================================
 function sendMessage() {
 
@@ -317,7 +315,7 @@ function sendMessage() {
 
     $.post("../chat/send_message.php", {
         client_id: currentClientID,
-        ticket_id: currentTicketID,   // 🔥 CRITICAL FIX
+        ticket_id: currentTicketID,
         message: msg
     }, (res) => {
 
