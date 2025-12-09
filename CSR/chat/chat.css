@@ -1,5 +1,5 @@
 /* ===========================================================
-   GRID LAYOUT — Improved spacing & layout
+   GRID LAYOUT
 =========================================================== */
 #chat-container {
   display: grid;
@@ -11,7 +11,7 @@
 }
 
 /* ===========================================================
-   LEFT PANEL — Client List + Filters
+   LEFT PANEL
 =========================================================== */
 .chat-left-panel {
   background: #ffffff;
@@ -21,7 +21,6 @@
   box-shadow: inset -2px 0 4px rgba(0,0,0,0.03);
 }
 
-/* Ticket Filters */
 .ticket-filter-buttons {
   display: flex;
   gap: 8px;
@@ -37,12 +36,10 @@
   font-size: 13px;
   cursor: pointer;
   text-align: center;
-  transition: 0.2s ease;
+  transition: 0.2s;
 }
 
-.ticket-filter:hover {
-  background: #dfffe4;
-}
+.ticket-filter:hover { background: #dfffe4; }
 
 .ticket-filter.active {
   background: #00a246;
@@ -51,7 +48,6 @@
   font-weight: bold;
 }
 
-/* Search Bar */
 #client-search {
   width: 90%;
   padding: 9px 12px;
@@ -61,11 +57,9 @@
   margin: 12px auto;
   background: #f9fffa;
   font-size: 14px;
-  transition: 0.2s;
 }
 
 #client-search:focus {
-  outline: none;
   border-color: #00a246;
   background: #ffffff;
 }
@@ -75,7 +69,6 @@
 =========================================================== */
 .client-item {
   display: flex;
-  align-items: center;
   justify-content: space-between;
   padding: 14px;
   cursor: pointer;
@@ -83,10 +76,7 @@
   transition: background 0.18s, transform 0.15s;
 }
 
-.client-item:hover {
-  background: #eaffea;
-  transform: translateX(2px);
-}
+.client-item:hover { background: #eaffea; transform: translateX(2px); }
 
 .client-item.active-client {
   background: #d2ffd3;
@@ -100,82 +90,59 @@
   margin-left: 10px;
 }
 
-.client-info strong {
-  font-size: 15px;
-  color: #003900;
-}
-
-.last-msg {
-  font-size: 12px;
-  color: #777;
-}
+.client-info strong { font-size: 15px; color: #003900; }
+.last-msg { font-size: 12px; color: #777; }
 
 /* ===========================================================
    ASSIGNMENT ICONS
 =========================================================== */
+.assign-btn,
+.unassign-btn,
+.locked-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-/* Unassigned ➕ */
+/* ➕ Unassigned */
 .assign-btn {
   background: #00a246;
   color: #fff;
   border: none;
   border-radius: 50%;
-  width: 26px;
-  height: 26px;
-  font-size: 15px;
+  width: 28px;
+  height: 28px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   transition: 0.2s;
 }
+.assign-btn:hover { background: #008639; transform: scale(1.15); }
 
-.assign-btn:hover {
-  transform: scale(1.2);
-  background: #008639;
-}
-
-/* Assigned to ME ➖ */
+/* ➖ Assigned to me */
 .unassign-btn {
   background: #ff5252;
   color: white;
   border: none;
   border-radius: 50%;
-  width: 26px;
-  height: 26px;
-  font-size: 16px;
+  width: 28px;
+  height: 28px;
   cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  font-size: 18px;
   transition: 0.2s;
 }
+.unassign-btn:hover { background: #d80000; transform: scale(1.15); }
 
-.unassign-btn:hover {
-  background: #d80000;
-  transform: scale(1.2);
-}
-
-/* Assigned to other CSR 🔒 */
+/* 🔒 Assigned to other CSR */
 .locked-icon {
   background: #777;
   color: white;
   width: 28px;
   height: 28px;
-  font-size: 15px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
   opacity: 0.85;
   transition: 0.2s;
 }
-
-.locked-icon:hover {
-  opacity: 1;
-  transform: scale(1.15);
-}
+.locked-icon:hover { opacity: 1; transform: scale(1.15); }
 
 /* ===========================================================
    TICKET STATUS BADGES
@@ -185,23 +152,11 @@
   font-size: 11px;
   border-radius: 6px;
   font-weight: bold;
-  margin-left: 6px;
 }
 
-.ticket-badge.unresolved {
-  background: #ffdddd;
-  color: #b10000;
-}
-
-.ticket-badge.pending {
-  background: #fff5d0;
-  color: #c98200;
-}
-
-.ticket-badge.resolved {
-  background: #d6ffe0;
-  color: #007a1f;
-}
+.ticket-badge.unresolved { background: #ffdddd; color: #b10000; }
+.ticket-badge.pending    { background: #fff5d0; color: #c98200; }
+.ticket-badge.resolved   { background: #d7ffe1; color: #007a1f; }
 
 /* ===========================================================
    MIDDLE CHAT PANEL
@@ -214,72 +169,52 @@
   overflow: hidden;
 }
 
-.chat-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
 /* ===========================================================
    CHAT HEADER
 =========================================================== */
 .chat-header {
   padding: 14px 20px;
-  background: #ffffff;
+  background: white;
   border-bottom: 1px solid #dcdcdc;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.chat-with {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.chat-with { display: flex; align-items: center; gap: 10px; }
 
 #chat-client-name {
   font-size: 18px;
   font-weight: bold;
   color: #003700;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
+/* LOCK label beside client name */
 .client-locked-label {
   background: #777;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 10px;
   color: white;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  font-size: 12px;
 }
 
 /* ===========================================================
-   CHAT MESSAGES
+   CHAT MESSAGES AREA
 =========================================================== */
 .chat-messages {
   flex: 1;
+  padding: 20px 25px;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 20px 25px;
   overflow-y: auto;
   background: #f7fef8;
 }
 
-/* Scrollbar */
-.chat-messages::-webkit-scrollbar {
-  width: 6px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-  background: #a7d9b7;
-  border-radius: 10px;
-}
+.chat-messages::-webkit-scrollbar { width: 6px; }
+.chat-messages::-webkit-scrollbar-thumb { background: #a7d9b7; }
 
 /* ===========================================================
    MESSAGE BUBBLES
@@ -288,19 +223,21 @@
   display: flex;
   align-items: flex-end;
   gap: 10px;
-  animation: fadeInUp 0.23s ease;
   max-width: 480px;
-  width: fit-content;
+  animation: fadeInUp 0.2s;
 }
 
-.message.sent {
-  align-self: flex-end;
-  flex-direction: row-reverse;
-}
+.message.sent { align-self: flex-end; flex-direction: row-reverse; }
+.message.received { align-self: flex-start; }
 
-.message.received {
-  align-self: flex-start;
+/* Avatar */
+.message-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
 }
+.message-avatar img { width: 100%; height: 100%; }
 
 .message-bubble {
   padding: 12px 18px;
@@ -308,21 +245,21 @@
   font-size: 15px;
 }
 
-/* CSR sent message (blue) */
+/* CSR message */
 .message.sent .message-bubble {
   background: #007bff !important;
-  color: #ffffff !important;
+  color: white !important;
   border-radius: 20px 20px 4px 20px;
 }
 
-/* Client received message (light green) */
+/* Client message */
 .message.received .message-bubble {
   background: #e8f7e9 !important;
   color: #103810 !important;
   border-radius: 20px 20px 20px 4px;
 }
 
-/* Deleted message text */
+/* Deleted */
 .deleted-text {
   color: #777;
   font-style: italic;
@@ -330,7 +267,58 @@
 }
 
 /* ===========================================================
-   DISABLED CHAT INPUT
+   ACTION POPUP (Edit/Delete)
+=========================================================== */
+#msg-action-popup {
+  position: absolute;
+  background: white;
+  border-radius: 12px;
+  padding: 6px 0;
+  display: none;
+  width: 160px;
+  border: 1px solid #ddd;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+  z-index: 9999;
+}
+
+#msg-action-popup button {
+  width: 100%;
+  padding: 10px 14px;
+  cursor: pointer;
+  text-align: left;
+  border: none;
+  background: transparent;
+}
+
+#msg-action-popup button:hover {
+  background: #eef6ff;
+}
+
+/* ===========================================================
+   SCROLL TO BOTTOM BUTTON
+=========================================================== */
+.scroll-bottom-btn {
+  position: absolute;
+  bottom: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #00a246;
+  border: none;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  cursor: pointer;
+}
+
+.scroll-bottom-btn.show { display: flex; }
+.scroll-bottom-btn:hover { transform: translateX(-50%) scale(1.1); }
+
+/* ===========================================================
+   DISABLED INPUT
 =========================================================== */
 .chat-input-area.disabled {
   opacity: 0.45;
@@ -338,12 +326,8 @@
   pointer-events: none;
 }
 
-.chat-input-area.disabled input::placeholder {
-  color: #888;
-}
-
 /* ===========================================================
-   RIGHT PANEL — CLIENT INFO
+   RIGHT PANEL
 =========================================================== */
 .chat-right-panel {
   background: #ffffff;
@@ -354,7 +338,7 @@
 .client-info-panel h3 {
   font-size: 18px;
   color: #003700;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 /* ===========================================================
@@ -362,9 +346,8 @@
 =========================================================== */
 .system-divider {
   text-align: center;
-  margin: 20px 0;
+  margin: 18px 0;
   font-size: 13px;
-  color: #666;
 }
 
 .system-divider span {
@@ -374,7 +357,7 @@
 }
 
 /* ===========================================================
-   ANIMATIONS
+   ANIMATION
 =========================================================== */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(10px); }
