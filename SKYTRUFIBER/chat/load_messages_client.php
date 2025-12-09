@@ -117,7 +117,20 @@ foreach ($messages as $msg) {
 // --------------------------------------------------
 // 3️⃣ SHOW SUGGESTIONS ONLY AFTER FIRST CLIENT MESSAGE
 // --------------------------------------------------
-if ($clientFirstMsgPrinted && $msgCount === 1) {
+// Compute counts
+$clientCount = 0;
+$csrCount    = 0;
+
+foreach ($messages as $msg) {
+    if ($msg["sender_type"] === "client") $clientCount++;
+    if ($msg["sender_type"] === "csr")    $csrCount++;
+}
+
+// Suggestion logic:
+// Show ONLY after:
+//  ✔ FIRST client message
+//  ✔ CSR greeting already exists
+if ($clientCount === 1 && $csrCount >= 1) {
 
     echo "
     <div class='message received system-suggest'>
@@ -140,5 +153,6 @@ if ($clientFirstMsgPrinted && $msgCount === 1) {
     </div>
     ";
 }
+
 
 ?>
