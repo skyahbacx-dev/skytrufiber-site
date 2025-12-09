@@ -3,23 +3,21 @@ if (!isset($_SESSION)) session_start();
 require "../../db_connect.php";
 
 $clientID = intval($_POST["client_id"] ?? 0);
-$currentCSR = $_SESSION["csr_user"] ?? null;
+$csrUser  = $_SESSION["csr_user"] ?? null;
 
 if ($clientID <= 0) {
-    echo "<p>Error: Invalid client.</p>";
+    echo "<p>Error loading client info.</p>";
     exit;
 }
 
-// ============================================================
-// FETCH CLIENT + TICKET DATA
-// ============================================================
+// ----------------------------------------------------------
+// FETCH CLIENT INFO
+// ----------------------------------------------------------
 $stmt = $conn->prepare("
     SELECT 
-        id,
         full_name,
         email,
-        contact_number,
-        address,
+        account_number,
         assigned_csr,
         ticket_status,
         ticket_lock,
@@ -36,112 +34,78 @@ if (!$client) {
     exit;
 }
 
-$name        = htmlspecialchars($client["full_name"]);
-$email       = htmlspecialchars($client["email"]);
-$contact     = htmlspecialchars($client["contact_number"]);
-$address     = htmlspecialchars($client["address"]);
-$status      = $client["ticket_status"];
-$assigned    = $client["assigned_csr"];
-$isLocked    = ($client["ticket_lock"] == 1);
-$transferReq = $client["transfer_request"];
+$assignedCSR   = $client["assigned_csr"];
+$ticketStatus  = $client["ticket_status"];
+$ticketLock    = $client["ticket_lock"];
+$transferReq   = $client["transfer_request"];
+$isAssignedToMe = ($assignedCSR === $csrUser);
 
-// Current CSR authority
-$isMine = ($assigned === $currentCSR);
-$someoneElseOwns = ($assigned && !$isMine);
+// ----------------------------------------------------------
+// ICON LOGIC
+// ----------------------------------------------------------
+$topIcon = ""; // Shows beside client name
 
-// Lock icon text
-$lockIcon  = $isLocked ? "🔒 Locked" : "🔓 Unlocked";
-$lockColor = $isLocked ? "color:#e74c3c;" : "color:#27ae60;";
+if (!$assignedCSR) {
+    // Unassigned → show plus button
+    $topIcon = "<button class='assign-btn' data-id='$clientID'>➕</button>";
+} 
+else if ($assignedCSR === $csrUser) {
+    // Assigned to me → show minus (unassign)
+    $topIcon = "<button class='unassign-btn' data-id='$clientID'>➖</button>";
+} 
+else {
+    // Assigned to another CSR → show lock
+    $topIcon = "<button class='locked-btn' data-id='$clientID'>🔒</button>";
+}
+
+// ----------------------------------------------------------
+// TRANSFER REQUEST NOTICE
+// ----------------------------------------------------------
+$transferNotice = "";
+if ($transferReq && $assignedCSR === $csrUser) {
+    $transferNotice = "
+        <div class='transfer-request-box'>
+            <strong>$transferReq</strong> is requesting ownership of this client.<br><br>
+            <button class='approve-transfer' data-id='$clientID'>Approve</button>
+            <button class='deny-transfer' data-id='$clientID'>Deny</button>
+        </div>
+    ";
+}
+
+// ----------------------------------------------------------
+// PENDING STATUS MESSAGE
+// ----------------------------------------------------------
+$pendingNote = "";
+if ($ticketStatus === "pending") {
+    $pendingNote = "
+        <div class='pending-note'>
+            🟡 This ticket is currently pending. CSR is coordinating with a field technician.
+        </div>
+    ";
+}
 ?>
 
 <div id="client-meta"
-     data-ticket="<?= $status ?>"
-     data-assigned="<?= $isMine ? 'yes' : 'no' ?>"
-     data-locked="<?= $isLocked ? 'true' : 'false' ?>"
-     data-transfer="<?= $transferReq ? $transferReq : '' ?>"
-     style="display:none;">
+     data-ticket="<?= $ticketStatus ?>"
+     data-assigned="<?= $assignedCSR ? 'yes' : 'no' ?>"
+     data-assigned-csr="<?= htmlspecialchars($assignedCSR) ?>"
+     data-transfer-request="<?= htmlspecialchars($transferReq) ?>"
+     data-me="<?= htmlspecialchars($csrUser) ?>"
+     data-locked="<?= $ticketLock ?>">
 </div>
 
-<div class="client-info-box">
+<h3 style='margin-bottom:6px; display:flex; align-items:center; gap:10px;'>
+    <?= htmlspecialchars($client["full_name"]) ?>
+    <?= $topIcon ?>
+</h3>
 
-    <h2><?= $name ?></h2>
-    <p><strong>Email:</strong> <?= $email ?></p>
-    <p><strong>Contact:</strong> <?= $contact ?></p>
-    <p><strong>Address:</strong> <?= $address ?></p>
+<p><strong>Email:</strong> <?= htmlspecialchars($client["email"]) ?></p>
+<p><strong>Account #:</strong> <?= htmlspecialchars($client["account_number"]) ?></p>
+<p><strong>Ticket Status:</strong> 
+    <span class="status-tag status-<?= $ticketStatus ?>">
+        <?= strtoupper($ticketStatus) ?>
+    </span>
+</p>
 
-    <hr>
-
-    <!-- ========================================== -->
-    <!-- ASSIGNMENT STATUS -->
-    <!-- ========================================== -->
-    <p><strong>Assigned CSR:</strong>
-        <?= $assigned ? htmlspecialchars($assigned) : "None" ?>
-    </p>
-
-    <?php if (!$assigned): ?>
-        <button class="assign-btn" data-id="<?= $clientID ?>">
-            ➕ Assign to Me
-        </button>
-
-    <?php elseif ($isMine): ?>
-        <button class="unassign-btn" data-id="<?= $clientID ?>">
-            ➖ Unassign
-        </button>
-
-    <?php else: ?>
-        <button class="request-transfer-btn" 
-                data-id="<?= $clientID ?>" 
-                data-current="<?= $assigned ?>">
-            🔄 Request Transfer from <?= htmlspecialchars($assigned) ?>
-        </button>
-    <?php endif; ?>
-
-    <?php if ($transferReq && $transferReq === $currentCSR): ?>
-        <div class="transfer-box">
-            <p>⚠ <strong>Transfer requested to you.</strong></p>
-            <button class="transfer-accept-btn" data-id="<?= $clientID ?>">✔ Accept</button>
-            <button class="transfer-deny-btn" data-id="<?= $clientID ?>">✖ Deny</button>
-        </div>
-    <?php endif; ?>
-
-    <hr>
-
-    <!-- ========================================== -->
-    <!-- TICKET STATUS -->
-    <!-- ========================================== -->
-    <p><strong>Ticket Status:</strong></p>
-    <select id="ticket-status-dropdown" 
-        <?= !$isMine ? "disabled" : "" ?>>
-        <option value="unresolved" <?= $status === "unresolved" ? "selected" : "" ?>>
-            Unresolved
-        </option>
-
-        <option value="pending" <?= $status === "pending" ? "selected" : "" ?>>
-            Pending (On Hold)
-        </option>
-
-        <option value="resolved" <?= $status === "resolved" ? "selected" : "" ?>>
-            Resolved
-        </option>
-    </select>
-
-    <p style="font-size:12px;color:#888;margin-top:5px;">
-        * Pending means the CSR is coordinating with field technicians.
-    </p>
-
-    <hr>
-
-    <!-- ========================================== -->
-    <!-- LOCK CONTROL -->
-    <!-- ========================================== -->
-    <p><strong>Chat Lock:</strong> <span style="<?= $lockColor ?>"><?= $lockIcon ?></span></p>
-
-    <button class="lock-toggle-btn" data-id="<?= $clientID ?>">
-        <?= $isLocked ? "Unlock Chat" : "Lock Chat" ?>
-    </button>
-
-    <p style="font-size:12px;color:#999;margin-top:5px;">
-        * When locked, all CSR chat input is disabled.
-    </p>
-
-</div>
+<?= $pendingNote ?>
+<?= $transferNotice ?>
