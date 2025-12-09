@@ -1,5 +1,5 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — FULL ASSIGN/TRANSFER LOGIC
+// SkyTruFiber CSR Chat System — ASSIGN / TRANSFER / CHAT CORE
 // ============================================================
 
 let currentClientID = null;
@@ -12,12 +12,13 @@ let currentTicketFilter = "all"; // all | unresolved | pending | resolved
 
 $(document).ready(function () {
 
+    // Initial load
     loadClients();
     clientRefreshInterval = setInterval(loadClients, 4000);
 
-    // ------------------------------------------------------------
-    // SEARCH CLIENT
-    // ------------------------------------------------------------
+    // ============================================================
+    // SEARCH BAR
+    // ============================================================
     $("#client-search").on("keyup", function () {
         const q = $(this).val().toLowerCase();
         $("#client-list .client-item").each(function () {
@@ -25,9 +26,9 @@ $(document).ready(function () {
         });
     });
 
-    // ------------------------------------------------------------
-    // TICKET FILTER BUTTONS
-    // ------------------------------------------------------------
+    // ============================================================
+    // FILTER BUTTONS
+    // ============================================================
     $(document).on("click", ".ticket-filter", function () {
         currentTicketFilter = $(this).data("filter");
         $(".ticket-filter").removeClass("active");
@@ -35,11 +36,12 @@ $(document).ready(function () {
         loadClients();
     });
 
-    // ------------------------------------------------------------
-    // SELECT CLIENT (prevent clicking when pressing assign/unassign)
-    // ------------------------------------------------------------
+    // ============================================================
+    // SELECT CLIENT
+    // ============================================================
     $(document).on("click", ".client-item", function (e) {
 
+        // Prevent triggering when clicking assign/unassign icon
         if ($(e.target).closest(".assign-btn, .unassign-btn, .locked-icon").length) {
             return;
         }
@@ -50,6 +52,7 @@ $(document).ready(function () {
         currentClientID = $(this).data("id");
 
         $("#chat-client-name").text($(this).data("name"));
+
         $("#chat-messages").html("");
         lastMessageID = 0;
 
@@ -57,12 +60,12 @@ $(document).ready(function () {
         loadMessages(true);
 
         if (messageInterval) clearInterval(messageInterval);
-        messageInterval = setInterval(fetchNewMessages, 950);
+        messageInterval = setInterval(fetchNewMessages, 1000);
     });
 
-    // ------------------------------------------------------------
-    // SEND MESSAGE
-    // ------------------------------------------------------------
+    // ============================================================
+    // SENDING MESSAGE
+    // ============================================================
     $("#send-btn").click(sendMessage);
 
     $("#chat-input").keypress(e => {
@@ -72,9 +75,9 @@ $(document).ready(function () {
         }
     });
 
-    // ------------------------------------------------------------
-    // SCROLL MONITORING
-    // ------------------------------------------------------------
+    // ============================================================
+    // SCROLL DETECTOR
+    // ============================================================
     $("#chat-messages").on("scroll", function () {
         const box = this;
         const dist = box.scrollHeight - box.clientHeight - box.scrollTop;
@@ -83,18 +86,18 @@ $(document).ready(function () {
 
     $("#scroll-bottom-btn").click(scrollToBottom);
 
-    // ------------------------------------------------------------
-    // CLOSE POPUP MENU
-    // ------------------------------------------------------------
-    $(document).on("click", e => {
+    // ============================================================
+    // CLOSE POPUP WHEN CLICKING OUTSIDE
+    // ============================================================
+    $(document).on("click", function (e) {
         if (!$(e.target).closest("#msg-action-popup, .more-btn").length) {
             closeActionPopup();
         }
     });
 
-    // ------------------------------------------------------------
-    // TICKET STATUS DROPDOWN
-    // ------------------------------------------------------------
+    // ============================================================
+    // CHANGE TICKET STATUS
+    // ============================================================
     $(document).on("change", "#ticket-status-dropdown", function () {
 
         if (!currentClientID) return;
@@ -110,14 +113,14 @@ $(document).ready(function () {
                 loadClientInfo(currentClientID);
                 loadClients();
             } else {
-                alert("Error updating ticket.");
+                alert("Failed to update ticket status.");
             }
         });
     });
 
-    // ------------------------------------------------------------
-    // ASSIGN CLIENT (➕)
-    // ------------------------------------------------------------
+    // ============================================================
+    // ASSIGN BUTTON ( ➕ Assign to me )
+    // ============================================================
     $(document).on("click", ".assign-btn", function () {
 
         const id = $(this).data("id");
@@ -128,9 +131,9 @@ $(document).ready(function () {
         }, handleAssignResponse);
     });
 
-    // ------------------------------------------------------------
-    // UNASSIGN CLIENT (➖)
-    // ------------------------------------------------------------
+    // ============================================================
+    // UNASSIGN BUTTON ( ➖ )
+    // ============================================================
     $(document).on("click", ".unassign-btn", function () {
 
         const id = $(this).data("id");
@@ -150,9 +153,9 @@ $(document).ready(function () {
         });
     });
 
-    // ------------------------------------------------------------
-    // REQUEST TRANSFER 🔒 STEP 1
-    // ------------------------------------------------------------
+    // ============================================================
+    // REQUEST TRANSFER 🔒
+    // ============================================================
     $(document).on("click", ".request-transfer-btn", function () {
 
         const id = $(this).data("id");
@@ -161,15 +164,16 @@ $(document).ready(function () {
             action: "request_transfer",
             client_id: id
         }, res => {
+
             alert(res.msg);
             loadClientInfo(id);
             loadClients();
         });
     });
 
-    // ------------------------------------------------------------
-    // APPROVE TRANSFER (Current CSR)
-    // ------------------------------------------------------------
+    // ============================================================
+    // APPROVE TRANSFER
+    // ============================================================
     $(document).on("click", ".approve-transfer-btn", function () {
 
         const id = $(this).data("id");
@@ -185,9 +189,9 @@ $(document).ready(function () {
         });
     });
 
-    // ------------------------------------------------------------
+    // ============================================================
     // DENY TRANSFER
-    // ------------------------------------------------------------
+    // ============================================================
     $(document).on("click", ".deny-transfer-btn", function () {
 
         const id = $(this).data("id");
@@ -206,7 +210,7 @@ $(document).ready(function () {
 });
 
 // ============================================================
-// ASSIGN RESPONSE HANDLER
+// HANDLE ASSIGN RESPONSE
 // ============================================================
 function handleAssignResponse(res) {
 
@@ -225,6 +229,7 @@ function handleAssignResponse(res) {
                 action: "request_transfer",
                 client_id: currentClientID
             }, out => {
+
                 alert(out.msg);
                 loadClientInfo(currentClientID);
                 loadClients();
@@ -270,7 +275,6 @@ function loadClientInfo(id) {
         $("#client-info-content").html(html);
 
         const meta = $("#client-meta");
-
         if (!meta.length) return;
 
         const ticketStatus   = meta.data("ticket");
@@ -289,7 +293,7 @@ function loadClientInfo(id) {
 }
 
 // ============================================================
-// CHAT PERMISSIONS
+// CHAT PERMISSION CONTROL
 // ============================================================
 function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
 
@@ -297,7 +301,6 @@ function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
     const input = $("#chat-input");
     const sendBtn = $("#send-btn");
 
-    // Locked or not owned
     if (!isAssignedToMe || isLocked) {
         bar.addClass("disabled");
         input.prop("disabled", true);
@@ -307,11 +310,9 @@ function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
             isLocked ? "🔒 Ticket locked." :
             "Assigned to another CSR — view only."
         );
-
         return;
     }
 
-    // Resolved
     if (ticketStatus === "resolved") {
         bar.addClass("disabled");
         input.prop("disabled", true);
@@ -320,7 +321,6 @@ function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
         return;
     }
 
-    // Fully allowed
     bar.removeClass("disabled");
     input.prop("disabled", false);
     sendBtn.prop("disabled", false);
@@ -336,9 +336,7 @@ function loadMessages(scrollBottom = false) {
 
     $.post("../chat/load_messages.php", { client_id: currentClientID }, html => {
 
-        $("#chat-messages")
-            .removeClass("chat-slide-in")
-            .html(html);
+        $("#chat-messages").removeClass("chat-slide-in").html(html);
 
         setTimeout(() => $("#chat-messages").addClass("chat-slide-in"), 10);
 
@@ -352,7 +350,7 @@ function loadMessages(scrollBottom = false) {
 }
 
 // ============================================================
-// FETCH NEW MESSAGES ONLY
+// FETCH ONLY NEW MESSAGES
 // ============================================================
 function fetchNewMessages() {
 
@@ -402,7 +400,7 @@ function sendMessage() {
 }
 
 // ============================================================
-// TEMPORARY BUBBLE
+// TEMP SENDING BUBBLE
 // ============================================================
 function appendTempBubble(msg) {
 
@@ -419,7 +417,7 @@ function appendTempBubble(msg) {
 }
 
 // ============================================================
-// ACTION POPUP (edit/delete/unsend)
+// ACTION POPUP (Edit/Delete/Unsend)
 // ============================================================
 function bindActionButtons() {
 
@@ -433,16 +431,17 @@ function bindActionButtons() {
 function openActionPopup(id, anchor) {
 
     const popup = $("#msg-action-popup");
-
     popup.data("msg-id", id);
 
     const bubble = $(anchor).closest(".message-content");
-    const bubbleOffset = bubble.offset();
-    const bubbleWidth = bubble.outerWidth();
-    const chatOffset = $(".chat-wrapper").offset();
+    const offset = bubble.offset();
+    const width = bubble.outerWidth();
+    const wrapperOffset = $(".chat-wrapper").offset();
 
-    let top = bubbleOffset.top - chatOffset.top - popup.outerHeight() - 10;
-    let left = bubbleOffset.left - chatOffset.left + bubbleWidth - popup.outerWidth();
+    let top = offset.top - wrapperOffset.top - popup.outerHeight() - 10;
+    let left = offset.left - wrapperOffset.left + width - popup.outerWidth();
+
+    if (top < 0) top = 10;
 
     popup.css({ top, left }).show().addClass("show");
 }
@@ -452,7 +451,7 @@ function closeActionPopup() {
 }
 
 // ============================================================
-// EDITING MESSAGE
+// EDIT MESSAGE
 // ============================================================
 $(document).on("click", ".action-edit", function () {
 
