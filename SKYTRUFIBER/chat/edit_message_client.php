@@ -49,6 +49,21 @@ if ($msg["deleted"]) {
 }
 
 // ----------------------------------------------------------
+// PREVENT DUPLICATE EDIT
+// ----------------------------------------------------------
+$dup = $conn->prepare("
+    SELECT 1 FROM chat
+    WHERE id = ? AND message = ? AND deleted = FALSE
+    LIMIT 1
+");
+$dup->execute([$id, $message]);
+
+if ($dup->fetchColumn()) {
+    echo json_encode(["status" => "same", "msg" => "No changes detected"]);
+    exit;
+}
+
+// ----------------------------------------------------------
 // UPDATE MESSAGE
 // ----------------------------------------------------------
 $update = $conn->prepare("
