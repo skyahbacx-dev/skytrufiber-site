@@ -35,8 +35,8 @@ if (!$ticket) {
     exit;
 }
 
-$ticket_status = $ticket['status'] ?? 'unresolved';
-$client_id = (int)$ticket['client_id'];
+$ticket_status = $ticket["status"] ?? "unresolved";
+$client_id = (int)$ticket["client_id"];
 
 // ----------------------------------------------------------
 // BLOCK MESSAGE IF TICKET IS RESOLVED
@@ -59,17 +59,18 @@ if ($message === "") {
 
 // ----------------------------------------------------------
 // CHECK IF THIS IS THE FIRST-EVER CLIENT MESSAGE
+// Note: Only client-sent messages count.
 // ----------------------------------------------------------
 $firstCheck = $conn->prepare("
-    SELECT COUNT(*) 
-    FROM chat 
+    SELECT COUNT(*)
+    FROM chat
     WHERE ticket_id = ? AND sender_type = 'client'
 ");
 $firstCheck->execute([$ticketId]);
 $isFirstMessage = ($firstCheck->fetchColumn() == 0);
 
 // ----------------------------------------------------------
-// PREVENT DUPLICATE
+// PREVENT DUPLICATE MESSAGE
 // ----------------------------------------------------------
 $check = $conn->prepare("
     SELECT 1
@@ -89,22 +90,23 @@ if ($exists) {
 }
 
 // ----------------------------------------------------------
-// INSERT CLIENT MESSAGE
+// INSERT CLIENT MESSAGE (PostgreSQL booleans must be TRUE/FALSE)
 // ----------------------------------------------------------
 $insert = $conn->prepare("
     INSERT INTO chat (
-        ticket_id, client_id, sender_type, message, delivered, seen, created_at
+        ticket_id, client_id, sender_type, message,
+        delivered, seen, created_at
     )
     VALUES (?, ?, 'client', ?, TRUE, FALSE, NOW())
 ");
 $insert->execute([$ticketId, $client_id, $message]);
 
 // ----------------------------------------------------------
-// RETURN RESPONSE
-// JS will show suggestion bubble if first_message = true
+// RESPONSE TO JS
+// JS will show suggestion bubble only if first_message = true
 // ----------------------------------------------------------
 echo json_encode([
-    "status" => "ok",
+    "status"        => "ok",
     "first_message" => $isFirstMessage
 ]);
 
