@@ -9,7 +9,7 @@ $ticketId = trim($_POST["ticket"] ?? "");
 if (!$ticketId) exit("");
 
 // --------------------------------------------------
-// FETCH TICKET & CLIENT
+// FETCH TICKET
 // --------------------------------------------------
 $stmt = $conn->prepare("
     SELECT t.id AS ticket_id, t.status, t.client_id, u.full_name
@@ -25,12 +25,8 @@ if (!$ticket) exit("");
 
 $ticket_status = $ticket["status"] ?? "unresolved";
 
-// --------------------------------------------------
-// If RESOLVED → return nothing (JS handles logout + message)
-// --------------------------------------------------
-if ($ticket_status === "resolved") {
-    exit("");
-}
+// If resolved → JS handles it
+if ($ticket_status === "resolved") exit("");
 
 // --------------------------------------------------
 // FETCH CHAT MESSAGES
@@ -45,24 +41,23 @@ $stmt->execute([$ticketId]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // --------------------------------------------------
-// DETECT LOGIN-FIRST-MESSAGE SCENARIO
+// AUTO-GREET DETECTION LOGIC (FINAL VERSION)
 //
-// We show the greeting ONLY if:
-//   • EXACTLY 1 client message exists (the login concern)
-//   • ZERO CSR messages
-//   • No CSR auto-greet was added by send_message_client.php
+// IMPORTANT:
+// send_message_client.php now inserts CSR auto-greet automatically
+// when client sends their first-ever message.
+//
+// Therefore the ONLY time we should add a greeting here is:
+//
+//   ✔ ZERO messages exist (client has not typed yet)
+//   ❌ NOT when 1 client message exists (backend already inserts CSR greeting)
+//
 // --------------------------------------------------
-$csrCount = 0;
-$clientCount = 0;
 
-foreach ($messages as $m) {
-    if ($m["sender_type"] === "csr") $csrCount++;
-    if ($m["sender_type"] === "client") $clientCount++;
-}
+$msgCount = count($messages);
+$shouldShowGreeting = ($msgCount === 0);
 
-$showGreeting = ($csrCount === 0 && $clientCount === 1);
-
-if ($showGreeting) {
+if ($shouldShowGreeting) {
     echo "
     <div class='message received system-suggest'>
         <div class='message-avatar'>
@@ -84,10 +79,11 @@ if ($showGreeting) {
         </div>
     </div>
     ";
+    // Do NOT return here; allow messages to follow when merging
 }
 
 // --------------------------------------------------
-// RENDER EXISTING CHAT HISTORY
+// RENDER CHAT MESSAGES
 // --------------------------------------------------
 foreach ($messages as $msg) {
 
@@ -109,17 +105,19 @@ foreach ($messages as $msg) {
     // MESSAGE BUBBLE
     if (empty($msg["deleted"])) {
         $text = trim($msg["message"]);
-        echo "<div class='message-bubble'>" . nl2br(htmlspecialchars($text)) . "</div>";
+        echo "<div class='message-bubble'>"
+            . nl2br(htmlspecialchars($text)) .
+            "</div>";
     } else {
         echo "<div class='message-bubble removed-text'>Message removed</div>";
     }
 
-    // TIME + EDITED LABEL
+    // TIME, EDIT LABEL
     echo "<div class='message-time'>{$time}";
     if (!empty($msg["edited"])) echo " <span class='edited-label'>(edited)</span>";
     echo "</div>";
 
-    // ACTION TOOLBAR (only for client’s own messages)
+    // ACTION TOOLBAR FOR CLIENT-OWNED MESSAGES
     echo "<div class='action-toolbar'>";
     if ($sender === "sent" && empty($msg["deleted"])) {
         echo "<button class='more-btn' data-id='$id'>⋯</button>";
@@ -127,7 +125,7 @@ foreach ($messages as $msg) {
     echo "</div>";
 
     echo "</div>"; // message-content
-    echo "</div>"; // message wrapper
+    echo "</div>"; // wrapper
 }
 
 ?>
