@@ -3,21 +3,22 @@ if (!isset($_SESSION)) session_start();
 require "../../db_connect.php";
 
 $clientID = intval($_POST["client_id"] ?? 0);
+$ticketID = intval($_POST["ticket_id"] ?? 0);
 $status   = strtolower($_POST["status"] ?? "");
 $csrUser  = $_SESSION["csr_user"] ?? null;
 
-if (!$clientID || !$status) {
-    echo "Missing data";
+if (!$clientID || !$ticketID || !$status) {
+    echo "MISSING_DATA";
     exit;
 }
 
 if (!$csrUser) {
-    echo "Unauthorized";
+    echo "UNAUTHORIZED";
     exit;
 }
 
 /* ============================================================
-   VALID STATUS CHECK (unresolved, pending, resolved)
+   VALID STATUS CHECK
 ============================================================ */
 $validStatuses = ["unresolved", "pending", "resolved"];
 if (!in_array($status, $validStatuses)) {
@@ -26,27 +27,40 @@ if (!in_array($status, $validStatuses)) {
 }
 
 /* ============================================================
-   GET CURRENT ASSIGNMENT + STATUS
+   FETCH ACTIVE TICKET INFO
 ============================================================ */
-$check = $conn->prepare("
-    SELECT assigned_csr, ticket_status
-    FROM users
-    WHERE id = ?
+$stmt = $conn->prepare("
+    SELECT 
+        t.status AS ticket_status,
+        t.client_id,
+        u.assigned_csr
+    FROM tickets t
+    JOIN users u ON u.id = t.client_id
+    WHERE t.id = ?
     LIMIT 1
 ");
-$check->execute([$clientID]);
-$info = $check->fetch(PDO::FETCH_ASSOC);
+$stmt->execute([$ticketID]);
+$ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$info) {
-    echo "Client not found";
+if (!$ticket) {
+    echo "TICKET_NOT_FOUND";
     exit;
 }
 
-$currentStatus = strtolower($info["ticket_status"]);
-$assignedCSR   = $info["assigned_csr"];
+$currentStatus = strtolower($ticket["ticket_status"]);
+$assignedCSR   = $ticket["assigned_csr"];
+$dbClientID    = intval($ticket["client_id"]);
 
 /* ============================================================
-   ONLY THE ASSIGNED CSR CAN CHANGE STATUS
+   VERIFY TICKET BELONGS TO CLIENT
+============================================================ */
+if ($dbClientID !== $clientID) {
+    echo "CLIENT_TICKET_MISMATCH";
+    exit;
+}
+
+/* ============================================================
+   ONLY ASSIGNED CSR CAN CHANGE STATUS
 ============================================================ */
 if ($assignedCSR !== $csrUser) {
     echo "NOT_ASSIGNED";
@@ -54,46 +68,50 @@ if ($assignedCSR !== $csrUser) {
 }
 
 /* ============================================================
-   UPDATE STATUS IF CHANGED
+   PREVENT UPDATES TO ALREADY RESOLVED TICKETS
+============================================================ */
+if ($currentStatus === "resolved") {
+    echo "ALREADY_RESOLVED";
+    exit;
+}
+
+/* ============================================================
+   UPDATE TICKET STATUS
 ============================================================ */
 if ($currentStatus !== $status) {
 
-    // Update users table
-    $stmt = $conn->prepare("
-        UPDATE users
-        SET ticket_status = :s
-        WHERE id = :id
+    $update = $conn->prepare("
+        UPDATE tickets
+        SET status = :s
+        WHERE id = :tid
     ");
-    $stmt->execute([
-        ":s" => $status,
-        ":id" => $clientID
+    $update->execute([
+        ":s"   => $status,
+        ":tid" => $ticketID
     ]);
 
     /* ============================================================
-       LOG TO ticket_logs
-       YOUR REAL STRUCTURE:
-       (client_id, csr_user, action, timestamp)
-    ============================================================ */
-    
-    $actionName = $status; // pending | resolved | unresolved
-
+       INSERT INTO ticket_logs
+       (ticket_id, client_id, csr_user, action, timestamp)
+    ============================================================= */
     $log = $conn->prepare("
-        INSERT INTO ticket_logs (client_id, csr_user, action, timestamp)
-        VALUES (:cid, :csr, :action, NOW())
+        INSERT INTO ticket_logs (ticket_id, client_id, csr_user, action, timestamp)
+        VALUES (:tid, :cid, :csr, :action, NOW())
     ");
     $log->execute([
+        ":tid"    => $ticketID,
         ":cid"    => $clientID,
         ":csr"    => $csrUser,
-        ":action" => $actionName
+        ":action" => $status
     ]);
 }
 
 /* ============================================================
-   OPTIONAL: AUTO-UNASSIGN + UNLOCK WHEN RESOLVED
+   IF RESOLVED → AUTO-UNASSIGN + UNLOCK USER
 ============================================================ */
 if ($status === "resolved") {
 
-    // OPTIONAL — Remove assignment when ticket is done
+    // Clear assignment + unlock user
     $unlock = $conn->prepare("
         UPDATE users
         SET assigned_csr = NULL,
