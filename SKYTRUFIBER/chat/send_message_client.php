@@ -48,28 +48,32 @@ if ($message === "") {
 }
 
 // ----------------------------------------------------------
-// CHECK FIRST CLIENT MESSAGE (login concern)
+// CHECK MESSAGE COUNTS
 // ----------------------------------------------------------
 //
-// RULE: First client message = ONLY IF:
-//   1. Chat contains ZERO existing client messages
-//   2. Chat contains ZERO existing CSR messages
+// This identifies the FIRST post-login message correctly.
+// Very first message = no client messages + no CSR messages.
 //
-$chatCountQuery = $conn->prepare("
+// Note:
+// login concern message ALSO counts as a client message.
+// So this prevents double-auto-greet and avoids duplicates.
+// ----------------------------------------------------------
+
+$countQuery = $conn->prepare("
     SELECT 
         SUM(CASE WHEN sender_type = 'client' THEN 1 ELSE 0 END) AS client_count,
         SUM(CASE WHEN sender_type = 'csr' THEN 1 ELSE 0 END) AS csr_count
     FROM chat
     WHERE ticket_id = ?
 ");
-$chatCountQuery->execute([$ticketId]);
-$countRow = $chatCountQuery->fetch(PDO::FETCH_ASSOC);
+$countQuery->execute([$ticketId]);
+$count = $countQuery->fetch(PDO::FETCH_ASSOC);
 
-$existingClientCount = (int)$countRow["client_count"];
-$existingCsrCount    = (int)$countRow["csr_count"];
+$clientCount = (int)$count["client_count"];
+$csrCount    = (int)$count["csr_count"];
 
-// TRUE only for VERY first message after login
-$isFirstLoginMessage = ($existingClientCount === 0 && $existingCsrCount === 0);
+// TRUE only if ticket is 100% empty before this message
+$isFirstLoginMessage = ($clientCount === 0 && $csrCount === 0);
 
 // ----------------------------------------------------------
 // PREVENT DUPLICATE MESSAGE
@@ -77,6 +81,7 @@ $isFirstLoginMessage = ($existingClientCount === 0 && $existingCsrCount === 0);
 $dupe = $conn->prepare("
     SELECT 1 FROM chat
     WHERE ticket_id = ? AND message = ? AND deleted = FALSE
+    LIMIT 1
 ");
 $dupe->execute([$ticketId, $message]);
 
@@ -95,7 +100,13 @@ $insert = $conn->prepare("
 $insert->execute([$ticketId, $client_id, $message]);
 
 // ----------------------------------------------------------
-// INSERT CSR AUTO-GREET *ONLY FOR LOGIN FIRST MESSAGE*
+// AUTO-GREET ONLY FOR FIRST LOGIN MESSAGE
+// ----------------------------------------------------------
+//
+// If this was truly the first message after login (ticket empty),
+// backend inserts the CSR greeting immediately.
+//
+// load_messages_client.php does NOT add any greeting in this case.
 // ----------------------------------------------------------
 if ($isFirstLoginMessage) {
 
@@ -106,6 +117,7 @@ if ($isFirstLoginMessage) {
     ");
     $auto->execute([$ticketId, $client_id]);
 
+    // Tell JS to show suggestion bubble
     echo json_encode([
         "status" => "ok",
         "first_message" => true
