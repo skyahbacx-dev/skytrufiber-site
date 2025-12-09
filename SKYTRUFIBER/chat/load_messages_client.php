@@ -12,22 +12,19 @@ if (!$ticketId) exit("");
 // FETCH TICKET
 // --------------------------------------------------
 $stmt = $conn->prepare("
-    SELECT t.id AS ticket_id, t.status, t.client_id
-    FROM tickets t
-    WHERE t.id = ?
+    SELECT id, status, client_id
+    FROM tickets
+    WHERE id = ?
     LIMIT 1
 ");
 $stmt->execute([$ticketId]);
 $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$ticket) exit("");
-
-if ($ticket["status"] === "resolved") {
-    exit("");
-}
+if ($ticket["status"] === "resolved") exit("");
 
 // --------------------------------------------------
-// FETCH CHAT MESSAGES (ordered correctly)
+// FETCH CHAT (CSR GREET ALWAYS FIRST, THEN CLIENT MSG)
 // --------------------------------------------------
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted, edited
@@ -41,30 +38,32 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $msgCount = count($messages);
 
 // --------------------------------------------------
-// DETECT FIRST CLIENT MESSAGE & FIRST CSR GREETING
+// DETECT FIRST CSR GREETING & FIRST CLIENT MESSAGE
 // --------------------------------------------------
-$firstClientMessageId = null;
+$firstClientMsgId = null;
 $hasGreeting = false;
 
-foreach ($messages as $m) {
-    if ($m["sender_type"] === "csr") {
-        // This is CSR greeting IF it's the first CSR message
-        if (!$hasGreeting) $hasGreeting = true;
+foreach ($messages as $msg) {
+
+    if ($msg["sender_type"] === "csr" && !$hasGreeting) {
+        $hasGreeting = true;
     }
-    if ($m["sender_type"] === "client" && $firstClientMessageId === null) {
-        $firstClientMessageId = $m["id"];
+
+    if ($msg["sender_type"] === "client" && $firstClientMsgId === null) {
+        $firstClientMsgId = $msg["id"];
     }
 }
 
 // --------------------------------------------------
-// SHOW SUGGESTIONS ONLY ONCE:
-//   RIGHT AFTER FIRST CLIENT MESSAGE
-//   AND ONLY IF THERE IS ALREADY A CSR GREETING
+// ONLY SHOW SUGGESTIONS IF:
+//   ✔ A CSR greeting exists
+//   ✔ A client first message exists
+//   ✔ And suggestions have not been shown before in this render
 // --------------------------------------------------
-$shouldShowSuggestions = ($hasGreeting && $firstClientMessageId !== null);
+$shouldShowSuggestions = ($hasGreeting && $firstClientMsgId !== null);
 
 // --------------------------------------------------
-// RENDER MESSAGES
+// RENDER CHAT HISTORY
 // --------------------------------------------------
 foreach ($messages as $msg) {
 
@@ -103,9 +102,9 @@ foreach ($messages as $msg) {
     echo "</div></div>";
 
     // --------------------------------------------------
-    // INSERT SUGGESTIONS JUST AFTER FIRST CLIENT MESSAGE
+    // INSERT SUGGESTION BUBBLE AFTER FIRST CLIENT MSG ONLY
     // --------------------------------------------------
-    if ($shouldShowSuggestions && $id == $firstClientMessageId) {
+    if ($shouldShowSuggestions && $id == $firstClientMsgId) {
 
         echo "
         <div class='message received system-suggest' data-msg-id='suggest-1'>
@@ -126,7 +125,7 @@ foreach ($messages as $msg) {
         </div>
         ";
 
-        // Make sure suggestions show only once
+        // Only show ONCE
         $shouldShowSuggestions = false;
     }
 }
