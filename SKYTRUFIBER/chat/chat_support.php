@@ -11,7 +11,7 @@ if (!isset($_SESSION['client_id'], $_SESSION['ticket_id'])) {
 $clientId = $_SESSION['client_id'];
 $ticketId = $_SESSION['ticket_id'];
 
-// Fetch correct ticket status
+// Fetch ticket status
 try {
     $stmt = $conn->prepare("
         SELECT status 
@@ -37,17 +37,17 @@ try {
 }
 ?>
 <!DOCTYPE html>
-
 <html lang="en" data-theme="light">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SkyTruFiber Support</title>
 
 <!-- Disable caching -->
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="chat_support.css?v=<?php echo time(); ?>">
@@ -73,11 +73,10 @@ try {
 
                     <span class="status active">Support Team Active</span>
 
-                    <!-- Dynamic Ticket Status -->
                     <span id="ticket-status-label" 
                           class="ticket-label"
                           style="display:block;margin-top:4px;font-size:13px;color:#fff;opacity:.9;">
-                          Status: <?php echo htmlspecialchars($ticketStatus); ?>
+                        Status: <?php echo htmlspecialchars($ticketStatus); ?>
                     </span>
                 </div>
             </div>
@@ -96,7 +95,7 @@ try {
         </div>
 
         <!-- CHAT MESSAGES AREA -->
-        <div id="chat-messages" class="chat-messages"></div>
+        <div id="chat-messages"></div>
 
         <!-- Scroll to Bottom -->
         <button id="scroll-bottom-btn" class="scroll-bottom-btn">
@@ -111,6 +110,7 @@ try {
                        placeholder="Type a message..." 
                        autocomplete="off">
             </div>
+
             <button id="send-btn" class="chat-send-btn">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
@@ -121,7 +121,7 @@ try {
             <button class="action-edit"><i class="fa-solid fa-pen"></i> Edit</button>
             <button class="action-unsend"><i class="fa-solid fa-ban"></i> Unsend</button>
             <button class="action-delete"><i class="fa-solid fa-trash"></i> Delete</button>
-            <button class="action-cancel">Cancel</button>
+            <button class="action-cancel" onclick="this.parentElement.style.display='none'">Cancel</button>
         </div>
 
     </div>
