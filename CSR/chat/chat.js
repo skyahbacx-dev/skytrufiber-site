@@ -1,5 +1,5 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — TEXT ONLY + Ticketing + Permissions
+// SkyTruFiber CSR Chat System — FULL ASSIGNMENT + LOCK + PENDING BUILD
 // ============================================================
 
 let currentClientID = null;
@@ -8,11 +8,11 @@ let clientRefreshInterval = null;
 let lastMessageID = 0;
 let editing = false;
 
-let currentTicketFilter = "all"; // all | resolved | unresolved
+let currentTicketFilter = "all"; // all | unresolved | resolved | pending
 
 $(document).ready(function () {
 
-    // Load client list
+    // Load clients always
     loadClients();
     clientRefreshInterval = setInterval(loadClients, 4000);
 
@@ -80,7 +80,7 @@ $(document).ready(function () {
     $("#scroll-bottom-btn").click(scrollToBottom);
 
     // ------------------------------------------------------------
-    // CLOSE ACTION POPUP WHEN CLICKING OUTSIDE
+    // CLOSE ACTION POPUP
     // ------------------------------------------------------------
     $(document).on("click", function (e) {
         if (!$(e.target).closest("#msg-action-popup, .more-btn").length) {
@@ -89,7 +89,7 @@ $(document).ready(function () {
     });
 
     // ------------------------------------------------------------
-    // CHANGE TICKET STATUS
+    // CHANGE TICKET STATUS (unresolved, resolved, pending)
     // ------------------------------------------------------------
     $(document).on("change", "#ticket-status-dropdown", function () {
 
@@ -133,8 +133,11 @@ function loadClients() {
 
 // ============================================================
 // LOAD CLIENT INFO PANEL
-// + Apply permission rules
-// + Apply ticket border highlight
+// Shows:
+//   ✔ Assigned CSR
+//   ✔ Lock status
+//   ✔ Pending
+//   ✔ Banner message
 // ============================================================
 function loadClientInfo(id) {
 
@@ -147,29 +150,58 @@ function loadClientInfo(id) {
         if (meta.length) {
 
             const ticketStatus   = meta.data("ticket");
-            const isAssignedToMe = meta.data("assigned") === "yes";
-            const isLocked       = String(meta.data("locked")) === "true";
+            const assignedCSR    = meta.data("assigned-csr");
+            const myCSR          = meta.data("me");
+            const isLocked       = meta.data("locked") == "1";
+            const transferReq    = meta.data("transfer-request");
+
+            const isAssignedToMe = (assignedCSR === myCSR);
+
+            updateBanner(assignedCSR, myCSR, transferReq);
 
             // Chat-panel border color
             $("#ticket-border-panel")
-                .removeClass("resolved unresolved")
+                .removeClass("resolved pending unresolved")
                 .addClass(ticketStatus);
 
             // Enable or disable dropdown
             $("#ticket-status-dropdown").prop("disabled", !isAssignedToMe);
 
-            // Main permission gate
+            // Input permission
             handleChatPermission(isAssignedToMe, isLocked, ticketStatus);
         }
     });
 }
 
 // ============================================================
-// CHAT PERMISSION SYSTEM
-// CSR can reply ONLY IF:
-// ✔ assigned to client AND
-// ✔ client is not locked AND
-// ✔ ticket is not resolved
+// HEADER BANNER LOGIC
+// ============================================================
+function updateBanner(assignedCSR, myCSR, transferReq) {
+
+    const banner = $("#chat-header-banner");
+    if (!banner.length) return;
+
+    // Reset
+    banner.hide().text("");
+
+    // Not assigned at all
+    if (!assignedCSR) {
+        banner.text("⚠ This client is unassigned — Click 🔒 to assign.").show();
+        return;
+    }
+
+    // Assigned to me
+    if (assignedCSR === myCSR) {
+        banner.text("✔ You are assigned to this client.").show();
+        return;
+    }
+
+    // Assigned to another CSR
+    banner.text(`🔒 Assigned to ${assignedCSR}. You cannot reply.`).show();
+}
+
+// ============================================================
+// CHAT PERMISSIONS
 // ============================================================
 function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
 
@@ -177,7 +209,7 @@ function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
     const input = $("#chat-input");
     const sendBtn = $("#send-btn");
 
-    // Case 1 — Not assigned OR someone else locked client
+    // Not assigned OR locked
     if (!isAssignedToMe || isLocked) {
 
         bar.addClass("disabled");
@@ -186,14 +218,13 @@ function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
 
         input.attr("placeholder",
             isLocked
-                ? "Client is locked — you can't send messages."
-                : "Client is assigned to another CSR — you can't send messages."
+                ? "Client is locked — cannot send."
+                : "Assigned to another CSR — cannot send."
         );
-
         return;
     }
 
-    // Case 2 — Ticket resolved
+    // Ticket resolved
     if (ticketStatus === "resolved") {
         bar.addClass("disabled");
         input.prop("disabled", true);
@@ -202,7 +233,16 @@ function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
         return;
     }
 
-    // Case 3 — Full access
+    // Pending (CSR + Technician)
+    if (ticketStatus === "pending") {
+        bar.removeClass("disabled");
+        input.prop("disabled", false);
+        sendBtn.prop("disabled", false);
+        input.attr("placeholder", "Technician is coordinating — you may update the client.");
+        return;
+    }
+
+    // Full access
     bar.removeClass("disabled");
     input.prop("disabled", false);
     sendBtn.prop("disabled", false);
@@ -254,7 +294,6 @@ function fetchNewMessages() {
 
         bindActionButtons();
 
-        // Auto-scroll only if near bottom
         const box = $("#chat-messages")[0];
         const dist = box.scrollHeight - box.clientHeight - box.scrollTop;
         if (dist < 150) scrollToBottom();
@@ -262,7 +301,7 @@ function fetchNewMessages() {
 }
 
 // ============================================================
-// SEND MESSAGE (CSR only — permissions already handled)
+// SEND MESSAGE
 // ============================================================
 function sendMessage() {
 
@@ -281,7 +320,7 @@ function sendMessage() {
 }
 
 // ============================================================
-// TEMPORARY SENDING BUBBLE
+// TEMP BUBBLE
 // ============================================================
 function appendTempBubble(msg) {
     $("#chat-messages").append(`
@@ -296,7 +335,7 @@ function appendTempBubble(msg) {
 }
 
 // ============================================================
-// ACTION POPUP (edit/delete)
+// ACTION POPUP
 // ============================================================
 function bindActionButtons() {
     $(".more-btn").off("click").on("click", function (e) {
@@ -353,7 +392,11 @@ function startCSRMessageEdit(id) {
 $(document).on("click", ".edit-save", function () {
 
     const id = $(this).data("id");
-    const newText = $(this).closest(".message-bubble").find("textarea").val().trim();
+    const newText = $(this)
+        .closest(".message-bubble")
+        .find("textarea")
+        .val()
+        .trim();
 
     $.post("../chat/edit_message.php", { id, message: newText }, function () {
         editing = false;
@@ -367,7 +410,7 @@ $(document).on("click", ".edit-cancel", function () {
 });
 
 // ============================================================
-// DELETE / UNSEND MESSAGE
+// DELETE / UNSEND
 // ============================================================
 $(document).on("click", ".action-delete, .action-unsend", function () {
 
