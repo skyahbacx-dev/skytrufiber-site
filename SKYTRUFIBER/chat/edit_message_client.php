@@ -22,7 +22,7 @@ if ($message === "") {
 }
 
 // ----------------------------------------------------------
-// VALIDATE MESSAGE BELONGS TO THIS TICKET AND IS CLIENT-SENT
+// VALIDATE MESSAGE OWNERSHIP
 // ----------------------------------------------------------
 $stmt = $conn->prepare("
     SELECT sender_type, deleted
@@ -43,16 +43,17 @@ if ($msg["sender_type"] !== "client") {
     exit;
 }
 
-if ($msg["deleted"]) {
+if (!empty($msg["deleted"])) {
     echo json_encode(["status" => "error", "msg" => "Cannot edit a deleted message"]);
     exit;
 }
 
 // ----------------------------------------------------------
-// PREVENT DUPLICATE EDIT
+// PREVENT DUPLICATE EDIT (same text)
 // ----------------------------------------------------------
 $dup = $conn->prepare("
-    SELECT 1 FROM chat
+    SELECT 1 
+    FROM chat
     WHERE id = ? AND message = ? AND deleted = FALSE
     LIMIT 1
 ");
