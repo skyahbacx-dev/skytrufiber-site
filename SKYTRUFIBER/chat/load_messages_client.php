@@ -23,11 +23,10 @@ $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$ticket) exit("");
 
-$ticket_status = $ticket['status'] ?? 'unresolved';
-$client_id = (int)$ticket['client_id'];
+$ticket_status = $ticket["status"] ?? "unresolved";
 
 // --------------------------------------------------
-// If RESOLVED → return nothing (JS handles logout + message)
+// If RESOLVED → return nothing (JS handles logout)
 // --------------------------------------------------
 if ($ticket_status === "resolved") {
     exit("");
@@ -35,7 +34,7 @@ if ($ticket_status === "resolved") {
 
 // --------------------------------------------------
 // FETCH CHAT MESSAGES
-//---------------------------------------------------
+// --------------------------------------------------
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted, edited
     FROM chat
@@ -46,12 +45,23 @@ $stmt->execute([$ticketId]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // --------------------------------------------------
-// FIRST TIME MESSAGE → AUTO GREET (NO CHAT YET)
+// AUTO-GREET LOGIC
+// NEW RULE:
+// → Show assistant greeting ONLY IF:
+//     1. No CSR messages exist, AND
+//     2. Only ONE client message exists (the login concern)
 // --------------------------------------------------
-$is_first_time = (count($messages) === 0);
+$csrCount = 0;
+$clientCount = 0;
 
-if ($is_first_time) {
+foreach ($messages as $m) {
+    if ($m["sender_type"] === "csr") $csrCount++;
+    if ($m["sender_type"] === "client") $clientCount++;
+}
 
+$showGreeting = ($csrCount === 0 && $clientCount === 1);
+
+if ($showGreeting) {
     echo "
     <div class='message received system-suggest'>
         <div class='message-avatar'>
@@ -73,13 +83,11 @@ if ($is_first_time) {
         </div>
     </div>
     ";
-
-    exit(); // Stop here — no user messages exist yet
 }
 
 // --------------------------------------------------
-// RENDER EXISTING CHAT MESSAGES
-//---------------------------------------------------
+// RENDER EXISTING CHAT HISTORY
+// --------------------------------------------------
 foreach ($messages as $msg) {
 
     $id     = $msg["id"];
@@ -97,35 +105,27 @@ foreach ($messages as $msg) {
 
     echo "<div class='message-content'>";
 
-    // --------------------------
     // MESSAGE BUBBLE
-    // --------------------------
     if (empty($msg["deleted"])) {
         $text = trim($msg["message"]);
-        echo "<div class='message-bubble'>";
-        echo nl2br(htmlspecialchars($text));
-        echo "</div>";
+        echo "<div class='message-bubble'>" . nl2br(htmlspecialchars($text)) . "</div>";
     } else {
         echo "<div class='message-bubble removed-text'>Message removed</div>";
     }
 
-    // --------------------------
-    // TIME + EDITED
-    // --------------------------
-    echo "<div class='message-time'>$time";
-    if ($msg["edited"]) echo " <span class='edited-label'>(edited)</span>";
+    // TIME + EDITED LABEL
+    echo "<div class='message-time'>{$time}";
+    if (!empty($msg["edited"])) echo " <span class='edited-label'>(edited)</span>";
     echo "</div>";
 
-    // --------------------------
     // ACTION TOOLBAR
-    // --------------------------
     echo "<div class='action-toolbar'>";
     if ($sender === "sent" && empty($msg["deleted"])) {
         echo "<button class='more-btn' data-id='$id'>⋯</button>";
     }
     echo "</div>";
 
-    echo "</div>"; // content
-    echo "</div>"; // wrapper
+    echo "</div>"; // message-content
+    echo "</div>"; // message wrapper
 }
 ?>
