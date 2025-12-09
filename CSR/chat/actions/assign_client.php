@@ -215,4 +215,45 @@ if ($action === "unassign") {
 
 echo json_encode(["status" => "error", "msg" => "Invalid action"]);
 exit;
+// ----------------------------------------------------------
+// CASE 6 — LOCK / UNLOCK CHAT
+// ----------------------------------------------------------
+if ($action === "toggle_lock") {
+
+    if ($assignedCSR !== $csrUser) {
+        echo json_encode(["status" => "denied", "msg" => "Only the assigned CSR can lock/unlock chat."]);
+        exit;
+    }
+
+    $newLock = ($ticketLock == 1) ? 0 : 1;
+
+    $update = $conn->prepare("
+        UPDATE users
+        SET ticket_lock = :l
+        WHERE id = :cid
+    ");
+    $update->execute([
+        ":l"   => $newLock,
+        ":cid" => $clientID
+    ]);
+
+    // Log
+    $log = $conn->prepare("
+        INSERT INTO ticket_logs (client_id, csr_user, action, timestamp)
+        VALUES (:cid, :csr, :action, NOW())
+    ");
+    $log->execute([
+        ":cid"    => $clientID,
+        ":csr"    => $csrUser,
+        ":action" => ($newLock ? "locked" : "unlocked")
+    ]);
+
+    echo json_encode([
+        "status" => "ok",
+        "msg"    => $newLock ? "Chat locked." : "Chat unlocked.",
+        "lock"   => $newLock
+    ]);
+    exit;
+}
+
 ?>
