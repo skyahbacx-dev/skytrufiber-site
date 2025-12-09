@@ -10,7 +10,7 @@
     --bubble-sent: #0084ff;
     --bubble-sent-text: #fff;
 
-    --bubble-received: #e8e8e8;
+    --bubble-received: #e9ecef;
     --bubble-received-text: #111;
 
     --header-bg: #0084ff;
@@ -27,16 +27,19 @@
     --ticket-resolved: #27ae60;
     --ticket-unresolved: #ff4747;
 
-    --system-msg-bg: #e9f5ff;
-    --system-msg-text: #004b8d;
+    --system-msg-bg: #e8f4ff;
+    --system-msg-text: #004a82;
 
-    --qr-bg: #ffffff;
-    --qr-border: #ddd;
+    --suggest-bg: #e8f3ff;
+    --suggest-text: #003c75;
+
+    --popup-bg: #ffffff;
+    --popup-border: rgba(0,0,0,0.18);
 }
 
 :root[data-theme="dark"] {
     --bg: #0f0f0f;
-    --bg-secondary: #141414;
+    --bg-secondary: #161616;
     --text: #eee;
     --text-light: #aaa;
 
@@ -55,11 +58,14 @@
     --disabled-bg: #202020;
     --disabled-text: #777;
 
-    --system-msg-bg: #1a2838;
-    --system-msg-text: #7dc1ff;
+    --system-msg-bg: #15283d;
+    --system-msg-text: #9fc9f6;
 
-    --qr-bg: #1b1b1b;
-    --qr-border: #333;
+    --suggest-bg: #1d2f45;
+    --suggest-text: #b0d4ff;
+
+    --popup-bg: #1e1e1e;
+    --popup-border: #333;
 }
 
 /* ============================================================
@@ -76,7 +82,7 @@ body {
 #chat-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.55);
+    background: rgba(0,0,0,0.5);
     backdrop-filter: blur(6px);
     display: flex;
     justify-content: center;
@@ -131,31 +137,11 @@ body {
     border-radius: 50%;
 }
 
-/* Ticket Label */
 .ticket-label {
     display: inline-block;
-    margin-top: 3px;
-    padding: 4px 10px;
+    padding: 3px 10px;
     font-size: 12px;
     border-radius: 10px;
-}
-.ticket-resolved {
-    background: var(--ticket-resolved);
-    color: #fff;
-}
-.ticket-unresolved {
-    background: var(--ticket-unresolved);
-    color: #fff;
-}
-
-.logout-btn {
-    margin-left: 14px;
-    background: #ff4040;
-    padding: 8px 14px;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
 }
 
 /* ============================================================
@@ -205,15 +191,56 @@ body {
     border-radius: 4px;
 }
 
-.system-message {
+/* ============================================================
+   SYSTEM + AUTO-GREET + SUGGESTION MESSAGES
+============================================================ */
+.system-message,
+.system-suggest .message-bubble {
     background: var(--system-msg-bg);
-    padding: 14px;
-    border-radius: 12px;
     color: var(--system-msg-text);
+}
+
+.system-message {
+    padding: 14px;
+    margin: 10px auto;
+    border-radius: 12px;
+    max-width: 80%;
     font-size: 15px;
     text-align: center;
-    margin: 10px auto;
-    max-width: 80%;
+}
+
+/* Suggestion UI refinement */
+.system-suggest .message-bubble {
+    background: var(--suggest-bg);
+    color: var(--suggest-text);
+    padding-bottom: 18px;
+}
+
+.suggest-buttons {
+    margin-top: 10px;
+    gap: 6px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.suggest-btn {
+    padding: 6px 10px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid #d3d3d3;
+    cursor: pointer;
+    font-size: 13px;
+    transition: 0.2s;
+}
+
+:root[data-theme="dark"] .suggest-btn {
+    background: #2c2c2c;
+    border: 1px solid #555;
+    color: #ddd;
+}
+
+.suggest-btn:hover {
+    filter: brightness(.9);
 }
 
 /* ============================================================
@@ -237,8 +264,8 @@ body {
 .message.received { justify-content: flex-start; }
 
 .message-avatar img {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
 }
 
@@ -279,13 +306,15 @@ body {
     right: -40px;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .25s;
+    transition: 0.25s;
     z-index: 9999;
 }
+
 .message.sent .action-toolbar {
     left: -40px;
     right: auto;
 }
+
 .message:hover .action-toolbar {
     opacity: 1;
     pointer-events: auto;
@@ -298,58 +327,29 @@ body {
     background: #fff;
     border: none;
     box-shadow: 0 1px 5px rgba(0,0,0,0.25);
-    font-size: 16px;
 }
 
 /* ============================================================
-   POPUP MENU
+   POPUP MENU (Edit / Delete)
 ============================================================ */
 #msg-action-popup {
     position: absolute;
-    background: var(--bg);
+    background: var(--popup-bg);
     border-radius: 12px;
     padding: 6px 0;
-    border: 1px solid rgba(0,0,0,0.15);
+    border: 1px solid var(--popup-border);
     display: none;
     z-index: 999999;
+    min-width: 150px;
 }
 
 #msg-action-popup button {
     width: 100%;
     padding: 10px 16px;
-    text-align: left;
     background: none;
+    color: var(--text);
     border: none;
-}
-
-/* ============================================================
-   FLOATING QUICK REPLY BUTTONS
-============================================================ */
-#quick-replies {
-    display: flex;
-    gap: 10px;
-    padding: 12px;
-    border-top: 1px solid var(--input-border);
-    background: var(--qr-bg);
-    overflow-x: auto;
-    transition: 0.3s ease;
-}
-
-#quick-replies.hidden {
-    display: none;
-}
-
-.qr-btn {
-    padding: 6px 14px;
-    background: var(--qr-bg);
-    border: 1px solid var(--qr-border);
-    border-radius: 14px;
-    cursor: pointer;
-    font-size: 13px;
-    white-space: nowrap;
-}
-.qr-btn:hover {
-    background: #efefef;
+    text-align: left;
 }
 
 /* ============================================================
@@ -364,15 +364,9 @@ body {
     background: var(--input-bg);
 }
 
-.chat-input-area.disabled {
-    background: var(--disabled-bg);
-    opacity: .7;
-    pointer-events: none;
-}
-
 .chat-input-box {
     flex: 1;
-    border-radius: 22px;
+    border-radius: 20px;
     border: 1px solid var(--input-border);
     padding: 10px 14px;
 }
@@ -392,10 +386,14 @@ body {
     background: var(--bubble-sent);
     color: white;
     cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /* ============================================================
-   SCROLL TO BOTTOM BUTTON
+   SCROLL-TO-BOTTOM BUTTON
 ============================================================ */
 .scroll-bottom-btn {
     position: absolute;
@@ -421,7 +419,7 @@ body {
 }
 
 /* ============================================================
-   MOBILE COMPACT MODE
+   MOBILE RESPONSIVE
 ============================================================ */
 @media (max-width: 768px) {
 
@@ -445,15 +443,6 @@ body {
         font-size: 14px;
     }
 
-    #quick-replies {
-        padding: 8px;
-    }
-
-    .qr-btn {
-        padding: 5px 10px;
-        font-size: 12px;
-    }
-
     .scroll-bottom-btn {
         bottom: 80px;
         width: 40px;
@@ -461,7 +450,7 @@ body {
         font-size: 16px;
     }
 
-    /* Center popup in mobile */
+    /* Center popup on mobile */
     #msg-action-popup {
         left: 50% !important;
         transform: translateX(-50%);
