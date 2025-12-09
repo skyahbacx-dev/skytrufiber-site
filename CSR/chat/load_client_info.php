@@ -24,7 +24,8 @@ $stmt = $conn->prepare("
         is_locked,
         ticket_status,
         ticket_lock,
-        transfer_request
+        transfer_request,
+        current_ticket_id
     FROM users
     WHERE id = ?
     LIMIT 1
@@ -41,9 +42,9 @@ $csrUser = $_SESSION['csr_user'] ?? '';
 $isAssignedToMe = ($u["assigned_csr"] === $csrUser) ? "yes" : "no";
 $isLocked = ($u["ticket_lock"] == 1 ? "true" : "false");
 
+
 /* ============================================================
-   FETCH ACTIVE TICKET FOR THIS CLIENT
-   We only want the MOST RECENT unresolved/pending ticket.
+   FETCH MOST RECENT TICKET FOR THIS CLIENT
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT id, status
@@ -55,8 +56,24 @@ $stmt = $conn->prepare("
 $stmt->execute([$clientID]);
 $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$ticketID = $ticket["id"] ?? 0;
+$ticketID     = $ticket["id"]    ?? 0;
 $ticketStatus = strtolower($ticket["status"] ?? "none");
+
+
+/* ============================================================
+   UPDATE users.current_ticket_id IF NEEDED
+   (Prevents CSR loading the wrong ticket)
+============================================================ */
+if ($ticketID > 0 && intval($u["current_ticket_id"]) !== $ticketID) {
+
+    $update = $conn->prepare("
+        UPDATE users
+        SET current_ticket_id = ?
+        WHERE id = ?
+    ");
+    $update->execute([$ticketID, $clientID]);
+}
+
 
 /* ============================================================
    OUTPUT META FOR chat.js
