@@ -1,9 +1,10 @@
 /* ============================================================
-SkyTruFiber Client Chat System — UPDATED 2025
+SkyTruFiber Client Chat System — UPDATED 2025 (FINAL BUILD)
 * Auto-greet occurs ONLY after login first message (backend)
+* Smart Assistant suggestion bubble works only when needed
 * Greeting from CSR appears ABOVE first client message
-* Improved suggestion bubble logic
-* Stable merge behavior for new messages
+* Correct merge behavior for loading new messages
+* No duplicate greetings ever
 ============================================================ */
 
 /* ---------------- GLOBAL STATE ---------------- */
@@ -24,17 +25,17 @@ $(document).ready(() => {
         return;
     }
 
-    // Move popup inside modal
+    // Move popup inside modal container
     const staticPopup = $("#msg-action-popup");
     if (staticPopup.length) $(".chat-modal").append(staticPopup.detach());
 
-    // Load messages — server handles CSR greeting
+    // Load messages — backend handles CSR greeting & suggestion state
     loadMessages(true);
 
-    // Initial status check
+    // Initial ticket status check
     checkTicketStatus();
 
-    // Polling: new messages + ticket status
+    // Poll new messages + ticket status every 3.5 sec
     setInterval(() => {
         if (!editing && !activePopup) {
             fetchNewMessages();
@@ -42,7 +43,7 @@ $(document).ready(() => {
         }
     }, 3500);
 
-    // Send message
+    // Sending
     $("#send-btn").click(sendMessage);
     $("#message-input").keypress(e => {
         if (e.which === 13) {
@@ -51,7 +52,7 @@ $(document).ready(() => {
         }
     });
 
-    // Theme toggle
+    // Theme Toggle
     $("#theme-toggle").click(toggleTheme);
 });
 
@@ -60,8 +61,8 @@ THEME TOGGLE
 ============================================================ */
 function toggleTheme() {
     const root = document.documentElement;
-    const isDark = root.getAttribute("data-theme") === "dark";
-    root.setAttribute("data-theme", isDark ? "light" : "dark");
+    const dark = root.getAttribute("data-theme") === "dark";
+    root.setAttribute("data-theme", dark ? "light" : "dark");
 }
 
 /* ============================================================
@@ -98,7 +99,7 @@ function insertSuggestionBubble() {
 }
 
 /* ============================================================
-SUGGESTION BUTTON LOGIC
+SUGGESTION BUTTON HANDLER
 ============================================================ */
 $(document).on("click", ".suggest-btn", function () {
     const text = $(this).text();
@@ -122,7 +123,7 @@ TICKET STATUS CONTROL
 ============================================================ */
 function checkTicketStatus() {
     $.post("/SKYTRUFIBER/chat/get_ticket_status.php", { ticket: ticketId })
-        .done(status => applyTicketStatus(status.trim()))
+        .done(res => applyTicketStatus(res.trim()))
         .fail(() => console.warn("Failed to fetch ticket status."));
 }
 
@@ -174,7 +175,7 @@ function sendMessage() {
         let res = {};
         try { res = JSON.parse(raw); } catch {}
 
-        // FIRST EVER LOGIN MESSAGE → show Smart Assistant
+        // FIRST EVER LOGIN MESSAGE (ticket was empty before)
         if (res.first_message === true) {
             insertSuggestionBubble();
         }
@@ -207,13 +208,13 @@ LOAD MESSAGES
 function loadMessages(scrollBottom = false, callback = null) {
     $.post("/SKYTRUFIBER/chat/load_messages_client.php", { ticket: ticketId })
     .done(html => {
-        const isFirstLoad = $("#chat-messages").children().length === 0;
+        const firstLoad = $("#chat-messages").children().length === 0;
 
         $("#chat-messages").html(html);
         bindActionToolbar();
 
-        // Remove any older suggestion if messages already exist
-        if (!isFirstLoad) $(".system-suggest").remove();
+        // If messages already exist, remove suggestion (do NOT duplicate)
+        if (!firstLoad) $(".system-suggest").remove();
 
         if (scrollBottom) scrollToBottom();
         if (callback) callback();
@@ -222,7 +223,7 @@ function loadMessages(scrollBottom = false, callback = null) {
 }
 
 /* ============================================================
-FETCH NEW MESSAGES (MERGE MODE)
+FETCH NEW MESSAGES — MERGE MODE
 ============================================================ */
 function fetchNewMessages() {
     $.post("/SKYTRUFIBER/chat/load_messages_client.php", { ticket: ticketId })
@@ -231,6 +232,8 @@ function fetchNewMessages() {
 
         temp.find(".message").each(function () {
             const id = $(this).data("msg-id");
+
+            // If message not already present → append
             if (!$(`.message[data-msg-id='${id}']`).length) {
                 $("#chat-messages").append($(this));
             }
@@ -242,7 +245,7 @@ function fetchNewMessages() {
 }
 
 /* ============================================================
-SCROLL CONTROLS
+SCROLL
 ============================================================ */
 function scrollToBottom() {
     const m = $("#chat-messages");
@@ -252,7 +255,7 @@ function scrollToBottom() {
 $("#scroll-bottom-btn").click(scrollToBottom);
 
 /* ============================================================
-ACTION TOOLBAR (Edit/Delete)
+ACTION TOOLBAR (Edit / Delete)
 ============================================================ */
 function bindActionToolbar() {
     $(".more-btn").off("click").on("click", function (e) {
@@ -283,7 +286,7 @@ function closePopup() {
     activePopup = null;
 }
 
-/* EDIT / DELETE ACTIONS */
+/* EDIT / DELETE */
 $(document).on("click", ".action-edit", function () {
     startEdit($("#msg-action-popup").data("msgId"));
     closePopup();
@@ -308,10 +311,10 @@ EDIT MESSAGE
 function startEdit(id) {
     editing = true;
     const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
-    const old = bubble.text();
+    const oldText = bubble.text();
 
     bubble.html(`
-        <textarea class="edit-textarea" style="width:100%;min-height:50px;">${old}</textarea>
+        <textarea class="edit-textarea" style="width:100%;min-height:50px;">${oldText}</textarea>
         <div class="edit-actions">
             <button class="edit-save" data-id="${id}">Save</button>
             <button class="edit-cancel">Cancel</button>
