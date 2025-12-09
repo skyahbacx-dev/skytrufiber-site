@@ -4,8 +4,10 @@ require "../../db_connect.php";
 
 header("Content-Type: application/json");
 
-$csrUser = $_SESSION["csr_user"] ?? null;
+$csrUser  = $_SESSION["csr_user"] ?? null;
 $clientID = intval($_POST["client_id"] ?? 0);
+$action   = trim($_POST["action"] ?? ""); 
+// actions = assign, unassign, request_transfer, approve_transfer, deny_transfer
 
 if (!$csrUser) {
     echo json_encode(["status" => "error", "msg" => "CSR not logged in"]);
@@ -18,67 +20,199 @@ if ($clientID <= 0) {
 }
 
 // ----------------------------------------------------------
-// FETCH CLIENT INFO
+// FETCH CLIENT CURRENT ASSIGNMENT
 // ----------------------------------------------------------
 $stmt = $conn->prepare("
-    SELECT assigned_csr, ticket_status, ticket_lock
+    SELECT assigned_csr, ticket_lock, ticket_status, transfer_request
     FROM users
     WHERE id = ?
     LIMIT 1
 ");
 $stmt->execute([$clientID]);
-$c = $stmt->fetch(PDO::FETCH_ASSOC);
+$client = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$c) {
+if (!$client) {
     echo json_encode(["status" => "error", "msg" => "Client not found"]);
     exit;
 }
 
-$currentAssigned = $c["assigned_csr"];
-$isLocked       = $c["ticket_lock"] == 1;
+$assignedCSR     = $client["assigned_csr"];
+$ticketLock       = $client["ticket_lock"];
+$ticketStatus     = $client["ticket_status"];
+$transferRequest  = $client["transfer_request"]; // NEW column
 
 // ----------------------------------------------------------
-// Client is already assigned — cannot steal assignment
+// CASE 1 — ASSIGN TO MYSELF (client has no CSR)
 // ----------------------------------------------------------
-if (!empty($currentAssigned) && $currentAssigned !== $csrUser) {
+if ($action === "assign") {
+
+    if ($assignedCSR === $csrUser) {
+        echo json_encode(["status" => "already", "msg" => "You already own this ticket."]);
+        exit;
+    }
+
+    if ($assignedCSR === null) {
+
+        // Assign directly
+        $update = $conn->prepare("
+            UPDATE users
+            SET assigned_csr = :csr
+            WHERE id = :cid
+        ");
+        $update->execute([
+            ":csr" => $csrUser,
+            ":cid" => $clientID
+        ]);
+
+        // Log assignment
+        $log = $conn->prepare("
+            INSERT INTO ticket_logs (client_id, csr_user, action, timestamp)
+            VALUES (:cid, :csr, 'assigned', NOW())
+        ");
+        $log->execute([":cid" => $clientID, ":csr" => $csrUser]);
+
+        echo json_encode(["status" => "ok", "msg" => "Client assigned to you."]);
+        exit;
+    }
+
+    // Assigned to someone else → TRANSFER REQUEST
     echo json_encode([
-        "status" => "denied",
-        "msg"    => "Client is already assigned to another CSR: $currentAssigned"
+        "status" => "transfer_required",
+        "msg"    => "This client is assigned to another CSR. Request transfer?",
+        "assigned_to" => $assignedCSR
     ]);
     exit;
 }
 
 // ----------------------------------------------------------
-// ASSIGN CLIENT TO THIS CSR
+// CASE 2 — REQUEST TRANSFER
 // ----------------------------------------------------------
-$assign = $conn->prepare("
-    UPDATE users
-    SET assigned_csr = :csr,
-        ticket_lock  = 1,          -- LOCK for all other CSRs
-        ticket_status = 'unresolved'
-    WHERE id = :cid
-");
-$assign->execute([
-    ":csr" => $csrUser,
-    ":cid" => $clientID
-]);
+if ($action === "request_transfer") {
+
+    if ($assignedCSR === $csrUser) {
+        echo json_encode(["status" => "already", "msg" => "You already own this ticket."]);
+        exit;
+    }
+
+    // Write transfer request
+    $update = $conn->prepare("
+        UPDATE users
+        SET transfer_request = :csr
+        WHERE id = :cid
+    ");
+    $update->execute([
+        ":csr" => $csrUser,
+        ":cid" => $clientID
+    ]);
+
+    echo json_encode([
+        "status" => "requested",
+        "msg"    => "Transfer request sent to $assignedCSR."
+    ]);
+    exit;
+}
 
 // ----------------------------------------------------------
-// LOG THE ASSIGNMENT
+// CASE 3 — CURRENT CSR APPROVES TRANSFER
 // ----------------------------------------------------------
-$log = $conn->prepare("
-    INSERT INTO ticket_logs (client_id, csr_user, action, timestamp)
-    VALUES (:cid, :csr, 'assigned', NOW())
-");
-$log->execute([
-    ":cid" => $clientID,
-    ":csr" => $csrUser
-]);
+if ($action === "approve_transfer") {
 
-echo json_encode([
-    "status" => "ok",
-    "msg"    => "Client successfully assigned to you",
-    "assigned_to" => $csrUser
-]);
+    if ($assignedCSR !== $csrUser) {
+        echo json_encode(["status" => "denied", "msg" => "Only the assigned CSR can approve transfer."]);
+        exit;
+    }
+
+    if (!$transferRequest) {
+        echo json_encode(["status" => "error", "msg" => "No transfer request exists."]);
+        exit;
+    }
+
+    // Approve transfer
+    $update = $conn->prepare("
+        UPDATE users
+        SET assigned_csr = :newcsr,
+            transfer_request = NULL
+        WHERE id = :cid
+    ");
+    $update->execute([
+        ":newcsr" => $transferRequest,
+        ":cid"    => $clientID
+    ]);
+
+    // Log
+    $log = $conn->prepare("
+        INSERT INTO ticket_logs (client_id, csr_user, action, timestamp)
+        VALUES (:cid, :csr, 'transfer_approved_to_" . $transferRequest . "', NOW())
+    ");
+    $log->execute([
+        ":cid" => $clientID,
+        ":csr" => $csrUser
+    ]);
+
+    echo json_encode([
+        "status" => "ok",
+        "msg"    => "Transfer approved. $transferRequest now owns this ticket."
+    ]);
+    exit;
+}
+
+// ----------------------------------------------------------
+// CASE 4 — CURRENT CSR DENIES TRANSFER
+// ----------------------------------------------------------
+if ($action === "deny_transfer") {
+
+    if ($assignedCSR !== $csrUser) {
+        echo json_encode(["status" => "denied", "msg" => "Only the assigned CSR can deny transfer."]);
+        exit;
+    }
+
+    $update = $conn->prepare("
+        UPDATE users
+        SET transfer_request = NULL
+        WHERE id = :cid
+    ");
+    $update->execute([":cid" => $clientID]);
+
+    echo json_encode([
+        "status" => "ok",
+        "msg"    => "Transfer request denied."
+    ]);
+    exit;
+}
+
+// ----------------------------------------------------------
+// CASE 5 — UNASSIGN MYSELF
+// ----------------------------------------------------------
+if ($action === "unassign") {
+
+    if ($assignedCSR !== $csrUser) {
+        echo json_encode(["status" => "denied", "msg" => "Only the current CSR can unassign."]);
+        exit;
+    }
+
+    $update = $conn->prepare("
+        UPDATE users
+        SET assigned_csr = NULL,
+            ticket_lock = 0,
+            transfer_request = NULL,
+            ticket_status = 'unresolved'
+        WHERE id = :cid
+    ");
+    $update->execute([":cid" => $clientID]);
+
+    $log = $conn->prepare("
+        INSERT INTO ticket_logs (client_id, csr_user, action, timestamp)
+        VALUES (:cid, :csr, 'unassigned', NOW())
+    ");
+    $log->execute([":cid" => $clientID, ":csr" => $csrUser]);
+
+    echo json_encode([
+        "status" => "ok",
+        "msg"    => "You unassigned yourself."
+    ]);
+    exit;
+}
+
+echo json_encode(["status" => "error", "msg" => "Invalid action"]);
 exit;
 ?>
