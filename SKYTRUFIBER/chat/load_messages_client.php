@@ -46,7 +46,7 @@ $stmt->execute([$ticketId]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // --------------------------------------------------
-// Check if NO messages yet → send Assistant Suggestion Bubble
+// FIRST TIME MESSAGE → AUTO GREET (NO CHAT YET)
 // --------------------------------------------------
 $is_first_time = (count($messages) === 0);
 
@@ -79,7 +79,7 @@ if ($is_first_time) {
 
 // --------------------------------------------------
 // RENDER EXISTING CHAT MESSAGES
-//--------------------------------------------------
+//---------------------------------------------------
 foreach ($messages as $msg) {
 
     $id     = $msg["id"];
