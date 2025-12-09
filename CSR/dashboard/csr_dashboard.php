@@ -20,8 +20,7 @@ $tab = $_GET['tab'] ?? 'chat';
 <!-- CSS -->
 <link rel="stylesheet" href="csr_dashboard.css">
 <link rel="stylesheet" href="../chat/chat.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
