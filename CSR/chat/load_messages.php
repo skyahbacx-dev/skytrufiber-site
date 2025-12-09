@@ -20,24 +20,23 @@ $client = $stmt->fetch(PDO::FETCH_ASSOC);
 $ticketStatus = strtolower($client["ticket_status"] ?? "unresolved");
 
 /* ============================================================
-   FETCH TIMESTAMPS - REAL COLUMN = `timestamp`
+   HELPER — GET TIMESTAMP FROM ticket_logs.action
 ============================================================ */
-
-function getTimestamp($conn, $client_id, $statusName) {
+function getLogTime($conn, $client_id, $actionName) {
     $stmt = $conn->prepare("
         SELECT timestamp
         FROM ticket_logs
-        WHERE client_id = ? AND new_status = ?
+        WHERE client_id = ? AND action = ?
         ORDER BY timestamp ASC
         LIMIT 1
     ");
-    $stmt->execute([$client_id, $statusName]);
+    $stmt->execute([$client_id, $actionName]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     return $row ? $row["timestamp"] : null;
 }
 
-$resolvedAt = getTimestamp($conn, $client_id, "resolved");
-$pendingAt  = getTimestamp($conn, $client_id, "pending");
+$resolvedAt = getLogTime($conn, $client_id, "resolved");
+$pendingAt  = getLogTime($conn, $client_id, "pending");
 
 /* ============================================================
    FETCH ALL CHAT MESSAGES
@@ -57,7 +56,7 @@ if (!$rows) {
 }
 
 /* ============================================================
-   SYSTEM DIVIDER HTML
+   SYSTEM DIVIDERS HTML
 ============================================================ */
 $resolvedDividerHTML = $resolvedAt ? "
     <div class='system-divider'>
@@ -75,14 +74,13 @@ $pendingDividerHTML = $pendingAt ? "
     </div>
 " : "";
 
-// Print once only
+// print once only
 $printedResolved = false;
 $printedPending  = false;
 
 /* ============================================================
    RENDER MESSAGES
 ============================================================ */
-
 foreach ($rows as $msg) {
 
     $msgTime = strtotime($msg["created_at"]);
@@ -100,18 +98,16 @@ foreach ($rows as $msg) {
         $printedResolved = true;
     }
 
-    $id       = $msg["id"];
-    $sender   = ($msg["sender_type"] === "csr") ? "sent" : "received";
+    $id     = $msg["id"];
+    $sender = ($msg["sender_type"] === "csr") ? "sent" : "received";
 
     echo "
     <div class='message $sender' data-msg-id='$id'>
-        
         <div class='message-avatar'>
             <img src='/upload/default-avatar.png'>
         </div>
 
         <div class='message-content'>
-
             <button class='more-btn' data-id='$id'>
                 <i class='fa-solid fa-ellipsis-vertical'></i>
             </button>
@@ -119,14 +115,16 @@ foreach ($rows as $msg) {
             <div class='message-bubble'>
     ";
 
+    // Message content
     if ($msg["deleted"]) {
         echo "<div class='deleted-text'>🗑️ <i>This message was deleted</i></div>";
     } else {
         echo "<div class='msg-text'>" . nl2br(htmlspecialchars($msg["message"])) . "</div>";
     }
 
-    echo "</div>"; // bubble
+    echo "</div>"; // end bubble
 
+    // Edited tag
     if ($msg["edited"] && !$msg["deleted"]) {
         echo "<div class='edited-label'>(edited)</div>";
     }
