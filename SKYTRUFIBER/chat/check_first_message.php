@@ -11,7 +11,7 @@ if ($ticketId <= 0) {
 }
 
 /* --------------------------------------------------
-   1) FETCH TICKET & CLIENT
+   FETCH TICKET
 -------------------------------------------------- */
 $stmt = $conn->prepare("
     SELECT client_id
@@ -27,29 +27,29 @@ if (!$ticket) {
     exit;
 }
 
-$client_id = (int)$ticket["client_id"];
-
 /* --------------------------------------------------
-   2) CHECK IF ANY CHAT MESSAGES EXIST FOR THIS TICKET
+   COUNT MESSAGES FOR THIS TICKET
 -------------------------------------------------- */
 $stmt = $conn->prepare("
-    SELECT COUNT(*) AS total
+    SELECT id, sender_type
     FROM chat
     WHERE ticket_id = ?
+    ORDER BY id ASC
 ");
 $stmt->execute([$ticketId]);
+$messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$row = $stmt->fetch(PDO::FETCH_ASSOC);
-$totalMessages = (int)$row["total"];
+$total = count($messages);
 
 /* --------------------------------------------------
-   3) RETURN RESPONSE
-   - empty → system auto-greeting should run
-   - has-messages → do nothing
+   AUTO-GREET RULE:
+   Trigger only when:
+   - There is EXACTLY 1 message
+   - That message came from the client (login concern)
 -------------------------------------------------- */
-if ($totalMessages === 0) {
-    echo "empty";           // No messages → trigger greeting
+if ($total === 1 && $messages[0]["sender_type"] === "client") {
+    echo "first-login-message";
 } else {
-    echo "has-messages";    // Messages exist → skip greeting
+    echo "no-greet";
 }
 ?>
