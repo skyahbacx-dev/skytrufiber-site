@@ -115,6 +115,7 @@
   cursor: pointer;
   transition: 0.2s;
 }
+
 .assign-btn:hover { background: #008639; transform: scale(1.15); }
 
 /* ➖ Assigned to me */
@@ -129,6 +130,7 @@
   font-size: 18px;
   transition: 0.2s;
 }
+
 .unassign-btn:hover { background: #d80000; transform: scale(1.15); }
 
 /* 🔒 Assigned to other CSR */
@@ -142,6 +144,7 @@
   opacity: 0.85;
   transition: 0.2s;
 }
+
 .locked-icon:hover { opacity: 1; transform: scale(1.15); }
 
 /* ===========================================================
@@ -166,6 +169,15 @@
   display: flex;
   flex-direction: column;
   background: #f3faf4;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* WRAPPER FIX — REQUIRED */
+.chat-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -191,7 +203,7 @@
   gap: 6px;
 }
 
-/* LOCK label beside client name */
+/* Lock Label */
 .client-locked-label {
   background: #777;
   padding: 3px 10px;
@@ -211,6 +223,7 @@
   gap: 18px;
   overflow-y: auto;
   background: #f7fef8;
+  min-height: 0; /* FIX: prevents overflow beyond viewport */
 }
 
 .chat-messages::-webkit-scrollbar { width: 6px; }
@@ -267,7 +280,7 @@
 }
 
 /* ===========================================================
-   ACTION POPUP (Edit/Delete)
+   ACTION POPUP
 =========================================================== */
 #msg-action-popup {
   position: absolute;
@@ -316,15 +329,6 @@
 
 .scroll-bottom-btn.show { display: flex; }
 .scroll-bottom-btn:hover { transform: translateX(-50%) scale(1.1); }
-
-/* ===========================================================
-   DISABLED INPUT
-=========================================================== */
-.chat-input-area.disabled {
-  opacity: 0.45;
-  filter: blur(1px);
-  pointer-events: none;
-}
 
 /* ===========================================================
    RIGHT PANEL
