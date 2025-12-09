@@ -10,7 +10,9 @@ require_once "../../db_connect.php";
 $ticketId = (int)($_POST["ticket"] ?? 0);
 $message  = trim($_POST["message"] ?? "");
 
-// -------------------- VALIDATE --------------------
+// ----------------------------------------------------------
+// VALIDATE TICKET
+// ----------------------------------------------------------
 if ($ticketId <= 0) {
     echo json_encode(["status" => "error", "msg" => "invalid ticket"]);
     exit;
@@ -37,22 +39,41 @@ if ($ticket["status"] === "resolved") {
 
 $client_id = (int)$ticket["client_id"];
 
-// -------------------- EMPTY MESSAGE --------------------
+// ----------------------------------------------------------
+// BLOCK EMPTY MESSAGE
+// ----------------------------------------------------------
 if ($message === "") {
     echo json_encode(["status" => "empty"]);
     exit;
 }
 
-// -------------------- CHECK IF THIS IS FIRST CLIENT MESSAGE --------------------
-$firstCheck = $conn->prepare("
-    SELECT COUNT(*) 
-    FROM chat 
-    WHERE ticket_id = ? AND sender_type = 'client'
+// ----------------------------------------------------------
+// CHECK FIRST CLIENT MESSAGE (login concern)
+// ----------------------------------------------------------
+//
+// RULE: First client message = ONLY IF:
+//   1. Chat contains ZERO existing client messages
+//   2. Chat contains ZERO existing CSR messages
+//
+$chatCountQuery = $conn->prepare("
+    SELECT 
+        SUM(CASE WHEN sender_type = 'client' THEN 1 ELSE 0 END) AS client_count,
+        SUM(CASE WHEN sender_type = 'csr' THEN 1 ELSE 0 END) AS csr_count
+    FROM chat
+    WHERE ticket_id = ?
 ");
-$firstCheck->execute([$ticketId]);
-$isFirstMessage = ($firstCheck->fetchColumn() == 0);
+$chatCountQuery->execute([$ticketId]);
+$countRow = $chatCountQuery->fetch(PDO::FETCH_ASSOC);
 
-// -------------------- PREVENT DUPLICATE --------------------
+$existingClientCount = (int)$countRow["client_count"];
+$existingCsrCount    = (int)$countRow["csr_count"];
+
+// TRUE only for VERY first message after login
+$isFirstLoginMessage = ($existingClientCount === 0 && $existingCsrCount === 0);
+
+// ----------------------------------------------------------
+// PREVENT DUPLICATE MESSAGE
+// ----------------------------------------------------------
 $dupe = $conn->prepare("
     SELECT 1 FROM chat
     WHERE ticket_id = ? AND message = ? AND deleted = FALSE
@@ -64,19 +85,24 @@ if ($dupe->fetchColumn()) {
     exit;
 }
 
-// -------------------- INSERT CLIENT MESSAGE --------------------
+// ----------------------------------------------------------
+// INSERT CLIENT MESSAGE
+// ----------------------------------------------------------
 $insert = $conn->prepare("
     INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
     VALUES (?, ?, 'client', ?, TRUE, FALSE, NOW())
 ");
 $insert->execute([$ticketId, $client_id, $message]);
 
-// -------------------- CSR AUTO-GREET FOR FIRST CLIENT MESSAGE --------------------
-if ($isFirstMessage) {
+// ----------------------------------------------------------
+// INSERT CSR AUTO-GREET *ONLY FOR LOGIN FIRST MESSAGE*
+// ----------------------------------------------------------
+if ($isFirstLoginMessage) {
 
     $auto = $conn->prepare("
-        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
-        VALUES (?, ?, 'csr', 'Good day! How may we assist you today?', TRUE, FALSE, NOW())
+        INSERT INTO chat (
+            ticket_id, client_id, sender_type, message, delivered, seen, created_at
+        ) VALUES (?, ?, 'csr', 'Good day! How may we assist you today?', TRUE, FALSE, NOW())
     ");
     $auto->execute([$ticketId, $client_id]);
 
@@ -87,7 +113,9 @@ if ($isFirstMessage) {
     exit;
 }
 
-// -------------------- NORMAL RESPONSE --------------------
+// ----------------------------------------------------------
+// NORMAL RESPONSE
+// ----------------------------------------------------------
 echo json_encode(["status" => "ok"]);
 exit;
 
