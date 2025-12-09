@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
     if ($input && $password) {
         try {
-            // Fetch user by email OR full_name, limit 1 to prevent ambiguity
+            // Fetch user by email OR full_name
             $stmt = $conn->prepare("
                 SELECT * FROM users 
                 WHERE email = :input OR full_name = :input
@@ -24,19 +24,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
             if ($user && password_verify($password, $user['password'])) {
 
-                // Regenerate session ID
+                // Secure session regeneration
                 session_regenerate_id(true);
 
-                // Retrieve latest ticket for the user
-                $ticketStmt = $conn->prepare("SELECT id, status FROM tickets WHERE client_id = :cid ORDER BY created_at DESC LIMIT 1");
+                // Retrieve latest unresolved ticket
+                $ticketStmt = $conn->prepare("
+                    SELECT id, status 
+                    FROM tickets 
+                    WHERE client_id = :cid 
+                    ORDER BY created_at DESC 
+                    LIMIT 1
+                ");
                 $ticketStmt->execute([':cid' => $user['id']]);
                 $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
 
                 if (!$lastTicket || $lastTicket['status'] === 'resolved') {
-                    // Create new ticket if none exists or last ticket resolved
-                    $newTicket = $conn->prepare("INSERT INTO tickets (client_id, status, created_at) VALUES (:cid, 'unresolved', NOW())");
+
+                    // Create a fresh ticket
+                    $newTicket = $conn->prepare("
+                        INSERT INTO tickets (client_id, status, created_at)
+                        VALUES (:cid, 'unresolved', NOW())
+                    ");
                     $newTicket->execute([':cid' => $user['id']]);
+
                     $ticketId = $conn->lastInsertId();
+
                 } else {
                     $ticketId = $lastTicket['id'];
                 }
@@ -47,8 +59,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 $_SESSION['email'] = $user['email'];
                 $_SESSION['ticket_id'] = $ticketId;
 
-                // Insert initial concern message if provided
+                // -----------------------------
+                // INSERT LOGIN CONCERN MESSAGE
+                // -----------------------------
+                $hasExistingMsgs = false;
+
+                $checkMsgs = $conn->prepare("
+                    SELECT COUNT(*) FROM chat 
+                    WHERE ticket_id = :tid
+                ");
+                $checkMsgs->execute([':tid' => $ticketId]);
+                $hasExistingMsgs = ($checkMsgs->fetchColumn() > 0);
+
                 if (!empty($concern)) {
+
+                    // Insert client concern
                     $insert = $conn->prepare("
                         INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
                         VALUES (:tid, :cid, 'client', :msg, TRUE, FALSE, NOW())
@@ -58,6 +83,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                         ':cid' => $user['id'],
                         ':msg' => $concern
                     ]);
+
+                    // ----------------------------------------------
+                    // INSERT CSR GREETING (ONLY IF TICKET WAS EMPTY)
+                    // ----------------------------------------------
+                    if (!$hasExistingMsgs) {
+                        $autoGreet = $conn->prepare("
+                            INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
+                            VALUES (:tid, :cid, 'csr', 'Good day! How may we assist you today?', TRUE, FALSE, NOW())
+                        ");
+                        $autoGreet->execute([
+                            ':tid' => $ticketId,
+                            ':cid' => $user['id']
+                        ]);
+                    }
                 }
 
                 // Redirect to chat support
@@ -67,17 +106,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
             } else {
                 $message = "❌ Invalid email/full name or password.";
             }
+
         } catch (PDOException $e) {
             $message = "⚠ Database error: " . htmlspecialchars($e->getMessage());
         }
+
     } else {
         $message = "⚠ Please fill in all fields.";
     }
 }
 ?>
-
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -106,11 +145,7 @@ a:hover { text-decoration:underline; }
     <h2>Customer Service Portal</h2>
 
 <?php if ($message): ?>
-
-```
 <p class="message error"><?= htmlspecialchars($message) ?></p>
-```
-
 <?php endif; ?>
 
 <form id="loginForm" method="POST">
@@ -154,7 +189,7 @@ backToLogin.addEventListener('click', e => {
 forgotForm.addEventListener('submit', e => {
     e.preventDefault();
     const email = forgotForm.forgot_email.value.trim();
-    if(!email) return;
+    if (!email) return;
 
     forgotMessage.textContent = "Sending...";
     forgotMessage.className = 'message';
@@ -172,7 +207,7 @@ forgotForm.addEventListener('submit', e => {
         })
     })
     .then(res => {
-        if(res.ok) {
+        if (res.ok) {
             forgotMessage.textContent = "Email sent successfully via GitHub Actions!";
             forgotMessage.className = 'message success';
         } else {
