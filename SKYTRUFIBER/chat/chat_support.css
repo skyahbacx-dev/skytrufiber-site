@@ -456,3 +456,41 @@ body {
         transform: translateX(-50%);
     }
 }
+/* ============================================================
+   FADE + SLIDE ANIMATION FOR GREETING & SUGGESTIONS
+============================================================ */
+@keyframes slideFade {
+    0% {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Generic animation class */
+.animate-in {
+    animation: slideFade 0.45s ease forwards;
+}
+
+/* Apply animation automatically to greeting + suggestions */
+.system-suggest,
+.csr-greeting {
+    opacity: 0; 
+    animation: slideFade 0.45s ease forwards;
+}
+
+/* Extra polish: staggered buttons animation */
+.suggest-buttons .suggest-btn {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: slideFade 0.35s ease forwards;
+}
+
+.suggest-buttons .suggest-btn:nth-child(1) { animation-delay: 0.05s; }
+.suggest-buttons .suggest-btn:nth-child(2) { animation-delay: 0.10s; }
+.suggest-buttons .suggest-btn:nth-child(3) { animation-delay: 0.15s; }
+.suggest-buttons .suggest-btn:nth-child(4) { animation-delay: 0.20s; }
+.suggest-buttons .suggest-btn:nth-child(5) { animation-delay: 0.25s; }
