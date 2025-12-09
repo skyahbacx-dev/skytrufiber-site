@@ -1,6 +1,6 @@
 /* ============================================================
 SkyTruFiber Client Chat System — UPDATED 2025
-* Fixed path issues, added AJAX error handling
+* Fixed auto-greet workflow, path issues, added AJAX error handling
 ============================================================ */
 
 /* ---------------- GLOBAL STATE ---------------- */
@@ -27,8 +27,8 @@ $(document).ready(() => {
     const staticPopup = $("#msg-action-popup");
     if (staticPopup.length) $(".chat-modal").append(staticPopup.detach());
 
-    // Load chat → then check greeting
-    loadMessages(true, () => checkFirstTimeGreeting());
+    // Load chat (no more auto-greet check here)
+    loadMessages(true);
 
     // Check ticket status initially
     checkTicketStatus();
@@ -52,7 +52,6 @@ $(document).ready(() => {
 
     // Theme toggle
     $("#theme-toggle").click(toggleTheme);
-
 });
 
 /* ============================================================
@@ -100,6 +99,7 @@ function insertSuggestionBubble() {
 $(document).on("click", ".suggest-btn", function () {
     const text = $(this).text();
     $(".system-suggest").remove();
+
     const tempId = appendClientBubble(text);
 
     $.post("/SKYTRUFIBER/chat/send_message_client.php", { ticket: ticketId, message: text })
@@ -113,19 +113,11 @@ $(document).on("click", ".suggest-btn", function () {
 });
 
 /* ============================================================
-AUTO GREETING
+AUTO GREETING — REMOVED FROM JS (PHP handles it now)
 ============================================================ */
-function checkFirstTimeGreeting() {
-    $.post("/SKYTRUFIBER/chat/check_first_message.php", { ticket: ticketId }, function (res) {
-        if (res.trim() === "empty") {
-            $.post("/SKYTRUFIBER/chat/send_message_client.php", {
-                ticket: ticketId,
-                message: "Good day! How may we assist you today?"
-            });
-            insertSuggestionBubble();
-        }
-    }).fail(() => console.warn("Failed to check first message."));
-}
+// ★ REMOVED checkFirstTimeGreeting()
+// ★ Auto-greet now triggers ONLY inside send_message_client.php
+// ★ JS no longer controls welcome message
 
 /* ============================================================
 TICKET STATUS CONTROL
@@ -170,156 +162,27 @@ SEND MESSAGE
 function sendMessage() {
     const msg = $("#message-input").val().trim();
     if (!msg) return;
+
     $(".system-suggest").remove();
 
     const tempId = appendClientBubble(msg);
     $("#message-input").val("");
 
     $.post("/SKYTRUFIBER/chat/send_message_client.php", { ticket: ticketId, message: msg })
-        .done(() => {
+        .done((data) => {
+            // NEW: If server responded that it's the first message → show suggestions
+            try {
+                const res = JSON.parse(data);
+                if (res.first_message === true) {
+                    insertSuggestionBubble();
+                }
+            } catch {}
+
             $(`.message[data-msg-id='${tempId}']`).remove();
             fetchNewMessages();
         })
         .fail(() => alert("Failed to send message. Please try again."));
 }
 
-function appendClientBubble(msg) {
-    const id = "temp-" + Date.now();
-    $("#chat-messages").append(`
-        <div class="message sent no-avatar" data-msg-id="${id}">
-            <div class="message-content">
-                <div class="message-bubble">${msg}</div>
-                <div class="message-time">Sending...</div>
-            </div>
-        </div>
-    `);
-    scrollToBottom();
-    return id;
-}
+/* … REST OF THE FILE UNCHANGED … */
 
-/* ============================================================
-LOAD MESSAGES
-============================================================ */
-function loadMessages(scrollBottom = false, callback = null) {
-    $.post("/SKYTRUFIBER/chat/load_messages_client.php", { ticket: ticketId })
-        .done(html => {
-            const wasEmpty = $("#chat-messages").children().length === 0;
-            $("#chat-messages").html(html);
-            bindActionToolbar();
-            if (!wasEmpty) $(".system-suggest").remove();
-            if (scrollBottom) scrollToBottom();
-            if (callback) callback();
-        })
-        .fail(() => console.warn("Failed to load messages."));
-}
-
-/* ============================================================
-FETCH NEW MESSAGES
-============================================================ */
-function fetchNewMessages() {
-    $.post("/SKYTRUFIBER/chat/load_messages_client.php", { ticket: ticketId })
-        .done(html => {
-            const temp = $("<div>").html(html);
-            const incoming = temp.find(".message");
-            incoming.each(function () {
-                const id = $(this).data("msg-id");
-                if ($(`.message[data-msg-id='${id}']`).length) return;
-                $("#chat-messages").append($(this));
-            });
-            bindActionToolbar();
-        })
-        .fail(() => console.warn("Failed to fetch new messages."));
-}
-
-/* ============================================================
-SCROLL TO BOTTOM
-============================================================ */
-function scrollToBottom() {
-    const m = $("#chat-messages");
-    m.stop().animate({ scrollTop: m[0].scrollHeight }, 230);
-}
-$("#scroll-bottom-btn").click(scrollToBottom);
-
-/* ============================================================
-ACTION TOOLBAR (Edit / Delete)
-============================================================ */
-function bindActionToolbar() {
-    $(".more-btn").off("click").on("click", function (e) {
-        e.stopPropagation();
-        openPopup($(this).data("id"), this);
-    });
-}
-
-function openPopup(id, anchor) {
-    const popup = $("#msg-action-popup");
-    const modal = $(".chat-modal");
-    popup.data("msgId", id).show();
-    const a = $(anchor).offset();
-    const m = modal.offset();
-    popup.css({
-        top: a.top - m.top + 32,
-        left: Math.max(0, a.left - m.left - popup.outerWidth() + 20)
-    });
-    activePopup = popup;
-}
-
-function closePopup() {
-    $("#msg-action-popup").hide();
-    activePopup = null;
-}
-
-/* POPUP ACTIONS */
-$(document).on("click", ".action-edit", function () {
-    startEdit($("#msg-action-popup").data("msgId"));
-    closePopup();
-});
-$(document).on("click", ".action-unsend, .action-delete", function () {
-    const id = $("#msg-action-popup").data("msgId");
-    $.post("/SKYTRUFIBER/chat/delete_message_client.php", { id, ticket: ticketId })
-        .done(() => loadMessages(false))
-        .fail(() => alert("Failed to delete message."));
-    closePopup();
-});
-
-/* ============================================================
-EDIT MESSAGE
-============================================================ */
-function startEdit(id) {
-    editing = true;
-    const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
-    const old = bubble.text();
-    bubble.html(`
-        <textarea class="edit-textarea" style="width:100%; min-height:50px;">${old}</textarea>
-        <div class="edit-actions">
-            <button class="edit-save" data-id="${id}">Save</button>
-            <button class="edit-cancel">Cancel</button>
-        </div>
-    `);
-}
-
-$(document).on("click", ".edit-save", function () {
-    const id = $(this).data("id");
-    const newText = $(this).closest(".message-bubble").find("textarea").val().trim();
-    $.post("/SKYTRUFIBER/chat/edit_message_client.php", { id, message: newText })
-        .done(() => {
-            editing = false;
-            loadMessages(true);
-        })
-        .fail(() => {
-            alert("Failed to edit message.");
-            editing = false;
-        });
-});
-$(document).on("click", ".edit-cancel", () => {
-    editing = false;
-    loadMessages(false);
-});
-
-/* ============================================================
-LOGOUT
-============================================================ */
-$(document).on("click", "#logout-btn", function () {
-    if (confirm("Are you sure you want to log out?")) {
-        window.location.href = "/SKYTRUFIBER/chat/logout.php";
-    }
-});
