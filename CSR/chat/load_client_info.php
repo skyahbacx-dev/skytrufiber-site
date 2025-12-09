@@ -9,7 +9,7 @@ if ($clientID <= 0) {
 }
 
 /* ============================================================
-   FETCH CLIENT DETAILS — MATCHES REAL COLUMNS IN YOUR DATABASE
+   FETCH CLIENT DETAILS
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT 
@@ -37,18 +37,20 @@ if (!$u) {
     exit;
 }
 
-/* Metadata for JS logic */
+$csrUser = $_SESSION['csr_user'] ?? '';
+$isAssignedToMe = ($u["assigned_csr"] === $csrUser) ? "yes" : "no";
+$isLocked = ($u["ticket_lock"] == 1 ? "true" : "false");
+
+/* ============================================================
+   META FOR JS
+============================================================ */
 echo "
 <div id='client-meta'
     data-ticket='{$u["ticket_status"]}'
-    data-assigned='" . ($u["assigned_csr"] == ($_SESSION['csr_user'] ?? '')) . "'
-    data-locked='" . ($u["ticket_lock"] == 1 ? "true" : "false") . "'>
+    data-assigned='{$isAssignedToMe}'
+    data-locked='{$isLocked}'>
 </div>
 ";
-
-/* ============================================================
-   DISPLAY CLIENT INFO
-============================================================ */
 ?>
 <div class="client-info-panel">
     <h3><?= htmlspecialchars($u["full_name"]) ?></h3>
@@ -59,7 +61,7 @@ echo "
     <p><strong>Date Installed:</strong> <?= htmlspecialchars($u["date_installed"]) ?></p>
 
     <p><strong>Assigned CSR:</strong> 
-        <?= $u["assigned_csr"] ? $u["assigned_csr"] : "Unassigned" ?>
+        <?= $u["assigned_csr"] ? htmlspecialchars($u["assigned_csr"]) : "Unassigned" ?>
     </p>
 
     <p><strong>Status:</strong> 
