@@ -8,24 +8,14 @@ require_once "../../db_connect.php";
 $ticketId = trim($_POST["ticket"] ?? "");
 if (!$ticketId) exit("");
 
-// --------------------------------------------------
-// FETCH TICKET
-// --------------------------------------------------
-$stmt = $conn->prepare("
-    SELECT id, status, client_id
-    FROM tickets
-    WHERE id = ?
-    LIMIT 1
-");
+// fetch ticket
+$stmt = $conn->prepare("SELECT status FROM tickets WHERE id = ? LIMIT 1");
 $stmt->execute([$ticketId]);
 $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$ticket) exit("");
-if ($ticket["status"] === "resolved") exit("");
+if (!$ticket || $ticket["status"] === "resolved") exit("");
 
-// --------------------------------------------------
-// FETCH CHAT (CSR GREET ALWAYS FIRST, THEN CLIENT MSG)
-// --------------------------------------------------
+// fetch messages
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted, edited
     FROM chat
@@ -35,65 +25,40 @@ $stmt = $conn->prepare("
 $stmt->execute([$ticketId]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$msgCount = count($messages);
-
-// --------------------------------------------------
-// DETECT FIRST CSR GREETING & FIRST CLIENT MESSAGE
-// --------------------------------------------------
-$firstClientMsgId = null;
-$hasGreeting = false;
-
-foreach ($messages as $msg) {
-
-    if ($msg["sender_type"] === "csr" && !$hasGreeting) {
-        $hasGreeting = true;
-    }
-
-    if ($msg["sender_type"] === "client" && $firstClientMsgId === null) {
-        $firstClientMsgId = $msg["id"];
+$firstClientId = null;
+foreach ($messages as $m) {
+    if ($m["sender_type"] === "client") {
+        $firstClientId = $m["id"];
+        break;
     }
 }
 
-// --------------------------------------------------
-// ONLY SHOW SUGGESTIONS IF:
-//   ✔ A CSR greeting exists
-//   ✔ A client first message exists
-//   ✔ And suggestions have not been shown before in this render
-// --------------------------------------------------
-$shouldShowSuggestions = ($hasGreeting && $firstClientMsgId !== null);
+$showSuggestions = isset($_SESSION["show_suggestions"]);
+unset($_SESSION["show_suggestions"]);
 
-// --------------------------------------------------
-// RENDER CHAT HISTORY
-// --------------------------------------------------
+// render all messages
 foreach ($messages as $msg) {
 
-    $id     = $msg["id"];
+    $id = $msg["id"];
     $sender = ($msg["sender_type"] === "csr") ? "received" : "sent";
-    $time   = date("g:i A", strtotime($msg["created_at"]));
+    $bubble = nl2br(htmlspecialchars(trim($msg["message"])));
+    $time = date("g:i A", strtotime($msg["created_at"]));
 
     echo "<div class='message $sender' data-msg-id='$id'>";
 
     if ($sender === "received") {
-        echo "<div class='message-avatar'>
-                <img src='/upload/default-avatar.png'>
-              </div>";
+        echo "<div class='message-avatar'><img src='/upload/default-avatar.png'></div>";
     }
 
     echo "<div class='message-content'>";
+    echo "<div class='message-bubble'>$bubble</div>";
+    echo "<div class='message-time'>$time";
 
-    if (empty($msg["deleted"])) {
-        echo "<div class='message-bubble'>"
-            . nl2br(htmlspecialchars(trim($msg["message"]))) .
-            "</div>";
-    } else {
-        echo "<div class='message-bubble removed-text'>Message removed</div>";
-    }
-
-    echo "<div class='message-time'>{$time}";
     if (!empty($msg["edited"])) echo " <span class='edited-label'>(edited)</span>";
+
     echo "</div>";
 
-    if ($sender === "sent" && empty($msg["deleted"])) {
+    if ($sender === "sent") {
         echo "<div class='action-toolbar'>
                 <button class='more-btn' data-id='$id'>⋯</button>
               </div>";
@@ -101,17 +66,15 @@ foreach ($messages as $msg) {
 
     echo "</div></div>";
 
-    // --------------------------------------------------
-    // INSERT SUGGESTION BUBBLE AFTER FIRST CLIENT MSG ONLY
-    // --------------------------------------------------
-    if ($shouldShowSuggestions && $id == $firstClientMsgId) {
+    // insert suggestions AFTER first client message
+    if ($showSuggestions && $id == $firstClientId) {
 
         echo "
-        <div class='message received system-suggest' data-msg-id='suggest-1'>
+        <div class='message received system-suggest'>
             <div class='message-avatar'><img src='/upload/default-avatar.png'></div>
             <div class='message-content'>
                 <div class='message-bubble'>
-                    Here are some quick answers you might be looking for:
+                    Here are some quick answers you may need:
                     <div class='suggest-buttons'>
                         <button class='suggest-btn'>I am experiencing no internet.</button>
                         <button class='suggest-btn'>My connection is slow.</button>
@@ -124,10 +87,6 @@ foreach ($messages as $msg) {
             </div>
         </div>
         ";
-
-        // Only show ONCE
-        $shouldShowSuggestions = false;
     }
 }
-
 ?>
