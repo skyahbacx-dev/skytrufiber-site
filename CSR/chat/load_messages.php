@@ -3,7 +3,7 @@ if (!isset($_SESSION)) session_start();
 require "../../db_connect.php";
 
 /* ============================================================
-   READ ticket_id (NOT client_id)
+   READ ticket_id
 ============================================================ */
 $ticket_id = intval($_POST["ticket_id"] ?? 0);
 if ($ticket_id <= 0) exit("<p>Invalid ticket.</p>");
@@ -12,8 +12,9 @@ if ($ticket_id <= 0) exit("<p>Invalid ticket.</p>");
    FETCH TICKET + CLIENT
 ============================================================ */
 $stmt = $conn->prepare("
-    SELECT t.status AS ticket_status,
-           t.client_id
+    SELECT 
+        t.status AS ticket_status,
+        t.client_id
     FROM tickets t
     WHERE t.id = ?
     LIMIT 1
@@ -28,22 +29,23 @@ $client_id    = intval($ticket["client_id"]);
 
 /* ============================================================
    FETCH LOG TIMES (PENDING / RESOLVED)
+   NOTE: ticket_logs uses client_id (NOT ticket_id)
 ============================================================ */
-function getLogTime($conn, $ticket_id, $actionName) {
+function getLogTime($conn, $client_id, $actionName) {
     $stmt = $conn->prepare("
         SELECT timestamp
         FROM ticket_logs
-        WHERE ticket_id = ? AND action = ?
+        WHERE client_id = ? AND action = ?
         ORDER BY timestamp ASC
         LIMIT 1
     ");
-    $stmt->execute([$ticket_id, $actionName]);
+    $stmt->execute([$client_id, $actionName]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     return $row ? $row["timestamp"] : null;
 }
 
-$resolvedAt = getLogTime($conn, $ticket_id, "resolved");
-$pendingAt  = getLogTime($conn, $ticket_id, "pending");
+$resolvedAt = getLogTime($conn, $client_id, "resolved");
+$pendingAt  = getLogTime($conn, $client_id, "pending");
 
 /* ============================================================
    FETCH CHAT MESSAGES — FILTERED BY ticket_id ONLY
@@ -87,10 +89,10 @@ $printedPending  = false;
 ============================================================ */
 foreach ($rows as $msg) {
 
-    $id       = $msg["id"];
-    $sender   = $msg["sender_type"];
-    $msgTime  = strtotime($msg["created_at"]);
-    $timeFmt  = date("M j g:i A", $msgTime);
+    $id      = $msg["id"];
+    $sender  = $msg["sender_type"];
+    $msgTime = strtotime($msg["created_at"]);
+    $timeFmt = date("M j g:i A", $msgTime);
 
     /* ------- Insert PENDING divider ------- */
     if ($pendingAt && !$printedPending && $msgTime > strtotime($pendingAt)) {
@@ -109,7 +111,7 @@ foreach ($rows as $msg) {
 
     echo "<div class='message $side' data-msg-id='$id'>";
 
-    /* ------- Avatar for client messages only ------- */
+    /* ------- Avatar for client messages ------- */
     if ($side === "received") {
         echo "
             <div class='message-avatar'>
@@ -122,7 +124,7 @@ foreach ($rows as $msg) {
 
     echo "<div class='message-content'>";
 
-    /* ------- Action menu (CSR can edit CSR messages only) ------- */
+    /* ------- Action menu only for CSR messages ------- */
     if ($sender === "csr" && !$msg["deleted"]) {
         echo "
             <button class='more-btn' data-id='$id'>
@@ -142,7 +144,7 @@ foreach ($rows as $msg) {
 
     echo "</div>"; // bubble
 
-    /* ------- Edited Tag ------- */
+    /* ------- Edited Label ------- */
     if ($msg["edited"] && !$msg["deleted"]) {
         echo "<div class='edited-label'>(edited)</div>";
     }
@@ -150,7 +152,7 @@ foreach ($rows as $msg) {
     /* ------- Timestamp ------- */
     echo "<div class='message-time'>$timeFmt</div>";
 
-    echo "</div></div>"; // content + wrapper
+    echo "</div></div>"; // end wrappers
 }
 
 ?>
