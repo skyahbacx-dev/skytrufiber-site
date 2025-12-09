@@ -25,7 +25,7 @@ if (!$ticket) exit("");
 
 $ticket_status = $ticket["status"] ?? "unresolved";
 
-// If resolved → JS handles it
+// If resolved → let JS handle UI + redirect
 if ($ticket_status === "resolved") exit("");
 
 // --------------------------------------------------
@@ -40,24 +40,22 @@ $stmt = $conn->prepare("
 $stmt->execute([$ticketId]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// --------------------------------------------------
-// AUTO-GREET DETECTION LOGIC (FINAL VERSION)
-//
-// IMPORTANT:
-// send_message_client.php now inserts CSR auto-greet automatically
-// when client sends their first-ever message.
-//
-// Therefore the ONLY time we should add a greeting here is:
-//
-//   ✔ ZERO messages exist (client has not typed yet)
-//   ❌ NOT when 1 client message exists (backend already inserts CSR greeting)
-//
-// --------------------------------------------------
-
 $msgCount = count($messages);
-$shouldShowGreeting = ($msgCount === 0);
 
-if ($shouldShowGreeting) {
+// --------------------------------------------------
+// AUTO-GREET RULE (FINAL VERSION)
+//
+// We ONLY show the greeting here when:
+//     ✔ ZERO messages exist
+//
+// Reason:
+//     send_message_client.php already inserts CSR auto-greet
+//     after FIRST client message.
+//     So showing greeting with 1 message would DUPLICATE it.
+//
+// --------------------------------------------------
+if ($msgCount === 0) {
+
     echo "
     <div class='message received system-suggest'>
         <div class='message-avatar'>
@@ -79,11 +77,11 @@ if ($shouldShowGreeting) {
         </div>
     </div>
     ";
-    // Do NOT return here; allow messages to follow when merging
+    // Do NOT exit — JS merge logic expects message list too
 }
 
 // --------------------------------------------------
-// RENDER CHAT MESSAGES
+// RENDER CHAT HISTORY
 // --------------------------------------------------
 foreach ($messages as $msg) {
 
@@ -106,18 +104,20 @@ foreach ($messages as $msg) {
     if (empty($msg["deleted"])) {
         $text = trim($msg["message"]);
         echo "<div class='message-bubble'>"
-            . nl2br(htmlspecialchars($text)) .
-            "</div>";
+             . nl2br(htmlspecialchars($text)) .
+             "</div>";
     } else {
         echo "<div class='message-bubble removed-text'>Message removed</div>";
     }
 
-    // TIME, EDIT LABEL
+    // TIME + EDIT INDICATOR
     echo "<div class='message-time'>{$time}";
-    if (!empty($msg["edited"])) echo " <span class='edited-label'>(edited)</span>";
+    if (!empty($msg["edited"])) {
+        echo " <span class='edited-label'>(edited)</span>";
+    }
     echo "</div>";
 
-    // ACTION TOOLBAR FOR CLIENT-OWNED MESSAGES
+    // ACTION TOOLBAR (only show for client's own sent messages)
     echo "<div class='action-toolbar'>";
     if ($sender === "sent" && empty($msg["deleted"])) {
         echo "<button class='more-btn' data-id='$id'>⋯</button>";
