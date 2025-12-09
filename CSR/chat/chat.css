@@ -1,5 +1,5 @@
 /* ===========================================================
-   GRID LAYOUT — Improved spacing & depth
+   GRID LAYOUT — Improved spacing & layout
 =========================================================== */
 #chat-container {
   display: grid;
@@ -50,6 +50,7 @@
   font-weight: bold;
 }
 
+/* Search Bar */
 #client-search {
   width: 90%;
   padding: 9px 12px;
@@ -68,7 +69,9 @@
   background: #ffffff;
 }
 
-/* Client List Items */
+/* ===========================================================
+   CLIENT LIST ITEMS
+=========================================================== */
 .client-item {
   display: flex;
   align-items: center;
@@ -98,7 +101,7 @@
 
 .client-info strong {
   font-size: 15px;
-  color: #004700;
+  color: #003900;
 }
 
 .last-msg {
@@ -106,25 +109,94 @@
   color: #777;
 }
 
-/* Ticket dot */
-.ticket-dot {
-  font-size: 12px;
-  margin-left: 6px;
+/* ===========================================================
+   ASSIGNMENT ICONS (NEW)
+=========================================================== */
+
+/* Unassigned ➕ */
+.assign-btn {
+  background: #00a246;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
 }
-.ticket-dot.resolved { color: #26a65b; }
-.ticket-dot.unresolved { color: #d63031; }
+.assign-btn:hover {
+  transform: scale(1.15);
+  background: #008639;
+}
+
+/* Assigned to ME ➖ */
+.unassign-btn {
+  background: #ff5252;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: 0.2s;
+}
+.unassign-btn:hover {
+  background: #e00000;
+  transform: scale(1.15);
+}
+
+/* Assigned to other CSR 🔒 */
+.locked-icon {
+  background: #777;
+  color: white;
+  width: 28px;
+  height: 28px;
+  font-size: 15px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: 0.2s;
+}
+.locked-icon:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
 
 /* ===========================================================
-   CLIENT ACTION BUTTONS
+   TICKET STATUS BADGES (NEW)
 =========================================================== */
-.client-icons button {
-  opacity: 1;
-  transform: scale(1);
-  transition: 0.2s ease;
+.ticket-badge {
+  padding: 3px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  font-weight: bold;
+  margin-left: 6px;
 }
 
-.client-icons button:hover {
-  transform: scale(1.15);
+.ticket-badge.unresolved {
+  background: #ffdddd;
+  color: #b10000;
+}
+
+.ticket-badge.resolved {
+  background: #d6ffe0;
+  color: #007a1f;
+}
+
+.ticket-badge.pending {
+  background: #fff5d0;
+  color: #c98200;
 }
 
 /* ===========================================================
@@ -154,7 +226,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .chat-with {
@@ -163,48 +234,30 @@
   gap: 12px;
 }
 
+/* Client Name */
 #chat-client-name {
   font-size: 18px;
   font-weight: bold;
-  color: #003d00;
+  color: #003700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* Status Dot */
-.status-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-.status-dot.online {
-  background: #2ecc71;
-  box-shadow: 0 0 6px rgba(46, 204, 113, 0.7);
-}
-.status-dot.offline {
-  background: #bbb;
-}
-
-/* Dropdown */
-#ticket-status-dropdown {
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid #bcdcbc;
-  background: #fdfdfd;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-#ticket-status-dropdown:hover {
-  border-color: #00a246;
-}
-
-#ticket-status-dropdown:disabled {
-  background: #f3f3f3;
-  cursor: not-allowed;
-  opacity: 0.6;
+/* LOCK beside name (assigned to other CSR) */
+.client-locked-label {
+  background: #777;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* ===========================================================
-   CHAT MESSAGES
+   CHAT MESSAGE AREA
 =========================================================== */
 .chat-messages {
   flex: 1;
@@ -216,6 +269,7 @@
   background: #f7fef8;
 }
 
+/* custom scrollbar */
 .chat-messages::-webkit-scrollbar {
   width: 6px;
 }
@@ -225,7 +279,7 @@
 }
 
 /* ===========================================================
-   MESSAGE BUBBLES (Improved styling)
+   MESSAGES
 =========================================================== */
 .message {
   display: flex;
@@ -234,226 +288,79 @@
   animation: fadeInUp 0.23s ease;
   max-width: 480px;
   width: fit-content;
-  position: relative;
 }
 
-.message.received {
-  align-self: flex-start;
-}
 .message.sent {
   align-self: flex-end;
   flex-direction: row-reverse;
 }
 
+.message.received {
+  align-self: flex-start;
+}
+
+/* Message bubble */
 .message-bubble {
   padding: 12px 18px;
   border-radius: 20px;
   font-size: 15px;
-  background: #e9e9e9;
+  background: #ececec;
   color: #222;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
-  transition: 0.15s ease;
 }
-
 .sent .message-bubble {
   background: #007bff;
   color: white;
-  border-radius: 20px 20px 4px 20px;
 }
-
 .received .message-bubble {
   background: #e8f7e9;
-  color: #1a381a;
-  border-radius: 20px 20px 20px 4px;
-}
-
-.message-bubble:hover {
-  transform: scale(1.03);
-}
-
-.message-time {
-  font-size: 11px;
-  opacity: 0.5;
-  margin-top: 4px;
-}
-
-/* Avatar */
-.message-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-}
-.message-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* Deleted text */
-.deleted-text {
-  color: #777;
-  font-style: italic;
-  opacity: 0.65;
+  color: #103810;
 }
 
 /* ===========================================================
-   ACTION POPUP + BUTTON — Improved styles
+   ASSIGN/LOCK STATES BLOCK CHAT INPUT
 =========================================================== */
-.more-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.08);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  opacity: 0;
-  transition: 0.2s ease;
-  position: absolute;
-  top: 4px;
-  right: -34px;
-}
-
-.message.sent .more-btn { left: -34px; right: auto; }
-
-.message:hover .more-btn {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-#msg-action-popup {
-  position: absolute;
-  z-index: 99999;
-  background: white;
-  border-radius: 12px;
-  padding: 6px 0;
-  border: 1px solid #d0d0d0;
-  display: none;
-  width: 170px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-}
-
-#msg-action-popup button {
-  width: 100%;
-  padding: 10px 14px;
-  cursor: pointer;
-  text-align: left;
-  border: none;
-  background: none;
-  transition: 0.2s;
-}
-
-#msg-action-popup button:hover {
-  background: #eef6ff;
-}
-
-/* ===========================================================
-   CHAT INPUT BAR
-=========================================================== */
-.chat-input-area {
-  padding: 14px;
-  background: white;
-  border-top: 1px solid #ccdccc;
-  display: flex;
-  gap: 10px;
-}
-
 .chat-input-area.disabled {
-  opacity: 0.4;
+  opacity: 0.45;
   filter: blur(1px);
   pointer-events: none;
 }
 
-.chat-input-box {
-  flex: 1;
-  border: 1px solid #bcdcbc;
-  border-radius: 20px;
-  padding: 12px 15px;
-  background: #fafffa;
-  transition: 0.2s ease;
-}
-
-.chat-input-box:hover {
-  border-color: #00a246;
-}
-
-.chat-input-box input {
-  width: 100%;
-  border: none;
-  background: none;
-  outline: none;
-  font-size: 14px;
-}
-
-.chat-send-btn {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #0094ff;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  transition: 0.2s ease;
-}
-
-.chat-send-btn:hover {
-  background: #007ae0;
-  transform: scale(1.07);
-}
-
-.chat-send-btn i {
-  color: white;
-  font-size: 20px;
+.chat-input-area.disabled input::placeholder {
+  color: #888;
 }
 
 /* ===========================================================
-   SCROLL TO BOTTOM BUTTON (improved)
+   RIGHT PANEL — CLIENT INFO
 =========================================================== */
-.scroll-bottom-btn {
-  position: absolute;
-  bottom: 110px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: #00a246;
-  border: none;
-  display: none;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.25);
-  transition: 0.2s;
+.chat-right-panel {
+  background: #ffffff;
+  border-left: 1px solid #d5e8d5;
+  padding: 18px;
 }
 
-.scroll-bottom-btn.show {
-  display: flex;
+.client-info-panel {
+  padding: 10px;
 }
 
-.scroll-bottom-btn:hover {
-  transform: translateX(-50%) scale(1.08);
+.client-info-panel h3 {
+  font-size: 18px;
+  color: #003700;
+  margin-bottom: 10px;
 }
 
 /* ===========================================================
-   SYSTEM "RESOLVED" DIVIDER
+   SYSTEM DIVIDER (RESOLVED)
 =========================================================== */
 .system-divider {
-    text-align: center;
-    margin: 20px 0;
-    font-size: 13px;
-    color: #666;
+  text-align: center;
+  margin: 20px 0;
+  font-size: 13px;
+  color: #666;
 }
-
 .system-divider span {
-    background: #e7f4ff;
-    padding: 6px 14px;
-    border-radius: 20px;
-    border: 1px solid #bcdfff;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  background: #e7f4ff;
+  padding: 6px 14px;
+  border-radius: 20px;
 }
 
 /* ===========================================================
@@ -461,14 +368,5 @@
 =========================================================== */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.chat-slide-in {
-  animation: chatSlideIn 0.35s ease both;
-}
-
-@keyframes chatSlideIn {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
