@@ -23,11 +23,10 @@ $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$ticket) exit("");
 
-$ticket_status = $ticket["status"] ?? "unresolved";
-if ($ticket_status === "resolved") exit("");
+if ($ticket["status"] === "resolved") exit("");
 
 // --------------------------------------------------
-// FETCH CHAT MESSAGES
+// FETCH CHAT HISTORY
 // --------------------------------------------------
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, created_at, deleted, edited
@@ -38,42 +37,33 @@ $stmt = $conn->prepare("
 $stmt->execute([$ticketId]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$msgCount = count($messages);
+$clientCount = 0;
+$csrCount    = 0;
+
+// Count messages by type
+foreach ($messages as $m) {
+    if ($m["sender_type"] === "client") $clientCount++;
+    if ($m["sender_type"] === "csr")    $csrCount++;
+}
 
 // --------------------------------------------------
-// RULE: New ticket (0 messages) => Only CSR greet.
-// Suggestion must appear ONLY after the client first message.
+// 1️⃣ CSR GREETING APPEARS ONLY WHEN THERE ARE ZERO MESSAGES
 // --------------------------------------------------
-$shouldShowGreet = ($msgCount === 0);
-
-// --------------------------------------------------
-// 1️⃣ CSR GREETING (ONLY if ticket is empty)
-// --------------------------------------------------
-if ($shouldShowGreet) {
-
+if (count($messages) === 0) {
     echo "
-    <div class='message received'>
-        <div class='message-avatar'>
-            <img src='/upload/default-avatar.png'>
-        </div>
+    <div class='message received' data-msg-id='greet-1'>
+        <div class='message-avatar'><img src='/upload/default-avatar.png'></div>
         <div class='message-content'>
-            <div class='message-bubble'>
-                Good day! How may we assist you today?
-            </div>
+            <div class='message-bubble'>Good day! How may we assist you today?</div>
             <div class='message-time'>Just now</div>
         </div>
     </div>
     ";
-
-    // Do NOT show suggestions here —
-    // suggestions appear AFTER the client sends login message.
 }
 
 // --------------------------------------------------
-// 2️⃣ RENDER CHAT MESSAGES
+// 2️⃣ PRINT ALL CHAT HISTORY
 // --------------------------------------------------
-$clientFirstMsgPrinted = false;
-
 foreach ($messages as $msg) {
 
     $id     = $msg["id"];
@@ -100,6 +90,7 @@ foreach ($messages as $msg) {
     if (!empty($msg["edited"])) echo " <span class='edited-label'>(edited)</span>";
     echo "</div>";
 
+    // Action buttons for client messages
     if ($sender === "sent" && empty($msg["deleted"])) {
         echo "<div class='action-toolbar'>
                 <button class='more-btn' data-id='$id'>⋯</button>
@@ -107,36 +98,19 @@ foreach ($messages as $msg) {
     }
 
     echo "</div></div>";
-
-    // Detect first client message
-    if (!$clientFirstMsgPrinted && $msg["sender_type"] === "client") {
-        $clientFirstMsgPrinted = true;
-    }
 }
 
 // --------------------------------------------------
-// 3️⃣ SHOW SUGGESTIONS ONLY AFTER FIRST CLIENT MESSAGE
+// 3️⃣ SHOW SUGGESTION ONLY ONCE:
+//     WHEN EXACTLY:
+//         1 client message exists AND
+//         1 CSR greet exists
 // --------------------------------------------------
-// Compute counts
-$clientCount = 0;
-$csrCount    = 0;
-
-foreach ($messages as $msg) {
-    if ($msg["sender_type"] === "client") $clientCount++;
-    if ($msg["sender_type"] === "csr")    $csrCount++;
-}
-
-// Suggestion logic:
-// Show ONLY after:
-//  ✔ FIRST client message
-//  ✔ CSR greeting already exists
-if ($clientCount === 1 && $csrCount >= 1) {
+if ($clientCount === 1 && $csrCount === 1) {
 
     echo "
-    <div class='message received system-suggest'>
-        <div class='message-avatar'>
-            <img src='/upload/default-avatar.png'>
-        </div>
+    <div class='message received system-suggest' data-msg-id='suggest-1'>
+        <div class='message-avatar'><img src='/upload/default-avatar.png'></div>
         <div class='message-content'>
             <div class='message-bubble'>
                 Here are some quick answers you might be looking for:
@@ -153,6 +127,5 @@ if ($clientCount === 1 && $csrCount >= 1) {
     </div>
     ";
 }
-
 
 ?>
