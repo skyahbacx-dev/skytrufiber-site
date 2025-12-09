@@ -20,20 +20,20 @@ $client = $stmt->fetch(PDO::FETCH_ASSOC);
 $ticketStatus = strtolower($client["ticket_status"] ?? "unresolved");
 
 /* ============================================================
-   FETCH TIMESTAMPS FOR SYSTEM DIVIDERS
+   FETCH TIMESTAMPS - REAL COLUMN = `timestamp`
 ============================================================ */
 
-function getTimestamp($conn, $client_id, $action) {
+function getTimestamp($conn, $client_id, $statusName) {
     $stmt = $conn->prepare("
-        SELECT changed_at 
+        SELECT timestamp
         FROM ticket_logs
         WHERE client_id = ? AND new_status = ?
-        ORDER BY changed_at ASC 
+        ORDER BY timestamp ASC
         LIMIT 1
     ");
-    $stmt->execute([$client_id, $action]);
+    $stmt->execute([$client_id, $statusName]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    return $row ? $row["changed_at"] : null;
+    return $row ? $row["timestamp"] : null;
 }
 
 $resolvedAt = getTimestamp($conn, $client_id, "resolved");
@@ -61,13 +61,17 @@ if (!$rows) {
 ============================================================ */
 $resolvedDividerHTML = $resolvedAt ? "
     <div class='system-divider'>
-        <span>Ticket marked <strong>RESOLVED</strong> on " . date("M j, Y g:i A", strtotime($resolvedAt)) . "</span>
+        <span>Ticket marked <strong>RESOLVED</strong> on " .
+        date('M j, Y g:i A', strtotime($resolvedAt)) .
+        "</span>
     </div>
 " : "";
 
 $pendingDividerHTML = $pendingAt ? "
     <div class='system-divider'>
-        <span>Ticket placed <strong>PENDING</strong> on " . date("M j, Y g:i A", strtotime($pendingAt)) . "</span>
+        <span>Ticket placed <strong>PENDING</strong> on " .
+        date('M j, Y g:i A', strtotime($pendingAt)) .
+        "</span>
     </div>
 " : "";
 
@@ -84,38 +88,34 @@ foreach ($rows as $msg) {
     $msgTime = strtotime($msg["created_at"]);
     $timeFormatted = date("M j g:i A", $msgTime);
 
-    // Insert Pending divider
+    // Insert PENDING divider
     if ($pendingAt && !$printedPending && $msgTime > strtotime($pendingAt)) {
         echo $pendingDividerHTML;
         $printedPending = true;
     }
 
-    // Insert Resolved divider
+    // Insert RESOLVED divider
     if ($resolvedAt && !$printedResolved && $msgTime > strtotime($resolvedAt)) {
         echo $resolvedDividerHTML;
         $printedResolved = true;
     }
 
-    // Determine message direction
-    $senderClass = ($msg["sender_type"] === "csr") ? "sent" : "received";
-    $msgID       = $msg["id"];
+    $id       = $msg["id"];
+    $sender   = ($msg["sender_type"] === "csr") ? "sent" : "received";
 
     echo "
-    <div class='message $senderClass' data-msg-id='$msgID'>
+    <div class='message $sender' data-msg-id='$id'>
         
-        <!-- Avatar -->
         <div class='message-avatar'>
             <img src='/upload/default-avatar.png'>
         </div>
 
         <div class='message-content'>
-            
-            <!-- Action Menu Button -->
-            <button class='more-btn' data-id='$msgID'>
+
+            <button class='more-btn' data-id='$id'>
                 <i class='fa-solid fa-ellipsis-vertical'></i>
             </button>
 
-            <!-- Bubble -->
             <div class='message-bubble'>
     ";
 
@@ -125,9 +125,8 @@ foreach ($rows as $msg) {
         echo "<div class='msg-text'>" . nl2br(htmlspecialchars($msg["message"])) . "</div>";
     }
 
-    echo "</div>"; // END bubble
+    echo "</div>"; // bubble
 
-    // Edited badge
     if ($msg["edited"] && !$msg["deleted"]) {
         echo "<div class='edited-label'>(edited)</div>";
     }
