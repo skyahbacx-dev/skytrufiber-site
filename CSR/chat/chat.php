@@ -6,6 +6,24 @@ if (!isset($_SESSION['csr_user'])) {
 }
 $csrUser = $_SESSION["csr_user"];
 ?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>CSR Chat Panel</title>
+
+<!-- FIXED FONT AWESOME (FA 6.5.1) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+
+<!-- Your CSS -->
+<link rel="stylesheet" href="chat.css?v=<?php echo time(); ?>">
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+</head>
+
+<body>
 
 <div id="chat-container">
 
@@ -29,7 +47,6 @@ $csrUser = $_SESSION["csr_user"];
     </div>
 
     <!-- MIDDLE CHAT PANEL -->
-    <!-- ADDED dynamic ticket-border class support -->
     <div class="chat-middle-panel" id="ticket-border-panel">
         <div class="chat-wrapper">
 
@@ -54,7 +71,7 @@ $csrUser = $_SESSION["csr_user"];
 
             <!-- SCROLL TO BOTTOM BUTTON -->
             <button id="scroll-bottom-btn" class="scroll-bottom-btn">
-                <i class="fa fa-arrow-down"></i>
+                <i class="fa-solid fa-arrow-down"></i>
             </button>
 
             <!-- CHAT INPUT -->
@@ -64,7 +81,7 @@ $csrUser = $_SESSION["csr_user"];
                 </div>
 
                 <button id="send-btn" class="chat-send-btn">
-                    <i class="fa fa-paper-plane"></i>
+                    <i class="fa-solid fa-paper-plane"></i>
                 </button>
             </div>
 
@@ -72,9 +89,9 @@ $csrUser = $_SESSION["csr_user"];
 
         <!-- ACTION MENU POPUP -->
         <div id="msg-action-popup" class="msg-action-popup">
-            <button class="action-edit"><i class="fa fa-pen"></i> Edit</button>
-            <button class="action-unsend"><i class="fa fa-ban"></i> Unsend</button>
-            <button class="action-delete"><i class="fa fa-trash"></i> Delete</button>
+            <button class="action-edit"><i class="fa-solid fa-pen"></i> Edit</button>
+            <button class="action-unsend"><i class="fa-solid fa-ban"></i> Unsend</button>
+            <button class="action-delete"><i class="fa-solid fa-trash"></i> Delete</button>
             <button class="action-cancel">Cancel</button>
         </div>
 
@@ -95,3 +112,7 @@ $csrUser = $_SESSION["csr_user"];
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script src="chat.js?v=<?php echo time(); ?>"></script>
+
+</body>
+</html>
