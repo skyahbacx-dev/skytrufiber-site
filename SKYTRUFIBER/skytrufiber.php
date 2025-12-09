@@ -6,15 +6,18 @@ $message = '';
 
 // Handle login POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['password'])) {
-    $input = trim($_POST['full_name']);
+
+    $input   = trim($_POST['full_name']);
     $password = $_POST['password'];
-    $concern = trim($_POST['concern'] ?? '');
+    $concern  = trim($_POST['concern'] ?? '');
 
     if ($input && $password) {
         try {
-            // Fetch user by email OR full_name
+
+            // Fetch user by email or full_name
             $stmt = $conn->prepare("
-                SELECT * FROM users 
+                SELECT *
+                FROM users
                 WHERE email = :input OR full_name = :input
                 ORDER BY id ASC
                 LIMIT 1
@@ -24,23 +27,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
             if ($user && password_verify($password, $user['password'])) {
 
-                // Secure session regeneration
                 session_regenerate_id(true);
 
-                // Retrieve latest unresolved ticket
+                // Retrieve latest ticket
                 $ticketStmt = $conn->prepare("
-                    SELECT id, status 
-                    FROM tickets 
-                    WHERE client_id = :cid 
-                    ORDER BY created_at DESC 
+                    SELECT id, status
+                    FROM tickets
+                    WHERE client_id = :cid
+                    ORDER BY created_at DESC
                     LIMIT 1
                 ");
                 $ticketStmt->execute([':cid' => $user['id']]);
                 $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
 
+                // Create new ticket if none or if last one was resolved
                 if (!$lastTicket || $lastTicket['status'] === 'resolved') {
 
-                    // Create a fresh ticket
                     $newTicket = $conn->prepare("
                         INSERT INTO tickets (client_id, status, created_at)
                         VALUES (:cid, 'unresolved', NOW())
@@ -48,29 +50,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                     $newTicket->execute([':cid' => $user['id']]);
 
                     $ticketId = $conn->lastInsertId();
+                    $ticketWasEmpty = true;
 
                 } else {
                     $ticketId = $lastTicket['id'];
+                    $ticketWasEmpty = false;
                 }
 
-                // Set session variables
-                $_SESSION['client_id'] = $user['id'];
+                // Session variables
+                $_SESSION['client_id']   = $user['id'];
                 $_SESSION['client_name'] = $user['full_name'];
-                $_SESSION['email'] = $user['email'];
-                $_SESSION['ticket_id'] = $ticketId;
+                $_SESSION['email']       = $user['email'];
+                $_SESSION['ticket_id']   = $ticketId;
 
-                // -----------------------------
-                // INSERT LOGIN CONCERN MESSAGE
-                // -----------------------------
-                $hasExistingMsgs = false;
-
+                // Check if chat already has messages
                 $checkMsgs = $conn->prepare("
-                    SELECT COUNT(*) FROM chat 
+                    SELECT COUNT(*) FROM chat
                     WHERE ticket_id = :tid
                 ");
                 $checkMsgs->execute([':tid' => $ticketId]);
                 $hasExistingMsgs = ($checkMsgs->fetchColumn() > 0);
 
+                // ---------------------------------------------------
+                // INSERT LOGIN CONCERN
+                // ---------------------------------------------------
                 if (!empty($concern)) {
 
                     // Insert client concern
@@ -84,10 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                         ':msg' => $concern
                     ]);
 
-                    // ----------------------------------------------
-                    // INSERT CSR GREETING (ONLY IF TICKET WAS EMPTY)
-                    // ----------------------------------------------
+                    // ---------------------------------------------------
+                    // INSERT CSR AUTO-GREET ONLY IF TICKET HAD 0 MESSAGES
+                    // ---------------------------------------------------
                     if (!$hasExistingMsgs) {
+
                         $autoGreet = $conn->prepare("
                             INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
                             VALUES (:tid, :cid, 'csr', 'Good day! How may we assist you today?', TRUE, FALSE, NOW())
@@ -96,10 +100,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                             ':tid' => $ticketId,
                             ':cid' => $user['id']
                         ]);
+
+                        // Trigger suggestion bubble in chat_support.js
+                        $_SESSION['show_suggestions'] = true;
                     }
                 }
 
-                // Redirect to chat support
+                // Redirect to chat UI
                 header("Location: chat/chat_support.php?ticket=" . $ticketId);
                 exit;
 
@@ -110,7 +117,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
         } catch (PDOException $e) {
             $message = "⚠ Database error: " . htmlspecialchars($e->getMessage());
         }
-
     } else {
         $message = "⚠ Please fill in all fields.";
     }
@@ -121,6 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 <head>
 <meta charset="UTF-8">
 <title>SkyTruFiber Customer Portal</title>
+
 <style>
 body { font-family:"Segoe UI", Arial, sans-serif; background:linear-gradient(to bottom right, #cceeff, #e6f7ff); display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; }
 .container { background:rgba(255,255,255,0.5); padding:30px; border-radius:20px; backdrop-filter:blur(12px); box-shadow:0 8px 25px rgba(0,0,0,0.15); width:380px; text-align:center; position: relative; overflow: hidden; }
@@ -138,9 +145,11 @@ a:hover { text-decoration:underline; }
 .message.success { color:green; }
 .message.error { color:red; }
 </style>
+
 </head>
 <body>
 <div class="container">
+
     <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
     <h2>Customer Service Portal</h2>
 
@@ -165,6 +174,7 @@ a:hover { text-decoration:underline; }
 </form>
 
 <p>No account yet? <a href="consent.php">Register here</a></p>
+
 </div>
 
 <script>
@@ -184,42 +194,6 @@ backToLogin.addEventListener('click', e => {
     e.preventDefault();
     forgotForm.classList.add('hidden');
     loginForm.classList.remove('hidden');
-});
-
-forgotForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const email = forgotForm.forgot_email.value.trim();
-    if (!email) return;
-
-    forgotMessage.textContent = "Sending...";
-    forgotMessage.className = 'message';
-
-    fetch('https://api.github.com/repos/skyahbacx-dev/skytrufiber-site/actions/workflows/send-cron.yml/dispatches', {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/vnd.github+json',
-            'Authorization': 'Bearer YOUR_GITHUB_TOKEN',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            ref: 'main',
-            inputs: { EMAIL_TO: email }
-        })
-    })
-    .then(res => {
-        if (res.ok) {
-            forgotMessage.textContent = "Email sent successfully via GitHub Actions!";
-            forgotMessage.className = 'message success';
-        } else {
-            forgotMessage.textContent = "Failed to trigger email workflow.";
-            forgotMessage.className = 'message error';
-        }
-    })
-    .catch(err => {
-        forgotMessage.textContent = "Error sending request.";
-        forgotMessage.className = 'message error';
-        console.error(err);
-    });
 });
 </script>
 
