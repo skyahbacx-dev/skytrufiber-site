@@ -4,17 +4,18 @@ require "../../db_connect.php";
 
 header("Content-Type: application/json; charset=utf-8");
 
-$csrUser  = $_SESSION["csr_user"] ?? null;
-$clientID = intval($_POST["client_id"] ?? 0);
-$message  = trim($_POST["message"] ?? "");
+$csrUser   = $_SESSION["csr_user"] ?? null;
+$clientID  = intval($_POST["client_id"] ?? 0);
+$ticketID  = intval($_POST["ticket_id"] ?? 0);
+$message   = trim($_POST["message"] ?? "");
 
 if (!$csrUser) {
     echo json_encode(["status" => "error", "msg" => "CSR not logged in"]);
     exit;
 }
 
-if ($clientID <= 0) {
-    echo json_encode(["status" => "error", "msg" => "Invalid client"]);
+if ($clientID <= 0 || $ticketID <= 0) {
+    echo json_encode(["status" => "error", "msg" => "Invalid client or ticket"]);
     exit;
 }
 
@@ -26,57 +27,79 @@ if ($message === "") {
 try {
 
     /* ==========================================================
-       1) Verify the CSR is assigned to this client
+       1) Validate ticket & check assignment
     ========================================================== */
     $stmt = $conn->prepare("
-        SELECT assigned_csr, ticket_status
-        FROM users
-        WHERE id = :cid
+        SELECT 
+            t.status AS ticket_status,
+            t.client_id,
+            u.assigned_csr
+        FROM tickets t
+        JOIN users u ON u.id = t.client_id
+        WHERE t.id = :tid
         LIMIT 1
     ");
-    $stmt->execute([":cid" => $clientID]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt->execute([":tid" => $ticketID]);
+    $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$user) {
-        echo json_encode(["status" => "error", "msg" => "Client not found"]);
+    if (!$ticket) {
+        echo json_encode(["status" => "error", "msg" => "Ticket not found"]);
         exit;
     }
 
-    $assignedCSR   = $user["assigned_csr"];
-    $ticketStatus  = $user["ticket_status"] ?? "unresolved";
+    $ticketStatus = $ticket["ticket_status"];
+    $assignedCSR  = $ticket["assigned_csr"];
+    $dbClientID   = intval($ticket["client_id"]);
+
+    /* Ensure ticket belongs to selected client */
+    if ($dbClientID !== $clientID) {
+        echo json_encode(["status" => "error", "msg" => "Ticket does not belong to this client"]);
+        exit;
+    }
 
     /* ==========================================================
-       2) Block CSR from messaging a resolved ticket
+       2) Block CSR from messaging in a resolved ticket
     ========================================================== */
     if ($ticketStatus === "resolved") {
         echo json_encode([
             "status" => "blocked",
-            "msg"    => "This ticket is already resolved. Messaging disabled."
+            "msg"    => "Ticket is already resolved. Messaging disabled."
         ]);
         exit;
     }
 
     /* ==========================================================
-       3) Enforce lock — CSR may only message assigned clients
+       3) Enforce assignment rules
     ========================================================== */
     if ($assignedCSR !== $csrUser) {
         echo json_encode([
             "status" => "locked",
-            "msg"    => "You are not assigned to this client."
+            "msg"    => "You are not assigned to this ticket."
         ]);
         exit;
     }
 
     /* ==========================================================
-       4) Insert CSR message
-          Delivered = TRUE so the client instantly receives it
+       4) INSERT CSR MESSAGE (Correctly tied to ticket)
     ========================================================== */
     $insert = $conn->prepare("
-        INSERT INTO chat (client_id, sender_type, message, deleted, edited, delivered, seen, created_at)
-        VALUES (:cid, 'csr', :msg, FALSE, FALSE, TRUE, FALSE, NOW())
+        INSERT INTO chat (
+            ticket_id,
+            client_id,
+            sender_type,
+            message,
+            deleted,
+            edited,
+            delivered,
+            seen,
+            created_at
+        ) VALUES (
+            :tid, :cid, 'csr', :msg, FALSE, FALSE, TRUE, FALSE, NOW()
+        )
     ");
 
     $insert->execute([
+        ":tid" => $ticketID,
         ":cid" => $clientID,
         ":msg" => $message
     ]);
