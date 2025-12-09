@@ -1,31 +1,84 @@
 <?php
 if (!isset($_SESSION)) session_start();
-require_once "../../db_connect.php";
+require "../../db_connect.php";
 
-$csr       = $_SESSION["csr_user"] ?? null;
-$client_id = $_POST["client_id"] ?? null;
+header("Content-Type: application/json");
 
-if (!$csr || !$client_id) {
-    exit("Missing data");
+$csrUser = $_SESSION["csr_user"] ?? null;
+$clientID = intval($_POST["client_id"] ?? 0);
+
+if (!$csrUser) {
+    echo json_encode(["status" => "error", "msg" => "CSR not logged in"]);
+    exit;
 }
 
-try {
+if ($clientID <= 0) {
+    echo json_encode(["status" => "error", "msg" => "Invalid client"]);
+    exit;
+}
 
-    // Assign CSR but DO NOT lock them out
-    $stmt = $conn->prepare("
-        UPDATE users
-        SET assigned_csr = :csr,
-            is_locked = FALSE
-        WHERE id = :cid
-    ");
-    $stmt->execute([
-        ":csr" => $csr,
-        ":cid" => $client_id
+// ----------------------------------------------------------
+// FETCH CLIENT INFO
+// ----------------------------------------------------------
+$stmt = $conn->prepare("
+    SELECT assigned_csr, ticket_status, ticket_lock
+    FROM users
+    WHERE id = ?
+    LIMIT 1
+");
+$stmt->execute([$clientID]);
+$c = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$c) {
+    echo json_encode(["status" => "error", "msg" => "Client not found"]);
+    exit;
+}
+
+$currentAssigned = $c["assigned_csr"];
+$isLocked       = $c["ticket_lock"] == 1;
+
+// ----------------------------------------------------------
+// Client is already assigned — cannot steal assignment
+// ----------------------------------------------------------
+if (!empty($currentAssigned) && $currentAssigned !== $csrUser) {
+    echo json_encode([
+        "status" => "denied",
+        "msg"    => "Client is already assigned to another CSR: $currentAssigned"
     ]);
-
-    echo "OK";
-
-} catch (PDOException $e) {
-    echo "DB Error: " . $e->getMessage();
+    exit;
 }
+
+// ----------------------------------------------------------
+// ASSIGN CLIENT TO THIS CSR
+// ----------------------------------------------------------
+$assign = $conn->prepare("
+    UPDATE users
+    SET assigned_csr = :csr,
+        ticket_lock  = 1,          -- LOCK for all other CSRs
+        ticket_status = 'unresolved'
+    WHERE id = :cid
+");
+$assign->execute([
+    ":csr" => $csrUser,
+    ":cid" => $clientID
+]);
+
+// ----------------------------------------------------------
+// LOG THE ASSIGNMENT
+// ----------------------------------------------------------
+$log = $conn->prepare("
+    INSERT INTO ticket_logs (client_id, csr_user, action, timestamp)
+    VALUES (:cid, :csr, 'assigned', NOW())
+");
+$log->execute([
+    ":cid" => $clientID,
+    ":csr" => $csrUser
+]);
+
+echo json_encode([
+    "status" => "ok",
+    "msg"    => "Client successfully assigned to you",
+    "assigned_to" => $csrUser
+]);
+exit;
 ?>
