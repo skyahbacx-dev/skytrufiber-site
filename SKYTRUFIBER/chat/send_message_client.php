@@ -7,108 +7,88 @@ header("Content-Type: application/json");
 
 require_once "../../db_connect.php";
 
-$ticketId = trim($_POST["ticket"] ?? "");
+$ticketId = (int)($_POST["ticket"] ?? 0);
 $message  = trim($_POST["message"] ?? "");
 
-// ----------------------------------------------------------
-// VALIDATE TICKET
-// ----------------------------------------------------------
-if (!$ticketId) {
-    echo json_encode(["status" => "error", "msg" => "no ticket"]);
+// -------------------- VALIDATE --------------------
+if ($ticketId <= 0) {
+    echo json_encode(["status" => "error", "msg" => "invalid ticket"]);
     exit;
 }
 
-// ----------------------------------------------------------
-// FETCH TICKET & CLIENT
-// ----------------------------------------------------------
 $stmt = $conn->prepare("
-    SELECT t.id AS ticket_id, t.status, t.client_id
-    FROM tickets t
-    WHERE t.id = ?
+    SELECT client_id, status
+    FROM tickets 
+    WHERE id = ?
     LIMIT 1
 ");
 $stmt->execute([$ticketId]);
 $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$ticket) {
-    echo json_encode(["status" => "error", "msg" => "invalid ticket"]);
+    echo json_encode(["status" => "error", "msg" => "ticket not found"]);
     exit;
 }
 
-$ticket_status = $ticket["status"] ?? "unresolved";
+if ($ticket["status"] === "resolved") {
+    echo json_encode(["status" => "blocked"]);
+    exit;
+}
+
 $client_id = (int)$ticket["client_id"];
 
-// ----------------------------------------------------------
-// BLOCK MESSAGE IF TICKET IS RESOLVED
-// ----------------------------------------------------------
-if ($ticket_status === "resolved") {
-    echo json_encode([
-        "status" => "blocked",
-        "msg" => "Ticket already resolved — messaging disabled."
-    ]);
-    exit;
-}
-
-// ----------------------------------------------------------
-// PREVENT EMPTY MESSAGE
-// ----------------------------------------------------------
+// -------------------- EMPTY MESSAGE --------------------
 if ($message === "") {
-    echo json_encode(["status" => "ok", "msg" => "empty skipped"]);
+    echo json_encode(["status" => "empty"]);
     exit;
 }
 
-// ----------------------------------------------------------
-// CHECK IF THIS IS THE FIRST-EVER CLIENT MESSAGE
-// Note: Only client-sent messages count.
-// ----------------------------------------------------------
+// -------------------- CHECK IF THIS IS FIRST CLIENT MESSAGE --------------------
 $firstCheck = $conn->prepare("
-    SELECT COUNT(*)
-    FROM chat
+    SELECT COUNT(*) 
+    FROM chat 
     WHERE ticket_id = ? AND sender_type = 'client'
 ");
 $firstCheck->execute([$ticketId]);
 $isFirstMessage = ($firstCheck->fetchColumn() == 0);
 
-// ----------------------------------------------------------
-// PREVENT DUPLICATE MESSAGE
-// ----------------------------------------------------------
-$check = $conn->prepare("
-    SELECT 1
-    FROM chat
-    WHERE ticket_id = ?
-      AND sender_type = 'client'
-      AND message = ?
-      AND deleted = FALSE
-    LIMIT 1
+// -------------------- PREVENT DUPLICATE --------------------
+$dupe = $conn->prepare("
+    SELECT 1 FROM chat
+    WHERE ticket_id = ? AND message = ? AND deleted = FALSE
 ");
-$check->execute([$ticketId, $message]);
-$exists = $check->fetchColumn();
+$dupe->execute([$ticketId, $message]);
 
-if ($exists) {
-    echo json_encode(["status" => "duplicate", "msg" => "message already exists"]);
+if ($dupe->fetchColumn()) {
+    echo json_encode(["status" => "duplicate"]);
     exit;
 }
 
-// ----------------------------------------------------------
-// INSERT CLIENT MESSAGE (PostgreSQL booleans must be TRUE/FALSE)
-// ----------------------------------------------------------
+// -------------------- INSERT CLIENT MESSAGE --------------------
 $insert = $conn->prepare("
-    INSERT INTO chat (
-        ticket_id, client_id, sender_type, message,
-        delivered, seen, created_at
-    )
+    INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
     VALUES (?, ?, 'client', ?, TRUE, FALSE, NOW())
 ");
 $insert->execute([$ticketId, $client_id, $message]);
 
-// ----------------------------------------------------------
-// RESPONSE TO JS
-// JS will show suggestion bubble only if first_message = true
-// ----------------------------------------------------------
-echo json_encode([
-    "status"        => "ok",
-    "first_message" => $isFirstMessage
-]);
+// -------------------- CSR AUTO-GREET FOR FIRST CLIENT MESSAGE --------------------
+if ($isFirstMessage) {
 
+    $auto = $conn->prepare("
+        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
+        VALUES (?, ?, 'csr', 'Good day! How may we assist you today?', TRUE, FALSE, NOW())
+    ");
+    $auto->execute([$ticketId, $client_id]);
+
+    echo json_encode([
+        "status" => "ok",
+        "first_message" => true
+    ]);
+    exit;
+}
+
+// -------------------- NORMAL RESPONSE --------------------
+echo json_encode(["status" => "ok"]);
 exit;
+
 ?>
