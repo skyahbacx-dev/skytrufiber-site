@@ -44,17 +44,32 @@ $msgCount = count($messages);
 
 // --------------------------------------------------
 // AUTO-GREET RULE (FINAL VERSION)
+// --------------------------------------------------
 //
-// We ONLY show the greeting here when:
-//     ✔ ZERO messages exist
+// We display an auto-greet ONLY when:
+//     ✔ ZERO messages exist (fresh ticket, no concern submitted)
+// OR  ✔ $_SESSION['show_suggestions'] == true
 //
 // Reason:
-//     send_message_client.php already inserts CSR auto-greet
-//     after FIRST client message.
-//     So showing greeting with 1 message would DUPLICATE it.
+//     • First-message CSR greeting is inserted inside send_message_client.php
+//     • Login concern greeting is inserted inside skytrufiber.php
+//     • This file must *not* duplicate those greetings.
 //
+// After showing, unset the session flag so it doesn't repeat.
 // --------------------------------------------------
+
+$shouldShowGreeting = false;
+
 if ($msgCount === 0) {
+    $shouldShowGreeting = true;
+}
+
+if (!empty($_SESSION['show_suggestions'])) {
+    $shouldShowGreeting = true;
+    unset($_SESSION['show_suggestions']); // prevent repeating
+}
+
+if ($shouldShowGreeting) {
 
     echo "
     <div class='message received system-suggest'>
@@ -77,7 +92,6 @@ if ($msgCount === 0) {
         </div>
     </div>
     ";
-    // Do NOT exit — JS merge logic expects message list too
 }
 
 // --------------------------------------------------
@@ -103,8 +117,8 @@ foreach ($messages as $msg) {
     // MESSAGE BUBBLE
     if (empty($msg["deleted"])) {
         $text = trim($msg["message"]);
-        echo "<div class='message-bubble'>"
-             . nl2br(htmlspecialchars($text)) .
+        echo "<div class='message-bubble'>" .
+             nl2br(htmlspecialchars($text)) .
              "</div>";
     } else {
         echo "<div class='message-bubble removed-text'>Message removed</div>";
@@ -117,14 +131,14 @@ foreach ($messages as $msg) {
     }
     echo "</div>";
 
-    // ACTION TOOLBAR (only show for client's own sent messages)
+    // ACTION TOOLBAR (client only)
     echo "<div class='action-toolbar'>";
     if ($sender === "sent" && empty($msg["deleted"])) {
         echo "<button class='more-btn' data-id='$id'>⋯</button>";
     }
     echo "</div>";
 
-    echo "</div>"; // message-content
+    echo "</div>"; // content
     echo "</div>"; // wrapper
 }
 
