@@ -1,309 +1,121 @@
-/* ============================================================
-   HISTORY PAGES — GLOBAL THEME MATCHING CSR DASHBOARD
-============================================================ */
-
+/* GENERAL */
 body {
-    background: #F4FFF4;
+    background: #f5fff5;
     font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 20px;
-    color: #013b17;
 }
 
 h2, h3 {
-    margin-top: 10px;
-    font-weight: bold;
-    color: #013b17;
+    color: #024d1e;
+    margin-bottom: 10px;
 }
 
-a {
-    text-decoration: none;
-}
-
-/* Back button */
 .back-btn {
     display: inline-block;
     background: #05702e;
     color: white;
-    padding: 8px 14px;
+    padding: 6px 12px;
     border-radius: 6px;
-    margin-bottom: 15px;
-}
-.back-btn:hover {
-    background: #045a24;
+    margin-bottom: 12px;
+    text-decoration: none;
 }
 
-/* ============================================================
-   HISTORY LIST PAGE
-============================================================ */
-
+/* HISTORY LIST */
 .history-controls {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
+    margin-bottom: 12px;
 }
 
-/* Search Field */
 .history-search input {
     padding: 8px;
-    border: 1px solid #bbb;
+    border: 1px solid #ccc;
     border-radius: 6px;
-    width: 220px;
-}
-
-/* Sort Tabs */
-.sort-tabs {
-    display: flex;
-    gap: 10px;
+    width: 200px;
 }
 
 .sort-tabs a {
     padding: 6px 12px;
-    background: #e5ffe5;
+    text-decoration: none;
     border-radius: 6px;
-    color: #014d1e;
-    font-size: 14px;
-    font-weight: bold;
+    background: #e6ffe6;
+    color: #024d1e;
+    margin-right: 5px;
 }
 
-.sort-tabs a.active {
+.sort-tabs .active {
     background: #05702e;
     color: white;
 }
 
-/* Month group header */
 .month-header {
+    padding: 6px;
+    background: #dfffe0;
     font-weight: bold;
-    margin-top: 20px;
-    margin-bottom: 6px;
-    color: #045a24;
-    text-align: center;
-}
-
-/* Ticket item */
-.ticket-item {
-    display: block;
-    padding: 12px;
-    border-radius: 8px;
-    background: white;
-    border: 1px solid #dcefdc;
-    margin-bottom: 10px;
-    transition: 0.2s;
-}
-
-.ticket-item:hover {
-    transform: scale(1.01);
-    border-color: #9cd09c;
-    background: #f5fff5;
-}
-
-.ticket-title {
-    font-size: 17px;
-    font-weight: bold;
-    margin-bottom: 3px;
-}
-
-.ticket-status {
-    display: inline-block;
-    padding: 4px 8px;
-    font-size: 11px;
     border-radius: 6px;
-    margin-right: 6px;
-    font-weight: bold;
+    margin-top: 15px;
 }
 
-.ticket-status.resolved {
-    background: #c7ffd1;
-    color: #075e1f;
+.ticket-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px;
+    background: white;
+    border-radius: 6px;
+    margin-top: 8px;
+    text-decoration: none;
+    color: black;
 }
 
-.ticket-status.unresolved {
-    background: #ffdddd;
-    color: #b30000;
-}
+/* STATUS COLORS */
+.ticket-status.resolved { background: #c2f7c2; color: #036003; }
+.ticket-status.unresolved { background: #ffd4d4; color: #9b0000; }
 
-/* Created date */
-.ticket-date {
-    font-size: 12px;
-    color: #444;
-}
-
-/* Empty message */
-.empty {
-    padding: 15px;
-    text-align: center;
-    font-size: 14px;
-    color: #666;
-}
-
-/* ============================================================
-   TIMELINE
-============================================================ */
-
+/* TIMELINE */
 .timeline {
-    border-left: 4px solid #05702e;
-    padding-left: 18px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .log-entry {
-    background: #f4fff5;
-    border-left: 4px solid #9cd09c;
-    padding: 10px 15px;
-    margin-bottom: 10px;
+    border-left: 4px solid #ccc;
+    padding: 10px 12px;
+    background: white;
+    margin-bottom: 8px;
     border-radius: 6px;
 }
 
-/* Color coding by action */
+.log-entry.pending { border-left-color: orange; }
+.log-entry.resolved { border-left-color: green; }
+.log-entry.unresolved { border-left-color: red; }
+.log-entry.assigned { border-left-color: #0a69d8; }
 
-.log-entry.assigned {
-    border-left-color: #0077ff;
-    background: #e7f1ff;
-}
-
-.log-entry.unassigned {
-    border-left-color: #444;
-    background: #eee;
-}
-
-.log-entry.pending {
-    border-left-color: #ffae00;
-    background: #fff5d6;
-}
-
-.log-entry.resolved {
-    border-left-color: #00994d;
-    background: #d9ffe8;
-}
-
-.log-entry.unresolved {
-    border-left-color: #d90000;
-    background: #ffe5e5;
-}
-
-.log-action {
-    font-weight: bold;
-    font-size: 14px;
-}
-
-.log-by {
-    font-size: 12px;
-    color: #444;
-}
-
-.log-time {
-    font-size: 12px;
-    color: #666;
-}
-
-/* ============================================================
-   CHAT MESSAGES
-============================================================ */
-
-.filters {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-}
-
-.filter-btn {
-    padding: 6px 12px;
-    background: #e5ffe5;
-    border-radius: 6px;
-    color: #014d1e;
-    font-size: 13px;
-    font-weight: bold;
-}
-.filter-btn:hover {
-    background: #d1ffd1;
-}
-
-/* SORT for chat */
-.sort-chat a {
+/* CHAT */
+.filters .filter-btn {
+    background: #eaffea;
     padding: 6px 12px;
     border-radius: 6px;
-    background: #eaeaea;
-    margin-left: 6px;
+    margin-right: 5px;
+    text-decoration: none;
 }
 
-.sort-chat a.active {
-    background: #05702e;
-    color: white;
-}
-
-.chat-history {
-    padding-bottom: 30px;
-    margin-bottom: 50px;
-}
-
-.chat-msg {
-    margin-bottom: 12px;
-}
-
-.chat-msg .bubble {
+.chat-history .chat-msg {
+    margin-top: 10px;
     padding: 10px;
-    border-radius: 10px;
-    display: inline-block;
-    max-width: 70%;
+    background: white;
+    border-radius: 6px;
 }
 
-/* CSR bubble */
-.chat-msg.csr .bubble {
-    background: #c7ffd6;
-    border-left: 4px solid #05702e;
-}
-
-/* Client bubble */
-.chat-msg.client .bubble {
-    background: #e7f3ff;
-    border-left: 4px solid #0062c7;
-}
-
-/* Deleted message */
-.deleted-bubble {
-    background: #f6dcdc !important;
-    border-left-color: #b30000 !important;
-    opacity: 0.7;
-}
-
-.meta {
-    font-size: 11px;
-    color: #555;
-    margin-top: 3px;
-}
-
-.edited {
-    color: #888;
-}
-
-/* ============================================================
-   JUMP BUTTONS
-============================================================ */
-
+/* Scroll Buttons */
 .jump-btn {
     position: fixed;
     right: 20px;
-    padding: 8px 14px;
+    padding: 10px;
     background: #05702e;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 50%;
     cursor: pointer;
-    z-index: 50;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+    font-size: 18px;
 }
 
-#jumpTop {
-    bottom: 80px;
-}
-
-#jumpBottom {
-    bottom: 20px;
-}
-
-.jump-btn:hover {
-    background: #045a24;
-}
+#jumpTop { bottom: 80px; }
+#jumpBottom { bottom: 20px; }
