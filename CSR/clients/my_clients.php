@@ -5,13 +5,13 @@ if (!isset($_SESSION['csr_user'])) {
     exit;
 }
 
-include "../../db_connect.php";
+require "../../db_connect.php";
 
 $csrUser = $_SESSION["csr_user"];
 $search = trim($_GET["search"] ?? "");
 ?>
 
-<link rel="stylesheet" href="../clients/my_clients.css">
+<link rel="stylesheet" href="my_clients.css">
 
 <h1>👥 My Clients</h1>
 
@@ -24,9 +24,18 @@ $search = trim($_GET["search"] ?? "");
 </form>
 
 <?php
-// FETCH ASSIGNED CLIENTS
+/* ============================================================
+   FETCH ASSIGNED CLIENTS
+============================================================ */
 $query = "
-    SELECT id, account_number, full_name, email, district, barangay, date_installed
+    SELECT 
+        id, 
+        account_number, 
+        full_name, 
+        email, 
+        district, 
+        barangay, 
+        date_installed
     FROM users
     WHERE assigned_csr = :csr
 ";
@@ -34,7 +43,13 @@ $query = "
 $params = [":csr" => $csrUser];
 
 if ($search !== "") {
-    $query .= " AND (full_name ILIKE :s OR account_number ILIKE :s OR email ILIKE :s)";
+    $query .= " 
+        AND (
+            full_name ILIKE :s OR 
+            account_number ILIKE :s OR 
+            email ILIKE :s
+        )
+    ";
     $params[":s"] = "%$search%";
 }
 
@@ -62,12 +77,13 @@ $total = count($clients);
             <th>Barangay</th>
             <th>Date Installed</th>
             <th>Chat</th>
+            <th>History</th>
         </tr>
     </thead>
     <tbody>
 
     <?php if ($total == 0): ?>
-        <tr><td colspan="7" style="text-align:center;">No clients found</td></tr>
+        <tr><td colspan="8" style="text-align:center;">No clients found</td></tr>
     <?php endif; ?>
 
     <?php foreach ($clients as $c): ?>
@@ -79,12 +95,20 @@ $total = count($clients);
             <td><?= htmlspecialchars($c['barangay']) ?></td>
             <td><?= htmlspecialchars($c['date_installed']) ?></td>
 
+            <!-- OPEN CURRENT CHAT -->
             <td>
-                <a href="../dashboard/csr_dashboard.php?tab=chat&client=<?= urlencode($c['account_number']) ?>" 
+                <a href="../dashboard/csr_dashboard.php?tab=chat&client=<?= $c['id'] ?>" 
                    class="chat-btn">
                    💬 Chat
                 </a>
+            </td>
 
+            <!-- NEW: HISTORY PAGE -->
+            <td>
+                <a href="../chat/history_list.php?client=<?= $c['id'] ?>" 
+                   class="history-btn">
+                   📜 History
+                </a>
             </td>
         </tr>
     <?php endforeach; ?>
@@ -92,4 +116,3 @@ $total = count($clients);
     </tbody>
 </table>
 </div>
-
