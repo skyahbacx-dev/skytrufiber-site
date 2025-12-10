@@ -21,24 +21,32 @@ $ticketID = intval($_GET["ticket"] ?? 0);
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CSR Dashboard — <?= htmlspecialchars($csrFullName) ?></title>
 
-<!-- CSS -->
+<!-- Dashboard CSS -->
 <link rel="stylesheet" href="csr_dashboard.css">
-<link rel="stylesheet" href="../chat/chat.css">
-<link rel="stylesheet" href="../history/history.css"> <!-- FIXED -->
 
-<!-- LOCAL FONT AWESOME (no CDN issues) -->
-<link rel="stylesheet" href="../../vendor/fontawesome/css/all.min.css">
+<!-- Chat CSS -->
+<link rel="stylesheet" href="../chat/chat.css">
+
+<!-- History CSS -->
+<link rel="stylesheet" href="../history/history.css">
+
+<!-- FontAwesome - CDN FIXED -->
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+<!-- Sortable.js LOCAL FIX -->
+<script src="../vendor/js/Sortable.min.js"></script>
+
 <!-- Dashboard JS -->
 <script src="csr_dashboard.js?v=3"></script>
 
-<!-- Chat System JS -->
+<!-- Chat JS -->
 <script src="../chat/chat.js?v=3"></script>
 
-<!-- History JS (loaded early but harmless) -->
+<!-- History JS -->
 <script src="../history/history.js?v=3"></script>
 
 <script>
@@ -46,7 +54,6 @@ const csrUser     = "<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>";
 const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 </script>
 </head>
-
 
 <body>
 
