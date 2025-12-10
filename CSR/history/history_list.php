@@ -51,8 +51,9 @@ $stmt->execute($params);
 $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<link rel="stylesheet" href="history.css">
-<script src="history.js?v=2"></script>
+<!-- FIXED PATHS -->
+<link rel="stylesheet" href="../history/history.css?v=<?= time(); ?>">
+<script src="../history/history.js?v=<?= time(); ?>"></script>
 
 <h2>📜 Ticket History — <?= $clientName ?> (<?= $acctNo ?>)</h2>
 
@@ -81,11 +82,14 @@ $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <button id="jumpBottom" class="jump-btn">⬇ Bottom</button>
 
 <div class="history-list" id="ticketList">
+
 <?php
 if (!$tickets) {
     echo "<div class='empty'>No tickets found.</div>";
 } else {
+
     $lastMonth = "";
+
     foreach ($tickets as $t) {
 
         $month = date("F Y", strtotime($t["created_at"]));
@@ -97,7 +101,7 @@ if (!$tickets) {
 
         $statusClass = strtolower($t["status"]);
 ?>
-        <a class="ticket-item" 
+        <a class="ticket-item"
            href="../dashboard/csr_dashboard.php?tab=clients&ticket=<?= $t['id'] ?>">
 
             <div class="ticket-title">Ticket #<?= $t["id"] ?></div>
