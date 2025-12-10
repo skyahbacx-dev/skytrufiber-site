@@ -92,19 +92,49 @@ label { font-weight:600; color:#004466; display:block; margin-top:10px; }
 input, select, textarea {
   width:100%; padding:10px; margin-top:5px; border-radius:8px; border:1px solid #ccc;
 }
+
+.search-bar {
+  width:100%; padding:10px; border-radius:8px; border:1px solid #aaa;
+  margin-top:5px;
+}
+
+.dropdown-panel {
+  position:absolute;
+  width:100%;
+  background:white;
+  border-radius:10px;
+  border:1px solid #ccc;
+  margin-top:2px;
+  max-height:180px;
+  overflow-y:auto;
+  display:none;
+  z-index:1000;
+  box-shadow:0 4px 10px rgba(0,0,0,0.15);
+}
+
+.dropdown-item {
+  padding:10px;
+  cursor:pointer;
+  transition:0.15s;
+}
+
+.dropdown-item:hover {
+  background:#e8f4ff;
+}
+
+.no-results {
+  padding:10px;
+  color:#777;
+  font-style:italic;
+}
+
 button {
   width:100%; padding:10px; background:#0099cc; color:white; border:none;
   border-radius:8px; cursor:pointer; margin-top:15px; font-weight:bold;
 }
 button:hover { background:#007a99; }
-textarea { height:80px; resize:none; }
-.search-bar {
-  width:100%; padding:9px; border-radius:8px; border:1px solid #ccc;
-}
 
-.dropdown-item:hover {
-    background:#e8f4ff;
-}
+textarea { height:80px; resize:none; }
 </style>
 </head>
 
@@ -137,16 +167,11 @@ textarea { height:80px; resize:none; }
   </select>
 
   <label>Barangay:</label>
-  <div style="position: relative; width: 100%;">
+  <div style="position:relative;">
       <input id="barangaySearch" class="search-bar" type="text" placeholder="Search barangay..." autocomplete="off">
+      <input type="hidden" id="location" name="location" required>
 
-      <select id="location" name="location" required size="1" style="width:100%; height:40px; margin-top:5px;"></select>
-
-      <div id="dropdownList" 
-           style="position:absolute; top:90px; left:0; width:100%; max-height:150px;
-                  overflow-y:auto; background:white; border:1px solid #ccc;
-                  border-radius:8px; display:none; z-index:999;">
-      </div>
+      <div id="dropdownList" class="dropdown-panel"></div>
   </div>
 
   <label>Date Installed:</label>
@@ -200,18 +225,21 @@ const barangays = {
 const districtSelect = document.getElementById('district');
 const barangaySearch = document.getElementById('barangaySearch');
 const dropdownList = document.getElementById('dropdownList');
-const barangaySelect = document.getElementById('location');
+const hiddenBarangay = document.getElementById('location');
 
+// When district changes, clear search + dropdown
 districtSelect.addEventListener('change', () => {
     barangaySearch.value = "";
-    updateDropdown();
+    hiddenBarangay.value = "";
+    dropdownList.style.display = "none";
 });
 
+// Typing triggers filtering
 barangaySearch.addEventListener('input', () => {
     updateDropdown();
-    dropdownList.style.display = "block";
 });
 
+// Hide dropdown if user clicks outside
 document.addEventListener("click", (event) => {
     if (!dropdownList.contains(event.target) && event.target !== barangaySearch) {
         dropdownList.style.display = "none";
@@ -220,37 +248,40 @@ document.addEventListener("click", (event) => {
 
 function updateDropdown() {
     const district = districtSelect.value;
-    dropdownList.innerHTML = "";
-    barangaySelect.innerHTML = "";
-
-    if (!barangays[district]) return;
-
     const searchText = barangaySearch.value.toLowerCase();
+    
+    dropdownList.innerHTML = "";
+
+    if (!barangays[district]) {
+        dropdownList.style.display = "none";
+        return;
+    }
 
     const filtered = barangays[district].filter(b =>
         b.toLowerCase().includes(searchText)
     );
 
+    if (filtered.length === 0) {
+        dropdownList.innerHTML = `<div class="no-results">No results found</div>`;
+        dropdownList.style.display = "block";
+        return;
+    }
+
     filtered.forEach(b => {
-        let item = document.createElement("div");
-        item.textContent = b;
-        item.className = "dropdown-item";
-        item.style.padding = "8px";
-        item.style.cursor = "pointer";
+        const div = document.createElement("div");
+        div.className = "dropdown-item";
+        div.textContent = b;
 
-        item.addEventListener("click", () => {
+        div.addEventListener("click", () => {
             barangaySearch.value = b;
+            hiddenBarangay.value = b;
             dropdownList.style.display = "none";
-
-            const opt = document.createElement("option");
-            opt.value = b;
-            opt.textContent = b;
-            barangaySelect.innerHTML = "";
-            barangaySelect.appendChild(opt);
         });
 
-        dropdownList.appendChild(item);
+        dropdownList.appendChild(div);
     });
+
+    dropdownList.style.display = "block";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
