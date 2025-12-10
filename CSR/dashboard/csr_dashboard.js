@@ -1,43 +1,27 @@
 /* ============================================================
-   CSR DASHBOARD — MAIN JS CONTROLLER (UPDATED)
-   Supports:
-   - Icon-only collapsed sidebar
-   - Expandable full sidebar
-   - Loader overlay
-   - Tab navigation
-   - Auto-close sidebar on outside click
-   - Smart mobile behavior
-   ============================================================ */
+   CSR DASHBOARD — CLEAN / FINAL JS
+============================================================ */
 
-/* ============================================================
-   SIDEBAR TOGGLE (EXPANDS / COLLAPSES FULL SIDEBAR)
-   ============================================================ */
+// Sidebar toggle
 function toggleSidebar() {
     const sidebar = document.getElementById("sidebar");
     const overlay = document.querySelector(".sidebar-overlay");
 
-    const willOpen = !sidebar.classList.contains("active");
-
-    sidebar.classList.toggle("active", willOpen);
-    overlay.classList.toggle("active", willOpen);
+    const isActive = sidebar.classList.toggle("active");
+    overlay.classList.toggle("active", isActive);
 }
 
-/* ============================================================
-   NAVIGATION WITH LOADER
-   ============================================================ */
+// Navigation with loader
 function navigate(tab) {
     showLoader();
     window.location = "csr_dashboard.php?tab=" + tab;
 }
 
-/* ============================================================
-   LOADING OVERLAY
-   ============================================================ */
+// Loader show / hide
 function showLoader() {
     const overlay = document.getElementById("loadingOverlay");
     if (overlay) overlay.style.display = "flex";
 }
-
 function hideLoader() {
     const overlay = document.getElementById("loadingOverlay");
     if (overlay) overlay.style.display = "none";
@@ -46,53 +30,37 @@ function hideLoader() {
 document.addEventListener("DOMContentLoaded", hideLoader);
 
 /* ============================================================
-   CLICK OUTSIDE → CLOSE SIDEBAR
-   ============================================================ */
-document.addEventListener("click", (e) => {
+   AUTO-CLOSE SIDEBAR ON OUTSIDE CLICK
+============================================================ */
+document.addEventListener("click", function (e) {
     const sidebar = document.getElementById("sidebar");
     const overlay = document.querySelector(".sidebar-overlay");
 
-    // Sidebar not open → ignore
     if (!sidebar.classList.contains("active")) return;
 
-    // Clicking hamburger → ignore
-    if (e.target.classList.contains("hamburger")) return;
+    if (!sidebar.contains(e.target) &&
+        !e.target.classList.contains("hamburger") &&
+        !e.target.closest(".hamburger")) {
 
-    // Clicking inside sidebar → ignore
-    if (sidebar.contains(e.target)) return;
-
-    // Otherwise → close sidebar
-    sidebar.classList.remove("active");
-    overlay.classList.remove("active");
-});
-
-/* ============================================================
-   ICON BAR → OPEN SIDEBAR
-   (When user clicks an icon on the collapsed sidebar)
-   ============================================================ */
-document.addEventListener("click", (e) => {
-    if (e.target.closest(".sidebar-collapsed .icon-btn")) {
-        // Expand the real sidebar
-        document.getElementById("sidebar").classList.add("active");
-        document.querySelector(".sidebar-overlay").classList.add("active");
+        sidebar.classList.remove("active");
+        overlay.classList.remove("active");
     }
 });
 
 /* ============================================================
-   RESPONSIVE AUTO-CLOSE (Mobile behavior)
-   ============================================================ */
-let lastWidth = window.innerWidth;
+   SMART RESIZE BEHAVIOR
+============================================================ */
+let lastWidth = window.innerWidth; // <-- Only declared ONCE.
 
 window.addEventListener("resize", () => {
-    const width = window.innerWidth;
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.querySelector(".sidebar-overlay");
+    const now = window.innerWidth;
 
-    // When screen grows from mobile to desktop → hide overlay sidebar
-    if (width > 900 && lastWidth <= 900) {
+    if (lastWidth <= 900 && now > 900) {
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.querySelector(".sidebar-overlay");
         sidebar.classList.remove("active");
         overlay.classList.remove("active");
     }
 
-    lastWidth = width;
+    lastWidth = now;
 });
