@@ -1,253 +1,309 @@
-/* =======================================================
-   HISTORY VIEW — CLEAN + FIXED LAYOUT
-======================================================= */
+/* ============================================================
+   HISTORY PAGES — GLOBAL THEME MATCHING CSR DASHBOARD
+============================================================ */
 
-:root {
-    --green: #05702e;
-    --green-light: #e9ffe9;
-    --bg: #f4fff4;
-    --border: #dcdcdc;
-    --text-dark: #014d1e;
-    --timeline-line: #0ba34d;
+body {
+    background: #F4FFF4;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    color: #013b17;
 }
 
-/* PAGE WRAPPER */
-.history-wrapper {
-    padding: 20px 30px;
-    max-width: 1100px;
-    margin: auto;
-}
-
-/* HEADER */
-.history-title {
-    font-size: 26px;
+h2, h3 {
+    margin-top: 10px;
     font-weight: bold;
-    color: var(--text-dark);
-    margin-bottom: 5px;
+    color: #013b17;
 }
 
-.history-sub {
-    margin-bottom: 20px;
-    font-size: 14px;
+a {
+    text-decoration: none;
 }
 
+/* Back button */
 .back-btn {
     display: inline-block;
-    padding: 8px 14px;
-    background: var(--green);
+    background: #05702e;
     color: white;
+    padding: 8px 14px;
     border-radius: 6px;
     margin-bottom: 15px;
-    text-decoration: none;
 }
 .back-btn:hover {
     background: #045a24;
 }
 
-/* SECTION TITLES */
-.section-title {
-    font-size: 20px;
-    font-weight: bold;
-    margin: 20px 0 10px;
-    color: var(--text-dark);
+/* ============================================================
+   HISTORY LIST PAGE
+============================================================ */
+
+.history-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
 }
 
-/* =======================================================
+/* Search Field */
+.history-search input {
+    padding: 8px;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    width: 220px;
+}
+
+/* Sort Tabs */
+.sort-tabs {
+    display: flex;
+    gap: 10px;
+}
+
+.sort-tabs a {
+    padding: 6px 12px;
+    background: #e5ffe5;
+    border-radius: 6px;
+    color: #014d1e;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.sort-tabs a.active {
+    background: #05702e;
+    color: white;
+}
+
+/* Month group header */
+.month-header {
+    font-weight: bold;
+    margin-top: 20px;
+    margin-bottom: 6px;
+    color: #045a24;
+    text-align: center;
+}
+
+/* Ticket item */
+.ticket-item {
+    display: block;
+    padding: 12px;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid #dcefdc;
+    margin-bottom: 10px;
+    transition: 0.2s;
+}
+
+.ticket-item:hover {
+    transform: scale(1.01);
+    border-color: #9cd09c;
+    background: #f5fff5;
+}
+
+.ticket-title {
+    font-size: 17px;
+    font-weight: bold;
+    margin-bottom: 3px;
+}
+
+.ticket-status {
+    display: inline-block;
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 6px;
+    margin-right: 6px;
+    font-weight: bold;
+}
+
+.ticket-status.resolved {
+    background: #c7ffd1;
+    color: #075e1f;
+}
+
+.ticket-status.unresolved {
+    background: #ffdddd;
+    color: #b30000;
+}
+
+/* Created date */
+.ticket-date {
+    font-size: 12px;
+    color: #444;
+}
+
+/* Empty message */
+.empty {
+    padding: 15px;
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+}
+
+/* ============================================================
    TIMELINE
-======================================================= */
+============================================================ */
+
 .timeline {
-    border-left: 4px solid var(--timeline-line);
-    padding-left: 20px;
-    margin-left: 10px;
+    border-left: 4px solid #05702e;
+    padding-left: 18px;
+    margin-bottom: 20px;
 }
 
 .log-entry {
-    background: white;
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--green);
+    background: #f4fff5;
+    border-left: 4px solid #9cd09c;
     padding: 10px 15px;
-    margin: 10px 0;
+    margin-bottom: 10px;
     border-radius: 6px;
-    animation: fadeInUp 0.25s ease;
 }
 
-.log-entry:last-child {
-    margin-bottom: 25px;
+/* Color coding by action */
+
+.log-entry.assigned {
+    border-left-color: #0077ff;
+    background: #e7f1ff;
+}
+
+.log-entry.unassigned {
+    border-left-color: #444;
+    background: #eee;
+}
+
+.log-entry.pending {
+    border-left-color: #ffae00;
+    background: #fff5d6;
+}
+
+.log-entry.resolved {
+    border-left-color: #00994d;
+    background: #d9ffe8;
+}
+
+.log-entry.unresolved {
+    border-left-color: #d90000;
+    background: #ffe5e5;
 }
 
 .log-action {
     font-weight: bold;
-    color: var(--green);
     font-size: 14px;
 }
+
 .log-by {
-    font-size: 13px;
-    color: #555;
-}
-.log-time {
     font-size: 12px;
-    color: #777;
+    color: #444;
 }
 
-/* =======================================================
-   FILTER BAR
-======================================================= */
-.filter-bar {
-    margin: 15px 0;
+.log-time {
+    font-size: 12px;
+    color: #666;
+}
+
+/* ============================================================
+   CHAT MESSAGES
+============================================================ */
+
+.filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
 }
 
 .filter-btn {
-    padding: 6px 14px;
-    border: 1px solid var(--green);
-    background: white;
-    border-radius: 20px;
-    margin-right: 5px;
-    cursor: pointer;
+    padding: 6px 12px;
+    background: #e5ffe5;
+    border-radius: 6px;
+    color: #014d1e;
     font-size: 13px;
+    font-weight: bold;
 }
-.filter-btn.active {
-    background: var(--green);
+.filter-btn:hover {
+    background: #d1ffd1;
+}
+
+/* SORT for chat */
+.sort-chat a {
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: #eaeaea;
+    margin-left: 6px;
+}
+
+.sort-chat a.active {
+    background: #05702e;
     color: white;
 }
 
-/* =======================================================
-   CHAT HISTORY
-======================================================= */
 .chat-history {
-    background: var(--bg);
-    padding: 15px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    min-height: 150px;
+    padding-bottom: 30px;
+    margin-bottom: 50px;
 }
 
 .chat-msg {
-    margin: 12px 0;
+    margin-bottom: 12px;
+}
+
+.chat-msg .bubble {
+    padding: 10px;
+    border-radius: 10px;
+    display: inline-block;
     max-width: 70%;
 }
 
-.chat-msg.csr {
-    margin-left: auto;
-    text-align: right;
+/* CSR bubble */
+.chat-msg.csr .bubble {
+    background: #c7ffd6;
+    border-left: 4px solid #05702e;
 }
 
-.chat-msg.client {
-    margin-right: auto;
-    text-align: left;
+/* Client bubble */
+.chat-msg.client .bubble {
+    background: #e7f3ff;
+    border-left: 4px solid #0062c7;
 }
 
-.bubble {
-    display: inline-block;
-    padding: 10px 14px;
-    border-radius: 12px;
-}
-
-.csr .bubble {
-    background: #d9ffe1;
-    border: 1px solid #9ed9a4;
-}
-
-.client .bubble {
-    background: #fff;
-    border: 1px solid var(--border);
+/* Deleted message */
+.deleted-bubble {
+    background: #f6dcdc !important;
+    border-left-color: #b30000 !important;
+    opacity: 0.7;
 }
 
 .meta {
     font-size: 11px;
-    color: #666;
+    color: #555;
     margin-top: 3px;
 }
 
 .edited {
-    color: #c66;
-    font-size: 11px;
-}
-
-/* EMPTY STATE */
-.empty {
-    text-align: center;
     color: #888;
-    padding: 20px;
 }
 
-/* ANIMATIONS */
-@keyframes fadeInUp {
-    from { opacity:0; transform:translateY(5px); }
-    to { opacity:1; transform:translateY(0); }
-}
-/* TIMELINE COLOR CODING */
-.action-pending  { border-left-color: #e6b800; background:#fff9db; }
-.action-unresolved { border-left-color:#d9534f; background:#ffe2e2; }
-.action-resolved { border-left-color:#28a745; background:#e6ffe6; }
-.action-assigned { border-left-color:#0275d8; background:#e2f0ff; }
-.action-unassigned { border-left-color:#f0ad4e; background:#fff3dd; }
+/* ============================================================
+   JUMP BUTTONS
+============================================================ */
 
-/* Hidden class for tabs */
-.hidden { display: none; }
-
-/* Jump buttons */
 .jump-btn {
     position: fixed;
-    right: 25px;
-    padding: 10px 14px;
-    background: var(--green);
+    right: 20px;
+    padding: 8px 14px;
+    background: #05702e;
     color: white;
-    border-radius: 50%;
     border: none;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 18px;
-    z-index: 1000;
-}
-#jumpTop { bottom: 90px; }
-#jumpBottom { bottom: 30px; }
-/* Ticket list container */
-.history-list {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    z-index: 50;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.25);
 }
 
-/* Card-style ticket */
-.ticket-card {
-    background: white;
-    padding: 14px 18px;
-    border-radius: 10px;
-    border-left: 5px solid #999;
-    text-decoration: none;
-    color: black;
-    display: block;
-    transition: 0.2s;
+#jumpTop {
+    bottom: 80px;
 }
 
-.ticket-card:hover {
-    background: #f7fff7;
-    transform: translateX(4px);
+#jumpBottom {
+    bottom: 20px;
 }
 
-/* Ticket header */
-.ticket-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 6px;
-    font-size: 16px;
-}
-
-.ticket-status {
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: bold;
-    color: white;
-}
-
-/* Status colors */
-.ticket-status.unresolved { background: #d9534f; }
-.ticket-status.pending    { background: #f0ad4e; }
-.ticket-status.resolved   { background: #28a745; }
-
-/* Date text */
-.ticket-date {
-    font-size: 13px;
-    color: #666;
+.jump-btn:hover {
+    background: #045a24;
 }
