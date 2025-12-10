@@ -75,27 +75,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Customer Registration & Feedback - SkyTruFiber</title>
 
 <style>
+/* ------------------ GLOBAL ------------------ */
+
 body {
   font-family: Arial, sans-serif;
   background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
   display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
-  min-height: 100vh; margin:0; padding-top:30px;
+  min-height:100vh; margin:0; padding-top:30px;
 }
 
 form {
-  background:#fff; padding:25px; border-radius:15px; width:420px;
+  background:#fff; 
+  padding:25px; 
+  border-radius:15px; 
+  width:420px;
+  max-width:92%;
   box-shadow:0 4px 12px rgba(0,0,0,0.15);
 }
 
-h2 { text-align:center; color:#004466; margin-bottom:15px; }
-label { font-weight:600; color:#004466; display:block; margin-top:10px; }
-input, select, textarea {
-  width:100%; padding:10px; margin-top:5px; border-radius:8px; border:1px solid #ccc;
+h2 {
+  text-align:center; 
+  color:#004466; 
+  margin-bottom:15px;
 }
 
+label {
+  font-weight:600; 
+  color:#004466; 
+  display:block; 
+  margin-top:12px;
+}
+
+input, select, textarea {
+  width:100%; 
+  padding:12px; 
+  margin-top:6px; 
+  border-radius:8px; 
+  border:1px solid #ccc;
+  font-size:15px;
+}
+
+/* ------------------ BARANGAY DROPDOWN ------------------ */
+
 .search-bar {
-  width:100%; padding:10px; border-radius:8px; border:1px solid #aaa;
-  margin-top:5px;
+  width:100%; 
+  padding:12px; 
+  border-radius:8px; 
+  border:1px solid #aaa;
+  margin-top:6px;
 }
 
 .dropdown-panel {
@@ -104,18 +131,19 @@ input, select, textarea {
   background:white;
   border-radius:10px;
   border:1px solid #ccc;
-  margin-top:2px;
-  max-height:180px;
+  margin-top:3px;
+  max-height:200px;
   overflow-y:auto;
   display:none;
-  z-index:1000;
+  z-index:999;
   box-shadow:0 4px 10px rgba(0,0,0,0.15);
 }
 
 .dropdown-item {
-  padding:10px;
+  padding:12px;
   cursor:pointer;
   transition:0.15s;
+  font-size:15px;
 }
 
 .dropdown-item:hover {
@@ -123,25 +151,84 @@ input, select, textarea {
 }
 
 .no-results {
-  padding:10px;
+  padding:12px;
   color:#777;
   font-style:italic;
 }
 
-button {
-  width:100%; padding:10px; background:#0099cc; color:white; border:none;
-  border-radius:8px; cursor:pointer; margin-top:15px; font-weight:bold;
-}
-button:hover { background:#007a99; }
+/* ------------------ BUTTON ------------------ */
 
-textarea { height:80px; resize:none; }
+button {
+  width:100%; 
+  padding:12px; 
+  background:#0099cc; 
+  color:white; 
+  border:none;
+  border-radius:8px; 
+  cursor:pointer; 
+  margin-top:18px; 
+  font-weight:bold;
+  font-size:16px;
+}
+
+button:hover {
+  background:#007a99;
+}
+
+/* ------------------ IMAGE ------------------ */
+
+.logo-container img {
+  width:140px;
+  border-radius:50%;
+  margin-bottom:15px;
+  transition:0.3s;
+}
+
+/* ------------------ MEDIA QUERIES ------------------ */
+
+/* Tablets (iPad) */
+@media (max-width: 900px) {
+  form { width:80%; }
+}
+
+/* Mobile Phones */
+@media (max-width: 600px) {
+
+  body {
+    padding-top:20px;
+  }
+
+  .logo-container img {
+    width:110px;
+  }
+
+  form {
+    width:90%;
+    padding:18px;
+  }
+
+  input, select, textarea, .search-bar {
+    padding:14px;
+    font-size:16px;
+  }
+
+  .dropdown-item {
+    padding:14px;
+    font-size:16px;
+  }
+
+  button {
+    padding:14px;
+    font-size:18px;
+  }
+}
 </style>
 </head>
 
 <body>
 
 <div class="logo-container">
-  <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo" style="width:140px; border-radius:50%; margin-bottom:15px;">
+  <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
 </div>
 
 <form method="POST">
@@ -170,7 +257,6 @@ textarea { height:80px; resize:none; }
   <div style="position:relative;">
       <input id="barangaySearch" class="search-bar" type="text" placeholder="Search barangay..." autocomplete="off">
       <input type="hidden" id="location" name="location" required>
-
       <div id="dropdownList" class="dropdown-panel"></div>
   </div>
 
@@ -227,19 +313,17 @@ const barangaySearch = document.getElementById('barangaySearch');
 const dropdownList = document.getElementById('dropdownList');
 const hiddenBarangay = document.getElementById('location');
 
-// When district changes, clear search + dropdown
+// Reset on district change
 districtSelect.addEventListener('change', () => {
     barangaySearch.value = "";
     hiddenBarangay.value = "";
     dropdownList.style.display = "none";
 });
 
-// Typing triggers filtering
-barangaySearch.addEventListener('input', () => {
-    updateDropdown();
-});
+// Filter during typing
+barangaySearch.addEventListener('input', () => updateDropdown());
 
-// Hide dropdown if user clicks outside
+// Hide dropdown when clicking outside
 document.addEventListener("click", (event) => {
     if (!dropdownList.contains(event.target) && event.target !== barangaySearch) {
         dropdownList.style.display = "none";
@@ -249,7 +333,7 @@ document.addEventListener("click", (event) => {
 function updateDropdown() {
     const district = districtSelect.value;
     const searchText = barangaySearch.value.toLowerCase();
-    
+
     dropdownList.innerHTML = "";
 
     if (!barangays[district]) {
@@ -262,7 +346,7 @@ function updateDropdown() {
     );
 
     if (filtered.length === 0) {
-        dropdownList.innerHTML = `<div class="no-results">No results found</div>`;
+        dropdownList.innerHTML = `<div class='no-results'>No results found</div>`;
         dropdownList.style.display = "block";
         return;
     }
@@ -284,10 +368,13 @@ function updateDropdown() {
     dropdownList.style.display = "block";
 }
 
+// Auto-fill today's date
 document.addEventListener("DOMContentLoaded", () => {
     const d = new Date();
     document.getElementById("date_installed").value =
-        d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+        d.getFullYear() + "-" + 
+        String(d.getMonth()+1).padStart(2, "0") + "-" + 
+        String(d.getDate()).padStart(2, "0");
 });
 </script>
 
