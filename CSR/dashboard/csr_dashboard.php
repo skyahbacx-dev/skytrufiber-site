@@ -19,31 +19,40 @@ $ticketID = intval($_GET["ticket"] ?? 0);
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>CSR Dashboard — <?= htmlspecialchars($csrFullName) ?></title>
+
+<!-- ==========================
+     CSS FILES
+=========================== -->
 
 <!-- Dashboard CSS -->
 <link rel="stylesheet" href="csr_dashboard.css">
 
 <!-- Chat CSS -->
-<link rel="stylesheet" href="../chat/chat.css">
+<link rel="stylesheet" href="../chat/chat.css?v=3">
 
 <!-- History CSS -->
-<link rel="stylesheet" href="../history/history.css">
+<link rel="stylesheet" href="../history/history.css?v=3">
 
-<!-- FontAwesome - CDN FIXED -->
-<link rel="stylesheet"
+<!-- Fixed FontAwesome — NO integrity, NO crossorigin -->
+<link rel="stylesheet" 
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- ==========================
+     JS LIBRARIES
+=========================== -->
 
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<!-- Sortable.js LOCAL FIX -->
+<!-- Sortable (LOCAL FILE, no CDN blocking) -->
 <script src="../vendor/js/Sortable.min.js"></script>
 
 <!-- Dashboard JS -->
 <script src="csr_dashboard.js?v=3"></script>
 
-<!-- Chat JS -->
+<!-- Chat System JS -->
 <script src="../chat/chat.js?v=3"></script>
 
 <!-- History JS -->
@@ -53,7 +62,9 @@ $ticketID = intval($_GET["ticket"] ?? 0);
 const csrUser     = "<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>";
 const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 </script>
+
 </head>
+
 
 <body>
 
