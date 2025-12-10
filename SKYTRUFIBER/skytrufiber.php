@@ -150,13 +150,27 @@ body {
     position:relative;
     overflow:hidden;
 }
+/* MOBILE FIX — bring form higher on screen */
+@media (max-width: 600px) {
+
+    body {
+        padding-top: 30px !important;
+        display: block !important;
+    }
+
+    .container {
+        margin: 0 auto;
+        margin-top: 20px !important;
+        transform: none !important;
+    }
+}
 
 /* ------------------------------------------------------------
    MOBILE RESPONSIVE CONTAINER
 ------------------------------------------------------------ */
 @media (max-width: 600px) {
     .container {
-        width:90%;
+        width: 380px;
         padding:22px;
         border-radius:16px;
     }
@@ -174,7 +188,7 @@ body {
 
 @media (max-width: 600px) {
     .container img {
-        width:110px;
+        width: 380px;
     }
 }
 
