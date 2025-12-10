@@ -70,14 +70,32 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
-    <div class="side-title">MENU</div>
 
-    <button class="side-item <?= $tab==='chat'?'active':'' ?>" onclick="navigate('chat')">💬 Chat Dashboard</button>
-    <button class="side-item <?= $tab==='clients'?'active':'' ?>" onclick="navigate('clients')">👥 My Clients</button>
-    <button class="side-item <?= $tab==='reminders'?'active':'' ?>" onclick="navigate('reminders')">⏱ Reminders</button>
-    <button class="side-item <?= $tab==='survey'?'active':'' ?>" onclick="navigate('survey')">📄 Survey Responses</button>
+    <button class="side-item <?= $tab==='chat'?'active':'' ?>" onclick="navigate('chat')">
+        <i class="fa-solid fa-comments"></i>
+        <span>Chat Dashboard</span>
+    </button>
 
-    <button class="side-item logout" onclick="window.location='../csr_logout.php'">🚪 Logout</button>
+    <button class="side-item <?= $tab==='clients'?'active':'' ?>" onclick="navigate('clients')">
+        <i class="fa-solid fa-users"></i>
+        <span>My Clients</span>
+    </button>
+
+    <button class="side-item <?= $tab==='reminders'?'active':'' ?>" onclick="navigate('reminders')">
+        <i class="fa-solid fa-bell"></i>
+        <span>Reminders</span>
+    </button>
+
+    <button class="side-item <?= $tab==='survey'?'active':'' ?>" onclick="navigate('survey')">
+        <i class="fa-solid fa-list-check"></i>
+        <span>Survey Responses</span>
+    </button>
+
+    <button class="side-item logout" onclick="window.location='../csr_logout.php'">
+        <i class="fa-solid fa-door-open"></i>
+        <span>Logout</span>
+    </button>
+
 </div>
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -89,15 +107,18 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 switch ($tab) {
 
     case 'clients':
-        // If user clicked a history button inside My Clients
+
+        // If user clicked history ITEM inside My Clients page
         if ($ticketID > 0) {
-            include "../chat/history_view.php"; // Chat messages for a ticket
-        } 
+            include "../chat/history_view.php"; // Show messages for a specific ticket
+        }
+        // Show list of tickets for a client
         else if ($clientID > 0) {
-            include "../chat/history_list.php"; // List of tickets for that client
-        } 
+            include "../chat/history_list.php";
+        }
+        // Regular My Clients page
         else {
-            include "../clients/my_clients.php"; // Normal My Clients page
+            include "../clients/my_clients.php";
         }
         break;
 
