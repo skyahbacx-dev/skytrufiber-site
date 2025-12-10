@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 $_SESSION['email']       = $user['email'];
                 $_SESSION['ticket_id']   = $ticketId;
 
-                // Check if chat has messages
+                // Check chat history
                 $checkMsgs = $conn->prepare("
                     SELECT COUNT(*) FROM chat
                     WHERE ticket_id = :tid
@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 $checkMsgs->execute([':tid' => $ticketId]);
                 $hasExistingMsgs = ($checkMsgs->fetchColumn() > 0);
 
-                // First: CSR greeting
+                // CSR Greeting (first)
                 if (!$hasExistingMsgs) {
 
                     $autoGreet = $conn->prepare("
@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                     $_SESSION['show_suggestions'] = true;
                 }
 
-                // Second: insert client concern
+                // Insert user's initial concern (second)
                 if (!empty($concern)) {
 
                     $insert = $conn->prepare("
@@ -137,7 +137,7 @@ body {
 }
 
 /* ------------------------------------------------------------
-   CONTAINER (DESKTOP)
+   MAIN FORM CONTAINER
 ------------------------------------------------------------ */
 .container {
     background:rgba(255,255,255,0.55);
@@ -150,29 +150,29 @@ body {
     position:relative;
     overflow:hidden;
 }
-/* MOBILE FIX — bring form higher on screen */
+
+/* ------------------------------------------------------------
+   MOBILE FIX (CORRECT VERSION)
+------------------------------------------------------------ */
 @media (max-width: 600px) {
 
     body {
-        padding-top: 30px !important;
-        display: block !important;
+        display:block !important;
+        padding-top:24px !important;
+        min-height:auto !important;
     }
 
     .container {
-        margin: 0 auto;
-        margin-top: 20px !important;
-        transform: none !important;
-    }
-}
-
-/* ------------------------------------------------------------
-   MOBILE RESPONSIVE CONTAINER
------------------------------------------------------------- */
-@media (max-width: 600px) {
-    .container {
-        width: 380px;
-        padding:22px;
+        width:92% !important;
+        padding:24px !important;
         border-radius:16px;
+        margin:0 auto;
+    }
+
+    /* FIX LOGO */
+    .container img {
+        width:120px !important;
+        margin-bottom:12px;
     }
 }
 
@@ -186,14 +186,8 @@ body {
     transition:.3s;
 }
 
-@media (max-width: 600px) {
-    .container img {
-        width: 380px;
-    }
-}
-
 /* ------------------------------------------------------------
-   FORMS
+   FORM ANIMATION
 ------------------------------------------------------------ */
 form { 
     transition:opacity .6s ease, transform .6s ease; 
@@ -224,7 +218,6 @@ input, textarea {
 
 textarea { height:80px; resize:none; }
 
-/* MOBILE INPUTS */
 @media (max-width:600px) {
     input, textarea {
         padding:14px;
@@ -233,7 +226,7 @@ textarea { height:80px; resize:none; }
 }
 
 /* ------------------------------------------------------------
-   BUTTONS
+   BUTTON
 ------------------------------------------------------------ */
 button {
     width:100%;
@@ -252,7 +245,6 @@ button {
 button:hover { background:#008c96; transform:translateY(-2px); }
 button:active { transform:scale(.97); }
 
-/* MOBILE BUTTON SIZE */
 @media (max-width:600px) {
     button {
         padding:14px;
@@ -275,7 +267,7 @@ a {
 a:hover { text-decoration:underline; }
 
 /* ------------------------------------------------------------
-   MESSAGE AREA
+   MESSAGE TEXT
 ------------------------------------------------------------ */
 .message { 
     font-size:0.9em; 
