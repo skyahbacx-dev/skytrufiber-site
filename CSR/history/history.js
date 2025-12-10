@@ -1,21 +1,17 @@
-/* ================================================
-   HISTORY SYSTEM JS — isolated from dashboard/chat
-================================================ */
+console.log("History JS Loaded");
 
+// Jump Buttons
 document.addEventListener("DOMContentLoaded", () => {
 
-    // Jump to Top
-    const topBtn = document.getElementById("jumpTop");
-    if (topBtn) {
-        topBtn.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+    const jumpTop = document.getElementById("jumpTop");
+    const jumpBottom = document.getElementById("jumpBottom");
+
+    if (jumpTop) {
+        jumpTop.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    // Jump to Bottom
-    const bottomBtn = document.getElementById("jumpBottom");
-    if (bottomBtn) {
-        bottomBtn.onclick = () =>
+    if (jumpBottom) {
+        jumpBottom.onclick = () =>
             window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     }
-
-    console.log("History JS Loaded");
 });
