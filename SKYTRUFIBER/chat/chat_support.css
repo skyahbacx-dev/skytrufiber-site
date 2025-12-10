@@ -469,7 +469,7 @@ body {
     /* Lift chat input + safe-area padding */
     .chat-input-area {
         padding: 12px;
-        padding-bottom: calc(32px + env(safe-area-inset-bottom)); /* Medium height lift */
+        padding-bottom: calc(40px + env(safe-area-inset-bottom)); /* Medium height lift */
         background: var(--input-bg);
         position: sticky;
         bottom: 0;
@@ -510,7 +510,7 @@ body {
 
     .chat-input-area {
         padding: 12px;
-        padding-bottom: calc(38px + env(safe-area-inset-bottom)); /* extra minor lift */
+        padding-bottom: calc(40px + env(safe-area-inset-bottom)); /* extra minor lift */
     }
 
     .chat-input-box {
