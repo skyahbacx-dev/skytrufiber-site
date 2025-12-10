@@ -41,7 +41,8 @@ try {
 
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
 <title>SkyTruFiber Support</title>
 
 <!-- Disable caching -->
@@ -49,10 +50,19 @@ try {
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- FIXED FONT AWESOME (Cloudflare CDN — works in Safari/iPhone) -->
+<link rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer">
+
+<!-- FIXED LOCAL CSS (prevents 404) -->
 <link rel="stylesheet" href="chat_support.css?v=<?php echo time(); ?>">
 
+<!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- FIXED LOCAL JS (prevents 404) -->
 <script src="chat_support.js?v=<?php echo time(); ?>" defer></script>
 
 </head>
@@ -76,7 +86,7 @@ try {
                     <span id="ticket-status-label" 
                           class="ticket-label"
                           style="display:block;margin-top:4px;font-size:13px;color:#fff;opacity:.9;">
-                        Status: <?php echo htmlspecialchars($ticketStatus); ?>
+                        Status: <?= htmlspecialchars($ticketStatus) ?>
                     </span>
                 </div>
             </div>
@@ -116,7 +126,7 @@ try {
             </button>
         </div>
 
-        <!-- ACTION POPUP (Edit / Delete) -->
+        <!-- ACTION POPUP -->
         <div id="msg-action-popup" class="msg-action-popup">
             <button class="action-edit"><i class="fa-solid fa-pen"></i> Edit</button>
             <button class="action-unsend"><i class="fa-solid fa-ban"></i> Unsend</button>
