@@ -1,4 +1,4 @@
-/* GENERAL */
+/* GENERAL ------------------------------------------------------ */
 body {
     background: #f5fff5;
     font-family: Arial, sans-serif;
@@ -6,9 +6,17 @@ body {
 
 h2, h3 {
     color: #024d1e;
-    margin-bottom: 10px;
 }
 
+.section-header {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #cceccc;
+}
+
+/* BACK BUTTON */
 .back-btn {
     display: inline-block;
     background: #05702e;
@@ -19,92 +27,155 @@ h2, h3 {
     text-decoration: none;
 }
 
-/* HISTORY LIST */
-.history-controls {
+/* TWO COLUMN ------------------------------------------------------ */
+.history-two-col {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 12px;
+    gap: 20px;
 }
 
-.history-search input {
-    padding: 8px;
-    border: 1px solid #ccc;
+/* LEFT TIMELINE COLUMN */
+.timeline-col {
+    width: 40%;
+    padding: 15px;
+    background: #ffffff;
+    border: 1px solid #d8efd8;
+    border-radius: 8px;
+    height: calc(100vh - 225px);
+    overflow-y: auto;
+}
+
+/* RIGHT CHAT COLUMN */
+.chat-col {
+    width: 60%;
+    padding: 15px;
+    background: #ffffff;
+    border: 1px solid #d8efd8;
+    border-radius: 8px;
+    height: calc(100vh - 225px);
+    overflow-y: auto;
+}
+
+/* SCROLLBAR */
+.timeline-col::-webkit-scrollbar,
+.chat-col::-webkit-scrollbar,
+.chat-history::-webkit-scrollbar {
+    width: 6px;
+}
+
+.timeline-col::-webkit-scrollbar-thumb,
+.chat-col::-webkit-scrollbar-thumb,
+.chat-history::-webkit-scrollbar-thumb {
+    background: #0ba34d;
     border-radius: 6px;
-    width: 200px;
 }
 
-.sort-tabs a {
-    padding: 6px 12px;
+/* TIMELINE STYLING ------------------------------------------------------ */
+.log-entry {
+    background: #ffffff;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border-left: 5px solid #ccc;
+}
+
+/* Color-coded timeline actions */
+.log-entry.pending { border-left-color: orange; }
+.log-entry.unresolved { border-left-color: red; }
+.log-entry.resolved { border-left-color: green; }
+.log-entry.assigned { border-left-color: royalblue; }
+.log-entry.unassigned { border-left-color: gray; }
+
+.log-action {
+    font-weight: bold;
+}
+
+.log-by {
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+.log-time {
+    font-size: 12px;
+    margin-top: 3px;
+    opacity: 0.7;
+}
+
+/* FILTER BUTTONS ------------------------------------------------------ */
+.filters {
+    margin-bottom: 10px;
+}
+
+.filter-btn {
+    padding: 6px 10px;
+    background: #eaffea;
+    border-radius: 6px;
+    margin-right: 6px;
     text-decoration: none;
-    border-radius: 6px;
-    background: #e6ffe6;
     color: #024d1e;
-    margin-right: 5px;
 }
 
-.sort-tabs .active {
+.filter-btn.active {
     background: #05702e;
     color: white;
 }
 
-.month-header {
-    padding: 6px;
-    background: #dfffe0;
-    font-weight: bold;
-    border-radius: 6px;
-    margin-top: 15px;
-}
-
-.ticket-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 12px;
-    background: white;
-    border-radius: 6px;
-    margin-top: 8px;
-    text-decoration: none;
-    color: black;
-}
-
-/* STATUS COLORS */
-.ticket-status.resolved { background: #c2f7c2; color: #036003; }
-.ticket-status.unresolved { background: #ffd4d4; color: #9b0000; }
-
-/* TIMELINE */
-.timeline {
-    margin-bottom: 15px;
-}
-
-.log-entry {
-    border-left: 4px solid #ccc;
-    padding: 10px 12px;
-    background: white;
-    margin-bottom: 8px;
-    border-radius: 6px;
-}
-
-.log-entry.pending { border-left-color: orange; }
-.log-entry.resolved { border-left-color: green; }
-.log-entry.unresolved { border-left-color: red; }
-.log-entry.assigned { border-left-color: #0a69d8; }
-
-/* CHAT */
-.filters .filter-btn {
-    background: #eaffea;
-    padding: 6px 12px;
-    border-radius: 6px;
-    margin-right: 5px;
-    text-decoration: none;
-}
-
-.chat-history .chat-msg {
-    margin-top: 10px;
+/* CHAT HISTORY ------------------------------------------------------ */
+.chat-history {
+    height: calc(100vh - 320px);
+    overflow-y: auto;
     padding: 10px;
-    background: white;
-    border-radius: 6px;
 }
 
-/* Scroll Buttons */
+/* Chat bubble layout */
+.chat-msg {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.bubble {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: white;
+    border: 1px solid #d4ecd4;
+    line-height: 1.4;
+}
+
+/* CSR bubble right aligned */
+.chat-msg.csr {
+    align-items: flex-end;
+}
+
+.chat-msg.csr .bubble {
+    background: #c8ffd5;
+    border-bottom-right-radius: 4px;
+}
+
+/* Client bubble left aligned */
+.chat-msg.client {
+    align-items: flex-start;
+}
+
+.chat-msg.client .bubble {
+    border-bottom-left-radius: 4px;
+}
+
+/* Deleted bubble */
+.chat-msg.deleted .bubble {
+    background: #f0f0f0;
+    font-style: italic;
+    color: #777;
+}
+
+/* Timestamp */
+.meta {
+    font-size: 11px;
+    opacity: 0.7;
+    margin-top: 4px;
+}
+
+/* JUMP BUTTONS ------------------------------------------------------ */
 .jump-btn {
     position: fixed;
     right: 20px;
@@ -114,132 +185,8 @@ h2, h3 {
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 18px;
+    z-index: 999;
 }
 
 #jumpTop { bottom: 80px; }
 #jumpBottom { bottom: 20px; }
-/* TWO-COLUMN LAYOUT */
-.history-two-col {
-    display: flex;
-    width: 100%;
-    gap: 18px;
-    margin-top: 10px;
-}
-
-/* LEFT TIMELINE (40%) */
-.timeline-col {
-    width: 40%;
-    background: #f4fff4;
-    padding: 14px;
-    border-radius: 8px;
-    height: calc(100vh - 220px);
-    overflow-y: auto;
-    border: 1px solid #d4ecd4;
-}
-
-/* RIGHT CHAT (60%) */
-.chat-col {
-    width: 60%;
-    background: #f4fff4;
-    padding: 14px;
-    border-radius: 8px;
-    height: calc(100vh - 220px);
-    overflow-y: auto;
-    border: 1px solid #d4ecd4;
-}
-
-/* Scrollbar styling */
-.timeline-col::-webkit-scrollbar,
-.chat-col::-webkit-scrollbar {
-    width: 6px;
-}
-.timeline-col::-webkit-scrollbar-thumb,
-.chat-col::-webkit-scrollbar-thumb {
-    background: #0ba34d;
-    border-radius: 6px;
-}
-
-/* TIMELINE COLOR CODING */
-.log-entry.pending { border-left: 4px solid orange; }
-.log-entry.assigned { border-left: 4px solid royalblue; }
-.log-entry.unassigned { border-left: 4px solid gray; }
-.log-entry.resolved { border-left: 4px solid green; }
-.log-entry.unresolved { border-left: 4px solid red; }
-
-/* Log entry style */
-.log-entry {
-    background: white;
-    margin-bottom: 10px;
-    padding: 10px 12px;
-    border-radius: 6px;
-    border-left-width: 4px;
-    border-left-style: solid;
-}
-/* CHAT COLUMN SCROLLING AREA */
-.chat-history {
-    height: calc(100vh - 320px);  /* Adjust height inside the right column */
-    overflow-y: auto;
-    padding: 10px;
-}
-
-/* Hide default scrollbar look (optional) */
-.chat-history::-webkit-scrollbar {
-    width: 6px;
-}
-.chat-history::-webkit-scrollbar-thumb {
-    background: #0ba34d;
-    border-radius: 6px;
-}
-
-/* CHAT MESSAGE WRAPPER */
-.chat-msg {
-    margin-bottom: 14px;
-    display: flex;
-    flex-direction: column;
-}
-
-/* BUBBLE BASE STYLE */
-.bubble {
-    max-width: 85%;
-    padding: 10px 14px;
-    border-radius: 14px;
-    font-size: 15px;
-    line-height: 1.4;
-    word-wrap: break-word;
-    background: white;
-    border: 1px solid #dcefdc;
-}
-
-/* TIMESTAMP */
-.meta {
-    font-size: 11px;
-    margin-top: 4px;
-    opacity: 0.7;
-}
-
-/* CSR BUBBLE — RIGHT SIDE */
-.chat-msg.csr {
-    align-items: flex-end;
-}
-.chat-msg.csr .bubble {
-    background: #c6ffd1;
-    border-color: #9ae6a8;
-    border-bottom-right-radius: 4px;
-}
-
-/* CLIENT BUBBLE — LEFT SIDE */
-.chat-msg.client {
-    align-items: flex-start;
-}
-.chat-msg.client .bubble {
-    background: #ffffff;
-    border-bottom-left-radius: 4px;
-}
-
-/* DELETED MESSAGE (gray bubble) */
-.chat-msg.deleted .bubble {
-    background: #f1f1f1;
-    color: #777;
-    font-style: italic;
-}
