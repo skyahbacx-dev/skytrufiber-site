@@ -67,38 +67,29 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
         <a href="../csr_logout.php" class="logout-btn">Logout</a>
     </div>
 </div>
+<!-- COLLAPSED ICON SIDEBAR (ALWAYS VISIBLE) -->
+<div class="sidebar-collapsed">
+    <button class="icon-btn" onclick="navigate('chat')" title="Chat">💬</button>
+    <button class="icon-btn" onclick="navigate('clients')" title="My Clients">👥</button>
+    <button class="icon-btn" onclick="navigate('reminders')" title="Reminders">⏱</button>
+    <button class="icon-btn" onclick="navigate('survey')" title="Survey">📄</button>
+    <button class="icon-btn logout" onclick="window.location='../csr_logout.php'" title="Logout">🚪</button>
+</div>
 
-<!-- SIDEBAR -->
+<!-- FULL SIDEBAR (WHEN EXPANDED) -->
 <div class="sidebar" id="sidebar">
+    <div class="side-title">MENU</div>
 
-    <button class="side-item <?= $tab==='chat'?'active':'' ?>" onclick="navigate('chat')">
-        <i class="fa-solid fa-comments"></i>
-        <span>Chat Dashboard</span>
-    </button>
+    <button class="side-item <?= $tab==='chat'?'active':'' ?>" onclick="navigate('chat')">💬 Chat Dashboard</button>
+    <button class="side-item <?= $tab==='clients'?'active':'' ?>" onclick="navigate('clients')">👥 My Clients</button>
+    <button class="side-item <?= $tab==='reminders'?'active':'' ?>" onclick="navigate('reminders')">⏱ Reminders</button>
+    <button class="side-item <?= $tab==='survey'?'active':'' ?>" onclick="navigate('survey')">📄 Survey Responses</button>
 
-    <button class="side-item <?= $tab==='clients'?'active':'' ?>" onclick="navigate('clients')">
-        <i class="fa-solid fa-users"></i>
-        <span>My Clients</span>
-    </button>
-
-    <button class="side-item <?= $tab==='reminders'?'active':'' ?>" onclick="navigate('reminders')">
-        <i class="fa-solid fa-bell"></i>
-        <span>Reminders</span>
-    </button>
-
-    <button class="side-item <?= $tab==='survey'?'active':'' ?>" onclick="navigate('survey')">
-        <i class="fa-solid fa-list-check"></i>
-        <span>Survey Responses</span>
-    </button>
-
-    <button class="side-item logout" onclick="window.location='../csr_logout.php'">
-        <i class="fa-solid fa-door-open"></i>
-        <span>Logout</span>
-    </button>
-
+    <button class="side-item logout" onclick="window.location='../csr_logout.php'">🚪 Logout</button>
 </div>
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 
 <!-- MAIN CONTENT -->
 <div class="dashboard-container">
