@@ -1,0 +1,169 @@
+/* ============================================
+   PAGE CONTAINER
+============================================ */
+.history-container {
+    padding: 20px;
+}
+
+.history-container h1 {
+    font-size: 22px;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.history-subtitle {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* ============================================
+   TICKET TABLE WRAPPER
+============================================ */
+.table-wrapper {
+    overflow-x: auto;
+    margin-top: 10px;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* ============================================
+   TABLE HEADER
+============================================ */
+.history-table th {
+    background: #05702e;
+    color: white;
+    padding: 10px;
+    text-align: left;
+    font-size: 14px;
+}
+
+/* ============================================
+   TABLE BODY
+============================================ */
+.history-table td {
+    background: white;
+    padding: 10px;
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 14px;
+}
+
+.history-table tr:hover td {
+    background: #f6f6f6;
+}
+
+/* ============================================
+   NO HISTORY MESSAGE
+============================================ */
+.no-history {
+    text-align: center;
+    padding: 15px;
+    font-size: 14px;
+    color: #777;
+}
+
+/* ============================================
+   STATUS BADGES
+============================================ */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+    color: white;
+    display: inline-block;
+}
+
+/* Unresolved */
+.status-unresolved {
+    background: #d9534f; /* red */
+}
+
+/* Pending */
+.status-pending {
+    background: #f0ad4e; /* yellow/orange */
+    color: black;
+}
+
+/* Resolved */
+.status-resolved {
+    background: #05702e; /* green */
+}
+
+/* ============================================
+   VIEW HISTORY BUTTON
+============================================ */
+.view-btn {
+    background: #0a4787;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    transition: 0.2s ease;
+    display: inline-block;
+}
+
+.view-btn:hover {
+    background: #083a6e;
+}
+
+/* ============================================
+   CHAT HISTORY PAGE (messages)
+============================================ */
+.history-chat-box {
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 8px;
+    background: #fafafa;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.history-message {
+    display: flex;
+    margin-bottom: 12px;
+}
+
+.history-message.sent {
+    justify-content: flex-end;
+}
+
+.history-message .bubble {
+    max-width: 70%;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.history-message.sent .bubble {
+    background: #05702e;
+    color: white;
+}
+
+.history-message.received .bubble {
+    background: #eaeaea;
+    color: #333;
+}
+
+.history-time {
+    font-size: 11px;
+    color: #777;
+    margin-top: 4px;
+}
+
+/* ============================================
+   BACK BUTTON
+============================================ */
+.back-btn {
+    display: inline-block;
+    background: #555;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    text-decoration:
