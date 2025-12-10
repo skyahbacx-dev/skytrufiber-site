@@ -9,6 +9,10 @@ if (!isset($_SESSION['csr_user'])) {
 $csrUser     = $_SESSION["csr_user"];
 $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 $tab = $_GET['tab'] ?? 'chat';
+
+/* OPTIONAL history parameters */
+$clientID = intval($_GET["client"] ?? 0);
+$ticketID = intval($_GET["ticket"] ?? 0);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -20,16 +24,18 @@ $tab = $_GET['tab'] ?? 'chat';
 <!-- CSS -->
 <link rel="stylesheet" href="csr_dashboard.css">
 <link rel="stylesheet" href="../chat/chat.css">
+<link rel="stylesheet" href="../chat/history.css">
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<!-- Dashboard JS (correct path) -->
+<!-- Dashboard JS -->
 <script src="csr_dashboard.js?v=2"></script>
 
-<!-- Chat System JS (correct path) -->
+<!-- Chat System JS -->
 <script src="../chat/chat.js?v=2"></script>
-
 
 <script>
 const csrUser     = "<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>";
@@ -54,18 +60,10 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     </div>
 
     <div class="nav-buttons">
-        <button class="nav-btn <?= $tab==='chat'?'active':'' ?>" 
-            onclick="navigate('chat')">💬 CHAT</button>
-
-        <button class="nav-btn <?= $tab==='clients'?'active':'' ?>" 
-            onclick="navigate('clients')">👥 MY CLIENTS</button>
-
-        <button class="nav-btn <?= $tab==='reminders'?'active':'' ?>" 
-            onclick="navigate('reminders')">⏱ REMINDERS</button>
-
-        <button class="nav-btn <?= $tab==='survey'?'active':'' ?>" 
-            onclick="navigate('survey')">📄 SURVEY</button>
-
+        <button class="nav-btn <?= $tab==='chat'?'active':'' ?>" onclick="navigate('chat')">💬 CHAT</button>
+        <button class="nav-btn <?= $tab==='clients'?'active':'' ?>" onclick="navigate('clients')">👥 MY CLIENTS</button>
+        <button class="nav-btn <?= $tab==='reminders'?'active':'' ?>" onclick="navigate('reminders')">⏱ REMINDERS</button>
+        <button class="nav-btn <?= $tab==='survey'?'active':'' ?>" onclick="navigate('survey')">📄 SURVEY</button>
         <a href="../csr_logout.php" class="logout-btn">Logout</a>
     </div>
 </div>
@@ -78,7 +76,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     <button class="side-item <?= $tab==='clients'?'active':'' ?>" onclick="navigate('clients')">👥 My Clients</button>
     <button class="side-item <?= $tab==='reminders'?'active':'' ?>" onclick="navigate('reminders')">⏱ Reminders</button>
     <button class="side-item <?= $tab==='survey'?'active':'' ?>" onclick="navigate('survey')">📄 Survey Responses</button>
-    
+
     <button class="side-item logout" onclick="window.location='../csr_logout.php'">🚪 Logout</button>
 </div>
 
@@ -86,15 +84,36 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 <!-- MAIN CONTENT -->
 <div class="dashboard-container">
-<?php
-    switch ($tab) {
-        case 'clients':   include "../clients/my_clients.php"; break;
-        case 'reminders': include "../reminders/reminders.php"; break;
-        case 'survey':    include "../survey/survey_responses.php"; break;
 
-        default:
-        case 'chat':      include "../chat/chat.php"; break;
-    }
+<?php
+switch ($tab) {
+
+    case 'clients':
+        // If user clicked a history button inside My Clients
+        if ($ticketID > 0) {
+            include "../chat/history_view.php"; // Chat messages for a ticket
+        } 
+        else if ($clientID > 0) {
+            include "../chat/history_list.php"; // List of tickets for that client
+        } 
+        else {
+            include "../clients/my_clients.php"; // Normal My Clients page
+        }
+        break;
+
+    case 'reminders':
+        include "../reminders/reminders.php";
+        break;
+
+    case 'survey':
+        include "../survey/survey_responses.php";
+        break;
+
+    default:
+    case 'chat':
+        include "../chat/chat.php";
+        break;
+}
 ?>
 </div>
 
