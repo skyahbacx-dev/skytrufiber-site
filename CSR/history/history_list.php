@@ -28,33 +28,31 @@ $acctNo     = htmlspecialchars($client["account_number"]);
 $search = trim($_GET["search"] ?? "");
 $sort   = $_GET["sort"] ?? "newest";
 
-/* Base query */
 $query = "SELECT id, status, created_at FROM tickets WHERE client_id = :cid";
 $params = [":cid" => $clientID];
 
-/* Search filter */
 if ($search !== "") {
     $query .= " AND (CAST(id AS TEXT) ILIKE :s OR status ILIKE :s)";
     $params[":s"] = "%$search%";
 }
 
-/* Sort */
+/* SORT OPTIONS */
 $orderSQL = match($sort){
     "oldest"     => " ORDER BY created_at ASC",
     "resolved"   => " AND status='resolved' ORDER BY created_at DESC",
     "unresolved" => " AND status!='resolved' ORDER BY created_at DESC",
-    default      => " ORDER BY created_at DESC",
+    default      => " ORDER BY created_at DESC"
 };
 
 $query .= $orderSQL;
 
-/* Fetch tickets */
 $stmt = $conn->prepare($query);
 $stmt->execute($params);
 $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <link rel="stylesheet" href="history.css">
+<script src="history.js?v=2"></script>
 
 <h2>📜 Ticket History — <?= $clientName ?> (<?= $acctNo ?>)</h2>
 
@@ -62,6 +60,7 @@ $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 <!-- SEARCH + SORT -->
 <div class="history-controls">
+
     <form class="history-search">
         <input type="hidden" name="client" value="<?= $clientID ?>">
         <input type="text" name="search" placeholder="Search tickets..."
@@ -74,9 +73,10 @@ $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <a href="?client=<?= $clientID ?>&sort=resolved" class="<?= $sort=='resolved'?'active':'' ?>">Resolved</a>
         <a href="?client=<?= $clientID ?>&sort=unresolved" class="<?= $sort=='unresolved'?'active':'' ?>">Unresolved</a>
     </div>
+
 </div>
 
-<!-- JUMP BUTTONS -->
+<!-- Jump buttons -->
 <button id="jumpTop" class="jump-btn">⬆ Top</button>
 <button id="jumpBottom" class="jump-btn">⬇ Bottom</button>
 
@@ -87,6 +87,7 @@ if (!$tickets) {
 } else {
     $lastMonth = "";
     foreach ($tickets as $t) {
+
         $month = date("F Y", strtotime($t["created_at"]));
 
         if ($month !== $lastMonth) {
@@ -95,21 +96,22 @@ if (!$tickets) {
         }
 
         $statusClass = strtolower($t["status"]);
-        ?>
-        
-        <a class="ticket-item" href="../dashboard/csr_dashboard.php?tab=clients&ticket=<?= $t['id'] ?>">
+?>
+        <a class="ticket-item" 
+           href="../dashboard/csr_dashboard.php?tab=clients&ticket=<?= $t['id'] ?>">
+
             <div class="ticket-title">Ticket #<?= $t["id"] ?></div>
-            <div class="ticket-status <?= $statusClass ?>"><?= strtoupper($t["status"]) ?></div>
+
+            <div class="ticket-status <?= $statusClass ?>">
+                <?= strtoupper($t["status"]) ?>
+            </div>
+
             <div class="ticket-date">
                 <?= date("M j, Y g:i A", strtotime($t["created_at"])) ?>
             </div>
         </a>
-
-        <?php
+<?php
     }
 }
 ?>
 </div>
-
-<script src="../history/history.js"></script>
-
