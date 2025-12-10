@@ -61,7 +61,7 @@ function matchFilter($m, $filter) {
 }
 ?>
 
-<link rel="stylesheet" href="history.css">
+<link rel="stylesheet" href="../history/history.css">
 
 <h2>📄 Ticket #<?= $ticketID ?> — <?= strtoupper($status) ?></h2>
 
@@ -74,12 +74,12 @@ function matchFilter($m, $filter) {
 
 <hr>
 
-<!-- TWO COLUMN LAYOUT -->
-<div class="history-container">
+<!-- TWO COLUMN WRAPPER -->
+<div class="history-two-col">
 
-    <!-- LEFT: TIMELINE -->
-    <div class="timeline-column">
-        <h3>📌 Ticket Timeline</h3>
+    <!-- LEFT COLUMN — TIMELINE -->
+    <div class="timeline-col">
+        <h3 class="section-header">📌 Ticket Timeline</h3>
 
         <div class="timeline">
         <?php if (!$logs): ?>
@@ -90,23 +90,18 @@ function matchFilter($m, $filter) {
                 <?php
                     $action = strtolower($log["action"]);
                     $colorClass = match($action) {
-                        "pending"     => "tl-pending",
-                        "unresolved"  => "tl-unresolved",
-                        "resolved"    => "tl-resolved",
-                        "assigned"    => "tl-assigned",
-                        "unassigned"  => "tl-unassigned",
-                        default       => "tl-default",
+                        "pending"     => "pending",
+                        "unresolved"  => "unresolved",
+                        "resolved"    => "resolved",
+                        "assigned"    => "assigned",
+                        "unassigned"  => "unassigned",
+                        default       => "default"
                     };
                 ?>
-
                 <div class="log-entry <?= $colorClass ?>">
-                    <div class="log-bar"></div>
-
-                    <div class="log-content">
-                        <div class="log-action"><?= strtoupper($log["action"]) ?></div>
-                        <div class="log-by">by <?= htmlspecialchars($log["csr_user"]) ?></div>
-                        <div class="log-time"><?= date("M j, Y g:i A", strtotime($log["timestamp"])) ?></div>
-                    </div>
+                    <div class="log-action"><?= strtoupper($log["action"]) ?></div>
+                    <div class="log-by">by <?= htmlspecialchars($log["csr_user"]) ?></div>
+                    <div class="log-time"><?= date("M j, Y g:i A", strtotime($log["timestamp"])) ?></div>
                 </div>
             <?php endforeach; ?>
 
@@ -114,25 +109,33 @@ function matchFilter($m, $filter) {
         </div>
     </div>
 
-    <!-- RIGHT: CHAT -->
-    <div class="chat-column">
+    <!-- RIGHT COLUMN — CHAT -->
+    <div class="chat-col">
 
-        <h3>💬 Chat Messages</h3>
+        <h3 class="section-header">💬 Chat Messages</h3>
 
         <!-- FILTER TABS -->
         <div class="filters">
-            <a href="?ticket=<?= $ticketID ?>&filter=all" class="filter-btn <?= $filter==='all'?'active':'' ?>">All</a>
-            <a href="?ticket=<?= $ticketID ?>&filter=csr" class="filter-btn <?= $filter==='csr'?'active':'' ?>">CSR</a>
-            <a href="?ticket=<?= $ticketID ?>&filter=client" class="filter-btn <?= $filter==='client'?'active':'' ?>">Client</a>
-            <a href="?ticket=<?= $ticketID ?>&filter=deleted" class="filter-btn <?= $filter==='deleted'?'active':'' ?>">Deleted</a>
+            <a href="?ticket=<?= $ticketID ?>&filter=all"
+               class="filter-btn <?= $filter==='all'?'active':'' ?>">All</a>
+
+            <a href="?ticket=<?= $ticketID ?>&filter=csr"
+               class="filter-btn <?= $filter==='csr'?'active':'' ?>">CSR</a>
+
+            <a href="?ticket=<?= $ticketID ?>&filter=client"
+               class="filter-btn <?= $filter==='client'?'active':'' ?>">Client</a>
+
+            <a href="?ticket=<?= $ticketID ?>&filter=deleted"
+               class="filter-btn <?= $filter==='deleted'?'active':'' ?>">Deleted</a>
         </div>
 
-        <!-- CHAT SCROLLER -->
+        <!-- CHAT CONTENT SCROLLER -->
         <div class="chat-history" id="chatHistory">
+
         <?php
         $found = false;
-        foreach ($messages as $m):
 
+        foreach ($messages as $m):
             if (!matchFilter($m, $filter)) continue;
             $found = true;
 
@@ -149,12 +152,12 @@ function matchFilter($m, $filter) {
 
                 <div class="meta">
                     <?= date("M j, Y g:i A", strtotime($m["created_at"])) ?>
+
                     <?php if ($m["edited"]): ?>
                         <span class="edited">(edited)</span>
                     <?php endif; ?>
                 </div>
             </div>
-
         <?php endforeach; ?>
 
         <?php if (!$found): ?>
@@ -162,9 +165,9 @@ function matchFilter($m, $filter) {
         <?php endif; ?>
         </div>
 
-        <!-- FLOATING JUMP BUTTONS -->
-        <button id="jumpTop" class="jump-btn">⬆ Top</button>
-        <button id="jumpBottom" class="jump-btn">⬇ Bottom</button>
+        <!-- FLOATING JUMP BUTTONS (handled by your history.js) -->
+        <button id="jumpTop" class="jump-btn">⬆</button>
+        <button id="jumpBottom" class="jump-btn">⬇</button>
 
     </div>
 </div>
