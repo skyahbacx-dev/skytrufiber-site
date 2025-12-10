@@ -24,24 +24,29 @@ $ticketID = intval($_GET["ticket"] ?? 0);
 <!-- CSS -->
 <link rel="stylesheet" href="csr_dashboard.css">
 <link rel="stylesheet" href="../chat/chat.css">
-<link rel="stylesheet" href="../history/history.css">
+<link rel="stylesheet" href="../history/history.css">  <!-- FIXED PATH -->
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+<!-- LOCAL FONTAWESOME -->
+<link rel="stylesheet" href="../../vendor/fontawesome/css/all.min.css">
 
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<!-- Dashboard JS (only once) -->
-<script src="csr_dashboard.js?v=2"></script>
+<!-- Dashboard JS -->
+<script src="csr_dashboard.js?v=3"></script>
 
 <!-- Chat System JS -->
-<script src="../chat/chat.js?v=2"></script>
+<script src="../chat/chat.js?v=3"></script>
+
+<!-- History JS (if used) -->
+<script src="../history/history.js?v=3"></script>
 
 <script>
 const csrUser     = "<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>";
 const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 </script>
 </head>
+
 
 <body>
 
