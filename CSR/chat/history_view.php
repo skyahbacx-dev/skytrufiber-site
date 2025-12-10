@@ -1,141 +1,118 @@
 <?php
 if (!isset($_SESSION)) session_start();
-if (!isset($_SESSION['csr_user'])) {
+if (!isset($_SESSION["csr_user"])) {
     header("Location: ../csr_login.php");
     exit;
 }
 
 require "../../db_connect.php";
 
-$csrUser = $_SESSION["csr_user"];
-$ticketID = intval($_GET["ticket"] ?? 0);
+$ticketID = intval($_GET["ticket_id"] ?? 0);
+$clientID = intval($_GET["client_id"] ?? 0);
 
-if ($ticketID <= 0) {
-    echo "<p>Invalid ticket.</p>";
+if ($ticketID <= 0 || $clientID <= 0) {
+    echo "<p>Invalid request.</p>";
     exit;
 }
 
 /* ============================================================
-   FETCH TICKET INFO
+   FETCH CLIENT NAME
 ============================================================ */
 $stmt = $conn->prepare("
-    SELECT t.id, t.client_id, t.status, t.created_at,
-           u.full_name
-    FROM tickets t
-    JOIN users u ON u.id = t.client_id
-    WHERE t.id = ?
-    LIMIT 1
+    SELECT full_name 
+    FROM users 
+    WHERE id = ?
+");
+$stmt->execute([$clientID]);
+$client = $stmt->fetch(PDO::FETCH_ASSOC);
+
+/* ============================================================
+   FETCH TICKET
+============================================================ */
+$stmt = $conn->prepare("
+    SELECT id, status, created_at
+    FROM tickets
+    WHERE id = ?
 ");
 $stmt->execute([$ticketID]);
 $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$ticket) {
-    echo "<p>Ticket not found.</p>";
-    exit;
-}
-
-$clientID   = $ticket["client_id"];
-$clientName = htmlspecialchars($ticket["full_name"]);
-$status     = strtoupper($ticket["status"]);
-$createdAt  = date("M j, Y g:i A", strtotime($ticket["created_at"]));
-
 /* ============================================================
-   FETCH LOG ENTRIES (PENDING / RESOLVED)
+   FETCH LOG EVENTS
 ============================================================ */
-$logs = $conn->prepare("
+$stmt = $conn->prepare("
     SELECT action, timestamp
     FROM ticket_logs
     WHERE client_id = ?
     ORDER BY timestamp ASC
 ");
-$logs->execute([$clientID]);
-$ticketLogs = $logs->fetchAll(PDO::FETCH_ASSOC);
+$stmt->execute([$clientID]);
+$logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 /* ============================================================
-   FETCH CHAT MESSAGES (READ-ONLY)
+   FETCH CHAT MESSAGES
 ============================================================ */
 $stmt = $conn->prepare("
-    SELECT sender_type, message, deleted, edited, created_at
-    FROM chat
+    SELECT * FROM chat
     WHERE ticket_id = ?
     ORDER BY created_at ASC
 ");
 $stmt->execute([$ticketID]);
-$messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+$messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Chat History - Ticket #<?= $ticketID ?></title>
-    <link rel="stylesheet" href="history_view.css"> <!-- You will style separately -->
-</head>
-<body>
+
+<link rel="stylesheet" href="history.css">
 
 <div class="history-container">
 
-    <h2>📜 Chat History — Ticket #<?= $ticketID ?></h2>
+    <h1>📄 Ticket #<?= $ticketID ?> — Chat History</h1>
 
-    <p><strong>Client:</strong> <?= $clientName ?></p>
-    <p><strong>Created:</strong> <?= $createdAt ?></p>
-    <p><strong>Status:</strong> <span class="ticket-status <?= strtolower($ticket["status"]) ?>"><?= $status ?></span></p>
-    <hr>
-
-    <h3>Ticket Timeline</h3>
-    <div class="ticket-timeline">
-        <?php if (empty($ticketLogs)): ?>
-            <p>No timeline logs available.</p>
-        <?php else: ?>
-            <?php foreach ($ticketLogs as $log): ?>
-                <div class="timeline-entry">
-                    <strong><?= strtoupper($log["action"]) ?></strong> — 
-                    <?= date("M j, Y g:i A", strtotime($log["timestamp"])) ?>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
+    <div class="ticket-header">
+        <strong>Client:</strong> <?= htmlspecialchars($client["full_name"]) ?><br>
+        <strong>Status:</strong> <?= strtoupper($ticket["status"]) ?><br>
+        <strong>Opened:</strong> <?= date("M j, Y g:i A", strtotime($ticket["created_at"])) ?>
     </div>
 
-    <hr>
+    <div class="history-chat-box">
 
-    <h3>Messages</h3>
+        <?php
+        $printedPending = false;
+        $printedResolved = false;
 
-    <div class="chat-history-box">
+        foreach ($messages as $m):
+            $msgTime = strtotime($m["created_at"]);
+            $side = ($m["sender_type"] === "csr") ? "sent" : "received";
+
+            // DIVIDERS (based on ticket_logs)
+            foreach ($logs as $log) {
+                if ($log["action"] === "pending" && !$printedPending && $msgTime > strtotime($log["timestamp"])) {
+                    echo "<div class='divider'>Ticket marked <strong>PENDING</strong> on " . date("M j, Y g:i A", strtotime($log["timestamp"])) . "</div>";
+                    $printedPending = true;
+                }
+
+                if ($log["action"] === "resolved" && !$printedResolved && $msgTime > strtotime($log["timestamp"])) {
+                    echo "<div class='divider'>Ticket <strong>RESOLVED</strong> on " . date("M j, Y g:i A", strtotime($log["timestamp"])) . "</div>";
+                    $printedResolved = true;
+                }
+            }
+        ?>
+
+        <div class="msg <?= $side ?>">
+            <div class="bubble">
+                <?= nl2br(htmlspecialchars($m["message"])) ?>
+            </div>
+            <div class="time"><?= date("M j g:i A", strtotime($m["created_at"])) ?></div>
+        </div>
+
+        <?php endforeach; ?>
+
         <?php if (!$messages): ?>
-            <p>No chat messages for this ticket.</p>
-        <?php else: ?>
-            <?php foreach ($messages as $m): ?>
-                <?php
-                    $sender = $m["sender_type"] === "csr" ? "CSR" : "Client";
-                    $side   = $m["sender_type"] === "csr" ? "sent" : "received";
-                    $time   = date("M j, Y g:i A", strtotime($m["created_at"]));
-                ?>
-
-                <div class="history-message <?= $side ?>">
-                    <div class="history-bubble">
-                        <?php if ($m["deleted"]): ?>
-                            <i>🗑️ Message deleted</i>
-                        <?php else: ?>
-                            <?= nl2br(htmlspecialchars($m["message"])) ?>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="history-meta">
-                        <span><?= $sender ?></span> • <span><?= $time ?></span>
-                        <?php if ($m["edited"] && !$m["deleted"]): ?>
-                            <span class="edited-tag">(edited)</span>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-            <?php endforeach; ?>
+            <p class="empty-row">No chat messages in this ticket.</p>
         <?php endif; ?>
+
     </div>
 
-    <br>
-
-    <a href="../dashboard/csr_dashboard.php?tab=clients" class="back-btn">⬅ Back to My Clients</a>
+    <a href="history_list.php?client_id=<?= $clientID ?>" class="back-btn">⬅ Back</a>
 
 </div>
-
-</body>
-</html>
