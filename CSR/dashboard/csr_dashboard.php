@@ -24,7 +24,7 @@ $ticketID = intval($_GET["ticket"] ?? 0);
 <!-- CSS -->
 <link rel="stylesheet" href="csr_dashboard.css">
 <link rel="stylesheet" href="../chat/chat.css">
-<link rel="stylesheet" href="../chat/history.css">
+<link rel="stylesheet" href="../history/history.css">
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
 
