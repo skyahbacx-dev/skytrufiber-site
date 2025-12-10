@@ -13,58 +13,100 @@ $csrUser = $_SESSION["csr_user"];
 <meta charset="UTF-8">
 <title>CSR Chat Panel</title>
 
-<!-- FIXED FONT AWESOME (FA 6.5.1) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+<!-- ⭐ PRIMARY FONT AWESOME (LOCAL to avoid CDN blocking) -->
+<link rel="stylesheet" href="/CSR/vendor/fontawesome/css/all.min.css">
 
-<!-- CHAT CSS -->
-<link rel="stylesheet" href="chat.css?v=<?php echo time(); ?>">
+<!-- ⭐ FALLBACK FONT AWESOME (ONLY if local fails) -->
+<link rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- ⭐ CORRECT CHAT CSS PATH -->
+<link rel="stylesheet" href="/CSR/chat/chat.css?v=<?= time(); ?>">
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <style>
-    /* Fix: ensure chat messages do not overlap the input */
-    .chat-wrapper {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        overflow: hidden;
-    }
+/* ---------------- GLOBAL FIXES ---------------- */
 
-    /* Ensure input stays visible and fixed inside wrapper */
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+#chat-container {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Prevent input from overlapping messages */
+.chat-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Chat input bar */
+#chat-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px;
+    border-top: 1px solid #dcdcdc;
+    background: white;
+    z-index: 20;
+}
+
+.chat-input-box {
+    flex: 1;
+}
+
+#chat-input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+}
+
+.chat-send-btn {
+    background: #00a246;
+    border: none;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.chat-send-btn:hover {
+    background: #008639;
+}
+
+/* ---------------- MOBILE FIXES ---------------- */
+@media (max-width: 600px) {
+
     #chat-input-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 14px;
-        border-top: 1px solid #dcdcdc;
-        background: white;
-        z-index: 20;
-    }
-
-    .chat-input-box {
-        flex: 1;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
     }
 
     #chat-input {
-        width: 100%;
-        padding: 12px;
-        border-radius: 12px;
-        border: 1px solid #ccc;
-        font-size: 14px;
+        font-size: 17px;
+        padding: 14px;
     }
 
     .chat-send-btn {
-        background: #00a246;
-        border: none;
-        color: white;
-        padding: 12px 16px;
-        border-radius: 10px;
-        cursor: pointer;
+        padding: 14px 16px;
+        font-size: 18px;
     }
 
-    .chat-send-btn:hover {
-        background: #008639;
+    #scroll-bottom-btn {
+        bottom: 92px !important;
     }
+}
 </style>
 
 </head>
@@ -112,16 +154,16 @@ $csrUser = $_SESSION["csr_user"];
                 </div>
             </div>
 
-            <!-- CHAT MESSAGES (SCROLLABLE) -->
+            <!-- CHAT MESSAGES -->
             <div id="chat-messages" class="chat-messages"></div>
 
-            <!-- SCROLL TO BOTTOM BUTTON -->
+            <!-- SCROLL BUTTON -->
             <button id="scroll-bottom-btn" class="scroll-bottom-btn">
                 <i class="fa-solid fa-arrow-down"></i>
             </button>
 
             <!-- CHAT INPUT AREA -->
-            <div id="chat-input-wrapper" class="chat-input-area">
+            <div id="chat-input-wrapper">
                 <div class="chat-input-box">
                     <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
                 </div>
@@ -131,9 +173,9 @@ $csrUser = $_SESSION["csr_user"];
                 </button>
             </div>
 
-        </div> <!-- /chat-wrapper -->
+        </div>
 
-        <!-- ACTION POPUP MENU -->
+        <!-- ACTION POPUP -->
         <div id="msg-action-popup" class="msg-action-popup">
             <button class="action-edit"><i class="fa-solid fa-pen"></i> Edit</button>
             <button class="action-unsend"><i class="fa-solid fa-ban"></i> Unsend</button>
@@ -141,7 +183,7 @@ $csrUser = $_SESSION["csr_user"];
             <button class="action-cancel">Cancel</button>
         </div>
 
-    </div> <!-- /chat-middle-panel -->
+    </div>
 
     <!-- RIGHT PANEL -->
     <div class="chat-right-panel">
@@ -152,13 +194,16 @@ $csrUser = $_SESSION["csr_user"];
         </div>
     </div>
 
-</div> <!-- /chat-container -->
+</div>
 
 <!-- Hidden CSR username -->
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-<script src="chat.js?v=<?php echo time(); ?>"></script>
+<!-- ⭐ SORTABLE (LOCAL FIXED PATH) -->
+<script src="/CSR/vendor/js/Sortable.min.js"></script>
+
+<!-- ⭐ CORRECT chat.js PATH -->
+<script src="/CSR/chat/chat.js?v=<?= time(); ?>"></script>
 
 </body>
 </html>
