@@ -101,11 +101,11 @@ switch ($tab) {
 
         // If user clicked history ITEM inside My Clients page
         if ($ticketID > 0) {
-            include "../chat/history_view.php";
+            include "../history/history_view.php";
         }
         // Show list of tickets for a client
         else if ($clientID > 0) {
-            include "../chat/history_list.php";
+            include "../history/history_list.php";
         }
         // Regular My Clients page
         else {
