@@ -61,7 +61,9 @@ function matchFilter($m, $filter) {
 }
 ?>
 
-<link rel="stylesheet" href="../history/history.css">
+<link rel="stylesheet" href="../history/history.css?v=<?= time(); ?>">
+<script src="../history/history.js?v=<?= time(); ?>"></script>
+
 
 <h2>📄 Ticket #<?= $ticketID ?> — <?= strtoupper($status) ?></h2>
 
