@@ -39,7 +39,7 @@ $status     = strtolower($row["status"]);
 $createdAt  = date("M j, Y g:i A", strtotime($row["created_at"]));
 
 /* ============================================================
-   FETCH CHAT MESSAGES FOR THIS TICKET
+   FETCH CHAT MESSAGES
 ============================================================ */
 $msgs = $conn->prepare("
     SELECT 
@@ -71,88 +71,145 @@ $logRows = $logs->fetchAll(PDO::FETCH_ASSOC);
 
 <link rel="stylesheet" href="history.css">
 
-<h2>📄 Ticket #<?= $ticketID ?> — <?= strtoupper($status) ?></h2>
+<div class="history-wrapper">
+
+<h2 class="history-title">📄 Ticket #<?= $ticketID ?> — <?= strtoupper($status) ?></h2>
 
 <a href="../dashboard/csr_dashboard.php?tab=clients&client=<?= $clientID ?>" class="back-btn">
     ← Back to Ticket History
 </a>
 
-<p><strong>Client:</strong> <?= $clientName ?> (<?= $acctNo ?>)</p>
-<p><strong>Created:</strong> <?= $createdAt ?></p>
+<p class="history-sub"><strong>Client:</strong> <?= $clientName ?> (<?= $acctNo ?>)</p>
+<p class="history-sub"><strong>Created:</strong> <?= $createdAt ?></p>
 
-<hr>
+<!-- ============================================================
+     SORTING TABS
+============================================================ -->
+<div class="tab-bar">
+    <button class="tab-btn active" data-tab="timeline">📌 Timeline</button>
+    <button class="tab-btn" data-tab="chat">💬 Chat Messages</button>
+    <button class="tab-btn" data-tab="info">ℹ Ticket Info</button>
+</div>
 
-<!-- =========================================
-     TIMELINE
-========================================= -->
-<h3>📌 Ticket Timeline</h3>
+<!-- ============================================================
+     CONTENT SECTIONS
+============================================================ -->
 
-<div class="timeline">
-<?php if (!$logRows): ?>
-    <div class="empty">No timeline logs found.</div>
-<?php else: ?>
-    <?php foreach ($logRows as $log): ?>
-        <div class="log-entry">
-            <div class="log-action"><?= strtoupper($log["action"]) ?></div>
-            <div class="log-by">by <?= htmlspecialchars($log["csr_user"]) ?></div>
-            <div class="log-time"><?= date("M j, Y g:i A", strtotime($log["timestamp"])) ?></div>
+<!-- ===== TIMELINE TAB ===== -->
+<div id="tab-timeline" class="tab-section">
+
+    <h3 class="section-title">📌 Ticket Timeline</h3>
+
+    <div class="timeline">
+    <?php if (!$logRows): ?>
+        <div class="empty">No timeline logs found.</div>
+    <?php else: ?>
+        <?php foreach ($logRows as $log): 
+            $action = strtolower($log["action"]);
+        ?>
+            <div class="log-entry action-<?= $action ?>">
+                <div class="log-action"><?= strtoupper($log["action"]) ?></div>
+                <div class="log-by">by <?= htmlspecialchars($log["csr_user"]) ?></div>
+                <div class="log-time"><?= date("M j, Y g:i A", strtotime($log["timestamp"])) ?></div>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+    </div>
+
+</div>
+
+<!-- ===== CHAT TAB ===== -->
+<div id="tab-chat" class="tab-section hidden">
+
+    <h3 class="section-title">💬 Chat Messages</h3>
+
+    <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="csr">CSR</button>
+        <button class="filter-btn" data-filter="client">Client</button>
+        <button class="filter-btn" data-filter="deleted">Deleted</button>
+    </div>
+
+    <div class="chat-history" id="chatContainer">
+    <?php foreach ($messages as $m): ?>
+        <div class="chat-msg <?= $m['sender_type'] ?> <?= $m['deleted']?'deleted-msg':'' ?>" 
+             data-type="<?= $m['sender_type'] ?>" 
+             data-deleted="<?= $m['deleted'] ?>">
+
+            <div class="bubble">
+                <?php if ($m["deleted"]): ?>
+                    <i>🗑️ Message deleted</i>
+                <?php else: ?>
+                    <?= nl2br(htmlspecialchars($m["message"])) ?>
+                <?php endif; ?>
+            </div>
+
+            <div class="meta">
+                <?= date("M j, Y g:i A", strtotime($m["created_at"])) ?>
+                <?php if ($m["edited"]): ?>
+                    <span class="edited">(edited)</span>
+                <?php endif; ?>
+            </div>
         </div>
     <?php endforeach; ?>
-<?php endif; ?>
-</div>
-
-<hr>
-
-<!-- =========================================
-     CHAT FILTERS
-========================================= -->
-<h3>💬 Chat Messages</h3>
-
-<div class="filters">
-    <a href="?ticket=<?= $ticketID ?>&filter=all" class="filter-btn">All</a>
-    <a href="?ticket=<?= $ticketID ?>&filter=csr" class="filter-btn">CSR</a>
-    <a href="?ticket=<?= $ticketID ?>&filter=client" class="filter-btn">Client</a>
-    <a href="?ticket=<?= $ticketID ?>&filter=deleted" class="filter-btn">Deleted</a>
-</div>
-
-<?php
-$filter = $_GET["filter"] ?? "all";
-
-function matchFilter($m, $filter) {
-    if ($filter === "all") return true;
-    if ($filter === "csr" && $m["sender_type"] === "csr") return true;
-    if ($filter === "client" && $m["sender_type"] !== "csr") return true;
-    if ($filter === "deleted" && $m["deleted"]) return true;
-    return false;
-}
-?>
-
-<div class="chat-history">
-<?php
-$found = false;
-foreach ($messages as $m):
-    if (!matchFilter($m, $filter)) continue;
-    $found = true;
-?>
-    <div class="chat-msg <?= $m['sender_type'] ?>">
-        <div class="bubble">
-            <?php if ($m["deleted"]): ?>
-                <i>🗑️ Message deleted</i>
-            <?php else: ?>
-                <?= nl2br(htmlspecialchars($m["message"])) ?>
-            <?php endif; ?>
-        </div>
-
-        <div class="meta">
-            <?= date("M j, Y g:i A", strtotime($m["created_at"])) ?>
-            <?php if ($m["edited"]): ?>
-                <span class="edited">(edited)</span>
-            <?php endif; ?>
-        </div>
     </div>
-<?php endforeach; ?>
-
-<?php if (!$found): ?>
-    <div class="empty">No messages match this filter.</div>
-<?php endif; ?>
 </div>
+
+<!-- ===== INFO TAB ===== -->
+<div id="tab-info" class="tab-section hidden">
+
+    <h3 class="section-title">ℹ Ticket Information</h3>
+
+    <div class="info-box">
+        <p><strong>Client Name:</strong> <?= $clientName ?></p>
+        <p><strong>Account #:</strong> <?= $acctNo ?></p>
+        <p><strong>Status:</strong> <?= strtoupper($status) ?></p>
+        <p><strong>Created:</strong> <?= $createdAt ?></p>
+    </div>
+
+</div>
+
+<!-- ============================================================
+     JUMP BUTTONS
+============================================================ -->
+<button id="jumpTop" class="jump-btn">🔼</button>
+<button id="jumpBottom" class="jump-btn">🔽</button>
+
+</div> <!-- end wrapper -->
+
+<script>
+// ===================== TABS =====================
+document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const tab = btn.dataset.tab;
+        document.querySelectorAll(".tab-section").forEach(s => s.classList.add("hidden"));
+        document.getElementById("tab-" + tab).classList.remove("hidden");
+    });
+});
+
+// ===================== FILTER CHAT =====================
+document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const filter = btn.dataset.filter;
+        document.querySelectorAll(".chat-msg").forEach(msg => {
+            let show = false;
+            if (filter === "all") show = true;
+            else if (filter === "csr" && msg.dataset.type === "csr") show = true;
+            else if (filter === "client" && msg.dataset.type !== "csr") show = true;
+            else if (filter === "deleted" && msg.dataset.deleted == "1") show = true;
+
+            msg.style.display = show ? "block" : "none";
+        });
+    });
+});
+
+// ===================== JUMP BUTTONS =====================
+document.getElementById("jumpTop").onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+document.getElementById("jumpBottom").onclick = () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+</script>
