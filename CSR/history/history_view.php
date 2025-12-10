@@ -8,13 +8,9 @@ if (!isset($_SESSION["csr_user"])) {
 require "../../db_connect.php";
 
 $ticketID = intval($_GET["ticket"] ?? 0);
-if ($ticketID <= 0) {
-    exit("<h2>Invalid ticket ID.</h2>");
-}
+if ($ticketID <= 0) exit("<h2>Invalid ticket ID.</h2>");
 
-/* ============================================================
-   FETCH TICKET + CLIENT INFO
-============================================================ */
+/* Fetch Ticket + Client info */
 $stmt = $conn->prepare("
     SELECT t.id, t.client_id, t.status, t.created_at,
            u.full_name, u.account_number
@@ -33,9 +29,7 @@ $acctNo     = htmlspecialchars($t["account_number"]);
 $status     = strtolower($t["status"]);
 $createdAt  = date("M j, Y g:i A", strtotime($t["created_at"]));
 
-/* ============================================================
-   FETCH CHAT MESSAGES
-============================================================ */
+/* Fetch chat messages */
 $msgStmt = $conn->prepare("
     SELECT id, sender_type, message, deleted, edited, created_at
     FROM chat
@@ -45,9 +39,7 @@ $msgStmt = $conn->prepare("
 $msgStmt->execute([$ticketID]);
 $messages = $msgStmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* ============================================================
-   FETCH TICKET TIMELINE LOGS
-============================================================ */
+/* Fetch timeline logs */
 $logStmt = $conn->prepare("
     SELECT action, csr_user, timestamp
     FROM ticket_logs
@@ -57,9 +49,7 @@ $logStmt = $conn->prepare("
 $logStmt->execute([$clientID]);
 $logs = $logStmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* ============================================================
-   CHAT FILTER HANDLING
-============================================================ */
+/* Filter handler */
 $filter = $_GET["filter"] ?? "all";
 
 function matchFilter($m, $filter) {
@@ -69,10 +59,9 @@ function matchFilter($m, $filter) {
     if ($filter === "deleted" && $m["deleted"]) return true;
     return false;
 }
-
 ?>
 
-<link rel="stylesheet" href="../history/history.css">
+<link rel="stylesheet" href="history.css">
 
 <h2>📄 Ticket #<?= $ticketID ?> — <?= strtoupper($status) ?></h2>
 
@@ -85,73 +74,65 @@ function matchFilter($m, $filter) {
 
 <hr>
 
-<!-- ============================================================
-   2-COLUMN LAYOUT: TIMELINE LEFT — CHAT RIGHT
-============================================================ -->
+<!-- TWO COLUMN LAYOUT -->
 <div class="history-container">
 
-    <!-- LEFT COLUMN -------------------------------------------------->
+    <!-- LEFT: TIMELINE -->
     <div class="timeline-column">
         <h3>📌 Ticket Timeline</h3>
 
         <div class="timeline">
-            <?php if (!$logs): ?>
-                <div class="empty">No timeline logs found.</div>
-            <?php else: ?>
-                <?php foreach ($logs as $log): ?>
-                    <?php
-                        $action = strtolower($log["action"]);
-                        $colorClass = match($action) {
-                            "pending"     => "tl-pending",
-                            "unresolved"  => "tl-unresolved",
-                            "resolved"    => "tl-resolved",
-                            "assigned"    => "tl-assigned",
-                            "unassigned"  => "tl-unassigned",
-                            default       => "tl-default",
-                        };
-                    ?>
+        <?php if (!$logs): ?>
+            <div class="empty">No timeline logs found.</div>
+        <?php else: ?>
 
-                    <div class="log-entry <?= $colorClass ?>">
-                        <div class="log-bar"></div>
+            <?php foreach ($logs as $log): ?>
+                <?php
+                    $action = strtolower($log["action"]);
+                    $colorClass = match($action) {
+                        "pending"     => "tl-pending",
+                        "unresolved"  => "tl-unresolved",
+                        "resolved"    => "tl-resolved",
+                        "assigned"    => "tl-assigned",
+                        "unassigned"  => "tl-unassigned",
+                        default       => "tl-default",
+                    };
+                ?>
 
-                        <div class="log-content">
-                            <div class="log-action"><?= strtoupper($log["action"]) ?></div>
-                            <div class="log-by">by <?= htmlspecialchars($log["csr_user"]) ?></div>
-                            <div class="log-time">
-                                <?= date("M j, Y g:i A", strtotime($log["timestamp"])) ?>
-                            </div>
-                        </div>
+                <div class="log-entry <?= $colorClass ?>">
+                    <div class="log-bar"></div>
+
+                    <div class="log-content">
+                        <div class="log-action"><?= strtoupper($log["action"]) ?></div>
+                        <div class="log-by">by <?= htmlspecialchars($log["csr_user"]) ?></div>
+                        <div class="log-time"><?= date("M j, Y g:i A", strtotime($log["timestamp"])) ?></div>
                     </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+
+        <?php endif; ?>
         </div>
     </div>
 
-    <!-- RIGHT COLUMN -------------------------------------------------->
+    <!-- RIGHT: CHAT -->
     <div class="chat-column">
 
         <h3>💬 Chat Messages</h3>
 
         <!-- FILTER TABS -->
         <div class="filters">
-            <a href="?ticket=<?= $ticketID ?>&filter=all" 
-               class="filter-btn <?= $filter==='all'?'active':'' ?>">All</a>
-
-            <a href="?ticket=<?= $ticketID ?>&filter=csr" 
-               class="filter-btn <?= $filter==='csr'?'active':'' ?>">CSR</a>
-
-            <a href="?ticket=<?= $ticketID ?>&filter=client" 
-               class="filter-btn <?= $filter==='client'?'active':'' ?>">Client</a>
-
-            <a href="?ticket=<?= $ticketID ?>&filter=deleted" 
-               class="filter-btn <?= $filter==='deleted'?'active':'' ?>">Deleted</a>
+            <a href="?ticket=<?= $ticketID ?>&filter=all" class="filter-btn <?= $filter==='all'?'active':'' ?>">All</a>
+            <a href="?ticket=<?= $ticketID ?>&filter=csr" class="filter-btn <?= $filter==='csr'?'active':'' ?>">CSR</a>
+            <a href="?ticket=<?= $ticketID ?>&filter=client" class="filter-btn <?= $filter==='client'?'active':'' ?>">Client</a>
+            <a href="?ticket=<?= $ticketID ?>&filter=deleted" class="filter-btn <?= $filter==='deleted'?'active':'' ?>">Deleted</a>
         </div>
 
-        <!-- SCROLLABLE CHAT HISTORY -->
+        <!-- CHAT SCROLLER -->
         <div class="chat-history" id="chatHistory">
         <?php
         $found = false;
         foreach ($messages as $m):
+
             if (!matchFilter($m, $filter)) continue;
             $found = true;
 
@@ -173,6 +154,7 @@ function matchFilter($m, $filter) {
                     <?php endif; ?>
                 </div>
             </div>
+
         <?php endforeach; ?>
 
         <?php if (!$found): ?>
@@ -180,20 +162,9 @@ function matchFilter($m, $filter) {
         <?php endif; ?>
         </div>
 
-        <!-- JUMP BUTTONS -->
+        <!-- FLOATING JUMP BUTTONS -->
         <button id="jumpTop" class="jump-btn">⬆ Top</button>
         <button id="jumpBottom" class="jump-btn">⬇ Bottom</button>
+
     </div>
 </div>
-
-<script>
-// Scroll buttons
-document.getElementById("jumpTop").onclick = () =>
-    document.getElementById("chatHistory").scrollTo({ top: 0, behavior: "smooth" });
-
-document.getElementById("jumpBottom").onclick = () =>
-    document.getElementById("chatHistory").scrollTo({ 
-        top: document.getElementById("chatHistory").scrollHeight, 
-        behavior: "smooth" 
-    });
-</script>
