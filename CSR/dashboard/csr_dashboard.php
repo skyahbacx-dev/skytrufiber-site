@@ -24,9 +24,9 @@ $ticketID = intval($_GET["ticket"] ?? 0);
 <!-- CSS -->
 <link rel="stylesheet" href="csr_dashboard.css">
 <link rel="stylesheet" href="../chat/chat.css">
-<link rel="stylesheet" href="../history/history.css">  <!-- FIXED PATH -->
+<link rel="stylesheet" href="../history/history.css"> <!-- FIXED -->
 
-<!-- LOCAL FONTAWESOME -->
+<!-- LOCAL FONT AWESOME (no CDN issues) -->
 <link rel="stylesheet" href="../../vendor/fontawesome/css/all.min.css">
 
 <!-- jQuery -->
@@ -38,7 +38,7 @@ $ticketID = intval($_GET["ticket"] ?? 0);
 <!-- Chat System JS -->
 <script src="../chat/chat.js?v=3"></script>
 
-<!-- History JS (if used) -->
+<!-- History JS (loaded early but harmless) -->
 <script src="../history/history.js?v=3"></script>
 
 <script>
@@ -50,12 +50,12 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 <body>
 
-<!-- LOADING OVERLAY -->
+<!-- GLOBAL LOADER -->
 <div id="loadingOverlay">
     <div class="spinner"></div>
 </div>
 
-<!-- TOP NAV -->
+<!-- TOP NAVBAR -->
 <div class="topnav">
     <button class="hamburger" onclick="toggleSidebar()">☰</button>
 
@@ -73,7 +73,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     </div>
 </div>
 
-<!-- COLLAPSED ICON SIDEBAR (ALWAYS VISIBLE) -->
+<!-- PERMANENT ICON SIDEBAR (collapsed mode) -->
 <div class="sidebar-collapsed">
     <button class="icon-btn" onclick="navigate('chat')" title="Chat">💬</button>
     <button class="icon-btn" onclick="navigate('clients')" title="My Clients">👥</button>
@@ -82,7 +82,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     <button class="icon-btn logout" onclick="window.location='../csr_logout.php'" title="Logout">🚪</button>
 </div>
 
-<!-- FULL SIDEBAR (WHEN EXPANDED) -->
+<!-- EXPANDING SIDEBAR -->
 <div class="sidebar" id="sidebar">
     <div class="side-title">MENU</div>
 
@@ -96,34 +96,48 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<!-- MAIN CONTENT -->
+<!-- MAIN PAGE CONTENT -->
 <div class="dashboard-container">
+
 <?php
 switch ($tab) {
 
+    // ==========================
+    //       MY CLIENTS TAB
+    // ==========================
     case 'clients':
-        // If user clicked a specific ticket in history
+
+        // If user clicked a specific TICKET
         if ($ticketID > 0) {
             include "../history/history_view.php";
         }
-        // If user clicked "History" for a client (list of tickets)
+        // If user clicked HISTORY for a CLIENT
         else if ($clientID > 0) {
             include "../history/history_list.php";
         }
-        // Normal My Clients view
+        // Default My Clients Page
         else {
             include "../clients/my_clients.php";
         }
         break;
 
+    // ==========================
+    //       REMINDERS
+    // ==========================
     case 'reminders':
         include "../reminders/reminders.php";
         break;
 
+    // ==========================
+    //       SURVEY
+    // ==========================
     case 'survey':
         include "../survey/survey_responses.php";
         break;
 
+    // ==========================
+    //       CHAT DASHBOARD
+    // ==========================
     default:
     case 'chat':
         include "../chat/chat.php";
