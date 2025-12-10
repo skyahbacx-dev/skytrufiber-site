@@ -99,9 +99,12 @@ button {
 button:hover { background:#007a99; }
 textarea { height:80px; resize:none; }
 .search-bar {
-  width:100%; padding:9px; margin-top:5px; border-radius:8px; border:1px solid #ccc;
+  width:100%; padding:9px; border-radius:8px; border:1px solid #ccc;
 }
 
+.dropdown-item:hover {
+    background:#e8f4ff;
+}
 </style>
 </head>
 
@@ -134,8 +137,17 @@ textarea { height:80px; resize:none; }
   </select>
 
   <label>Barangay:</label>
-  <input id="barangaySearch" class="search-bar" type="text" placeholder="Search barangay...">
-  <select id="location" name="location" required size="6" style="margin-top:5px;"></select>
+  <div style="position: relative; width: 100%;">
+      <input id="barangaySearch" class="search-bar" type="text" placeholder="Search barangay..." autocomplete="off">
+
+      <select id="location" name="location" required size="1" style="width:100%; height:40px; margin-top:5px;"></select>
+
+      <div id="dropdownList" 
+           style="position:absolute; top:90px; left:0; width:100%; max-height:150px;
+                  overflow-y:auto; background:white; border:1px solid #ccc;
+                  border-radius:8px; display:none; z-index:999;">
+      </div>
+  </div>
 
   <label>Date Installed:</label>
   <input type="date" id="date_installed" name="date_installed" required>
@@ -186,37 +198,65 @@ const barangays = {
 };
 
 const districtSelect = document.getElementById('district');
-const barangayList = document.getElementById('location');
 const barangaySearch = document.getElementById('barangaySearch');
+const dropdownList = document.getElementById('dropdownList');
+const barangaySelect = document.getElementById('location');
 
 districtSelect.addEventListener('change', () => {
-  loadBarangays();
+    barangaySearch.value = "";
+    updateDropdown();
 });
 
-barangaySearch.addEventListener('keyup', () => {
-  loadBarangays(barangaySearch.value.toLowerCase());
+barangaySearch.addEventListener('input', () => {
+    updateDropdown();
+    dropdownList.style.display = "block";
 });
 
-function loadBarangays(filter = "") {
-  const selected = districtSelect.value;
-  barangayList.innerHTML = "";
-
-  if (!barangays[selected]) return;
-
-  barangays[selected].forEach(b => {
-    if (b.toLowerCase().includes(filter)) {
-      const opt = document.createElement("option");
-      opt.value = b;
-      opt.textContent = b;
-      barangayList.appendChild(opt);
+document.addEventListener("click", (event) => {
+    if (!dropdownList.contains(event.target) && event.target !== barangaySearch) {
+        dropdownList.style.display = "none";
     }
-  });
+});
+
+function updateDropdown() {
+    const district = districtSelect.value;
+    dropdownList.innerHTML = "";
+    barangaySelect.innerHTML = "";
+
+    if (!barangays[district]) return;
+
+    const searchText = barangaySearch.value.toLowerCase();
+
+    const filtered = barangays[district].filter(b =>
+        b.toLowerCase().includes(searchText)
+    );
+
+    filtered.forEach(b => {
+        let item = document.createElement("div");
+        item.textContent = b;
+        item.className = "dropdown-item";
+        item.style.padding = "8px";
+        item.style.cursor = "pointer";
+
+        item.addEventListener("click", () => {
+            barangaySearch.value = b;
+            dropdownList.style.display = "none";
+
+            const opt = document.createElement("option");
+            opt.value = b;
+            opt.textContent = b;
+            barangaySelect.innerHTML = "";
+            barangaySelect.appendChild(opt);
+        });
+
+        dropdownList.appendChild(item);
+    });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const d = new Date();
-  document.getElementById("date_installed").value =
-    d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    const d = new Date();
+    document.getElementById("date_installed").value =
+        d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 });
 </script>
 
