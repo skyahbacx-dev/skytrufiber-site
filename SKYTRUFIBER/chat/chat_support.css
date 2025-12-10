@@ -24,6 +24,9 @@
 
     --scroll-btn-bg: #0084ff;
 
+    --ticket-resolved: #27ae60;
+    --ticket-unresolved: #ff4747;
+
     --system-msg-bg: #e8f4ff;
     --system-msg-text: #004a82;
 
@@ -87,7 +90,7 @@ body {
 }
 
 /* ============================================================
-   CHAT MODAL (Desktop + Tablet)
+   CHAT MODAL
 ============================================================ */
 .chat-modal {
     width: 760px;
@@ -97,19 +100,15 @@ body {
     box-shadow: 0 14px 40px rgba(0,0,0,0.25);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
     position: relative;
+    overflow: hidden;
 }
 
-/* ============================================================
-   FULLSCREEN MOBILE CHAT
-============================================================ */
 @media (max-width: 768px) {
     .chat-modal {
         width: 100vw;
         height: 100vh;
         border-radius: 0;
-        box-shadow: none;
     }
 }
 
@@ -138,18 +137,6 @@ body {
     border-radius: 50%;
 }
 
-/* MOBILE HEADER */
-@media (max-width: 768px) {
-    .chat-header {
-        height: 70px;
-        padding: 10px 14px;
-    }
-    .chat-header-logo {
-        width: 38px;
-        height: 38px;
-    }
-}
-
 /* ============================================================
    THEME TOGGLE
 ============================================================ */
@@ -160,10 +147,10 @@ body {
     background: rgba(255,255,255,0.25);
     border: none;
     cursor: pointer;
-    display:flex;
-    justify-content:center;
-    align-items:center;
     position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .theme-icon {
@@ -176,16 +163,7 @@ body {
 .sun-icon { opacity: 0; transform: rotate(-160deg); }
 
 :root[data-theme="dark"] .moon-icon { opacity: 0; transform: rotate(120deg); }
-:root[data-theme="dark"] .sun-icon { opacity: 1; transform: rotate(0); }
-
-/* Adjust for mobile */
-@media (max-width:768px) {
-    #theme-toggle {
-        width: 38px;
-        height: 38px;
-    }
-    .theme-icon { font-size: 18px; }
-}
+:root[data-theme="dark"] .sun-icon { opacity: 1; transform: rotate(0deg); }
 
 /* ============================================================
    MESSAGES AREA
@@ -198,22 +176,58 @@ body {
     display: flex;
     flex-direction: column;
     gap: 18px;
+    position: relative;
 }
 
-/* MOBILE */
-@media (max-width: 768px) {
-    #chat-messages {
-        padding: 16px;
-        gap: 12px;
-    }
-}
-
-/* Scrollbar */
 #chat-messages::-webkit-scrollbar { width: 6px; }
 #chat-messages::-webkit-scrollbar-thumb {
     background: #8dbdff;
     border-radius: 4px;
 }
+
+/* ============================================================
+   SYSTEM + GREETING + SUGGESTION MSGS
+============================================================ */
+.system-message {
+    padding: 14px;
+    margin: 10px auto;
+    border-radius: 12px;
+    max-width: 80%;
+    background: var(--system-msg-bg);
+    color: var(--system-msg-text);
+    font-size: 15px;
+    text-align: center;
+}
+
+.system-suggest .message-bubble {
+    background: var(--suggest-bg);
+    color: var(--suggest-text);
+    padding-bottom: 18px;
+}
+
+.suggest-buttons {
+    margin-top: 10px;
+    gap: 6px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.suggest-btn {
+    padding: 6px 10px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid #d3d3d3;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+:root[data-theme="dark"] .suggest-btn {
+    background: #2c2c2c;
+    border: 1px solid #555;
+    color: #ddd;
+}
+
+.suggest-btn:hover { filter: brightness(.9); }
 
 /* ============================================================
    MESSAGE BUBBLES
@@ -223,11 +237,18 @@ body {
     display: flex;
     gap: 10px;
     align-items: flex-end;
-    position: relative;
+    position: relative; /* REQUIRED for action toolbar */
     opacity: 0;
     transform: translateY(6px);
     animation: msgFade .25s ease forwards;
 }
+
+@keyframes msgFade {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.message.sent { justify-content: flex-end; }
+.message.received { justify-content: flex-start; }
 
 .message-avatar img {
     width: 36px;
@@ -247,14 +268,75 @@ body {
     color: var(--bubble-received-text);
 }
 
-/* Mobile bubble scale */
-@media (max-width: 768px) {
-    .message-avatar img {
-        width: 30px;
-        height: 30px;
-    }
-    .message-content { max-width: 80%; }
-    .message-bubble { padding: 10px 16px; font-size: 14px; }
+.message.sent .message-bubble {
+    background: var(--bubble-sent);
+    color: var(--bubble-sent-text);
+    border-radius: 20px 20px 4px 20px;
+}
+
+.message.received .message-bubble {
+    border-radius: 20px 20px 20px 4px;
+}
+
+.message-time {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 4px;
+}
+
+/* ============================================================
+   ACTION TOOLBAR (FIXED)
+============================================================ */
+.action-toolbar {
+    position: absolute;
+    top: 4px;
+    right: -38px;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.25s;
+    z-index: 9999;
+}
+
+.message.sent .action-toolbar {
+    left: -38px;
+    right: auto;
+}
+
+.message:hover .action-toolbar {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.more-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #fff;
+    border: none;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.25);
+}
+
+/* ============================================================
+   POPUP MENU (Edit / Delete)
+============================================================ */
+#msg-action-popup {
+    position: absolute;
+    background: var(--popup-bg);
+    border-radius: 12px;
+    padding: 6px 0;
+    border: 1px solid var(--popup-border);
+    display: none;
+    z-index: 999999;
+    min-width: 150px;
+}
+
+#msg-action-popup button {
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    color: var(--text);
+    border: none;
+    text-align: left;
 }
 
 /* ============================================================
@@ -265,8 +347,8 @@ body {
     display: flex;
     gap: 10px;
     align-items: center;
-    background: var(--input-bg);
     border-top: 1px solid var(--input-border);
+    background: var(--input-bg);
 }
 
 .chat-input-box {
@@ -283,15 +365,22 @@ body {
     background: none;
 }
 
-/* MOBILE INPUT AREA */
-@media (max-width: 768px) {
-    .chat-input-area { padding: 10px; }
-    .chat-input-box { padding: 12px 16px; }
-    #send-btn { width: 44px; height: 44px; font-size: 17px; }
+#send-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bubble-sent);
+    color: white;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /* ============================================================
-   SCROLL-TO-BOTTOM BUTTON
+   SCROLL-TO-BOTTOM BUTTON (FIXED)
 ============================================================ */
 .scroll-bottom-btn {
     position: absolute;
@@ -300,69 +389,87 @@ body {
     width: 46px;
     height: 46px;
     background: var(--scroll-btn-bg);
-    color:white;
-    border-radius:50%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    opacity:0;
-    pointer-events:none;
-    transition:.25s;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    font-size: 18px;
+    transition: 0.25s;
+    z-index: 99999;
 }
 
-.scroll-bottom-btn.show { opacity:1; pointer-events:auto; }
+.scroll-bottom-btn.show {
+    opacity: 1;
+    pointer-events: auto;
+}
 
-/* MOBILE ADJUSTMENT */
-@media (max-width:768px) {
+/* ============================================================
+   ANIMATIONS FOR SUGGESTIONS + GREETING
+============================================================ */
+@keyframes slideFade {
+    0% {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-in {
+    animation: slideFade 0.45s ease forwards;
+}
+
+.system-suggest,
+.csr-greeting {
+    opacity: 0;
+    animation: slideFade 0.45s ease forwards;
+}
+
+.suggest-buttons .suggest-btn {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: slideFade 0.35s ease forwards;
+}
+
+.suggest-buttons .suggest-btn:nth-child(1) { animation-delay: 0.05s; }
+.suggest-buttons .suggest-btn:nth-child(2) { animation-delay: 0.10s; }
+.suggest-buttons .suggest-btn:nth-child(3) { animation-delay: 0.15s; }
+.suggest-buttons .suggest-btn:nth-child(4) { animation-delay: 0.20s; }
+.suggest-buttons .suggest-btn:nth-child(5) { animation-delay: 0.25s; }
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+@media (max-width: 768px) {
+
+    .chat-header {
+        height: 70px;
+        padding: 10px 14px;
+    }
+
+    #chat-messages {
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .message-bubble {
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+
     .scroll-bottom-btn {
         bottom: 80px;
         width: 40px;
         height: 40px;
         font-size: 16px;
     }
-}
 
-/* ============================================================
-   ACTION TOOLBAR (EDIT / DELETE)
-============================================================ */
-.action-toolbar {
-    position: absolute;
-    top: 4px;
-    right: -38px;
-    opacity: 0;
-    pointer-events: none;
-    transition: 0.25s;
-}
-
-/* FIX: move toolbar inside on mobile */
-@media (max-width: 768px) {
-    .action-toolbar {
-        right: 6px !important;
-        top: -4px !important;
-    }
-}
-
-.message:hover .action-toolbar {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-/* ============================================================
-   POPUP MENU
-============================================================ */
-#msg-action-popup {
-    position: absolute;
-    background: var(--popup-bg);
-    border-radius: 12px;
-    padding: 6px 0;
-    border: 1px solid var(--popup-border);
-    display: none;
-    min-width: 150px;
-    z-index: 999999;
-}
-
-/* MOBILE CENTERING */
-@media (max-width: 768px) {
+    /* Center popup on mobile */
     #msg-action-popup {
         left: 50% !important;
         transform: translateX(-50%);
