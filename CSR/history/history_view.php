@@ -12,56 +12,54 @@ if ($ticketID <= 0) {
     exit("<h2>Invalid ticket ID.</h2>");
 }
 
-/* Fetch ticket info */
-$t = $conn->prepare("
-    SELECT 
-        t.id,
-        t.client_id,
-        t.status,
-        t.created_at,
-        u.full_name,
-        u.account_number
+/* ============================================================
+   FETCH TICKET + CLIENT INFO
+============================================================ */
+$stmt = $conn->prepare("
+    SELECT t.id, t.client_id, t.status, t.created_at,
+           u.full_name, u.account_number
     FROM tickets t
     JOIN users u ON u.id = t.client_id
     WHERE t.id = ?
 ");
-$t->execute([$ticketID]);
-$row = $t->fetch(PDO::FETCH_ASSOC);
+$stmt->execute([$ticketID]);
+$t = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$row) exit("<h2>Ticket not found.</h2>");
+if (!$t) exit("<h2>Ticket not found.</h2>");
 
-$clientID   = $row["client_id"];
-$clientName = htmlspecialchars($row["full_name"]);
-$acctNo     = htmlspecialchars($row["account_number"]);
-$status     = strtolower($row["status"]);
-$createdAt  = date("M j, Y g:i A", strtotime($row["created_at"]));
+$clientID   = $t["client_id"];
+$clientName = htmlspecialchars($t["full_name"]);
+$acctNo     = htmlspecialchars($t["account_number"]);
+$status     = strtolower($t["status"]);
+$createdAt  = date("M j, Y g:i A", strtotime($t["created_at"]));
 
-/* Fetch chat messages */
-$msgs = $conn->prepare("
-    SELECT 
-        id,
-        sender_type,
-        message,
-        deleted,
-        edited,
-        created_at
+/* ============================================================
+   FETCH CHAT MESSAGES
+============================================================ */
+$msgStmt = $conn->prepare("
+    SELECT id, sender_type, message, deleted, edited, created_at
     FROM chat
     WHERE ticket_id = ?
     ORDER BY created_at ASC
 ");
-$msgs->execute([$ticketID]);
-$messages = $msgs->fetchAll(PDO::FETCH_ASSOC);
+$msgStmt->execute([$ticketID]);
+$messages = $msgStmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* Fetch ticket logs */
-$logs = $conn->prepare("
+/* ============================================================
+   FETCH TICKET TIMELINE LOGS
+============================================================ */
+$logStmt = $conn->prepare("
     SELECT action, csr_user, timestamp
     FROM ticket_logs
     WHERE client_id = ?
     ORDER BY timestamp ASC
 ");
-$logs->execute([$clientID]);
-$logRows = $logs->fetchAll(PDO::FETCH_ASSOC);
+$logStmt->execute([$clientID]);
+$logs = $logStmt->fetchAll(PDO::FETCH_ASSOC);
 
+/* ============================================================
+   CHAT FILTER HANDLING
+============================================================ */
 $filter = $_GET["filter"] ?? "all";
 
 function matchFilter($m, $filter) {
@@ -71,75 +69,108 @@ function matchFilter($m, $filter) {
     if ($filter === "deleted" && $m["deleted"]) return true;
     return false;
 }
+
 ?>
 
 <link rel="stylesheet" href="../history/history.css">
 
 <h2>📄 Ticket #<?= $ticketID ?> — <?= strtoupper($status) ?></h2>
 
-<a href="../dashboard/csr_dashboard.php?tab=clients&client=<?= $clientID ?>" 
-   class="back-btn">← Back to Ticket History</a>
+<a href="../dashboard/csr_dashboard.php?tab=clients&client=<?= $clientID ?>" class="back-btn">
+    ← Back to Ticket History
+</a>
 
 <p><strong>Client:</strong> <?= $clientName ?> (<?= $acctNo ?>)</p>
 <p><strong>Created:</strong> <?= $createdAt ?></p>
 
 <hr>
 
-<!-- =======================================================
-     TWO COLUMN LAYOUT — TIMELINE LEFT / CHAT RIGHT
-========================================================== -->
-<div class="history-two-col">
+<!-- ============================================================
+   2-COLUMN LAYOUT: TIMELINE LEFT — CHAT RIGHT
+============================================================ -->
+<div class="history-container">
 
-    <!-- LEFT COLUMN — TIMELINE -->
-    <div class="timeline-col">
+    <!-- LEFT COLUMN -------------------------------------------------->
+    <div class="timeline-column">
         <h3>📌 Ticket Timeline</h3>
 
         <div class="timeline">
-        <?php if (!$logRows): ?>
-            <div class="empty">No timeline logs found.</div>
-        <?php else: ?>
-            <?php foreach ($logRows as $log): 
-                $action = strtolower($log["action"]);
-            ?>
-                <div class="log-entry <?= $action ?>">
-                    <div class="log-action"><?= strtoupper($log["action"]) ?></div>
-                    <div class="log-by">by <?= htmlspecialchars($log["csr_user"]) ?></div>
-                    <div class="log-time"><?= date("M j, Y g:i A", strtotime($log["timestamp"])) ?></div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
+            <?php if (!$logs): ?>
+                <div class="empty">No timeline logs found.</div>
+            <?php else: ?>
+                <?php foreach ($logs as $log): ?>
+                    <?php
+                        $action = strtolower($log["action"]);
+                        $colorClass = match($action) {
+                            "pending"     => "tl-pending",
+                            "unresolved"  => "tl-unresolved",
+                            "resolved"    => "tl-resolved",
+                            "assigned"    => "tl-assigned",
+                            "unassigned"  => "tl-unassigned",
+                            default       => "tl-default",
+                        };
+                    ?>
+
+                    <div class="log-entry <?= $colorClass ?>">
+                        <div class="log-bar"></div>
+
+                        <div class="log-content">
+                            <div class="log-action"><?= strtoupper($log["action"]) ?></div>
+                            <div class="log-by">by <?= htmlspecialchars($log["csr_user"]) ?></div>
+                            <div class="log-time">
+                                <?= date("M j, Y g:i A", strtotime($log["timestamp"])) ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
     </div>
 
-    <!-- RIGHT COLUMN — CHAT -->
-    <div class="chat-col">
+    <!-- RIGHT COLUMN -------------------------------------------------->
+    <div class="chat-column">
+
         <h3>💬 Chat Messages</h3>
 
+        <!-- FILTER TABS -->
         <div class="filters">
-            <a href="?ticket=<?= $ticketID ?>&filter=all" class="filter-btn <?= $filter=='all'?'active':'' ?>">All</a>
-            <a href="?ticket=<?= $ticketID ?>&filter=csr" class="filter-btn <?= $filter=='csr'?'active':'' ?>">CSR</a>
-            <a href="?ticket=<?= $ticketID ?>&filter=client" class="filter-btn <?= $filter=='client'?'active':'' ?>">Client</a>
-            <a href="?ticket=<?= $ticketID ?>&filter=deleted" class="filter-btn <?= $filter=='deleted'?'active':'' ?>">Deleted</a>
+            <a href="?ticket=<?= $ticketID ?>&filter=all" 
+               class="filter-btn <?= $filter==='all'?'active':'' ?>">All</a>
+
+            <a href="?ticket=<?= $ticketID ?>&filter=csr" 
+               class="filter-btn <?= $filter==='csr'?'active':'' ?>">CSR</a>
+
+            <a href="?ticket=<?= $ticketID ?>&filter=client" 
+               class="filter-btn <?= $filter==='client'?'active':'' ?>">Client</a>
+
+            <a href="?ticket=<?= $ticketID ?>&filter=deleted" 
+               class="filter-btn <?= $filter==='deleted'?'active':'' ?>">Deleted</a>
         </div>
 
-        <div class="chat-history">
+        <!-- SCROLLABLE CHAT HISTORY -->
+        <div class="chat-history" id="chatHistory">
         <?php
         $found = false;
         foreach ($messages as $m):
             if (!matchFilter($m, $filter)) continue;
             $found = true;
+
+            $type = $m["deleted"] ? "deleted" : strtolower($m["sender_type"]);
         ?>
-            <div class="chat-msg <?= $m['sender_type'] ?>">
+            <div class="chat-msg <?= $type ?>">
                 <div class="bubble">
                     <?php if ($m["deleted"]): ?>
-                        <i>🗑️ Message deleted</i>
+                        🗑️ <i>Message deleted</i>
                     <?php else: ?>
                         <?= nl2br(htmlspecialchars($m["message"])) ?>
                     <?php endif; ?>
                 </div>
+
                 <div class="meta">
                     <?= date("M j, Y g:i A", strtotime($m["created_at"])) ?>
-                    <?php if ($m["edited"]): ?><span class="edited">(edited)</span><?php endif; ?>
+                    <?php if ($m["edited"]): ?>
+                        <span class="edited">(edited)</span>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endforeach; ?>
@@ -148,6 +179,21 @@ function matchFilter($m, $filter) {
             <div class="empty">No messages match this filter.</div>
         <?php endif; ?>
         </div>
-    </div>
 
+        <!-- JUMP BUTTONS -->
+        <button id="jumpTop" class="jump-btn">⬆ Top</button>
+        <button id="jumpBottom" class="jump-btn">⬇ Bottom</button>
+    </div>
 </div>
+
+<script>
+// Scroll buttons
+document.getElementById("jumpTop").onclick = () =>
+    document.getElementById("chatHistory").scrollTo({ top: 0, behavior: "smooth" });
+
+document.getElementById("jumpBottom").onclick = () =>
+    document.getElementById("chatHistory").scrollTo({ 
+        top: document.getElementById("chatHistory").scrollHeight, 
+        behavior: "smooth" 
+    });
+</script>
