@@ -40,7 +40,7 @@ $tickets = $conn->prepare("
 $tickets->execute([$clientID]);
 $list = $tickets->fetchAll(PDO::FETCH_ASSOC);
 ?>
-<link rel="stylesheet" href="history.css">
+<link rel="stylesheet" href="CSR/chat/history.css">
 
 <h2>📜 Ticket History — <?= $clientName ?> (<?= $acctNo ?>)</h2>
 
