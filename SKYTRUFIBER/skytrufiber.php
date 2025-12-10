@@ -1,387 +1,326 @@
 <?php
+session_start();
 include '../db_connect.php';
 
 $message = '';
-$source = $_GET['source'] ?? '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Handle login POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['password'])) {
 
-    $account_number = trim($_POST['account_number']);
-    $full_name = trim($_POST['full_name']);
-    $email = trim($_POST['email']);
-    $district = trim($_POST['district']);
-    $barangay = trim($_POST['location']);
-    $date_installed = trim($_POST['date_installed']);
-    $remarks = trim($_POST['remarks']);
-    $password = $account_number;
-    $source = trim($_POST['source']);
+    $input   = trim($_POST['full_name']);
+    $password = $_POST['password'];
+    $concern  = trim($_POST['concern'] ?? '');
 
-    if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
-
+    if ($input && $password) {
         try {
-            $conn->beginTransaction();
 
-            $hash = password_hash($password, PASSWORD_BCRYPT);
-
+            // Fetch user by email or full name
             $stmt = $conn->prepare("
-                INSERT INTO users (account_number, full_name, email, password, district, barangay, date_installed, privacy_consent, source, created_at)
-                VALUES (:acc, :name, :email, :pw, :district, :brgy, :installed, 'yes', :source, NOW())
+                SELECT *
+                FROM users
+                WHERE email = :input OR full_name = :input
+                ORDER BY id ASC
+                LIMIT 1
             ");
-            $stmt->execute([
-                ':acc' => $account_number,
-                ':name' => $full_name,
-                ':email' => $email,
-                ':pw' => $hash,
-                ':district' => $district,
-                ':brgy' => $barangay,
-                ':installed' => $date_installed,
-                ':source' => $source
-            ]);
+            $stmt->execute([':input' => $input]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($remarks) {
-                $stmt2 = $conn->prepare("
-                    INSERT INTO survey_responses (client_name, account_number, district, location, feedback, source, created_at)
-                    VALUES (:name, :acc, :district, :brgy, :feedback, :source, NOW())
+            if ($user && password_verify($password, $user['password'])) {
+
+                session_regenerate_id(true);
+
+                // Retrieve latest ticket
+                $ticketStmt = $conn->prepare("
+                    SELECT id, status
+                    FROM tickets
+                    WHERE client_id = :cid
+                    ORDER BY created_at DESC
+                    LIMIT 1
                 ");
-                $stmt2->execute([
-                    ':name' => $full_name,
-                    ':acc' => $account_number,
-                    ':district' => $district,
-                    ':brgy' => $barangay,
-                    ':feedback' => $remarks,
-                    ':source' => $source
-                ]);
+                $ticketStmt->execute([':cid' => $user['id']]);
+                $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
+
+                // Create new ticket if none or resolved
+                if (!$lastTicket || $lastTicket['status'] === 'resolved') {
+
+                    $newTicket = $conn->prepare("
+                        INSERT INTO tickets (client_id, status, created_at)
+                        VALUES (:cid, 'unresolved', NOW())
+                    ");
+                    $newTicket->execute([':cid' => $user['id']]);
+
+                    $ticketId = $conn->lastInsertId();
+                    $ticketWasEmpty = true;
+
+                } else {
+                    $ticketId = $lastTicket['id'];
+                    $ticketWasEmpty = false;
+                }
+
+                // Session variables
+                $_SESSION['client_id']   = $user['id'];
+                $_SESSION['client_name'] = $user['full_name'];
+                $_SESSION['email']       = $user['email'];
+                $_SESSION['ticket_id']   = $ticketId;
+
+                // Check if chat has messages
+                $checkMsgs = $conn->prepare("
+                    SELECT COUNT(*) FROM chat
+                    WHERE ticket_id = :tid
+                ");
+                $checkMsgs->execute([':tid' => $ticketId]);
+                $hasExistingMsgs = ($checkMsgs->fetchColumn() > 0);
+
+                // First: CSR greeting
+                if (!$hasExistingMsgs) {
+
+                    $autoGreet = $conn->prepare("
+                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
+                        VALUES (:tid, :cid, 'csr', 'Good day! How may we assist you today?', TRUE, FALSE, NOW())
+                    ");
+                    $autoGreet->execute([
+                        ':tid' => $ticketId,
+                        ':cid' => $user['id']
+                    ]);
+
+                    $_SESSION['show_suggestions'] = true;
+                }
+
+                // Second: insert client concern
+                if (!empty($concern)) {
+
+                    $insert = $conn->prepare("
+                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
+                        VALUES (:tid, :cid, 'client', :msg, TRUE, FALSE, NOW())
+                    ");
+                    $insert->execute([
+                        ':tid' => $ticketId,
+                        ':cid' => $user['id'],
+                        ':msg' => $concern
+                    ]);
+                }
+
+                // Redirect to chat UI
+                header("Location: chat/chat_support.php?ticket=" . $ticketId);
+                exit;
+
+            } else {
+                $message = "❌ Invalid email/full name or password.";
             }
 
-            $conn->commit();
-            header("Location: skytrufiber.php?msg=success");
-            exit;
-
         } catch (PDOException $e) {
-            $conn->rollBack();
-            $message = '❌ Database error: ' . htmlspecialchars($e->getMessage());
+            $message = "⚠ Database error: " . htmlspecialchars($e->getMessage());
         }
-
     } else {
-        $message = '⚠️ Please fill in all required fields.';
+        $message = "⚠ Please fill in all fields.";
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Customer Registration & Feedback - SkyTruFiber</title>
+<title>SkyTruFiber Customer Portal</title>
 
 <style>
-/* ------------------ GLOBAL ------------------ */
-
-body {
-  font-family: Arial, sans-serif;
-  background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
-  display:flex; 
-  flex-direction:column; 
-  align-items:center; 
-  justify-content:flex-start;
-  min-height:100vh; 
-  margin:0; 
-  padding-top:30px;
+/* ------------------------------------------------------------
+   GLOBAL LAYOUT
+------------------------------------------------------------ */
+body { 
+    margin:0; 
+    font-family:"Segoe UI", Arial, sans-serif; 
+    background:linear-gradient(to bottom right, #cceeff, #e6f7ff);
+    display:flex; 
+    justify-content:center; 
+    align-items:center; 
+    min-height:100vh; 
 }
 
-form {
-  background:#fff; 
-  padding:25px; 
-  border-radius:15px; 
-  width:420px;
-  max-width:95%;
-  box-shadow:0 4px 12px rgba(0,0,0,0.15);
+/* ------------------------------------------------------------
+   CONTAINER (DESKTOP)
+------------------------------------------------------------ */
+.container {
+    background:rgba(255,255,255,0.55);
+    padding:30px;
+    border-radius:20px;
+    backdrop-filter:blur(12px);
+    box-shadow:0 8px 25px rgba(0,0,0,0.15);
+    width:380px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
 }
 
-h2 {
-  text-align:center; 
-  color:#004466; 
-  margin-bottom:15px;
-}
-
-label {
-  font-weight:600; 
-  color:#004466; 
-  display:block; 
-  margin-top:12px;
-}
-
-input, select, textarea {
-  width:100%; 
-  padding:12px; 
-  margin-top:6px; 
-  border-radius:8px; 
-  border:1px solid #ccc;
-  font-size:15px;
-}
-
-/* ------------------ BUTTON ------------------ */
-
-button {
-  width:100%; 
-  padding:12px; 
-  background:#0099cc; 
-  color:white; 
-  border:none;
-  border-radius:8px; 
-  cursor:pointer; 
-  margin-top:18px; 
-  font-weight:bold;
-  font-size:16px;
-}
-
-button:hover {
-  background:#007a99;
-}
-
-/* ------------------ BARANGAY DROPDOWN ------------------ */
-
-.search-bar {
-  width:100%; 
-  padding:12px; 
-  border-radius:8px; 
-  border:1px solid #aaa;
-  margin-top:5px;
-}
-
-.dropdown-panel {
-  position:absolute;
-  width:100%;
-  background:white;
-  border-radius:10px;
-  border:1px solid #ccc;
-  margin-top:2px;
-  max-height:200px;
-  overflow-y:auto;
-  display:none;
-  z-index:1000;
-  box-shadow:0 4px 10px rgba(0,0,0,0.15);
-}
-
-.dropdown-item {
-  padding:12px;
-  cursor:pointer;
-  font-size:15px;
-}
-
-.dropdown-item:hover {
-  background:#e8f4ff;
-}
-
-.no-results {
-  padding:12px;
-  color:#777;
-  font-style:italic;
-}
-
-/* ------------------ IMAGE ------------------ */
-
-.logo-container img {
-  width:140px;
-  border-radius:50%;
-  transition:0.2s;
-}
-
-/* ------------------ MEDIA QUERIES ------------------ */
-
-/* Tablets (iPad) */
-@media (max-width: 900px) {
-  form {
-    width:80%;
-  }
-}
-
-/* Mobile */
+/* ------------------------------------------------------------
+   MOBILE RESPONSIVE CONTAINER
+------------------------------------------------------------ */
 @media (max-width: 600px) {
-
-  body {
-    padding-top:20px;
-  }
-
-  .logo-container img {
-    width:110px;
-  }
-
-  form {
-    width:90%;
-    padding:18px;
-  }
-
-  input, select, textarea {
-    padding:14px;
-    font-size:16px;
-  }
-
-  .search-bar {
-    padding:14px;
-    font-size:16px;
-  }
-
-  button {
-    padding:14px;
-    font-size:18px;
-  }
-
-  .dropdown-item {
-    padding:14px;
-    font-size:16px;
-  }
+    .container {
+        width:90%;
+        padding:22px;
+        border-radius:16px;
+    }
 }
 
+/* ------------------------------------------------------------
+   LOGO
+------------------------------------------------------------ */
+.container img {
+    width:150px; 
+    border-radius:50%; 
+    margin-bottom:15px;
+    transition:.3s;
+}
+
+@media (max-width: 600px) {
+    .container img {
+        width:110px;
+    }
+}
+
+/* ------------------------------------------------------------
+   FORMS
+------------------------------------------------------------ */
+form { 
+    transition:opacity .6s ease, transform .6s ease; 
+}
+
+.hidden { 
+    opacity:0; 
+    transform:translateY(-20px); 
+    pointer-events:none; 
+    position:absolute; 
+    top:0; 
+    left:0; 
+    width:100%; 
+}
+
+/* ------------------------------------------------------------
+   INPUTS
+------------------------------------------------------------ */
+input, textarea {
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border-radius:10px;
+    border:1px solid #ccc;
+    font-size:15px;
+    box-sizing:border-box;
+}
+
+textarea { height:80px; resize:none; }
+
+/* MOBILE INPUTS */
+@media (max-width:600px) {
+    input, textarea {
+        padding:14px;
+        font-size:16px;
+    }
+}
+
+/* ------------------------------------------------------------
+   BUTTONS
+------------------------------------------------------------ */
+button {
+    width:100%;
+    padding:12px;
+    background:#00a6b6;
+    color:white;
+    border:none;
+    border-radius:50px;
+    cursor:pointer;
+    font-weight:bold;
+    font-size:16px;
+    margin-top:10px;
+    transition:.2s;
+}
+
+button:hover { background:#008c96; transform:translateY(-2px); }
+button:active { transform:scale(.97); }
+
+/* MOBILE BUTTON SIZE */
+@media (max-width:600px) {
+    button {
+        padding:14px;
+        font-size:18px;
+    }
+}
+
+/* ------------------------------------------------------------
+   LINKS
+------------------------------------------------------------ */
+a { 
+    display:block; 
+    margin-top:10px; 
+    color:#0077a3; 
+    text-decoration:none; 
+    cursor:pointer; 
+    font-size:14px;
+}
+
+a:hover { text-decoration:underline; }
+
+/* ------------------------------------------------------------
+   MESSAGE AREA
+------------------------------------------------------------ */
+.message { 
+    font-size:0.9em; 
+    margin-bottom:8px; 
+}
+
+.message.error { color:red; }
+.message.success { color:green; }
 </style>
 </head>
 
 <body>
+<div class="container">
 
-<div class="logo-container">
-  <img src="../SKYTRUFIBER.png">
-</div>
+    <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+    <h2>Customer Service Portal</h2>
 
-<form method="POST">
-  <h2>Customer Registration & Feedback</h2>
+<?php if ($message): ?>
+<p class="message error"><?= htmlspecialchars($message) ?></p>
+<?php endif; ?>
 
-  <input type="hidden" name="source" value="<?= htmlspecialchars($source) ?>">
-
-  <label>Account Number:</label>
-  <input type="text" name="account_number" required>
-
-  <label>Full Name:</label>
-  <input type="text" name="full_name" required>
-
-  <label>Email:</label>
-  <input type="email" name="email" required>
-
-  <label>District:</label>
-  <select id="district" name="district" required>
-    <option value="">Select District</option>
-    <option value="District 1">District 1</option>
-    <option value="District 3">District 3</option>
-    <option value="District 4">District 4</option>
-  </select>
-
-  <label>Barangay:</label>
-  <div style="position:relative;">
-      <input id="barangaySearch" class="search-bar" type="text" placeholder="Search barangay..." autocomplete="off">
-      <input type="hidden" id="location" name="location" required>
-      <div id="dropdownList" class="dropdown-panel"></div>
-  </div>
-
-  <label>Date Installed:</label>
-  <input type="date" id="date_installed" name="date_installed" required>
-
-  <label>Feedback / Comments:</label>
-  <textarea name="remarks" required></textarea>
-
-  <button type="submit">Submit</button>
-
-  <?php if ($message): ?>
-    <p style="color:red; text-align:center;"><?= htmlspecialchars($message) ?></p>
-  <?php endif; ?>
-
-  <p style="text-align:center; margin-top:10px;">Already registered? <a href="skytrufiber.php">Login here</a></p>
+<!-- LOGIN FORM -->
+<form id="loginForm" method="POST">
+    <input type="text" name="full_name" placeholder="Email or Full Name" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <textarea name="concern" placeholder="Concern / Inquiry"></textarea>
+    <button type="submit">Submit</button>
+    <a id="forgotLink">Forgot Password?</a>
 </form>
 
+<!-- FORGOT PASSWORD FORM -->
+<form id="forgotForm" class="hidden">
+    <p>Enter your email to receive your account number:</p>
+    <input type="email" name="forgot_email" placeholder="Email" required>
+    <button type="submit">Send my account number</button>
+    <p class="message" id="forgotMessage"></p>
+    <a id="backToLogin">Back to Login</a>
+</form>
+
+<p>No account yet? <a href="consent.php">Register here</a></p>
+
+</div>
+
 <script>
-const barangays = {
-  "District 1": [
-"Alicia (Bago Bantay)","Bagong Pag-asa (North EDSA / Triangle Park)","Bahay Toro (Project 8)","Balingasa (Balintawak / Cloverleaf)",
-"Bungad (Project 7)","Damar","Damayan (San Francisco del Monte / Frisco)","Del Monte (San Francisco del Monte / Frisco)",
-"Katipunan (Muñoz)","Lourdes (Sta. Mesa Heights)","Maharlika (Sta. Mesa Heights)","Manresa","Mariblo (SFDM / Frisco)","Masambong",
-"N.S. Amoranto (Gintong Silahis, La Loma)","Nayong Kanluran","Paang Bundok (La Loma)","Pag-ibig sa Nayon (Balintawak)","Paltok (SFDM / Frisco)",
-"Paraiso (SFDM / Frisco)","Phil-Am (West Triangle)","Project 6 (Diliman / Triangle Park)","Ramon Magsaysay (Bago Bantay)",
-"Saint Peter (Sta. Mesa Heights)","Salvacion (La Loma)","San Antonio (SFDM / Frisco)","San Isidro Labrador (La Loma)","San Jose (La Loma)",
-"Santa Cruz (Pantranco / Heroes Hill)","Santa Teresita (Sta. Mesa Heights)","Santo Domingo (Matalahib)","Siena","Sto. Cristo (Bago Bantay)",
-"Talayan","Vasra (Diliman)","Veterans Village (Project 7 / Muñoz)","West Triangle"
-  ],
-  "District 3": [
-"Camp Aguinaldo","Pansol (Balara)","Mangga (Cubao)","San Roque (Cubao)","Silangan (Cubao)","Socorro (Araneta City)","Bagumbayan (Eastwood)",
-"Libis (Eastwood)","Ugong Norte (Green Meadows / Corinthian / Ortigas)","Masagana (Jacobo Zobel)","Loyola Heights (Katipunan)",
-"Matandang Balara (Old Balara)","East Kamias (Project 1)","Quirino 2-A (Project 2 / Anonas)","Quirino 2-B (Project 2 / Anonas)",
-"Quirino 2-C (Project 2 / Anonas)","Amihan (Project 3)","Claro (Quirino 3-B)","Duyan-duyan (Project 3)","Quirino 3-A (Project 3 / Anonas)",
-"Bagumbuhay (Project 4)","Bayanihan (Project 4)","Blue Ridge A (Project 4)","Blue Ridge B (Project 4)","Dioquino Zobel (Project 4)",
-"Escopa I","Escopa II","Escopa III","Escopa IV","Marilag (Project 4)","Milagrosa (Project 4)","Tagumpay (Project 4)",
-"Villa Maria Clara (Project 4)","E. Rodriguez (Project 5 / Cubao)","West Kamias (Project 5 / Kamias)","St. Ignatius","White Plains"
-  ],
-  "District 4": [
-"Bagong Lipunan ng Crame (Camp Crame)","Botocan (Diliman)","Central (Diliman)","Damayang Lagi (New Manila)","Don Manuel (Galas)",
-"Doña Aurora (Galas)","Doña Imelda (Sta. Mesa / Galas)","Doña Josefa (Galas)","Horseshoe","Immaculate Concepcion (Cubao)",
-"Kalusugan (St. Luke’s)","Kamuning","Kaunlaran (Cubao)","Kristong Hari","Krus na Ligas (Diliman)","Laging Handa (Diliman)",
-"Malaya (Diliman)","Mariana (New Manila)","Obrero (Project 1)","Old Capitol Site (Diliman)","Paligsahan (Diliman)","Pinagkaisahan (Cubao)",
-"Pinyahan (Triangle Park)","Roxas (Project 1)","Sacred Heart (Kamuning)","San Isidro Galas (Galas)","San Martin de Porres (Cubao)",
-"San Vicente (Diliman)","Santol","Sikatuna Village (Diliman)","South Triangle (Diliman)","Sto. Niño (Galas)","Tatalon",
-"Teacher's Village East (Diliman)","Teacher's Village West (Diliman)","U.P. Campus (Diliman)","U.P. Village (Diliman)",
-"Valencia (Gilmore / N. Domingo)"
-  ]
-};
+const loginForm = document.getElementById('loginForm');
+const forgotForm = document.getElementById('forgotForm');
+const forgotLink = document.getElementById('forgotLink');
+const backToLogin = document.getElementById('backToLogin');
 
-const districtSelect = document.getElementById('district');
-const barangaySearch = document.getElementById('barangaySearch');
-const dropdownList = document.getElementById('dropdownList');
-const hiddenBarangay = document.getElementById('location');
-
-districtSelect.addEventListener('change', () => {
-    barangaySearch.value = "";
-    hiddenBarangay.value = "";
-    dropdownList.style.display = "none";
+forgotLink.addEventListener('click', e => {
+    e.preventDefault();
+    loginForm.classList.add('hidden');
+    forgotForm.classList.remove('hidden');
 });
 
-barangaySearch.addEventListener('input', () => {
-    updateDropdown();
-});
-
-document.addEventListener("click", (event) => {
-    if (!dropdownList.contains(event.target) && event.target !== barangaySearch) {
-        dropdownList.style.display = "none";
-    }
-});
-
-function updateDropdown() {
-    const district = districtSelect.value;
-    const searchText = barangaySearch.value.toLowerCase();
-
-    dropdownList.innerHTML = "";
-
-    if (!barangays[district]) {
-        dropdownList.style.display = "none";
-        return;
-    }
-
-    const filtered = barangays[district].filter(b =>
-        b.toLowerCase().includes(searchText)
-    );
-
-    if (filtered.length === 0) {
-        dropdownList.innerHTML = `<div class="no-results">No results found</div>`;
-        dropdownList.style.display = "block";
-        return;
-    }
-
-    filtered.forEach(b => {
-        const div = document.createElement("div");
-        div.className = "dropdown-item";
-        div.textContent = b;
-
-        div.addEventListener("click", () => {
-            barangaySearch.value = b;
-            hiddenBarangay.value = b;
-            dropdownList.style.display = "none";
-        });
-
-        dropdownList.appendChild(div);
-    });
-
-    dropdownList.style.display = "block";
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const d = new Date();
-    document.getElementById("date_installed").value =
-        d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+backToLogin.addEventListener('click', e => {
+    e.preventDefault();
+    forgotForm.classList.add('hidden');
+    loginForm.classList.remove('hidden');
 });
 </script>
 
