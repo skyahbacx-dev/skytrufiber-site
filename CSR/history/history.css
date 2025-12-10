@@ -119,3 +119,60 @@ h2, h3 {
 
 #jumpTop { bottom: 80px; }
 #jumpBottom { bottom: 20px; }
+/* TWO-COLUMN LAYOUT */
+.history-two-col {
+    display: flex;
+    width: 100%;
+    gap: 18px;
+    margin-top: 10px;
+}
+
+/* LEFT TIMELINE (40%) */
+.timeline-col {
+    width: 40%;
+    background: #f4fff4;
+    padding: 14px;
+    border-radius: 8px;
+    height: calc(100vh - 220px);
+    overflow-y: auto;
+    border: 1px solid #d4ecd4;
+}
+
+/* RIGHT CHAT (60%) */
+.chat-col {
+    width: 60%;
+    background: #f4fff4;
+    padding: 14px;
+    border-radius: 8px;
+    height: calc(100vh - 220px);
+    overflow-y: auto;
+    border: 1px solid #d4ecd4;
+}
+
+/* Scrollbar styling */
+.timeline-col::-webkit-scrollbar,
+.chat-col::-webkit-scrollbar {
+    width: 6px;
+}
+.timeline-col::-webkit-scrollbar-thumb,
+.chat-col::-webkit-scrollbar-thumb {
+    background: #0ba34d;
+    border-radius: 6px;
+}
+
+/* TIMELINE COLOR CODING */
+.log-entry.pending { border-left: 4px solid orange; }
+.log-entry.assigned { border-left: 4px solid royalblue; }
+.log-entry.unassigned { border-left: 4px solid gray; }
+.log-entry.resolved { border-left: 4px solid green; }
+.log-entry.unresolved { border-left: 4px solid red; }
+
+/* Log entry style */
+.log-entry {
+    background: white;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border-left-width: 4px;
+    border-left-style: solid;
+}
