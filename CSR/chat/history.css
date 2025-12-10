@@ -102,3 +102,74 @@
     text-align: center;
     color: #777;
 }
+/* Filters */
+.filters {
+    margin: 10px 0;
+    display: flex;
+    gap: 10px;
+}
+.filter-btn {
+    padding: 6px 14px;
+    background: #e2ffe7;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #05702e;
+    font-weight: bold;
+    border: 1px solid #aee8b8;
+}
+.filter-btn:hover {
+    background: #caffd1;
+}
+
+/* Timeline styling */
+.timeline {
+    border-left: 3px solid #05702e;
+    padding-left: 15px;
+    margin-bottom: 20px;
+}
+.log-entry {
+    margin-bottom: 12px;
+}
+.log-action {
+    font-weight: bold;
+    color: #05702e;
+}
+.log-by {
+    color: #444;
+}
+.log-time {
+    font-size: 12px;
+    color: #777;
+}
+
+/* Chat messages */
+.chat-history {
+    margin-top: 15px;
+}
+.chat-msg {
+    margin-bottom: 15px;
+}
+.chat-msg.csr .bubble {
+    background: #d5ffd9;
+}
+.chat-msg.client .bubble {
+    background: #e8f1ff;
+}
+.bubble {
+    padding: 10px;
+    border-radius: 12px;
+    margin-bottom: 4px;
+}
+.meta {
+    font-size: 12px;
+    color: #666;
+}
+.edited {
+    color: #999;
+    font-style: italic;
+}
+.empty {
+    padding: 20px;
+    text-align: center;
+    color: #777;
+}
