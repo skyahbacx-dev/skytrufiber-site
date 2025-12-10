@@ -8,7 +8,7 @@ if (!isset($_SESSION['csr_user'])) {
 
 $csrUser     = $_SESSION["csr_user"];
 $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
-$tab = $_GET['tab'] ?? 'chat';
+$tab         = $_GET['tab'] ?? 'chat';
 
 /* OPTIONAL history parameters */
 $clientID = intval($_GET["client"] ?? 0);
@@ -31,7 +31,7 @@ $ticketID = intval($_GET["ticket"] ?? 0);
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<!-- Dashboard JS -->
+<!-- Dashboard JS (only once) -->
 <script src="csr_dashboard.js?v=2"></script>
 
 <!-- Chat System JS -->
@@ -67,6 +67,7 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
         <a href="../csr_logout.php" class="logout-btn">Logout</a>
     </div>
 </div>
+
 <!-- COLLAPSED ICON SIDEBAR (ALWAYS VISIBLE) -->
 <div class="sidebar-collapsed">
     <button class="icon-btn" onclick="navigate('chat')" title="Chat">💬</button>
@@ -90,24 +91,21 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-
 <!-- MAIN CONTENT -->
 <div class="dashboard-container">
-
 <?php
 switch ($tab) {
 
     case 'clients':
-
-        // If user clicked history ITEM inside My Clients page
+        // If user clicked a specific ticket in history
         if ($ticketID > 0) {
             include "../history/history_view.php";
         }
-        // Show list of tickets for a client
+        // If user clicked "History" for a client (list of tickets)
         else if ($clientID > 0) {
             include "../history/history_list.php";
         }
-        // Regular My Clients page
+        // Normal My Clients view
         else {
             include "../clients/my_clients.php";
         }
@@ -129,6 +127,5 @@ switch ($tab) {
 ?>
 </div>
 
-<script src="csr_dashboard.js"></script>
 </body>
 </html>
