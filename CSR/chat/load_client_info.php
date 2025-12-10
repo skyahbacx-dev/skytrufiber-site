@@ -20,6 +20,7 @@ $stmt = $conn->prepare("
         district,
         barangay,
         date_installed,
+        created_at,        -- Added registration date
         assigned_csr,
         is_online,
         is_locked,
@@ -43,7 +44,7 @@ $isAssignedToMe = ($u["assigned_csr"] === $csrUser) ? "yes" : "no";
 $isLocked       = ($u["ticket_lock"] == 1 ? "true" : "false");
 
 /* ============================================================
-   FETCH LATEST ACTIVE TICKET FOR THIS CLIENT
+   FETCH LATEST ACTIVE TICKET
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT id, status
@@ -59,7 +60,18 @@ $ticketID     = $ticket["id"] ?? 0;
 $ticketStatus = strtolower($ticket["status"] ?? "none");
 
 /* ============================================================
-   OUTPUT META FOR chat.js
+   COUNT TOTAL TICKETS
+============================================================ */
+$stmt = $conn->prepare("
+    SELECT COUNT(*)
+    FROM tickets
+    WHERE client_id = ?
+");
+$stmt->execute([$clientID]);
+$totalTickets = $stmt->fetchColumn();
+
+/* ============================================================
+   META FOR chat.js
 ============================================================ */
 echo "
 <div id='client-meta'
@@ -79,6 +91,12 @@ echo "
     <p><strong>District:</strong> <?= htmlspecialchars($u["district"]) ?></p>
     <p><strong>Barangay:</strong> <?= htmlspecialchars($u["barangay"]) ?></p>
     <p><strong>Date Installed:</strong> <?= htmlspecialchars($u["date_installed"]) ?></p>
+
+    <p><strong>Registered On:</strong> 
+        <?= htmlspecialchars(date("F d, Y", strtotime($u["created_at"]))) ?>
+    </p>
+
+    <p><strong>Total Tickets:</strong> <?= $totalTickets ?></p>
 
     <p><strong>Assigned CSR:</strong> 
         <?= $u["assigned_csr"] ? htmlspecialchars($u["assigned_csr"]) : "Unassigned" ?>
@@ -101,7 +119,9 @@ echo "
     <hr>
 
     <p><strong>Online Status:</strong>
-        <?= $u["is_online"] ? "<span style='color:green;'>● Online</span>" : "<span style='color:red;'>● Offline</span>" ?>
+        <?= $u["is_online"] 
+            ? "<span style='color:green;'>● Online</span>" 
+            : "<span style='color:red;'>● Offline</span>" ?>
     </p>
 
     <p><strong>Locked:</strong>
