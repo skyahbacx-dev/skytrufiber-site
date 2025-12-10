@@ -1,10 +1,10 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — TICKET-BASED CHAT (FINAL VERSION)
-// Each ticket has its own chat. No more mixing of old messages.
+// SkyTruFiber CSR Chat System — FINAL TICKET-BASED VERSION
+// Cleaned, fixed, fully synced with updated PHP backend
 // ============================================================
 
 let currentClientID = null;
-let currentTicketID = null;   // 🔥 NEW — CRITICAL FIX
+let currentTicketID = null;
 let messageInterval = null;
 let clientRefreshInterval = null;
 let editing = false;
@@ -13,11 +13,11 @@ let currentTicketFilter = "all"; // all | unresolved | pending | resolved
 
 $(document).ready(function () {
 
-    // INITIAL LOAD --------------------------------------------
+    // INITIAL LOAD ------------------------------------------------
     loadClients();
     clientRefreshInterval = setInterval(loadClients, 4000);
 
-    // SEARCH BAR ----------------------------------------------
+    // SEARCH ------------------------------------------------------
     $("#client-search").on("keyup", function () {
         const q = $(this).val().toLowerCase();
         $("#client-list .client-item").each(function () {
@@ -25,7 +25,7 @@ $(document).ready(function () {
         });
     });
 
-    // FILTER BUTTONS ------------------------------------------
+    // FILTER ------------------------------------------------------
     $(document).on("click", ".ticket-filter", function () {
         currentTicketFilter = $(this).data("filter");
         $(".ticket-filter").removeClass("active");
@@ -33,7 +33,7 @@ $(document).ready(function () {
         loadClients();
     });
 
-    // SELECT CLIENT -------------------------------------------
+    // SELECT CLIENT ----------------------------------------------
     $(document).on("click", ".client-item", function (e) {
 
         if ($(e.target).closest(".assign-btn, .unassign-btn, .locked-icon").length)
@@ -47,14 +47,13 @@ $(document).ready(function () {
 
         $("#chat-messages").html("");
 
-        // Load CSR-side info INCLUDING TICKET ID
         loadClientInfo(currentClientID);
 
         if (messageInterval) clearInterval(messageInterval);
         messageInterval = setInterval(fetchNewMessages, 1000);
     });
 
-    // SEND MESSAGE --------------------------------------------
+    // SEND MESSAGE ------------------------------------------------
     $("#send-btn").click(sendMessage);
     $("#chat-input").keypress(e => {
         if (e.which === 13) {
@@ -63,7 +62,7 @@ $(document).ready(function () {
         }
     });
 
-    // SCROLL HANDLING -----------------------------------------
+    // SCROLL BUTTON ----------------------------------------------
     $("#chat-messages").on("scroll", function () {
         const box = this;
         const dist = box.scrollHeight - box.clientHeight - box.scrollTop;
@@ -71,14 +70,14 @@ $(document).ready(function () {
     });
     $("#scroll-bottom-btn").click(scrollToBottom);
 
-    // CLOSE POPUP ---------------------------------------------
+    // CLOSE POPUP -------------------------------------------------
     $(document).on("click", e => {
         if (!$(e.target).closest("#msg-action-popup, .more-btn").length) {
             closeActionPopup();
         }
     });
 
-    // STATUS UPDATE -------------------------------------------
+    // CHANGE TICKET STATUS ---------------------------------------
     $(document).on("change", "#ticket-status-dropdown", function () {
 
         if (!currentClientID || !currentTicketID) return;
@@ -87,17 +86,19 @@ $(document).ready(function () {
             client_id: currentClientID,
             ticket_id: currentTicketID,
             status: $(this).val()
-        }, (res) => {
+        }, res => {
 
             if (res === "OK") {
                 loadClientInfo(currentClientID);
                 loadMessages(true);
                 loadClients();
-            } else alert("Failed to update ticket.");
+            } else {
+                alert("Failed to update ticket.");
+            }
         });
     });
 
-    // ASSIGN / UNASSIGN / TRANSFER ----------------------------
+    // ASSIGN, UNASSIGN, TRANSFER ---------------------------------
     $(document).on("click", ".assign-btn", function () {
         $.post("../chat/assign_client.php", {
             action: "assign",
@@ -152,7 +153,7 @@ $(document).ready(function () {
 });
 
 // ============================================================
-// ASSIGN RESPONSE HANDLER
+// HANDLE ASSIGN RESULTS
 // ============================================================
 function handleAssignResponse(res) {
 
@@ -183,7 +184,7 @@ function handleAssignResponse(res) {
 }
 
 // ============================================================
-// SCROLL
+// SCROLL to Bottom
 // ============================================================
 function scrollToBottom() {
     const box = $("#chat-messages");
@@ -196,13 +197,15 @@ function scrollToBottom() {
 function loadClients() {
     $.post("../chat/load_clients.php", { filter: currentTicketFilter }, html => {
         $("#client-list").html(html);
-        if (currentClientID)
+
+        if (currentClientID) {
             $(`.client-item[data-id='${currentClientID}']`).addClass("active-client");
+        }
     });
 }
 
 // ============================================================
-// LOAD CLIENT INFO + UPDATE TICKET ID
+// LOAD CLIENT INFO (ALSO SET TICKET ID)
 // ============================================================
 function loadClientInfo(id) {
 
@@ -229,7 +232,7 @@ function loadClientInfo(id) {
 }
 
 // ============================================================
-// PERMISSIONS
+// CHAT PERMISSION CONTROL
 // ============================================================
 function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
 
@@ -280,7 +283,7 @@ function loadMessages(scrollBottom = false) {
 }
 
 // ============================================================
-// FETCH NEW MESSAGES
+// FETCH NEW MESSAGES (NO DUPLICATES)
 // ============================================================
 function fetchNewMessages() {
 
@@ -289,6 +292,12 @@ function fetchNewMessages() {
     $.post("../chat/load_messages.php", {
         ticket_id: currentTicketID
     }, html => {
+
+        // If resolved, HTML will be a notice.
+        if (html.includes("resolved") && html.includes("history")) {
+            $("#chat-messages").html(html);
+            return;
+        }
 
         const temp = $("<div>").html(html);
 
@@ -304,7 +313,7 @@ function fetchNewMessages() {
 }
 
 // ============================================================
-// SEND MESSAGE — USES BOTH client_id + ticket_id
+// SEND MESSAGE
 // ============================================================
 function sendMessage() {
 
@@ -317,7 +326,7 @@ function sendMessage() {
         client_id: currentClientID,
         ticket_id: currentTicketID,
         message: msg
-    }, (res) => {
+    }, res => {
 
         if (res.status === "blocked" || res.status === "locked") {
             alert(res.msg);
