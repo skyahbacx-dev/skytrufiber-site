@@ -28,27 +28,22 @@ $ticketStatus = strtolower($ticket["ticket_status"]);
 $client_id    = intval($ticket["client_id"]);
 
 /* ============================================================
-   FETCH LOG TIMES (PENDING / RESOLVED)
-   NOTE: ticket_logs uses client_id (NOT ticket_id)
+   IF TICKET IS RESOLVED → DO NOT LOAD OLD MESSAGES
 ============================================================ */
-function getLogTime($conn, $client_id, $actionName) {
-    $stmt = $conn->prepare("
-        SELECT timestamp
-        FROM ticket_logs
-        WHERE client_id = ? AND action = ?
-        ORDER BY timestamp ASC
-        LIMIT 1
-    ");
-    $stmt->execute([$client_id, $actionName]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    return $row ? $row["timestamp"] : null;
+if ($ticketStatus === "resolved") {
+
+    echo "
+    <p style='text-align:center;color:#777;padding:20px;'>
+        This ticket has been <strong>resolved</strong>.<br>
+        Chat history is available in <b>My Clients → Chat History</b>.
+    </p>
+    ";
+
+    exit;
 }
 
-$resolvedAt = getLogTime($conn, $client_id, "resolved");
-$pendingAt  = getLogTime($conn, $client_id, "pending");
-
 /* ============================================================
-   FETCH CHAT MESSAGES — FILTERED BY ticket_id ONLY
+   FETCH CHAT MESSAGES — ONLY FOR THIS ACTIVE TICKET
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, deleted, edited, created_at
@@ -59,33 +54,16 @@ $stmt = $conn->prepare("
 $stmt->execute([$ticket_id]);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+/* ============================================================
+   NO MESSAGES YET
+============================================================ */
 if (!$rows) {
     echo "<p style='text-align:center;color:#999;padding:10px;'>No messages yet.</p>";
     exit;
 }
 
 /* ============================================================
-   DIVIDER HTML
-============================================================ */
-$resolvedDividerHTML = $resolvedAt ? "
-    <div class='system-divider'>
-        <span>Ticket marked <strong>RESOLVED</strong> on " .
-        date("M j, Y g:i A", strtotime($resolvedAt)) . "</span>
-    </div>
-" : "";
-
-$pendingDividerHTML = $pendingAt ? "
-    <div class='system-divider'>
-        <span>Ticket placed <strong>PENDING</strong> on " .
-        date("M j, Y g:i A", strtotime($pendingAt)) . "</span>
-    </div>
-" : "";
-
-$printedResolved = false;
-$printedPending  = false;
-
-/* ============================================================
-   RENDER MESSAGES
+   RENDER CHAT THREAD
 ============================================================ */
 foreach ($rows as $msg) {
 
@@ -94,24 +72,12 @@ foreach ($rows as $msg) {
     $msgTime = strtotime($msg["created_at"]);
     $timeFmt = date("M j g:i A", $msgTime);
 
-    /* ------- Insert PENDING divider ------- */
-    if ($pendingAt && !$printedPending && $msgTime > strtotime($pendingAt)) {
-        echo $pendingDividerHTML;
-        $printedPending = true;
-    }
-
-    /* ------- Insert RESOLVED divider ------- */
-    if ($resolvedAt && !$printedResolved && $msgTime > strtotime($resolvedAt)) {
-        echo $resolvedDividerHTML;
-        $printedResolved = true;
-    }
-
-    /* ------- Determine message side ------- */
+    /* Determine the bubble side */
     $side = ($sender === "csr") ? "sent" : "received";
 
     echo "<div class='message $side' data-msg-id='$id'>";
 
-    /* ------- Avatar for client messages ------- */
+    /* Avatar for client messages */
     if ($side === "received") {
         echo "
             <div class='message-avatar'>
@@ -124,7 +90,7 @@ foreach ($rows as $msg) {
 
     echo "<div class='message-content'>";
 
-    /* ------- Action menu only for CSR messages ------- */
+    /* CSR message menu */
     if ($sender === "csr" && !$msg["deleted"]) {
         echo "
             <button class='more-btn' data-id='$id'>
@@ -133,7 +99,7 @@ foreach ($rows as $msg) {
         ";
     }
 
-    /* ------- Message Bubble ------- */
+    /* Message Bubble */
     echo "<div class='message-bubble'>";
 
     if ($msg["deleted"]) {
@@ -142,17 +108,17 @@ foreach ($rows as $msg) {
         echo "<div class='msg-text'>" . nl2br(htmlspecialchars($msg["message"])) . "</div>";
     }
 
-    echo "</div>"; // bubble
+    echo "</div>"; // bubble end
 
-    /* ------- Edited Label ------- */
+    /* Edited label */
     if ($msg["edited"] && !$msg["deleted"]) {
         echo "<div class='edited-label'>(edited)</div>";
     }
 
-    /* ------- Timestamp ------- */
+    /* Timestamp */
     echo "<div class='message-time'>$timeFmt</div>";
 
-    echo "</div></div>"; // end wrappers
+    echo "</div></div>"; // content + wrapper end
 }
 
 ?>
