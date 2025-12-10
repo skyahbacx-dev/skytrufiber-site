@@ -461,7 +461,29 @@ body {
         padding: 10px 14px;
         font-size: 14px;
     }
+/* ============================================================
+   SMALL PHONE SCREENS — < 390px width
+============================================================ */
+@media (max-width: 390px) {
 
+    .chat-input-area {
+        padding: 10px;
+    }
+
+    .chat-input-box {
+        padding: 12px 14px;
+    }
+
+    .chat-input-box input {
+        font-size: 16px;
+    }
+
+    #send-btn {
+        width: 42px;
+        height: 42px;
+        font-size: 16px;
+    }
+}
     .scroll-bottom-btn {
         bottom: 80px;
         width: 40px;
@@ -473,5 +495,32 @@ body {
     #msg-action-popup {
         left: 50% !important;
         transform: translateX(-50%);
+    }
+}
+
+/* ============================================================
+   MOBILE RESPONSIVE BEHAVIOR (iPhone, Android)
+============================================================ */
+@media (max-width: 768px) {
+
+    /* Safe-area support for iPhone 11+ notch */
+    .chat-input-area {
+        padding: 12px;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    }
+
+    .chat-input-box {
+        padding: 14px 16px;
+        border-radius: 25px;
+    }
+
+    .chat-input-box input {
+        font-size: 17px;   /* Prevents iOS zoom issue */
+    }
+
+    #send-btn {
+        width: 46px;
+        height: 46px;
+        font-size: 17px;
     }
 }
