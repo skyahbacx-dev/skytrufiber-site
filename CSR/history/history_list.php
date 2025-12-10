@@ -111,10 +111,5 @@ if (!$tickets) {
 ?>
 </div>
 
-<script>
-// Jump buttons
-document.getElementById("jumpTop").onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
-document.getElementById("jumpBottom").onclick = () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+<script src="../history/history.js"></script>
 
-// Infinite scroll (loads visually only, no ajax needed)
-</script>
