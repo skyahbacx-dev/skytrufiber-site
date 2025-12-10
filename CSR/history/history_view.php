@@ -47,7 +47,7 @@ $logs->execute([$clientID]);
 $logRows = $logs->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<link rel="stylesheet" href="history.css">
+
 
 <h2>📄 Ticket #<?= $ticketID ?> — <?= strtoupper($ticket["status"]) ?></h2>
 
