@@ -1,25 +1,37 @@
 <?php
 if (!isset($_SESSION)) session_start();
-if (!isset($_SESSION["csr_user"])) exit("Unauthorized");
+if (!isset($_SESSION["csr_user"])) {
+    header("Location: ../csr_login.php");
+    exit;
+}
 
 require "../../db_connect.php";
 
 $clientID = intval($_GET["client_id"] ?? 0);
-if ($clientID <= 0) exit("Invalid client");
+if ($clientID <= 0) {
+    echo "<p>Invalid client.</p>";
+    exit;
+}
 
-// =====================================================
-// FETCH CLIENT NAME
-// =====================================================
-$stmt = $conn->prepare("SELECT full_name FROM users WHERE id = ? LIMIT 1");
+/* ============================================================
+   FETCH CLIENT
+============================================================ */
+$stmt = $conn->prepare("
+    SELECT full_name, account_number
+    FROM users
+    WHERE id = ?
+");
 $stmt->execute([$clientID]);
 $client = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$client) exit("Client not found.");
-$clientName = htmlspecialchars($client["full_name"]);
+if (!$client) {
+    echo "<p>Client not found.</p>";
+    exit;
+}
 
-// =====================================================
-// FETCH ALL TICKETS FOR THIS CLIENT
-// =====================================================
+/* ============================================================
+   FETCH ALL TICKETS FOR THIS CLIENT
+============================================================ */
 $stmt = $conn->prepare("
     SELECT 
         id,
@@ -31,65 +43,58 @@ $stmt = $conn->prepare("
 ");
 $stmt->execute([$clientID]);
 $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// =====================================================
-// FETCH TICKET LOGS (actions: pending, resolved, etc.)
-// =====================================================
-$stmt = $conn->prepare("
-    SELECT action, timestamp, csr_user
-    FROM ticket_logs
-    WHERE client_id = ?
-    ORDER BY timestamp ASC
-");
-$stmt->execute([$clientID]);
-$logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Group logs by status
-$logByAction = [];
-foreach ($logs as $log) {
-    $logByAction[$log["action"]] = $log["timestamp"];
-}
-
 ?>
+
 <link rel="stylesheet" href="history.css">
 
-<h2 class="history-title">📜 Ticket History — <?= $clientName ?></h2>
+<div class="history-container">
 
-<div class="history-list">
+    <h1>📜 Chat History</h1>
 
-<?php if (empty($tickets)): ?>
-    <p class="empty-history">No ticket history found.</p>
-<?php endif; ?>
-
-<?php foreach ($tickets as $t): ?>
-    <div class="ticket-box">
-
-        <div class="ticket-header">
-            <span class="ticket-id">Ticket #<?= $t["id"] ?></span>
-            <span class="ticket-status <?= strtolower($t["status"]) ?>">
-                <?= strtoupper($t["status"]) ?>
-            </span>
-        </div>
-
-        <div class="ticket-body">
-            <p><strong>Created:</strong> <?= date("M j, Y g:i A", strtotime($t["created_at"])) ?></p>
-
-            <?php if (!empty($logByAction["pending"])): ?>
-                <p><strong>Pending:</strong> <?= date("M j, Y g:i A", strtotime($logByAction["pending"])) ?></p>
-            <?php endif; ?>
-
-            <?php if (!empty($logByAction["resolved"])): ?>
-                <p><strong>Resolved:</strong> <?= date("M j, Y g:i A", strtotime($logByAction["resolved"])) ?></p>
-            <?php endif; ?>
-
-        </div>
-
-        <a class="view-chat-btn"
-           href="view_ticket_chat.php?ticket_id=<?= $t["id"] ?>&client_id=<?= $clientID ?>">
-           💬 View Chat
-        </a>
-
+    <div class="client-header">
+        <strong>Client:</strong> <?= htmlspecialchars($client["full_name"]) ?><br>
+        <strong>Account #:</strong> <?= htmlspecialchars($client["account_number"]) ?>
     </div>
-<?php endforeach; ?>
+
+    <table class="styled-table">
+        <thead>
+            <tr>
+                <th>Ticket #</th>
+                <th>Status</th>
+                <th>Date Created</th>
+                <th>View</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        <?php if (!$tickets): ?>
+            <tr><td colspan="4" class="empty-row">No ticket history found.</td></tr>
+
+        <?php else: ?>
+            <?php foreach ($tickets as $t): ?>
+                <tr>
+                    <td>#<?= $t["id"] ?></td>
+
+                    <td>
+                        <span class="badge <?= strtolower($t["status"]) ?>">
+                            <?= strtoupper($t["status"]) ?>
+                        </span>
+                    </td>
+
+                    <td><?= date("M j, Y g:i A", strtotime($t["created_at"])) ?></td>
+
+                    <td>
+                        <a class="view-btn"
+                           href="history_view.php?ticket_id=<?= $t["id"] ?>&client_id=<?= $clientID ?>">
+                           View
+                        </a>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        <?php endif; ?>
+        </tbody>
+    </table>
+
+    <a href="../dashboard/csr_dashboard.php?tab=clients" class="back-btn">⬅ Back</a>
 
 </div>
