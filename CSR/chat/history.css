@@ -200,3 +200,54 @@
 }
 #jumpTop { bottom: 90px; }
 #jumpBottom { bottom: 30px; }
+/* Ticket list container */
+.history-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Card-style ticket */
+.ticket-card {
+    background: white;
+    padding: 14px 18px;
+    border-radius: 10px;
+    border-left: 5px solid #999;
+    text-decoration: none;
+    color: black;
+    display: block;
+    transition: 0.2s;
+}
+
+.ticket-card:hover {
+    background: #f7fff7;
+    transform: translateX(4px);
+}
+
+/* Ticket header */
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 16px;
+}
+
+.ticket-status {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+}
+
+/* Status colors */
+.ticket-status.unresolved { background: #d9534f; }
+.ticket-status.pending    { background: #f0ad4e; }
+.ticket-status.resolved   { background: #28a745; }
+
+/* Date text */
+.ticket-date {
+    font-size: 13px;
+    color: #666;
+}
