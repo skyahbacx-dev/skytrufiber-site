@@ -95,17 +95,17 @@ $total = count($clients);
             <td><?= htmlspecialchars($c['barangay']) ?></td>
             <td><?= htmlspecialchars($c['date_installed']) ?></td>
 
-            <!-- OPEN CURRENT CHAT -->
+            <!-- OPEN CHAT DASHBOARD WITH CORRECT client_id -->
             <td>
-                <a href="../dashboard/csr_dashboard.php?tab=chat&client=<?= $c['id'] ?>" 
+                <a href="../dashboard/csr_dashboard.php?tab=chat&client_id=<?= $c['id'] ?>" 
                    class="chat-btn">
                    💬 Chat
                 </a>
             </td>
 
-            <!-- NEW: HISTORY PAGE -->
+            <!-- OPEN CHAT HISTORY PAGE -->
             <td>
-                <a href="../chat/history_list.php?client=<?= $c['id'] ?>" 
+                <a href="../chat/history_list.php?client_id=<?= $c['id'] ?>" 
                    class="history-btn">
                    📜 History
                 </a>
