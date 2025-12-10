@@ -175,3 +175,28 @@
     from { opacity:0; transform:translateY(5px); }
     to { opacity:1; transform:translateY(0); }
 }
+/* TIMELINE COLOR CODING */
+.action-pending  { border-left-color: #e6b800; background:#fff9db; }
+.action-unresolved { border-left-color:#d9534f; background:#ffe2e2; }
+.action-resolved { border-left-color:#28a745; background:#e6ffe6; }
+.action-assigned { border-left-color:#0275d8; background:#e2f0ff; }
+.action-unassigned { border-left-color:#f0ad4e; background:#fff3dd; }
+
+/* Hidden class for tabs */
+.hidden { display: none; }
+
+/* Jump buttons */
+.jump-btn {
+    position: fixed;
+    right: 25px;
+    padding: 10px 14px;
+    background: var(--green);
+    color: white;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    z-index: 1000;
+}
+#jumpTop { bottom: 90px; }
+#jumpBottom { bottom: 30px; }
