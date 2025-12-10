@@ -1,118 +1,95 @@
 <?php
 if (!isset($_SESSION)) session_start();
-if (!isset($_SESSION['csr_user'])) {
-    header("Location: ../csr_login.php");
-    exit;
-}
+if (!isset($_SESSION["csr_user"])) exit("Unauthorized");
 
 require "../../db_connect.php";
 
-$csrUser = $_SESSION['csr_user'];
-$search  = trim($_GET["search"] ?? "");
-$statusFilter = trim($_GET["status"] ?? "all");
+$clientID = intval($_GET["client_id"] ?? 0);
+if ($clientID <= 0) exit("Invalid client");
 
-/* ============================================================
-   FETCH ALL TICKETS FOR THIS CSR’S CLIENTS
-============================================================ */
-$query = "
+// =====================================================
+// FETCH CLIENT NAME
+// =====================================================
+$stmt = $conn->prepare("SELECT full_name FROM users WHERE id = ? LIMIT 1");
+$stmt->execute([$clientID]);
+$client = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$client) exit("Client not found.");
+$clientName = htmlspecialchars($client["full_name"]);
+
+// =====================================================
+// FETCH ALL TICKETS FOR THIS CLIENT
+// =====================================================
+$stmt = $conn->prepare("
     SELECT 
-        t.id AS ticket_id,
-        t.client_id,
-        t.status,
-        t.created_at,
-        t.resolved_at,
-        u.full_name,
-        u.account_number
-    FROM tickets t
-    JOIN users u ON u.id = t.client_id
-    WHERE u.assigned_csr = :csr
-";
-
-$params = [":csr" => $csrUser];
-
-/* --- SEARCH CONDITIONS --- */
-if ($search !== "") {
-    $query .= " AND (u.full_name ILIKE :s OR u.account_number ILIKE :s OR t.id::TEXT ILIKE :s)";
-    $params[":s"] = "%$search%";
-}
-
-/* --- STATUS FILTER --- */
-if ($statusFilter !== "all") {
-    $query .= " AND t.status = :st";
-    $params[":st"] = $statusFilter;
-}
-
-$query .= " ORDER BY t.created_at DESC";
-
-$stmt = $conn->prepare($query);
-$stmt->execute($params);
+        id,
+        status,
+        created_at
+    FROM tickets
+    WHERE client_id = ?
+    ORDER BY created_at DESC
+");
+$stmt->execute([$clientID]);
 $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// =====================================================
+// FETCH TICKET LOGS (actions: pending, resolved, etc.)
+// =====================================================
+$stmt = $conn->prepare("
+    SELECT action, timestamp, csr_user
+    FROM ticket_logs
+    WHERE client_id = ?
+    ORDER BY timestamp ASC
+");
+$stmt->execute([$clientID]);
+$logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Group logs by status
+$logByAction = [];
+foreach ($logs as $log) {
+    $logByAction[$log["action"]] = $log["timestamp"];
+}
 
 ?>
 <link rel="stylesheet" href="history.css">
 
-<div class="history-container">
-    <h1>📘 Client Ticket History</h1>
-    <div class="history-subtitle">View all past and resolved tickets for your assigned clients.</div>
+<h2 class="history-title">📜 Ticket History — <?= $clientName ?></h2>
 
-    <!-- SEARCH + FILTER BAR -->
-    <form method="GET" class="history-search-bar">
-        <input type="text" name="search" placeholder="Search by name, ticket ID, account #..."
-               value="<?= htmlspecialchars($search) ?>">
+<div class="history-list">
 
-        <select name="status">
-            <option value="all" <?= $statusFilter=="all"?"selected":"" ?>>All Status</option>
-            <option value="unresolved" <?= $statusFilter=="unresolved"?"selected":"" ?>>Unresolved</option>
-            <option value="pending" <?= $statusFilter=="pending"?"selected":"" ?>>Pending</option>
-            <option value="resolved" <?= $statusFilter=="resolved"?"selected":"" ?>>Resolved</option>
-        </select>
+<?php if (empty($tickets)): ?>
+    <p class="empty-history">No ticket history found.</p>
+<?php endif; ?>
 
-        <button type="submit">Filter</button>
-    </form>
+<?php foreach ($tickets as $t): ?>
+    <div class="ticket-box">
 
-    <div class="table-wrapper">
-        <table class="history-table" id="historyTable">
-            <thead>
-                <tr>
-                    <th data-sort="number">Ticket ID</th>
-                    <th data-sort="string">Client Name</th>
-                    <th data-sort="string">Status</th>
-                    <th data-sort="date">Created</th>
-                    <th>View</th>
-                </tr>
-            </thead>
+        <div class="ticket-header">
+            <span class="ticket-id">Ticket #<?= $t["id"] ?></span>
+            <span class="ticket-status <?= strtolower($t["status"]) ?>">
+                <?= strtoupper($t["status"]) ?>
+            </span>
+        </div>
 
-            <tbody>
-                <?php if (empty($tickets)) : ?>
-                    <tr>
-                        <td colspan="5" class="no-history">No tickets found.</td>
-                    </tr>
-                <?php endif; ?>
+        <div class="ticket-body">
+            <p><strong>Created:</strong> <?= date("M j, Y g:i A", strtotime($t["created_at"])) ?></p>
 
-                <?php foreach ($tickets as $t): ?>
-                    <tr>
-                        <td>#<?= $t["ticket_id"] ?></td>
-                        <td><?= htmlspecialchars($t["full_name"]) ?></td>
+            <?php if (!empty($logByAction["pending"])): ?>
+                <p><strong>Pending:</strong> <?= date("M j, Y g:i A", strtotime($logByAction["pending"])) ?></p>
+            <?php endif; ?>
 
-                        <td>
-                            <span class="status-badge status-<?= $t["status"] ?>">
-                                <?= strtoupper($t["status"]) ?>
-                            </span>
-                        </td>
+            <?php if (!empty($logByAction["resolved"])): ?>
+                <p><strong>Resolved:</strong> <?= date("M j, Y g:i A", strtotime($logByAction["resolved"])) ?></p>
+            <?php endif; ?>
 
-                        <td><?= date("M j, Y g:i A", strtotime($t["created_at"])) ?></td>
+        </div>
 
-                        <td>
-                            <a href="history_view.php?ticket=<?= $t["ticket_id"] ?>" class="view-btn">
-                                📄 View
-                            </a>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
+        <a class="view-chat-btn"
+           href="view_ticket_chat.php?ticket_id=<?= $t["id"] ?>&client_id=<?= $clientID ?>">
+           💬 View Chat
+        </a>
 
-        </table>
     </div>
-</div>
+<?php endforeach; ?>
 
-<script src="sort.js"></script>
+</div>
