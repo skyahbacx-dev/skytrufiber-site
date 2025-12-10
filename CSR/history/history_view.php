@@ -8,35 +8,40 @@ if (!isset($_SESSION["csr_user"])) {
 require "../../db_connect.php";
 
 $ticketID = intval($_GET["ticket"] ?? 0);
-if ($ticketID <= 0) exit("<h2>Invalid ticket.</h2>");
+if ($ticketID <= 0) exit("<h2>Invalid ticket ID.</h2>");
 
-/* Get ticket info */
+/* ============================================================
+   FETCH TICKET
+============================================================ */
 $stmt = $conn->prepare("
-    SELECT t.*, u.full_name, u.account_number
+    SELECT t.id, t.client_id, t.status, t.created_at,
+           u.full_name, u.account_number
     FROM tickets t
     JOIN users u ON u.id = t.client_id
     WHERE t.id = ?
 ");
 $stmt->execute([$ticketID]);
-$ticket = $stmt->fetch(PDO::FETCH_ASSOC);
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$ticket) exit("<h2>Ticket not found.</h2>");
+if (!$row) exit("<h2>Ticket not found.</h2>");
 
-$clientID = $ticket["client_id"];
-$sortChat = $_GET["sort"] ?? "asc";
+$clientID   = $row["client_id"];
+$clientName = htmlspecialchars($row["full_name"]);
+$acctNo     = htmlspecialchars($row["account_number"]);
+$status     = strtolower($row["status"]);
+$createdAt  = date("M j, Y g:i A", strtotime($row["created_at"]));
 
-/* Get chat messages */
-$msgQuery = "
-    SELECT *
+/* CHAT MESSAGES */
+$msgs = $conn->prepare("
+    SELECT id, sender_type, message, deleted, edited, created_at
     FROM chat
     WHERE ticket_id = ?
-    ORDER BY created_at " . ($sortChat == "desc" ? "DESC" : "ASC");
-
-$msgs = $conn->prepare($msgQuery);
+    ORDER BY created_at ASC
+");
 $msgs->execute([$ticketID]);
 $messages = $msgs->fetchAll(PDO::FETCH_ASSOC);
 
-/* Get timeline logs */
+/* TIMELINE LOGS */
 $logs = $conn->prepare("
     SELECT action, csr_user, timestamp
     FROM ticket_logs
@@ -47,71 +52,90 @@ $logs->execute([$clientID]);
 $logRows = $logs->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
+<link rel="stylesheet" href="history.css">
+<script src="history.js?v=2"></script>
 
-
-<h2>📄 Ticket #<?= $ticketID ?> — <?= strtoupper($ticket["status"]) ?></h2>
+<h2>📄 Ticket #<?= $ticketID ?> — <?= strtoupper($status) ?></h2>
 
 <a href="../dashboard/csr_dashboard.php?tab=clients&client=<?= $clientID ?>" class="back-btn">← Back to Ticket History</a>
 
-<p><strong>Client:</strong> <?= $ticket["full_name"] ?> (<?= $ticket["account_number"] ?>)</p>
-<p><strong>Created:</strong> <?= date("M j, Y g:i A", strtotime($ticket["created_at"])) ?></p>
+<p><strong>Client:</strong> <?= $clientName ?> (<?= $acctNo ?>)</p>
+<p><strong>Created:</strong> <?= $createdAt ?></p>
 
 <hr>
 
+<!-- TIMELINE -->
 <h3>📌 Ticket Timeline</h3>
 
 <div class="timeline">
-<?php foreach ($logRows as $log): 
-    $cls = strtolower($log["action"]);
-?>
-    <div class="log-entry <?= $cls ?>">
-        <div class="log-action"><?= strtoupper($log["action"]) ?></div>
-        <div class="log-by">by <?= $log["csr_user"] ?></div>
-        <div class="log-time"><?= date("M j, Y g:i A", strtotime($log["timestamp"])) ?></div>
-    </div>
-<?php endforeach; ?>
+<?php if (!$logRows): ?>
+    <div class="empty">No timeline logs found.</div>
+<?php else: ?>
+    <?php foreach ($logRows as $log): 
+        $action = strtolower($log["action"]);
+    ?>
+        <div class="log-entry <?= $action ?>">
+            <div class="log-action"><?= strtoupper($log["action"]) ?></div>
+            <div class="log-by">by <?= htmlspecialchars($log["csr_user"]) ?></div>
+            <div class="log-time"><?= date("M j, Y g:i A", strtotime($log["timestamp"])) ?></div>
+        </div>
+    <?php endforeach; ?>
+<?php endif; ?>
 </div>
 
 <hr>
 
+<!-- CHAT FILTERS -->
 <h3>💬 Chat Messages</h3>
 
-<!-- Sort & Filter Tabs -->
 <div class="filters">
     <a href="?ticket=<?= $ticketID ?>&filter=all" class="filter-btn">All</a>
     <a href="?ticket=<?= $ticketID ?>&filter=csr" class="filter-btn">CSR</a>
     <a href="?ticket=<?= $ticketID ?>&filter=client" class="filter-btn">Client</a>
     <a href="?ticket=<?= $ticketID ?>&filter=deleted" class="filter-btn">Deleted</a>
-
-    <div class="sort-chat">
-        <a href="?ticket=<?= $ticketID ?>&sort=asc" class="<?= $sortChat=='asc'?'active':'' ?>">Oldest</a>
-        <a href="?ticket=<?= $ticketID ?>&sort=desc" class="<?= $sortChat=='desc'?'active':'' ?>">Newest</a>
-    </div>
 </div>
 
-<!-- JUMP BUTTONS -->
+<?php
+$filter = $_GET["filter"] ?? "all";
+
+function matchFilter($m, $filter) {
+    if ($filter == "all") return true;
+    if ($filter == "csr" && $m["sender_type"] === "csr") return true;
+    if ($filter == "client" && $m["sender_type"] !== "csr") return true;
+    if ($filter == "deleted" && $m["deleted"]) return true;
+    return false;
+}
+?>
+
+<!-- Jump Buttons -->
 <button id="jumpTop" class="jump-btn">⬆ Top</button>
 <button id="jumpBottom" class="jump-btn">⬇ Bottom</button>
 
 <div class="chat-history">
 <?php
-$filter = $_GET["filter"] ?? "all";
-foreach ($messages as $m) {
-    if ($filter == "csr" && $m["sender_type"] != "csr") continue;
-    if ($filter == "client" && $m["sender_type"] == "csr") continue;
-    if ($filter == "deleted" && !$m["deleted"]) continue;
+$found = false;
+
+foreach ($messages as $m):
+    if (!matchFilter($m, $filter)) continue;
+    $found = true;
 ?>
     <div class="chat-msg <?= $m['sender_type'] ?>">
-        <div class="bubble <?= $m["deleted"] ? "deleted-bubble" : "" ?>">
-            <?= $m["deleted"] ? "<i>🗑️ Deleted message</i>" : nl2br(htmlspecialchars($m["message"])) ?>
+        <div class="bubble">
+            <?php if ($m["deleted"]): ?>
+                <i>🗑️ Message deleted</i>
+            <?php else: ?>
+                <?= nl2br(htmlspecialchars($m["message"])) ?>
+            <?php endif; ?>
         </div>
+
         <div class="meta">
             <?= date("M j, Y g:i A", strtotime($m["created_at"])) ?>
-            <?= $m["edited"] ? "<span class='edited'>(edited)</span>" : "" ?>
+            <?php if ($m["edited"]): ?><span class="edited">(edited)</span><?php endif; ?>
         </div>
     </div>
-<?php } ?>
+<?php endforeach; ?>
+
+<?php if (!$found): ?>
+    <div class="empty">No messages match this filter.</div>
+<?php endif; ?>
 </div>
-
-<script src="../history/history.js"></script>
-
