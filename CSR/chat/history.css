@@ -1,5 +1,5 @@
 /* ============================================
-   PAGE CONTAINER
+   PAGE STRUCTURE
 ============================================ */
 .history-container {
     padding: 20px;
@@ -17,47 +17,72 @@
 }
 
 /* ============================================
-   TICKET TABLE WRAPPER
+   SEARCH + FILTER BAR
+============================================ */
+.history-search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.history-search-bar input {
+    padding: 8px;
+    flex: 1;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.history-search-bar select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.history-search-bar button {
+    padding: 8px 14px;
+    background: #05702e;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* ============================================
+   SORTABLE TABLE WRAPPER
 ============================================ */
 .table-wrapper {
     overflow-x: auto;
-    margin-top: 10px;
 }
 
 .history-table {
     width: 100%;
     border-collapse: collapse;
-    border-radius: 8px;
-    overflow: hidden;
 }
 
-/* ============================================
-   TABLE HEADER
-============================================ */
 .history-table th {
     background: #05702e;
     color: white;
     padding: 10px;
-    text-align: left;
-    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
 }
 
-/* ============================================
-   TABLE BODY
-============================================ */
+.history-table th:hover {
+    background: #045a24;
+}
+
 .history-table td {
     background: white;
     padding: 10px;
-    border-bottom: 1px solid #e5e5e5;
-    font-size: 14px;
+    border-bottom: 1px solid #eee;
 }
 
 .history-table tr:hover td {
-    background: #f6f6f6;
+    background: #f9f9f9;
 }
 
 /* ============================================
-   NO HISTORY MESSAGE
+   EMPTY STATE
 ============================================ */
 .no-history {
     text-align: center;
@@ -78,20 +103,17 @@
     display: inline-block;
 }
 
-/* Unresolved */
 .status-unresolved {
-    background: #d9534f; /* red */
+    background: #d9534f;
 }
 
-/* Pending */
 .status-pending {
-    background: #f0ad4e; /* yellow/orange */
+    background: #f0ad4e;
     color: black;
 }
 
-/* Resolved */
 .status-resolved {
-    background: #05702e; /* green */
+    background: #05702e;
 }
 
 /* ============================================
@@ -113,7 +135,67 @@
 }
 
 /* ============================================
-   CHAT HISTORY PAGE (messages)
+   BACK BUTTON
+============================================ */
+.back-btn {
+    display: inline-block;
+    background: #555;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    margin-bottom: 15px;
+    transition: 0.2s ease;
+}
+
+.back-btn:hover {
+    background: #333;
+}
+
+/* ============================================
+   TIMELINE VIEW
+============================================ */
+.timeline {
+    position: relative;
+    margin: 30px 0;
+    padding-left: 30px;
+    border-left: 3px solid #05702e;
+}
+
+.timeline-item {
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.timeline-item::before {
+    content: "";
+    position: absolute;
+    left: -9px;
+    top: 4px;
+    width: 14px;
+    height: 14px;
+    background: #05702e;
+    border-radius: 50%;
+}
+
+.timeline-title {
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.timeline-date {
+    font-size: 12px;
+    color: #777;
+}
+
+.timeline-status {
+    margin-top: 5px;
+    display: inline-block;
+}
+
+/* ============================================
+   CHAT HISTORY VIEW
 ============================================ */
 .history-chat-box {
     border: 1px solid #ddd;
@@ -158,12 +240,20 @@
 }
 
 /* ============================================
-   BACK BUTTON
+   MOBILE RESPONSIVE
 ============================================ */
-.back-btn {
-    display: inline-block;
-    background: #555;
-    color: white;
-    padding: 6px 14px;
-    border-radius: 6px;
-    text-decoration:
+@media (max-width: 700px) {
+    .history-table th, .history-table td {
+        padding: 8px;
+        font-size: 13px;
+    }
+
+    .view-btn {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+
+    .history-search-bar {
+        flex-direction: column;
+    }
+}
