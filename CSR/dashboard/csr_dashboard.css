@@ -1,5 +1,5 @@
 /* =======================================================
-   CSR DASHBOARD — CLEAN SHELL LAYOUT CSS (NO CHAT UI)
+   CSR DASHBOARD — CLEAN SHELL LAYOUT CSS (UPDATED)
    ======================================================= */
 
 /* GLOBAL */
@@ -14,7 +14,9 @@ body {
     overflow: hidden;
 }
 
-/* TOP NAV */
+/* =======================================================
+   TOP NAVIGATION BAR
+   ======================================================= */
 .topnav {
     height: 55px;
     background: #05702e;
@@ -65,32 +67,74 @@ body {
     text-decoration:none;
 }
 
-/* SIDEBAR */
+/* =======================================================
+   COLLAPSED SIDEBAR (ICON STRIP)
+   ALWAYS VISIBLE
+   ======================================================= */
+.sidebar-collapsed {
+    position: fixed;
+    left: 0;
+    top: 55px;
+    width: 60px;
+    height: calc(100vh - 55px);
+    background: #1c1c1c;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 12px;
+    gap: 22px;
+    z-index: 12;
+}
+
+.sidebar-collapsed .icon-btn {
+    font-size: 22px;
+    color: white;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: .25s;
+}
+
+.sidebar-collapsed .icon-btn:hover {
+    transform: scale(1.2);
+    opacity: 0.85;
+}
+
+/* Logout icon colored red */
+.sidebar-collapsed .logout {
+    color: #ff4d4d;
+}
+
+/* =======================================================
+   EXPANDED SIDEBAR (TEXT + ICONS)
+   ======================================================= */
 .sidebar {
-    width: 240px;
+    width: 260px;
     height: 100vh;
     background: white;
     position: fixed;
     top: 0;
-    left: -240px; /* hidden by default */
+    left: -260px; /* hidden by default */
     transition: 0.30s ease;
     padding-top: 60px;
     border-right: 1px solid #dcdcdc;
     z-index: 20;
-    overflow: hidden;
 }
 
-/* Expanded Sidebar */
+/* When expanded, position it beside collapsed icons */
 .sidebar.active {
-    left: 0;
+    left: 60px;
 }
 
-/* Sidebar collapsed = icons only */
-.sidebar.collapsed {
-    width: 70px;
+/* Sidebar title */
+.side-title {
+    padding: 12px 20px;
+    font-weight: bold;
+    font-size: 15px;
+    color: #006622;
 }
 
-/* Sidebar item styles */
+/* Sidebar menu items */
 .side-item {
     width: 100%;
     padding: 12px 18px;
@@ -106,37 +150,38 @@ body {
     transition: 0.25s;
 }
 
-/* Icon inside sidebar item */
 .side-item i {
     font-size: 20px;
-    min-width: 24px;
+    min-width: 26px;
 }
 
-/* Hide text when collapsed */
-.sidebar.collapsed .side-item span {
-    display: none;
-}
-
-/* Active button */
+/* Highlight active sidebar item */
 .side-item.active {
     background: #e6ffe6;
     font-weight: bold;
     border-right: 4px solid #05702e;
 }
 
-/* Hover */
+/* Hover effect */
 .side-item:hover {
     background: #f3fff3;
 }
 
-/* Logout button */
+/* Logout button inside sidebar */
 .side-item.logout {
-    margin-top: 30px;
-    color: #b30000;
+    color: #c00000;
     font-weight: bold;
+    margin-top: 25px;
 }
 
-/* Overlay */
+/* Hide text label when sidebar is in collapsed mode */
+.sidebar.collapsed .side-item span {
+    display: none;
+}
+
+/* =======================================================
+   SIDEBAR OVERLAY — MOBILE EXPERIENCE
+   ======================================================= */
 .sidebar-overlay {
     display:none;
     position:fixed;
@@ -144,19 +189,25 @@ body {
     height:100%;
     background:rgba(0,0,0,0.45);
     z-index:15;
+    top:0;
+    left:0;
 }
 .sidebar-overlay.active {
     display:block;
 }
 
-
-/* MAIN DASHBOARD WRAPPER */
+/* =======================================================
+   MAIN CONTENT AREA
+   ======================================================= */
 .dashboard-container {
     height: calc(100vh - 55px);
     overflow: hidden;
+    margin-left: 60px; /* space for collapsed sidebar */
 }
 
-/* Right info panel scroll */
+/* =======================================================
+   CUSTOM SCROLLBARS
+   ======================================================= */
 .chat-right-panel::-webkit-scrollbar,
 .chat-left-panel::-webkit-scrollbar {
     width: 6px;
@@ -167,14 +218,17 @@ body {
     border-radius:8px;
 }
 
-/* ANIMATION SUPPORT */
+/* =======================================================
+   ANIMATION SUPPORT
+   ======================================================= */
 @keyframes fadeInUp {
     from { opacity:0; transform:translateY(10px); }
     to { opacity:1; transform:translateY(0); }
 }
-/* YOUR ORIGINAL CSS ABOVE THIS LINE */
 
-/* GLOBAL LOADER */
+/* =======================================================
+   GLOBAL LOADING OVERLAY
+   ======================================================= */
 #loadingOverlay {
     position: fixed;
     top: 0;
