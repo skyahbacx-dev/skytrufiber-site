@@ -448,7 +448,7 @@ body {
 @media (max-width: 768px) {
 
     .chat-header {
-        height: 100px;
+        height: 160px;
         padding: 10px 14px;
     }
 
