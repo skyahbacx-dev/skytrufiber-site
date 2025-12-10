@@ -7,32 +7,35 @@ if (!isset($_SESSION["csr_user"])) {
 
 require "../../db_connect.php";
 
-$clientID = intval($_GET["client_id"] ?? 0);
+$csrUser = $_SESSION["csr_user"];
+$clientID = intval($_GET["client"] ?? 0);
+
 if ($clientID <= 0) {
-    echo "<p>Invalid client.</p>";
-    exit;
+    exit("<h2>Invalid client</h2>");
 }
 
 /* ============================================================
-   FETCH CLIENT
+   FETCH CLIENT INFO
 ============================================================ */
-$stmt = $conn->prepare("
+$client = $conn->prepare("
     SELECT full_name, account_number
     FROM users
     WHERE id = ?
 ");
-$stmt->execute([$clientID]);
-$client = $stmt->fetch(PDO::FETCH_ASSOC);
+$client->execute([$clientID]);
+$clientRow = $client->fetch(PDO::FETCH_ASSOC);
 
-if (!$client) {
-    echo "<p>Client not found.</p>";
-    exit;
+if (!$clientRow) {
+    exit("<h2>Client not found.</h2>");
 }
+
+$clientName = htmlspecialchars($clientRow["full_name"]);
+$acctNo     = htmlspecialchars($clientRow["account_number"]);
 
 /* ============================================================
    FETCH ALL TICKETS FOR THIS CLIENT
 ============================================================ */
-$stmt = $conn->prepare("
+$tickets = $conn->prepare("
     SELECT 
         id,
         status,
@@ -41,60 +44,29 @@ $stmt = $conn->prepare("
     WHERE client_id = ?
     ORDER BY created_at DESC
 ");
-$stmt->execute([$clientID]);
-$tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$tickets->execute([$clientID]);
+$list = $tickets->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
 <link rel="stylesheet" href="history.css">
 
-<div class="history-container">
+<h2>📜 Ticket History — <?= $clientName ?> (<?= $acctNo ?>)</h2>
 
-    <h1>📜 Chat History</h1>
+<a href="../dashboard/csr_dashboard.php?tab=clients" class="back-btn">← Back to My Clients</a>
 
-    <div class="client-header">
-        <strong>Client:</strong> <?= htmlspecialchars($client["full_name"]) ?><br>
-        <strong>Account #:</strong> <?= htmlspecialchars($client["account_number"]) ?>
-    </div>
-
-    <table class="styled-table">
-        <thead>
-            <tr>
-                <th>Ticket #</th>
-                <th>Status</th>
-                <th>Date Created</th>
-                <th>View</th>
-            </tr>
-        </thead>
-
-        <tbody>
-        <?php if (!$tickets): ?>
-            <tr><td colspan="4" class="empty-row">No ticket history found.</td></tr>
-
-        <?php else: ?>
-            <?php foreach ($tickets as $t): ?>
-                <tr>
-                    <td>#<?= $t["id"] ?></td>
-
-                    <td>
-                        <span class="badge <?= strtolower($t["status"]) ?>">
-                            <?= strtoupper($t["status"]) ?>
-                        </span>
-                    </td>
-
-                    <td><?= date("M j, Y g:i A", strtotime($t["created_at"])) ?></td>
-
-                    <td>
-                        <a class="view-btn"
-                           href="history_view.php?ticket_id=<?= $t["id"] ?>&client_id=<?= $clientID ?>">
-                           View
-                        </a>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        <?php endif; ?>
-        </tbody>
-    </table>
-
-    <a href="../dashboard/csr_dashboard.php?tab=clients" class="back-btn">⬅ Back</a>
-
+<div class="history-list">
+<?php if (!$list): ?>
+    <div class="empty">No previous tickets found.</div>
+<?php else: ?>
+    <?php foreach ($list as $t): ?>
+        <a class="ticket-item" href="history_view.php?ticket=<?= $t['id'] ?>">
+            <div class="ticket-title">Ticket #<?= $t["id"] ?></div>
+            <div class="ticket-status <?= strtolower($t["status"]) ?>">
+                <?= strtoupper($t["status"]) ?>
+            </div>
+            <div class="ticket-date">
+                Created <?= date("M j, Y g:i A", strtotime($t["created_at"])) ?>
+            </div>
+        </a>
+    <?php endforeach; ?>
+<?php endif; ?>
 </div>
