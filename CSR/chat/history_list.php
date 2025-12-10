@@ -14,9 +14,7 @@ if ($clientID <= 0) {
     exit("<h2>Invalid client</h2>");
 }
 
-/* ============================================================
-   FETCH CLIENT INFO
-============================================================ */
+/* Fetch client */
 $client = $conn->prepare("
     SELECT full_name, account_number
     FROM users
@@ -32,14 +30,9 @@ if (!$clientRow) {
 $clientName = htmlspecialchars($clientRow["full_name"]);
 $acctNo     = htmlspecialchars($clientRow["account_number"]);
 
-/* ============================================================
-   FETCH ALL TICKETS FOR THIS CLIENT
-============================================================ */
+/* Fetch all tickets */
 $tickets = $conn->prepare("
-    SELECT 
-        id,
-        status,
-        created_at
+    SELECT id, status, created_at
     FROM tickets
     WHERE client_id = ?
     ORDER BY created_at DESC
@@ -58,11 +51,15 @@ $list = $tickets->fetchAll(PDO::FETCH_ASSOC);
     <div class="empty">No previous tickets found.</div>
 <?php else: ?>
     <?php foreach ($list as $t): ?>
-        <a class="ticket-item" href="history_view.php?ticket=<?= $t['id'] ?>">
+        <a class="ticket-item" 
+           href="../dashboard/csr_dashboard.php?tab=clients&ticket=<?= $t['id'] ?>">
+           
             <div class="ticket-title">Ticket #<?= $t["id"] ?></div>
+
             <div class="ticket-status <?= strtolower($t["status"]) ?>">
                 <?= strtoupper($t["status"]) ?>
             </div>
+
             <div class="ticket-date">
                 Created <?= date("M j, Y g:i A", strtotime($t["created_at"])) ?>
             </div>
