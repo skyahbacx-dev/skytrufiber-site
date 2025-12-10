@@ -113,7 +113,5 @@ foreach ($messages as $m) {
 <?php } ?>
 </div>
 
-<script>
-document.getElementById("jumpTop").onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
-document.getElementById("jumpBottom").onclick = () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-</script>
+<script src="../history/history.js"></script>
+
