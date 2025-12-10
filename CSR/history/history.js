@@ -1,17 +1,14 @@
 console.log("History JS Loaded");
 
-// Jump Buttons
-document.addEventListener("DOMContentLoaded", () => {
+// Scrollable chat container
+const chatBox = document.getElementById("chatHistory");
 
-    const jumpTop = document.getElementById("jumpTop");
-    const jumpBottom = document.getElementById("jumpBottom");
+// Jump to top
+document.getElementById("jumpTop")?.addEventListener("click", () => {
+    chatBox.scrollTo({ top: 0, behavior: "smooth" });
+});
 
-    if (jumpTop) {
-        jumpTop.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-
-    if (jumpBottom) {
-        jumpBottom.onclick = () =>
-            window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-    }
+// Jump to bottom
+document.getElementById("jumpBottom")?.addEventListener("click", () => {
+    chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
 });
