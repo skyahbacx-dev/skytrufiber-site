@@ -105,10 +105,11 @@ $total = count($clients);
 
             <!-- OPEN CHAT HISTORY PAGE -->
             <td>
-                <a href="../chat/history_list.php?client_id=<?= $c['id'] ?>" 
-                   class="history-btn">
-                   📜 History
+               <a href="../dashboard/csr_dashboard.php?tab=clients&client=<?= $c['id'] ?>" 
+               class="history-btn">
+                 📜 History
                 </a>
+
             </td>
         </tr>
     <?php endforeach; ?>
