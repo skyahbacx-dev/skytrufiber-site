@@ -1,4 +1,6 @@
-/* GENERAL ------------------------------------------------------ */
+/* ============================================================
+   GLOBAL
+============================================================ */
 body {
     background: #f5fff5;
     font-family: Arial, sans-serif;
@@ -6,7 +8,184 @@ body {
 
 h2, h3 {
     color: #024d1e;
+    margin-top: 0;
 }
+
+.history-title {
+    margin-bottom: 10px;
+}
+
+/* BACK BUTTON ------------------------------------------------------ */
+.back-btn {
+    display: inline-block;
+    background: #05702e;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: 0.15s;
+}
+
+.back-btn:hover {
+    background: #046026;
+}
+
+/* ============================================================
+   HISTORY LIST PAGE (ticket list)
+============================================================ */
+
+.history-container {
+    padding: 15px;
+}
+
+.history-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+/* SEARCH BOX */
+.history-search input {
+    padding: 10px 14px;
+    width: 240px;
+    border-radius: 6px;
+    border: 1px solid #bcdcbc;
+    font-size: 14px;
+}
+
+@media (max-width: 600px) {
+    .history-search input {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+
+/* SORT TABS */
+.sort-tabs a {
+    display: inline-block;
+    padding: 6px 12px;
+    margin-left: 6px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #024d1e;
+    background: #e8ffe8;
+    font-size: 14px;
+    border: 1px solid #cceccc;
+    transition: 0.15s;
+}
+
+.sort-tabs a:hover {
+    background: #caffca;
+}
+
+.sort-tabs a.active {
+    background: #05702e;
+    color: white;
+    border-color: #05702e;
+}
+
+/* MONTH HEADER ------------------------------------------------------ */
+.month-header {
+    font-weight: bold;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    padding: 4px 0;
+    color: #035d27;
+    border-bottom: 1px solid #cceccc;
+}
+
+/* TICKET LIST ------------------------------------------------------ */
+.history-list {
+    background: white;
+    padding: 10px;
+    border: 1px solid #d9f0d9;
+    border-radius: 8px;
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+}
+
+.ticket-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fff8;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    border: 1px solid #d5ebd5;
+    text-decoration: none;
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+.ticket-item:hover {
+    background: #e3ffe3;
+    transform: translateX(3px);
+}
+
+.ticket-title {
+    font-weight: bold;
+    color: #045024;
+}
+
+.ticket-status {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Status colors */
+.ticket-status.unresolved {
+    background: #ffe5e5;
+    color: #b30000;
+}
+
+.ticket-status.resolved {
+    background: #d8ffe0;
+    color: #0d7a32;
+}
+
+.ticket-status.pending {
+    background: #fff4d6;
+    color: #aa7800;
+}
+
+.ticket-date {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* EMPTY STATE */
+.empty {
+    text-align: center;
+    padding: 20px;
+    color: #777;
+    font-style: italic;
+}
+
+/* SCROLLBAR STYLE ------------------------------------------------------ */
+.history-list::-webkit-scrollbar,
+.timeline-col::-webkit-scrollbar,
+.chat-col::-webkit-scrollbar {
+    width: 6px;
+}
+
+.history-list::-webkit-scrollbar-thumb,
+.timeline-col::-webkit-scrollbar-thumb,
+.chat-col::-webkit-scrollbar-thumb {
+    background: #0ba34d;
+    border-radius: 6px;
+}
+
+/* ============================================================
+   HISTORY VIEW PAGE (existing styles preserved)
+============================================================ */
 
 .section-header {
     font-size: 18px;
@@ -16,60 +195,25 @@ h2, h3 {
     border-bottom: 2px solid #cceccc;
 }
 
-/* BACK BUTTON */
-.back-btn {
-    display: inline-block;
-    background: #05702e;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 6px;
-    margin-bottom: 12px;
-    text-decoration: none;
-}
-
 /* TWO COLUMN ------------------------------------------------------ */
 .history-two-col {
     display: flex;
     gap: 20px;
 }
 
-/* LEFT TIMELINE COLUMN */
-.timeline-col {
-    width: 40%;
-    padding: 15px;
+.timeline-col, .chat-col {
     background: #ffffff;
     border: 1px solid #d8efd8;
     border-radius: 8px;
     height: calc(100vh - 225px);
     overflow-y: auto;
-}
-
-/* RIGHT CHAT COLUMN */
-.chat-col {
-    width: 60%;
     padding: 15px;
-    background: #ffffff;
-    border: 1px solid #d8efd8;
-    border-radius: 8px;
-    height: calc(100vh - 225px);
-    overflow-y: auto;
 }
 
-/* SCROLLBAR */
-.timeline-col::-webkit-scrollbar,
-.chat-col::-webkit-scrollbar,
-.chat-history::-webkit-scrollbar {
-    width: 6px;
-}
+.timeline-col { width: 40%; }
+.chat-col { width: 60%; }
 
-.timeline-col::-webkit-scrollbar-thumb,
-.chat-col::-webkit-scrollbar-thumb,
-.chat-history::-webkit-scrollbar-thumb {
-    background: #0ba34d;
-    border-radius: 6px;
-}
-
-/* TIMELINE STYLING ------------------------------------------------------ */
+/* TIMELINE LOGS ------------------------------------------------------ */
 .log-entry {
     background: #ffffff;
     padding: 10px 12px;
@@ -78,55 +222,19 @@ h2, h3 {
     border-left: 5px solid #ccc;
 }
 
-/* Color-coded timeline actions */
 .log-entry.pending { border-left-color: orange; }
 .log-entry.unresolved { border-left-color: red; }
 .log-entry.resolved { border-left-color: green; }
 .log-entry.assigned { border-left-color: royalblue; }
 .log-entry.unassigned { border-left-color: gray; }
 
-.log-action {
-    font-weight: bold;
-}
-
-.log-by {
-    font-size: 13px;
-    opacity: 0.7;
-}
-
-.log-time {
-    font-size: 12px;
-    margin-top: 3px;
-    opacity: 0.7;
-}
-
-/* FILTER BUTTONS ------------------------------------------------------ */
-.filters {
-    margin-bottom: 10px;
-}
-
-.filter-btn {
-    padding: 6px 10px;
-    background: #eaffea;
-    border-radius: 6px;
-    margin-right: 6px;
-    text-decoration: none;
-    color: #024d1e;
-}
-
-.filter-btn.active {
-    background: #05702e;
-    color: white;
-}
-
-/* CHAT HISTORY ------------------------------------------------------ */
+/* CHAT MESSAGES ------------------------------------------------------ */
 .chat-history {
     height: calc(100vh - 320px);
     overflow-y: auto;
     padding: 10px;
 }
 
-/* Chat bubble layout */
 .chat-msg {
     margin-bottom: 15px;
     display: flex;
@@ -142,33 +250,18 @@ h2, h3 {
     line-height: 1.4;
 }
 
-/* CSR bubble right aligned */
-.chat-msg.csr {
-    align-items: flex-end;
-}
+.chat-msg.csr { align-items: flex-end; }
+.chat-msg.csr .bubble { background: #c8ffd5; border-bottom-right-radius: 4px; }
 
-.chat-msg.csr .bubble {
-    background: #c8ffd5;
-    border-bottom-right-radius: 4px;
-}
+.chat-msg.client { align-items: flex-start; }
+.chat-msg.client .bubble { border-bottom-left-radius: 4px; }
 
-/* Client bubble left aligned */
-.chat-msg.client {
-    align-items: flex-start;
-}
-
-.chat-msg.client .bubble {
-    border-bottom-left-radius: 4px;
-}
-
-/* Deleted bubble */
 .chat-msg.deleted .bubble {
     background: #f0f0f0;
     font-style: italic;
     color: #777;
 }
 
-/* Timestamp */
 .meta {
     font-size: 11px;
     opacity: 0.7;
@@ -190,3 +283,31 @@ h2, h3 {
 
 #jumpTop { bottom: 80px; }
 #jumpBottom { bottom: 20px; }
+
+/* ============================================================
+   RESPONSIVE ADJUSTMENTS
+============================================================ */
+
+@media (max-width: 900px) {
+    .history-two-col {
+        flex-direction: column;
+    }
+
+    .timeline-col, .chat-col {
+        width: 100%;
+        height: auto;
+        max-height: 400px;
+    }
+}
+
+@media (max-width: 600px) {
+    .ticket-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .ticket-status {
+        align-self: flex-start;
+    }
+}
