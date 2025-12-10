@@ -469,7 +469,11 @@ body {
     /* Lift chat input + safe-area padding */
     .chat-input-area {
         padding: 12px;
-        padding-bottom: calc(20px + env(safe-area-inset-bottom)); /* <-- higher */
+        padding-bottom: calc(32px + env(safe-area-inset-bottom)); /* Medium height lift */
+        background: var(--input-bg);
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
     }
 
     .chat-input-box {
@@ -478,13 +482,24 @@ body {
     }
 
     .chat-input-box input {
-        font-size: 17px;   /* Prevents iOS zoom issue */
+        font-size: 17px;   /* Prevents iOS zoom */
     }
 
     #send-btn {
         width: 46px;
         height: 46px;
         font-size: 17px;
+    }
+
+    /* Scroll button stays aligned */
+    .scroll-bottom-btn {
+        bottom: 110px; /* Lift to match input bar height */
+    }
+
+    /* Popup stays centered */
+    #msg-action-popup {
+        left: 50% !important;
+        transform: translateX(-50%);
     }
 }
 
@@ -495,22 +510,26 @@ body {
 
     .chat-input-area {
         padding: 12px;
-        padding-bottom: calc(26px + env(safe-area-inset-bottom)); /* even higher */
+        padding-bottom: calc(38px + env(safe-area-inset-bottom)); /* extra minor lift */
     }
 
     .chat-input-box {
         padding: 12px 14px;
-        height: 36px;  /* better than 30px */
+        height: 38px;
     }
 
     .chat-input-box input {
         font-size: 16px;
-        height: 36px;
+        height: 38px;
     }
 
     #send-btn {
         width: 44px;
-        height: 36px;
+        height: 38px;
         font-size: 16px;
+    }
+
+    .scroll-bottom-btn {
+        bottom: 120px; /* matches small-screen lift */
     }
 }
