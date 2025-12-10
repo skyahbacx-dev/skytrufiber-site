@@ -1,27 +1,36 @@
+/* ===========================
+   CONTAINER & HEADERS
+=========================== */
 .clients-container {
     padding: 20px;
 }
 
 h1 {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+    font-weight: 600;
 }
 
 .client-count {
-    font-size: 16px;
-    margin-bottom: 12px;
+    font-size: 15px;
+    margin-bottom: 15px;
+    color: #444;
 }
 
+/* ===========================
+   SEARCH BAR
+=========================== */
 .client-search {
     display: flex;
     gap: 10px;
-    margin-bottom: 15px;
+    margin-bottom: 18px;
 }
 
 .client-search input {
-    padding: 8px;
+    padding: 8px 10px;
     border: 1px solid #ccc;
     border-radius: 6px;
     flex: 1;
+    font-size: 14px;
 }
 
 .client-search button {
@@ -31,36 +40,61 @@ h1 {
     border: none;
     border-radius: 6px;
     cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s ease;
 }
 
+.client-search button:hover {
+    background: #045a24;
+}
+
+/* ===========================
+   TABLE
+=========================== */
 .table-wrapper {
     overflow-x: auto;
+    margin-top: 10px;
 }
 
 .styled-table {
     width: 100%;
     border-collapse: collapse;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 .styled-table th {
     background: #05702e;
     color: white;
-    cursor: pointer;
-    padding: 8px;
+    padding: 10px;
+    text-align: left;
+    font-size: 14px;
 }
 
 .styled-table td {
     background: white;
-    padding: 8px;
+    padding: 10px;
     border-bottom: 1px solid #eee;
+    font-size: 14px;
 }
 
+.styled-table tr:hover td {
+    background: #f6f6f6;
+}
+
+/* ===========================
+   EMPTY STATE
+=========================== */
 .empty {
     text-align: center;
-    padding: 12px;
-    color: #888;
+    padding: 14px;
+    color: #777;
+    font-size: 14px;
 }
 
+/* ===========================
+   PAGINATION
+=========================== */
 .pagination {
     margin-top: 15px;
 }
@@ -68,24 +102,64 @@ h1 {
 .pagination a {
     padding: 6px 12px;
     background: #ddd;
-    margin-right: 4px;
+    margin-right: 5px;
     border-radius: 6px;
     text-decoration: none;
     color: black;
+    font-size: 14px;
+    transition: 0.2s ease;
+}
+
+.pagination a:hover {
+    background: #ccc;
 }
 
 .pagination a.active {
     background: #05702e;
     color: white;
 }
+
+/* ===========================
+   CHAT BUTTON
+=========================== */
 .chat-btn {
     background: #05702e;
     color: white;
-    padding: 6px 12px;
+    padding: 6px 14px;
     border-radius: 6px;
     text-decoration: none;
     font-size: 13px;
+    display: inline-block;
+    transition: 0.2s ease;
 }
+
 .chat-btn:hover {
     background: #045a24;
+}
+
+/* ===========================
+   HISTORY BUTTON (NEW)
+=========================== */
+.history-btn {
+    background: #0a4787;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    margin-left: 5px;
+    display: inline-block;
+    transition: 0.2s ease;
+}
+
+.history-btn:hover {
+    background: #083a6e;
+}
+
+/* ===========================
+   ACTION CELL (CHAT + HISTORY)
+=========================== */
+.action-buttons {
+    display: flex;
+    gap: 6px;
 }
