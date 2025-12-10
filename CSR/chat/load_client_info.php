@@ -16,6 +16,7 @@ $stmt = $conn->prepare("
         id,
         full_name,
         email,
+        account_number,
         district,
         barangay,
         date_installed,
@@ -73,6 +74,7 @@ echo "
 <div class="client-info-panel">
     <h3><?= htmlspecialchars($u["full_name"]) ?></h3>
 
+    <p><strong>Account Number:</strong> <?= htmlspecialchars($u["account_number"]) ?></p>
     <p><strong>Email:</strong> <?= htmlspecialchars($u["email"]) ?></p>
     <p><strong>District:</strong> <?= htmlspecialchars($u["district"]) ?></p>
     <p><strong>Barangay:</strong> <?= htmlspecialchars($u["barangay"]) ?></p>
