@@ -8,7 +8,8 @@ if (!isset($_SESSION["csr_user"])) {
 require "../../db_connect.php";
 
 $csrUser = $_SESSION["csr_user"];
-$clientID = intval($_GET["client"] ?? 0);
+$clientID = intval($_GET["client"] ?? ($_GET["client_id"] ?? 0));
+
 
 if ($clientID <= 0) {
     exit("<h2>Invalid client</h2>");
