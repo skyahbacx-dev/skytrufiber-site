@@ -1,10 +1,12 @@
 <?php
 session_start();
 
-// Unset all session variables
+/* ------------------------------------------
+   CLEAR ALL SESSION DATA
+------------------------------------------ */
 $_SESSION = [];
 
-// Delete the session cookie (if any)
+/* Delete session cookie */
 if (ini_get("session.use_cookies")) {
     $params = session_get_cookie_params();
     setcookie(
@@ -18,10 +20,13 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
-// Destroy the session completely
+/* Destroy the session completely */
 session_destroy();
 
-// Redirect to login page
-header("Location: csr_login.php");
+/* ------------------------------------------
+   REDIRECT USING CLEAN ROUTE
+   /csr → home.php → encrypted csr_login
+------------------------------------------ */
+header("Location: /csr");
 exit;
 ?>
