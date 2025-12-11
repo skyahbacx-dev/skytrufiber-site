@@ -116,17 +116,37 @@ $(document).on("click", ".suggest-btn", function () {
 });
 
 /* ============================================================
-CHECK TICKET STATUS
+CHECK TICKET STATUS (FULLY FIXED + CACHE-PROOF)
 ============================================================ */
 function checkTicketStatus() {
-    $.post("/SKYTRUFIBER/chat/get_ticket_status.php", { ticket: ticketId })
-        .done(status => applyTicketStatus(status.trim()));
+
+    $.post("/SKYTRUFIBER/chat/get_ticket_status.php", {
+        ticket: ticketId,
+        nocache: Date.now() // avoid caching
+    })
+    .done(raw => {
+        if (!raw) return;
+        const status = raw.trim().toLowerCase(); // normalize always
+        applyTicketStatus(status);
+    });
 }
 
+/* ============================================================
+APPLY TICKET STATUS (RELIABLE STATUS CONTROL)
+============================================================ */
 function applyTicketStatus(status) {
+
     const input = $("#message-input");
     const sendBtn = $("#send-btn");
 
+    // Normalize all possible returned formats
+    status = status.replace(/"/g, "").trim().toLowerCase();
+
+    console.log("CLIENT TICKET STATUS:", status);
+
+    /* ----------------------------------------------
+       STATUS: RESOLVED → Disable chat & auto-logout
+    ------------------------------------------------*/
     if (status === "resolved") {
 
         input.prop("disabled", true);
@@ -151,9 +171,13 @@ function applyTicketStatus(status) {
         return;
     }
 
+    /* ----------------------------------------------
+       Ticket not resolved → allow messaging
+    ------------------------------------------------*/
     input.prop("disabled", false);
     sendBtn.prop("disabled", false);
 }
+
 
 /* ============================================================
 SEND MESSAGE
