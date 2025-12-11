@@ -46,19 +46,13 @@ $stmt = $conn->prepare("
         status
     FROM tickets
     WHERE client_id = ?
-    ORDER BY created_at DESC
+    ORDER BY id DESC
     LIMIT 1
 ");
 $stmt->execute([$clientID]);
 $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $ticketID = intval($ticket["id"] ?? 0);
-
-/*
-    FIX #1:
-    ticket_status must NEVER be "none".
-    Default unresolved so chat.js does not break.
-*/
 $ticketStatus = strtolower($ticket["status"] ?? "unresolved");
 
 /* ============================================================
