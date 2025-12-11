@@ -86,7 +86,7 @@ try {
         <div class="chat-header">
 
             <div class="chat-header-left">
-                <img src="/SKYTRUFIBER/SKYTRUFIBER.png" class="chat-header-logo">
+                <img src="SKYTRUFIBER.png" class="chat-header-logo">
 
                 <div class="header-info">
                     <h2>SkyTruFiber Support</h2>
