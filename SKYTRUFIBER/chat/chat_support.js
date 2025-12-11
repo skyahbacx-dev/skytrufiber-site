@@ -1,5 +1,5 @@
 /* ============================================================
-SkyTruFiber Client Chat System — FINAL FIXED BUILD (2025)
+SkyTruFiber Client Chat System — FINAL REVISED BUILD (2025)
 ============================================================ */
 
 /* ---------------- GLOBAL STATE ---------------- */
@@ -20,15 +20,14 @@ $(document).ready(() => {
         return;
     }
 
-    // Keep popup inside modal
+    // Move popup inside modal for correct positioning
     const popup = $("#msg-action-popup");
     if (popup.length) $(".chat-modal").append(popup.detach());
 
-    // Initial load
     loadMessages(true);
     checkTicketStatus();
 
-    // Safe polling
+    // Polling every 3.5 seconds
     setInterval(() => {
         if (!editing && !activePopup) {
             fetchNewMessages();
@@ -45,20 +44,26 @@ $(document).ready(() => {
         }
     });
 
-    // Theme toggle
+    // Restore theme if saved
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+
+    // Toggle theme
     $("#theme-toggle").click(toggleTheme);
 
-    // Scroll listener
+    // Scroll visibility
     $("#chat-messages").on("scroll", updateScrollButton);
 });
 
 /* ============================================================
-THEME TOGGLE
+THEME TOGGLE (WITH LOCALSTORAGE)
 ============================================================ */
 function toggleTheme() {
     const root = document.documentElement;
     const dark = root.getAttribute("data-theme") === "dark";
-    root.setAttribute("data-theme", dark ? "light" : "dark");
+    const newTheme = dark ? "light" : "dark";
+    root.setAttribute("data-theme", newTheme);
+    localStorage.setItem("theme", newTheme);
 }
 
 /* ============================================================
@@ -168,16 +173,14 @@ function sendMessage() {
         message: msg
     }).done(raw => {
 
-        // Case 1: Resolved auto logout
         if (typeof raw === "string" && raw.trim() === "FORCE_LOGOUT") {
             window.location.href = "/SKYTRUFIBER/chat/logout.php";
             return;
         }
 
         let res = {};
-        try { res = JSON.parse(raw); } catch { }
+        try { res = JSON.parse(raw); } catch {}
 
-        // First message → suggestions bubble
         if (res.first_message === true) {
             insertSuggestionBubble();
         }
@@ -204,22 +207,20 @@ function appendClientBubble(msg) {
 }
 
 /* ============================================================
-LOAD MESSAGES (FULL RELOAD)
+LOAD MESSAGES (FULL)
 ============================================================ */
 function loadMessages(scrollBottom = false) {
     $.post("/SKYTRUFIBER/chat/load_messages_client.php", { ticket: ticketId })
     .done(html => {
 
-        // AUTO LOGOUT SIGNAL
         if (html.trim() === "FORCE_LOGOUT") {
             window.location.href = "/SKYTRUFIBER/chat/logout.php";
             return;
         }
 
         $("#chat-messages").html(html);
-        bindActionToolbar();
 
-        updateScrollButton();
+        bindActionToolbar();
 
         if (scrollBottom) scrollToBottom();
     });
@@ -255,14 +256,13 @@ function fetchNewMessages() {
 SCROLL
 ============================================================ */
 function scrollToBottom() {
-    const m = $("#chat-messages");
-    m.stop().animate({ scrollTop: m[0].scrollHeight }, 200);
+    const m = $("#chat-messages")[0];
+    m.scrollTo({ top: m.scrollHeight, behavior: "smooth" });
 }
 
 function updateScrollButton() {
     const m = $("#chat-messages");
     const btn = $("#scroll-bottom-btn");
-    if (!btn.length) return;
 
     const nearBottom = m.scrollTop() + m.innerHeight() >= m[0].scrollHeight - 60;
     if (nearBottom) btn.removeClass("show");
@@ -272,10 +272,9 @@ function updateScrollButton() {
 $(document).on("click", "#scroll-bottom-btn", scrollToBottom);
 
 /* ============================================================
-ACTION TOOLBAR
+ACTION POPUP
 ============================================================ */
 function bindActionToolbar() {
-
     $(".more-btn").off("click").on("click", function (e) {
         e.stopPropagation();
         openPopup($(this).data("id"), this);
