@@ -155,11 +155,7 @@ $csrUser = $_SESSION["csr_user"];
 
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
 
-<!-- FIXED ABSOLUTE PATH for Sortable -->
-<script src="/CSR/vendor/js/Sortable.min.js"></script>
 
-<!-- FIXED Chat JS -->
-<script src="/CSR/chat/chat.js?v=3"></script>
 
 
 </body>
