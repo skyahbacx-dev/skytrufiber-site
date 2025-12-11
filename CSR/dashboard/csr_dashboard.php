@@ -1,10 +1,10 @@
 <?php
-
-
 if (!isset($_SESSION['csr_user'])) {
-    header("Location: ../csr_login.php");
+    $token = urlencode(base64_encode("csr_login|" . time()));
+    header("Location: /home.php?v=" . $token);
     exit;
 }
+
 
 $csrUser     = $_SESSION["csr_user"];
 $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
