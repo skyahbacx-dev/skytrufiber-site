@@ -8,7 +8,7 @@ $view = $_GET['view'] ?? 'responses';
    LOAD ANALYTICS PAGE
 --------------------------------------- */
 if ($view === 'analytics') {
-    include "analytics.php";
+    include "CSR/survey/analytics.php";
     return;
 }
 
@@ -109,9 +109,9 @@ $dList = $conn->query("
 <h1>📄 Survey Responses</h1>
 <!-- EXPORT BUTTONS -->
 <div class="export-buttons">
-    <a class="export-btn" href="../survey/export_survey_pdf.php?<?= http_build_query($_GET) ?>" target="_blank">📄 Export PDF</a>
-    <a class="export-btn" href="../survey/export_survey_excel.php?<?= http_build_query($_GET) ?>">📊 Export Excel</a>
-   <a class="export-btn" href="../survey/print_survey.php?<?= http_build_query($_GET) ?>" target="_blank">🖨 Print View</a>
+    <a class="export-btn" href="CSR/survey/export_survey_pdf.php?<?= http_build_query($_GET) ?>" target="_blank">📄 Export PDF</a>
+    <a class="export-btn" href="CSR/survey/export_survey_excel.php?<?= http_build_query($_GET) ?>">📊 Export Excel</a>
+   <a class="export-btn" href="CSR/survey/print_survey.php?<?= http_build_query($_GET) ?>" target="_blank">🖨 Print View</a>
 
 </div>
 
