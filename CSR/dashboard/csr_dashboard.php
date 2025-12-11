@@ -166,6 +166,9 @@ switch ($tab) {
     case "SURVEY":
         include __DIR__ . "/../survey/survey_responses.php";
         break;
+    case "SURVEY_ANALYTICS":
+       include __DIR__ . "/../survey/analytics.php";
+       break;
 
     /* FALLBACK → chat */
     default:
