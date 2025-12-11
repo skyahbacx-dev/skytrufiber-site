@@ -1,30 +1,17 @@
 <?php
 if (!isset($_SESSION)) session_start();
-require "../../db_connect.php";
+require __DIR__ . "/../../db_connect.php";
 
 $clientID = intval($_POST["client_id"] ?? 0);
-if ($clientID <= 0) {
-    echo "<p>Invalid client.</p>";
-    exit;
-}
+if ($clientID <= 0) exit("<p>Invalid client.</p>");
 
-/* ============================================================
-   FETCH CLIENT DETAILS
-============================================================ */
 $stmt = $conn->prepare("
     SELECT 
-        id,
-        full_name,
-        email,
-        account_number,
-        district,
-        barangay,
-        date_installed,
-        created_at,        -- Added registration date
+        id, full_name, email, account_number,
+        district, barangay, date_installed,
+        created_at,
         assigned_csr,
         is_online,
-        is_locked,
-        ticket_status,
         ticket_lock,
         transfer_request
     FROM users
@@ -34,18 +21,13 @@ $stmt = $conn->prepare("
 $stmt->execute([$clientID]);
 $u = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$u) {
-    echo "<p>Client not found.</p>";
-    exit;
-}
+if (!$u) exit("<p>Client not found.</p>");
 
-$csrUser = $_SESSION['csr_user'] ?? '';
+$csrUser = $_SESSION["csr_user"] ?? '';
 $isAssignedToMe = ($u["assigned_csr"] === $csrUser) ? "yes" : "no";
-$isLocked       = ($u["ticket_lock"] == 1 ? "true" : "false");
+$isLocked       = ($u["ticket_lock"] ? "true" : "false");
 
-/* ============================================================
-   FETCH LATEST ACTIVE TICKET
-============================================================ */
+/* FETCH LATEST TICKET */
 $stmt = $conn->prepare("
     SELECT id, status
     FROM tickets
@@ -59,47 +41,30 @@ $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 $ticketID     = $ticket["id"] ?? 0;
 $ticketStatus = strtolower($ticket["status"] ?? "none");
 
-/* ============================================================
-   COUNT TOTAL TICKETS
-============================================================ */
-$stmt = $conn->prepare("
-    SELECT COUNT(*)
-    FROM tickets
-    WHERE client_id = ?
-");
-$stmt->execute([$clientID]);
-$totalTickets = $stmt->fetchColumn();
-
-/* ============================================================
-   META FOR chat.js
-============================================================ */
+/* Output meta */
 echo "
 <div id='client-meta'
-    data-ticket='{$ticketStatus}'
     data-ticket-id='{$ticketID}'
+    data-ticket='{$ticketStatus}'
     data-assigned='{$isAssignedToMe}'
     data-locked='{$isLocked}'>
-</div>
-";
+</div>";
 ?>
 
 <div class="client-info-panel">
     <h3><?= htmlspecialchars($u["full_name"]) ?></h3>
-
     <p><strong>Account Number:</strong> <?= htmlspecialchars($u["account_number"]) ?></p>
     <p><strong>Email:</strong> <?= htmlspecialchars($u["email"]) ?></p>
     <p><strong>District:</strong> <?= htmlspecialchars($u["district"]) ?></p>
     <p><strong>Barangay:</strong> <?= htmlspecialchars($u["barangay"]) ?></p>
     <p><strong>Date Installed:</strong> <?= htmlspecialchars($u["date_installed"]) ?></p>
 
-    <p><strong>Registered On:</strong> 
-        <?= htmlspecialchars(date("F d, Y", strtotime($u["created_at"]))) ?>
+    <p><strong>Registered On:</strong>
+        <?= date("F d, Y", strtotime($u["created_at"])) ?>
     </p>
 
-    <p><strong>Total Tickets:</strong> <?= $totalTickets ?></p>
-
-    <p><strong>Assigned CSR:</strong> 
-        <?= $u["assigned_csr"] ? htmlspecialchars($u["assigned_csr"]) : "Unassigned" ?>
+    <p><strong>Assigned CSR:</strong>
+        <?= $u["assigned_csr"] ?: "Unassigned" ?>
     </p>
 
     <p><strong>Current Ticket:</strong>
@@ -107,24 +72,13 @@ echo "
     </p>
 
     <p><strong>Status:</strong>
-        <span class="ticket-badge <?= $ticketStatus ?>">
-            <?= strtoupper($ticketStatus) ?>
-        </span>
+        <span class="ticket-badge <?= $ticketStatus ?>"><?= strtoupper($ticketStatus) ?></span>
     </p>
-
-    <?php if ($u["transfer_request"]) : ?>
-        <p><strong>Transfer Requested By:</strong> <?= htmlspecialchars($u["transfer_request"]) ?></p>
-    <?php endif; ?>
-
-    <hr>
 
     <p><strong>Online Status:</strong>
-        <?= $u["is_online"] 
-            ? "<span style='color:green;'>● Online</span>" 
-            : "<span style='color:red;'>● Offline</span>" ?>
+        <?= $u["is_online"] ? "<span style='color:green;'>● Online</span>" :
+                               "<span style='color:red;'>● Offline</span>" ?>
     </p>
 
-    <p><strong>Locked:</strong>
-        <?= $u["ticket_lock"] ? "Yes (another CSR is editing)" : "No" ?>
-    </p>
+    <p><strong>Locked:</strong> <?= $u["ticket_lock"] ? "Yes" : "No" ?></p>
 </div>
