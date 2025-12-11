@@ -131,6 +131,11 @@ if (!empty($_GET["v"])) {
             $GLOBALS["CSR_TAB"] = "SURVEY";
             require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
             exit;
+        case "csr_survey_analytics":
+           if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
+           $GLOBALS["CSR_TAB"] = "SURVEY_ANALYTICS";
+           require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
+           exit;
 
         default:
             die("⛔ Unknown encrypted route");
