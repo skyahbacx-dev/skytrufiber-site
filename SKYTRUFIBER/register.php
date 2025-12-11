@@ -1,10 +1,9 @@
 <?php
-// ALWAYS use an absolute include path
+// ALWAYS use absolute include path
 require_once __DIR__ . '/../db_connect.php';
 
-// Get encrypted source passed from consent.php
-$source = $_GET['source'] ?? '';
 $message = '';
+$source = $_GET['source'] ?? ''; // From consent.php
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -15,8 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $barangay       = trim($_POST['location']);
     $date_installed = trim($_POST['date_installed']);
     $remarks        = trim($_POST['remarks']);
-    $password       = $account_number; 
-    $source         = trim($_POST['source']); // from hidden input
+    $password       = $account_number;
+    $source         = trim($_POST['source']); // Hidden input
 
     if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
 
@@ -25,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $hash = password_hash($password, PASSWORD_BCRYPT);
 
-            // Insert user
+            // INSERT USER
             $stmt = $conn->prepare("
                 INSERT INTO users 
                 (account_number, full_name, email, password, district, barangay, date_installed, privacy_consent, source, created_at)
@@ -43,9 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':source'   => $source
             ]);
 
-            // Save optional feedback
-            if ($remarks) {
-
+            // INSERT FEEDBACK IF PROVIDED
+            if (!empty($remarks)) {
                 $stmt2 = $conn->prepare("
                     INSERT INTO survey_responses 
                     (client_name, account_number, district, location, feedback, source, created_at)
@@ -64,7 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $conn->commit();
 
-            // ALWAYS redirect to encrypted SkyTruFiber login
+            // Redirect to encrypted skytrufiber login
+            // /fiber → index.php → encrypt("fiber") → skytrufiber.php
             header("Location: /fiber?msg=success");
             exit;
 
@@ -85,7 +84,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Customer Registration – SkyTruFiber</title>
 
 <style>
-/* GLOBAL LAYOUT */
 body {
     font-family: Arial, sans-serif;
     background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
@@ -96,7 +94,6 @@ body {
     align-items: center;
 }
 
-/* LOGO */
 .logo-container img {
     width: 150px;
     border-radius: 50%;
@@ -105,7 +102,6 @@ body {
     .logo-container img { width: 115px; }
 }
 
-/* FORM BOX */
 form {
     background: white;
     padding: 25px;
@@ -115,7 +111,6 @@ form {
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* INPUTS */
 input, select, textarea {
     width: 100%;
     padding: 12px;
@@ -125,25 +120,27 @@ input, select, textarea {
     font-size: 15px;
 }
 
-/* BUTTON */
 button {
     width: 100%;
     padding: 12px;
+    margin-top: 18px;
     background: #0099cc;
     color: white;
     border: none;
     border-radius: 10px;
     cursor: pointer;
-    margin-top: 15px;
     font-size: 16px;
     font-weight: bold;
 }
 button:hover { background: #007a99; }
 
-/* ERROR MESSAGE */
-.message { text-align: center; color: red; margin-top: 10px; }
+.message { 
+    text-align: center; 
+    color: red; 
+    margin-top: 10px; 
+}
 
-/* BARANGAY DROPDOWN */
+/* Dropdown */
 .dropdown-panel {
     position: absolute;
     width: 100%;
@@ -161,13 +158,14 @@ button:hover { background: #007a99; }
     cursor: pointer;
 }
 .dropdown-item:hover { background: #e8f4ff; }
-</style>
 
+</style>
 </head>
+
 <body>
 
 <div class="logo-container">
-    <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+    <img src="/SKYTRUFIBER/SKYTRUFIBER.png" alt="SkyTruFiber Logo">
 </div>
 
 <form method="POST">
@@ -202,7 +200,7 @@ button:hover { background: #007a99; }
     <label>Date Installed:</label>
     <input type="date" id="date_installed" name="date_installed" required>
 
-    <label>Feedback / Comments:</label>
+    <label>Feedback / Comments (Optional):</label>
     <textarea name="remarks"></textarea>
 
     <button type="submit">Submit</button>
@@ -212,17 +210,16 @@ button:hover { background: #007a99; }
     <?php endif; ?>
 
     <p style="text-align:center; margin-top:10px;">
-        Already registered?  
-        <a href="/fiber">Login here</a>
+        Already registered? <a href="/fiber">Login here</a>
     </p>
 </form>
 
 <script>
-/* SAME BARANGAY SEARCH SYSTEM YOU ALREADY HAVE */
+/* Barangay JS — unchanged */
 const barangays = {
-  "District 1": [...],
-  "District 3": [...],
-  "District 4": [...]
+    "District 1": [...],
+    "District 3": [...],
+    "District 4": [...]
 };
 
 const districtSelect = document.getElementById('district');
@@ -238,7 +235,7 @@ districtSelect.addEventListener('change', () => {
 
 barangaySearch.addEventListener('input', updateDropdown);
 
-document.addEventListener("click", (e) => {
+document.addEventListener("click", e => {
     if (!dropdownList.contains(e.target) && e.target !== barangaySearch) {
         dropdownList.style.display = "none";
     }
@@ -250,34 +247,34 @@ function updateDropdown() {
 
     dropdownList.innerHTML = "";
 
-    if (!barangays[district]) {
-        dropdownList.style.display = "none";
-        return;
-    }
+    if (!barangays[district]) return dropdownList.style.display = "none";
 
-    const filtered = barangays[district].filter(b => 
+    const filtered = barangays[district].filter(b =>
         b.toLowerCase().includes(text)
     );
 
     filtered.forEach(brgy => {
-        let div = document.createElement("div");
-        div.className = "dropdown-item";
-        div.textContent = brgy;
-        div.onclick = () => {
+        let item = document.createElement("div");
+        item.className = "dropdown-item";
+        item.textContent = brgy;
+        item.onclick = () => {
             barangaySearch.value = brgy;
             hiddenBarangay.value = brgy;
             dropdownList.style.display = "none";
         };
-        dropdownList.appendChild(div);
+        dropdownList.appendChild(item);
     });
 
     dropdownList.style.display = "block";
 }
 
+// Auto-fill install date
 document.addEventListener("DOMContentLoaded", () => {
     const d = new Date();
     document.getElementById("date_installed").value =
-        d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+        d.getFullYear() + "-" +
+        String(d.getMonth() + 1).padStart(2, "0") + "-" +
+        String(d.getDate()).padStart(2, "0");
 });
 </script>
 
