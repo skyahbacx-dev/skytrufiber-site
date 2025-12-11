@@ -87,7 +87,8 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
         <button class="nav-btn <?= $tab==='SURVEY'?'active':'' ?>" 
                 onclick="navigateEncrypted('csr_survey')">📄 SURVEY</button>
 
-        <a href="CSR/csr_logout.php" class="logout-btn">Logout</a>
+        <a href="/csr/logout" class="logout-btn">Logout</a>
+
     </div>
 </div>
 
@@ -97,7 +98,8 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     <button class="icon-btn" onclick="navigateEncrypted('csr_clients')" title="Clients">👥</button>
     <button class="icon-btn" onclick="navigateEncrypted('csr_reminders')" title="Reminders">⏱</button>
     <button class="icon-btn" onclick="navigateEncrypted('csr_survey')" title="Survey">📄</button>
-    <button class="icon-btn logout" onclick="window.location='CSR/csr_logout.php'" title="Logout">🚪</button>
+    <button class="icon-btn logout" onclick="window.location='/csr/logout'">🚪</button>
+
 </div>
 
 <div class="sidebar" id="sidebar">
@@ -115,7 +117,8 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     <button class="side-item <?= $tab==='SURVEY'?'active':'' ?>" 
             onclick="navigateEncrypted('csr_survey')">📄 Survey Responses</button>
 
-    <button class="side-item logout" onclick="window.location='CSR/csr_logout.php'">🚪 Logout</button>
+    <button class="side-item logout" onclick="window.location='/csr/logout'">🚪 Logout</button>
+
 </div>
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
