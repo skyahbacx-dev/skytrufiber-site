@@ -1,0 +1,38 @@
+RewriteEngine On
+
+# ================================
+# 1️⃣ AHBADVET.COM  → dashboard/
+# ================================
+RewriteCond %{HTTP_HOST} ^ahbadevt\.com$ [NC]
+RewriteRule ^$ dashboard/dashboard.php [L]
+
+RewriteCond %{HTTP_HOST} ^www\.ahbadevt\.com$ [NC]
+RewriteRule ^$ dashboard/dashboard.php [L]
+
+
+# ================================
+# 2️⃣ SKYTRUFIBER.COM → SKYTRUFIBER/
+# ================================
+RewriteCond %{HTTP_HOST} ^skytrufiber\.com$ [NC]
+RewriteRule ^$ SKYTRUFIBER/skytrufiber.php [L]
+
+RewriteCond %{HTTP_HOST} ^www\.skytrufiber\.com$ [NC]
+RewriteRule ^$ SKYTRUFIBER/skytrufiber.php [L]
+
+
+# ================================
+# 3️⃣ AHBA-CSR.COM → CSR/
+# ================================
+RewriteCond %{HTTP_HOST} ^ahba-csr\.com$ [NC]
+RewriteRule ^$ CSR/csr_login.php [L]
+
+RewriteCond %{HTTP_HOST} ^www\.ahba-csr\.com$ [NC]
+RewriteRule ^$ CSR/csr_login.php [L]
+
+
+# ================================
+# OPTIONAL: Hide .php extensions
+# ================================
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.+)$ $1.php [L]
