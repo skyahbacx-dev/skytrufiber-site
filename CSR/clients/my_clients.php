@@ -5,7 +5,8 @@ if (!isset($_SESSION['csr_user'])) {
     exit;
 }
 
-require "../../db_connect.php";
+require __DIR__ . "/../../db_connect.php";
+
 
 $csrUser = $_SESSION["csr_user"];
 $search = trim($_GET["search"] ?? "");
