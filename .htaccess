@@ -1,6 +1,19 @@
 RewriteEngine On
+RewriteBase /
 
-# Clean folder URLs
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^([^/]+)/?$ /$1/index.php [L]
+# Allow direct file access
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# --------------------------
+# CLEAN URL ACCESS
+# --------------------------
+# /dashboard → /dashboard/dashboard.php
+RewriteRule ^dashboard/?$ /dashboard/dashboard.php [L]
+
+# /skytrufiber → /SKYTRUFIBER/skytrufiber.php
+RewriteRule ^skytrufiber/?$ /SKYTRUFIBER/skytrufiber.php [L]
+
+# /csr → /CSR/csr_login.php
+RewriteRule ^csr/?$ /CSR/csr_login.php [L]
