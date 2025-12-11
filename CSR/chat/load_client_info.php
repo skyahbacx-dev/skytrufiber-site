@@ -5,10 +5,18 @@ require __DIR__ . "/../../db_connect.php";
 $clientID = intval($_POST["client_id"] ?? 0);
 if ($clientID <= 0) exit("<p>Invalid client.</p>");
 
+/* ============================================================
+   FETCH CLIENT RECORD
+============================================================ */
 $stmt = $conn->prepare("
     SELECT 
-        id, full_name, email, account_number,
-        district, barangay, date_installed,
+        id,
+        full_name,
+        email,
+        account_number,
+        district,
+        barangay,
+        date_installed,
         created_at,
         assigned_csr,
         is_online,
@@ -24,12 +32,17 @@ $u = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$u) exit("<p>Client not found.</p>");
 
 $csrUser = $_SESSION["csr_user"] ?? '';
+
 $isAssignedToMe = ($u["assigned_csr"] === $csrUser) ? "yes" : "no";
 $isLocked       = ($u["ticket_lock"] ? "true" : "false");
 
-/* FETCH LATEST TICKET */
+/* ============================================================
+   FETCH MOST RECENT TICKET
+============================================================ */
 $stmt = $conn->prepare("
-    SELECT id, status
+    SELECT 
+        id,
+        status
     FROM tickets
     WHERE client_id = ?
     ORDER BY created_at DESC
@@ -41,7 +54,9 @@ $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 $ticketID     = $ticket["id"] ?? 0;
 $ticketStatus = strtolower($ticket["status"] ?? "none");
 
-/* Output meta */
+/* ============================================================
+   SEND META FOR chat.js
+============================================================ */
 echo "
 <div id='client-meta'
     data-ticket-id='{$ticketID}'
@@ -51,8 +66,12 @@ echo "
 </div>";
 ?>
 
+<!-- ============================================================
+     CLIENT INFO PANEL HTML
+=============================================================== -->
 <div class="client-info-panel">
     <h3><?= htmlspecialchars($u["full_name"]) ?></h3>
+
     <p><strong>Account Number:</strong> <?= htmlspecialchars($u["account_number"]) ?></p>
     <p><strong>Email:</strong> <?= htmlspecialchars($u["email"]) ?></p>
     <p><strong>District:</strong> <?= htmlspecialchars($u["district"]) ?></p>
@@ -64,7 +83,7 @@ echo "
     </p>
 
     <p><strong>Assigned CSR:</strong>
-        <?= $u["assigned_csr"] ?: "Unassigned" ?>
+        <?= $u["assigned_csr"] ? htmlspecialchars($u["assigned_csr"]) : "Unassigned" ?>
     </p>
 
     <p><strong>Current Ticket:</strong>
@@ -72,13 +91,25 @@ echo "
     </p>
 
     <p><strong>Status:</strong>
-        <span class="ticket-badge <?= $ticketStatus ?>"><?= strtoupper($ticketStatus) ?></span>
+        <span class="ticket-badge <?= $ticketStatus ?>">
+            <?= strtoupper($ticketStatus) ?>
+        </span>
     </p>
 
     <p><strong>Online Status:</strong>
-        <?= $u["is_online"] ? "<span style='color:green;'>● Online</span>" :
-                               "<span style='color:red;'>● Offline</span>" ?>
+        <?= $u["is_online"]
+            ? "<span style='color:green;'>● Online</span>"
+            : "<span style='color:red;'>● Offline</span>"
+        ?>
     </p>
 
-    <p><strong>Locked:</strong> <?= $u["ticket_lock"] ? "Yes" : "No" ?></p>
+    <p><strong>Locked:</strong>
+        <?= $u["ticket_lock"] ? "Yes" : "No" ?>
+    </p>
+
+    <?php if ($u["transfer_request"]): ?>
+        <p><strong>Transfer Requested By:</strong>
+            <?= htmlspecialchars($u["transfer_request"]) ?>
+        </p>
+    <?php endif; ?>
 </div>
