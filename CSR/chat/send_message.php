@@ -1,6 +1,6 @@
 <?php
 if (!isset($_SESSION)) session_start();
-require __DIR__ . "/../../db_connect.php";
+require "../../db_connect.php";
 
 header("Content-Type: application/json; charset=utf-8");
 
@@ -9,16 +9,26 @@ $clientID = intval($_POST["client_id"] ?? 0);
 $ticketID = intval($_POST["ticket_id"] ?? 0);
 $message  = trim($_POST["message"] ?? "");
 
-if (!$csrUser)
-    exit(json_encode(["status" => "error", "msg" => "CSR not logged in"]));
+if (!$csrUser) {
+    echo json_encode(["status" => "error", "msg" => "CSR not logged in"]);
+    exit;
+}
 
-if ($clientID <= 0 || $ticketID <= 0)
-    exit(json_encode(["status" => "error", "msg" => "Invalid client or ticket"]));
+if ($clientID <= 0 || $ticketID <= 0) {
+    echo json_encode(["status" => "error", "msg" => "Invalid client or ticket"]);
+    exit;
+}
 
-if ($message === "")
-    exit(json_encode(["status" => "error", "msg" => "Message cannot be empty"]));
+if ($message === "") {
+    echo json_encode(["status" => "error", "msg" => "Message cannot be empty"]);
+    exit;
+}
 
 try {
+
+    /* ==========================================================
+       1) Validate ticket belongs to client & assignment
+    ========================================================== */
     $stmt = $conn->prepare("
         SELECT 
             t.status AS ticket_status,
@@ -32,25 +42,69 @@ try {
     $stmt->execute([":tid" => $ticketID]);
     $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$ticket)
-        exit(json_encode(["status" => "error", "msg" => "Ticket not found"]));
+    if (!$ticket) {
+        echo json_encode(["status" => "error", "msg" => "Ticket not found"]);
+        exit;
+    }
 
-    if ($ticket["client_id"] != $clientID)
-        exit(json_encode(["status" => "error", "msg" => "Ticket does not belong to this client"]));
+    $ticketStatus = strtolower($ticket["ticket_status"]);
+    $assignedCSR  = $ticket["assigned_csr"];
+    $dbClientID   = intval($ticket["client_id"]);
 
-    if (strtolower($ticket["ticket_status"]) === "resolved")
-        exit(json_encode(["status" => "blocked", "msg" => "Ticket resolved — messaging disabled."]));
+    /* Ensure correct client–ticket mapping */
+    if ($dbClientID !== $clientID) {
+        echo json_encode(["status" => "error", "msg" => "Ticket does not belong to this client"]);
+        exit;
+    }
 
-    if ($ticket["assigned_csr"] !== $csrUser)
-        exit(json_encode(["status" => "locked", "msg" => "You are not assigned to this ticket."]));
+    /* ==========================================================
+       2) Block messaging in resolved tickets
+    ========================================================== */
+    if ($ticketStatus === "resolved") {
+        echo json_encode([
+            "status" => "blocked",
+            "msg"    => "This ticket is already resolved. Messaging disabled."
+        ]);
+        exit;
+    }
 
-    /* INSERT MESSAGE */
+    /* ==========================================================
+       3) CSR assignment enforcement
+    ========================================================== */
+    if ($assignedCSR !== $csrUser) {
+        echo json_encode([
+            "status" => "locked",
+            "msg"    => "You are not assigned to this ticket."
+        ]);
+        exit;
+    }
+
+    /* ==========================================================
+       4) INSERT MESSAGE (PostgreSQL-safe booleans)
+    ========================================================== */
+
     $insert = $conn->prepare("
         INSERT INTO chat (
-            ticket_id, client_id, sender_type,
-            message, deleted, edited, delivered, seen, created_at
+            ticket_id,
+            client_id,
+            sender_type,
+            message,
+            deleted,
+            edited,
+            delivered,
+            seen,
+            created_at
+        ) VALUES (
+            :tid,
+            :cid,
+            'csr',
+            :msg,
+            FALSE,   -- deleted
+            FALSE,   -- edited
+            TRUE,    -- delivered
+            FALSE,   -- seen
+            NOW()
         )
-        VALUES (:tid, :cid, 'csr', :msg, 0, 0, 1, 0, NOW())
     ");
 
     $insert->execute([
@@ -59,13 +113,18 @@ try {
         ":msg" => $message
     ]);
 
-    echo json_encode(["status" => "ok", "msg" => "Message sent"]);
+    echo json_encode([
+        "status" => "ok",
+        "msg"    => "Message sent"
+    ]);
     exit;
 
+
 } catch (Throwable $e) {
+
     echo json_encode([
         "status" => "error",
-        "msg" => "Server error: " . $e->getMessage()
+        "msg"    => "Server error: " . $e->getMessage()
     ]);
     exit;
 }
