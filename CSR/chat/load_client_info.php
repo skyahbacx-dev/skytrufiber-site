@@ -1,5 +1,7 @@
 <?php
-// 🚫 Disable caching so UI always gets fresh data
+// ------------------------------------------------------------
+// Disable caching (CSR must always receive up-to-date data)
+// ------------------------------------------------------------
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Expires: 0");
 header("Pragma: no-cache");
@@ -42,8 +44,8 @@ $isAssignedToMe = ($u["assigned_csr"] === $csrUser) ? "yes" : "no";
 $isLocked       = $u["ticket_lock"] ? "true" : "false";
 
 /* ============================================================
-   FETCH MOST RECENT TICKET — FIXED VERSION
-   Ensures updated ticket status is always returned
+   FETCH MOST RECENT TICKET — FIXES “status not updating issue”
+   Uses ID instead of created_at because it's faster & accurate.
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT 
@@ -57,11 +59,11 @@ $stmt = $conn->prepare("
 $stmt->execute([$clientID]);
 $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$ticketID = intval($ticket["id"] ?? 0);
+$ticketID     = intval($ticket["id"] ?? 0);
 $ticketStatus = strtolower($ticket["status"] ?? "unresolved");
 
 /* ============================================================
-   SEND META FOR chat.js — FIXED FOR CORRECT STATUS HANDLING
+   OUTPUT META — Used by chat.js to control UI & permissions
 ============================================================ */
 echo "
 <div id='client-meta'
@@ -73,7 +75,7 @@ echo "
 ?>
 
 <!-- ============================================================
-     CLIENT INFO PANEL HTML
+     CLIENT INFO PANEL — Always refreshes correctly now
 =============================================================== -->
 <div class="client-info-panel">
 
