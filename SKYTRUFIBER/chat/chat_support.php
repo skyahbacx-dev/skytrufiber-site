@@ -67,13 +67,13 @@ try {
       referrerpolicy="no-referrer">
 
 <!-- Local CSS -->
-<link rel="stylesheet" href="chat_support.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="/SKYTRUFIBER/chat/chat_support.css?v=<?php echo time(); ?>">
 
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <!-- Local JS -->
-<script src="chat_support.js?v=<?php echo time(); ?>" defer></script>
+<script src="/SKYTRUFIBER/chat/chat_support.js?v=<?php echo time(); ?>" defer></script>
 
 </head>
 
