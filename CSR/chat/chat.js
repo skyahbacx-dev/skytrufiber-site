@@ -89,13 +89,14 @@ $(document).ready(function () {
             status: $(this).val()
         }, res => {
 
-            if (res === "OK") {
-                loadClientInfo(currentClientID);
-                loadMessages(true);
-                loadClients();
-            } else {
-                alert("Failed to update ticket.");
+            if (res.ok) {
+            loadClientInfo(currentClientID);
+            loadMessages(true);
+            loadClients();
+          } else {
+                alert(res.msg);
             }
+
         });
     });
 
