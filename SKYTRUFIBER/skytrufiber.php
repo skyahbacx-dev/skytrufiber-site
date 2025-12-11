@@ -74,7 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 }
 
                 // Redirect to chat UI
-                header("Location: chat/chat_support.php?ticket=$ticketId");
+                header("Location: /SKYTRUFIBER/chat/chat_support.php?ticket=$ticketId");
+
                 exit;
 
             } else {
