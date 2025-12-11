@@ -1,9 +1,10 @@
 <?php
-// ALWAYS use absolute include path for reliability
-include __DIR__ . '/../db_connect.php';
+// ALWAYS use an absolute include path
+require_once __DIR__ . '/../db_connect.php';
 
-$message = '';
+// Get encrypted source passed from consent.php
 $source = $_GET['source'] ?? '';
+$message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -14,8 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $barangay       = trim($_POST['location']);
     $date_installed = trim($_POST['date_installed']);
     $remarks        = trim($_POST['remarks']);
-    $password       = $account_number; // password = account number
-    $source         = trim($_POST['source']);
+    $password       = $account_number; 
+    $source         = trim($_POST['source']); // from hidden input
 
     if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
 
@@ -24,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $hash = password_hash($password, PASSWORD_BCRYPT);
 
-            // INSERT USER
+            // Insert user
             $stmt = $conn->prepare("
                 INSERT INTO users 
                 (account_number, full_name, email, password, district, barangay, date_installed, privacy_consent, source, created_at)
@@ -42,8 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':source'   => $source
             ]);
 
-            // INSERT FEEDBACK IF EXISTS
+            // Save optional feedback
             if ($remarks) {
+
                 $stmt2 = $conn->prepare("
                     INSERT INTO survey_responses 
                     (client_name, account_number, district, location, feedback, source, created_at)
@@ -62,17 +64,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $conn->commit();
 
-            // Redirect back to encrypted SkyTruFiber login
-            header("Location: skytrufiber.php?msg=success");
+            // ALWAYS redirect to encrypted SkyTruFiber login
+            header("Location: /fiber?msg=success");
             exit;
 
         } catch (PDOException $e) {
             $conn->rollBack();
-            $message = '❌ Database error: ' . htmlspecialchars($e->getMessage());
+            $message = "❌ Database error: " . htmlspecialchars($e->getMessage());
         }
 
     } else {
-        $message = '⚠️ Please fill in all required fields.';
+        $message = "⚠️ Please fill in all required fields.";
     }
 }
 ?>
@@ -98,16 +100,12 @@ body {
 .logo-container img {
     width: 150px;
     border-radius: 50%;
-    margin-bottom: 15px;
 }
-
 @media (max-width: 600px) {
-    .logo-container img {
-        width: 115px;
-    }
+    .logo-container img { width: 115px; }
 }
 
-/* FORM CONTAINER */
+/* FORM BOX */
 form {
     background: white;
     padding: 25px;
@@ -117,7 +115,7 @@ form {
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* INPUTS & SELECTS */
+/* INPUTS */
 input, select, textarea {
     width: 100%;
     padding: 12px;
@@ -127,6 +125,7 @@ input, select, textarea {
     font-size: 15px;
 }
 
+/* BUTTON */
 button {
     width: 100%;
     padding: 12px;
@@ -135,19 +134,14 @@ button {
     border: none;
     border-radius: 10px;
     cursor: pointer;
-    margin-top: 18px;
+    margin-top: 15px;
     font-size: 16px;
+    font-weight: bold;
 }
+button:hover { background: #007a99; }
 
-button:hover {
-    background: #007a99;
-}
-
-.message {
-    text-align: center;
-    color: red;
-    margin-top: 10px;
-}
+/* ERROR MESSAGE */
+.message { text-align: center; color: red; margin-top: 10px; }
 
 /* BARANGAY DROPDOWN */
 .dropdown-panel {
@@ -162,71 +156,69 @@ button:hover {
     display: none;
     z-index: 999;
 }
-
 .dropdown-item {
     padding: 12px;
     cursor: pointer;
 }
-.dropdown-item:hover {
-    background: #e8f4ff;
-}
+.dropdown-item:hover { background: #e8f4ff; }
 </style>
-</head>
 
+</head>
 <body>
 
 <div class="logo-container">
-  <img src="/SKYTRUFIBER/SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+    <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
 </div>
 
 <form method="POST">
-  <h2>Customer Registration & Feedback</h2>
+    <h2>Customer Registration & Feedback</h2>
 
-  <input type="hidden" name="source" value="<?= htmlspecialchars($source) ?>">
+    <input type="hidden" name="source" value="<?= htmlspecialchars($source) ?>">
 
-  <label>Account Number:</label>
-  <input type="text" name="account_number" required>
+    <label>Account Number:</label>
+    <input type="text" name="account_number" required>
 
-  <label>Full Name:</label>
-  <input type="text" name="full_name" required>
+    <label>Full Name:</label>
+    <input type="text" name="full_name" required>
 
-  <label>Email:</label>
-  <input type="email" name="email" required>
+    <label>Email:</label>
+    <input type="email" name="email" required>
 
-  <label>District:</label>
-  <select id="district" name="district" required>
-    <option value="">Select District</option>
-    <option value="District 1">District 1</option>
-    <option value="District 3">District 3</option>
-    <option value="District 4">District 4</option>
-  </select>
+    <label>District:</label>
+    <select id="district" name="district" required>
+        <option value="">Select District</option>
+        <option value="District 1">District 1</option>
+        <option value="District 3">District 3</option>
+        <option value="District 4">District 4</option>
+    </select>
 
-  <label>Barangay:</label>
-  <div style="position:relative;">
-    <input id="barangaySearch" type="text" placeholder="Search barangay..." autocomplete="off">
-    <input type="hidden" id="location" name="location" required>
-    <div id="dropdownList" class="dropdown-panel"></div>
-  </div>
+    <label>Barangay:</label>
+    <div style="position:relative;">
+        <input id="barangaySearch" type="text" placeholder="Search barangay..." autocomplete="off">
+        <input type="hidden" id="location" name="location" required>
+        <div id="dropdownList" class="dropdown-panel"></div>
+    </div>
 
-  <label>Date Installed:</label>
-  <input type="date" id="date_installed" name="date_installed" required>
+    <label>Date Installed:</label>
+    <input type="date" id="date_installed" name="date_installed" required>
 
-  <label>Feedback / Comments:</label>
-  <textarea name="remarks" required></textarea>
+    <label>Feedback / Comments:</label>
+    <textarea name="remarks"></textarea>
 
-  <button type="submit">Submit</button>
+    <button type="submit">Submit</button>
 
-  <?php if ($message): ?>
-      <p class="message"><?= htmlspecialchars($message) ?></p>
-  <?php endif; ?>
+    <?php if ($message): ?>
+        <p class="message"><?= htmlspecialchars($message) ?></p>
+    <?php endif; ?>
 
-  <p style="text-align:center; margin-top:10px;">
-    Already registered? <a href="skytrufiber.php">Login here</a>
-  </p>
+    <p style="text-align:center; margin-top:10px;">
+        Already registered?  
+        <a href="/fiber">Login here</a>
+    </p>
 </form>
 
 <script>
-// Same barangay dropdown JS from your original — unchanged
+/* SAME BARANGAY SEARCH SYSTEM YOU ALREADY HAVE */
 const barangays = {
   "District 1": [...],
   "District 3": [...],
@@ -234,9 +226,9 @@ const barangays = {
 };
 
 const districtSelect = document.getElementById('district');
-const barangaySearch  = document.getElementById('barangaySearch');
-const dropdownList    = document.getElementById('dropdownList');
-const hiddenBarangay  = document.getElementById('location');
+const barangaySearch = document.getElementById('barangaySearch');
+const dropdownList = document.getElementById('dropdownList');
+const hiddenBarangay = document.getElementById('location');
 
 districtSelect.addEventListener('change', () => {
     barangaySearch.value = "";
@@ -263,7 +255,9 @@ function updateDropdown() {
         return;
     }
 
-    const filtered = barangays[district].filter(b => b.toLowerCase().includes(text));
+    const filtered = barangays[district].filter(b => 
+        b.toLowerCase().includes(text)
+    );
 
     filtered.forEach(brgy => {
         let div = document.createElement("div");
