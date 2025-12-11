@@ -1,13 +1,18 @@
-FROM php:8.2-cli
+FROM php:8.2-apache
 
-# Install PostgreSQL client & extension dependencies
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    libzip-dev \
-    unzip \
+# Enable Apache rewrite
+RUN a2enmod rewrite
+
+# Install PostgreSQL
+RUN apt-get update && apt-get install -y libpq-dev \
     && docker-php-ext-install pdo pdo_pgsql
 
-WORKDIR /app
-COPY . .
+# Copy project
+COPY . /var/www/html/
 
-CMD ["php", "-S", "0.0.0.0:8080", "-t", "."]
+# Allow .htaccess override
+RUN sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
+
+EXPOSE 8080
+
+CMD ["apache2-foreground"]
