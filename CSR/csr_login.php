@@ -1,42 +1,60 @@
 <?php
 session_start();
-include '../db_connect.php';
+require_once __DIR__ . '/../db_connect.php';
 
-if (isset($_SESSION['csr_user']) && $_SESSION['csr_user'] !== '') {
-    header("Location: dashboard/csr_dashboard.php");
+/* ============================================================
+   🔐 IF ALREADY LOGGED IN → GO TO ENCRYPTED CSR DASHBOARD
+============================================================ */
+if (!empty($_SESSION['csr_user'])) {
+    header("Location: /csr/dashboard");
     exit;
 }
 
-$error = '';
+$error = "";
 
+/* ============================================================
+   🔑 LOGIN PROCESS
+============================================================ */
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $username = trim($_POST["username"] ?? '');
-    $pass = $_POST["password"] ?? '';
 
-    if ($username === "" || $pass === "") {
+    $username = trim($_POST["username"] ?? "");
+    $password = $_POST["password"] ?? "";
+
+    if ($username === "" || $password === "") {
         $error = "Please enter username & password.";
     } else {
-        $stmt = $conn->prepare("SELECT username, full_name, password, status FROM csr_users WHERE username = :u LIMIT 1");
+
+        $stmt = $conn->prepare("
+            SELECT username, full_name, password, status
+            FROM csr_users
+            WHERE username = :u
+            LIMIT 1
+        ");
         $stmt->execute([":u" => $username]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($row && strtolower($row["status"]) === "active") {
 
-            if (password_verify($pass, $row["password"])) {
+            if (password_verify($password, $row["password"])) {
+
                 session_regenerate_id(true);
 
                 $_SESSION["csr_user"] = $row["username"];
                 $_SESSION["csr_fullname"] = $row["full_name"];
 
-                $conn->prepare("UPDATE csr_users SET last_seen = NOW() WHERE username = :u")
-                    ->execute([":u" => $row["username"]]);
+                // Update last seen
+                $upd = $conn->prepare("
+                    UPDATE csr_users SET last_seen = NOW() WHERE username = :u
+                ");
+                $upd->execute([":u" => $row["username"]]);
 
-                header("Location: dashboard/csr_dashboard.php");
+                // Redirect using encrypted clean route
+                header("Location: /csr/dashboard");
                 exit;
+
             } else {
                 $error = "Invalid password.";
             }
-
         } else {
             $error = "Account not found or inactive.";
         }
@@ -69,7 +87,7 @@ body::before{
     content:"";
     position:absolute;
     inset:0;
-    background:url('../AHBALOGO.png') no-repeat center center;
+    background:url('/AHBALOGO.png') no-repeat center center;
     background-size:600px auto;
     opacity:.08;
     z-index:0;
@@ -170,13 +188,13 @@ button:hover{background:var(--green-dark);}
 
         <button type="submit">Login</button>
 
-        <?php if($error): ?>
-            <div class="error"><?= $error ?></div>
+        <?php if ($error): ?>
+            <div class="error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
     </form>
 
     <div class="footer">
-        Back to <a href="../dashboard.php">Home</a>
+        Back to <a href="/">Home</a>
     </div>
 </div>
 
