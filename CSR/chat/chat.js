@@ -296,22 +296,28 @@ function loadMessages(scrollBottom = false) {
 // ============================================================
 function fetchNewMessages() {
 
-    if (!currentTicketID || editing) return;
+    if (!currentTicketID) return;
 
-    $.post("/CSR/chat/load_messages.php", {
+    $.post("CSR/chat/load_messages.php", {
         ticket_id: currentTicketID
     }, html => {
+
+        // Remove temp messages BEFORE updating messages
+        $("#chat-messages .temp-msg").remove();
 
         const temp = $("<div>").html(html);
 
         temp.find(".message").each(function () {
             const id = $(this).data("msg-id");
+
+            // Add only if not added yet
             if (!$(`.message[data-msg-id='${id}']`).length) {
                 $("#chat-messages").append($(this));
             }
         });
 
         bindActionButtons();
+        scrollToBottom();
     });
 }
 
@@ -346,6 +352,10 @@ function sendMessage() {
 // TEMP BUBBLE
 // ============================================================
 function appendTempBubble(msg) {
+
+    // remove any existing temp bubble
+    $(".temp-msg").remove();
+
     $("#chat-messages").append(`
         <div class="message sent temp-msg">
             <div class="message-content">
@@ -354,8 +364,10 @@ function appendTempBubble(msg) {
             </div>
         </div>
     `);
+
     scrollToBottom();
 }
+
 
 // ============================================================
 // ACTION MENU
