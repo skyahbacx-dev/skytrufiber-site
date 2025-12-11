@@ -79,26 +79,28 @@ $(document).ready(function () {
     });
 
     // CHANGE TICKET STATUS ---------------------------------------
-    $(document).on("change", "#ticket-status-dropdown", function () {
+  $(document).on("change", "#ticket-status-dropdown", function () {
 
         if (!currentClientID || !currentTicketID) return;
 
-        $.post("/CSR/chat/ticket_update.php", {
+            $.post("/CSR/chat/ticket_update.php", {
             client_id: currentClientID,
             ticket_id: currentTicketID,
             status: $(this).val()
         }, res => {
 
-            if (res.ok) {
-            loadClientInfo(currentClientID);
-            loadMessages(true);
-            loadClients();
-          } else {
-                alert(res.msg);
-            }
+            console.log("TICKET UPDATE RESPONSE:", res);
 
+            if (res.trim() === "OK") {
+                loadClientInfo(currentClientID);
+                loadMessages(true);
+                loadClients();
+            } else {
+                alert("Failed to update ticket: " + res);
+            }
         });
     });
+
 
     // ASSIGN / UNASSIGN / TRANSFER --------------------------------
     $(document).on("click", ".assign-btn", function () {
