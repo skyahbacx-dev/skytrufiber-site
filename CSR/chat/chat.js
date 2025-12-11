@@ -1,6 +1,5 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — UPDATED FOR ENCRYPTED ROUTING
-// All AJAX paths fixed to absolute CSR paths
+// SkyTruFiber CSR Chat System — FULLY PATCHED VERSION
 // ============================================================
 
 let currentClientID = null;
@@ -45,7 +44,6 @@ $(document).ready(function () {
 
         currentClientID = $(this).data("id");
         $("#chat-client-name").text($(this).data("name"));
-
         $("#chat-messages").html("");
 
         loadClientInfo(currentClientID);
@@ -79,11 +77,11 @@ $(document).ready(function () {
     });
 
     // CHANGE TICKET STATUS ---------------------------------------
-  $(document).on("change", "#ticket-status-dropdown", function () {
+    $(document).on("change", "#ticket-status-dropdown", function () {
 
         if (!currentClientID || !currentTicketID) return;
 
-            $.post("/CSR/chat/ticket_update.php", {
+        $.post("/CSR/chat/ticket_update.php", {
             client_id: currentClientID,
             ticket_id: currentTicketID,
             status: $(this).val()
@@ -92,15 +90,19 @@ $(document).ready(function () {
             console.log("TICKET UPDATE RESPONSE:", res);
 
             if (res.trim() === "OK") {
-                loadClientInfo(currentClientID);
-                loadMessages(true);
-                loadClients();
+
+                // Allow DB to update before reloading
+                setTimeout(() => {
+                    loadClientInfo(currentClientID);
+                    loadMessages(true);
+                    loadClients();
+                }, 350);
+
             } else {
                 alert("Failed to update ticket: " + res);
             }
         });
     });
-
 
     // ASSIGN / UNASSIGN / TRANSFER --------------------------------
     $(document).on("click", ".assign-btn", function () {
@@ -204,7 +206,7 @@ function scrollToBottom() {
 // LOAD CLIENT LIST
 // ============================================================
 function loadClients() {
-    $.post("/CSR/chat/load_clients.php", {
+    $.post("/CSR/chat/load_clients.php?t=" + Date.now(), {
         filter: currentTicketFilter
     }, html => {
 
@@ -217,11 +219,11 @@ function loadClients() {
 }
 
 // ============================================================
-// LOAD CLIENT INFO
+// LOAD CLIENT INFO (patched to prevent caching)
 // ============================================================
 function loadClientInfo(id) {
 
-    $.post("/CSR/chat/load_client_info.php", { client_id: id }, html => {
+    $.post(`/CSR/chat/load_client_info.php?t=${Date.now()}`, { client_id: id }, html => {
 
         $("#client-info-content").html(html);
 
@@ -283,7 +285,7 @@ function loadMessages(scrollBottom = false) {
 
     if (!currentTicketID) return;
 
-    $.post("/CSR/chat/load_messages.php", {
+    $.post("/CSR/chat/load_messages.php?t=" + Date.now(), {
         ticket_id: currentTicketID
     }, html => {
 
@@ -295,17 +297,16 @@ function loadMessages(scrollBottom = false) {
 }
 
 // ============================================================
-// FETCH NEW MESSAGES
+// FETCH NEW MESSAGES (fixed path)
 // ============================================================
 function fetchNewMessages() {
 
     if (!currentTicketID) return;
 
-    $.post("CSR/chat/load_messages.php", {
+    $.post("/CSR/chat/load_messages.php?t=" + Date.now(), {
         ticket_id: currentTicketID
     }, html => {
 
-        // Remove temp messages BEFORE updating messages
         $("#chat-messages .temp-msg").remove();
 
         const temp = $("<div>").html(html);
@@ -313,7 +314,6 @@ function fetchNewMessages() {
         temp.find(".message").each(function () {
             const id = $(this).data("msg-id");
 
-            // Add only if not added yet
             if (!$(`.message[data-msg-id='${id}']`).length) {
                 $("#chat-messages").append($(this));
             }
@@ -356,7 +356,6 @@ function sendMessage() {
 // ============================================================
 function appendTempBubble(msg) {
 
-    // remove any existing temp bubble
     $(".temp-msg").remove();
 
     $("#chat-messages").append(`
@@ -370,7 +369,6 @@ function appendTempBubble(msg) {
 
     scrollToBottom();
 }
-
 
 // ============================================================
 // ACTION MENU
