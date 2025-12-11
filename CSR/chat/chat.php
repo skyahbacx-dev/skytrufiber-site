@@ -159,7 +159,8 @@ $csrUser = $_SESSION["csr_user"];
 <script src="/CSR/vendor/js/Sortable.min.js"></script>
 
 <!-- FIXED Chat JS -->
-<script src="/CSR/chat/chat.js?v=<?= time(); ?>"></script>
+<script src="/CSR/chat/chat.js?v=3"></script>
+
 
 </body>
 </html>
