@@ -25,12 +25,12 @@ function decrypt_route($token) {
 }
 
 /* ============================================================
-   📌 CLEAN ROUTES (pretty URLs)
+   📌 CLEAN ACCESS — PRETTY URL SHORTCUTS
 ============================================================ */
 
-// /fiber → encrypted redirect to SkyTruFiber
+// /fiber → encrypted login page
 if (preg_match("#/fiber$#", $_SERVER["REQUEST_URI"])) {
-    $token = encrypt_route("fiber");
+    $token = encrypt_route("fiber_login");
     header("Location: /?v=$token");
     exit;
 }
@@ -48,12 +48,22 @@ if (isset($_GET["v"])) {
     }
 
     switch ($route) {
+
         case "dashboard":
             require __DIR__ . "/dashboard/dashboard.php";
             exit;
 
-        case "fiber":
+        /* SKYTRUFIBER ROUTES */
+        case "fiber_login":
             require __DIR__ . "/SKYTRUFIBER/skytrufiber.php";
+            exit;
+
+        case "fiber_consent":
+            require __DIR__ . "/SKYTRUFIBER/consent.php";
+            exit;
+
+        case "fiber_register":
+            require __DIR__ . "/SKYTRUFIBER/register.php";
             exit;
 
         default:
@@ -62,9 +72,8 @@ if (isset($_GET["v"])) {
 }
 
 /* ============================================================
-   🏠 DEFAULT: always send to encrypted dashboard
+   🏠 DEFAULT ROUTE — Always send encrypted dashboard
 ============================================================ */
 $token = encrypt_route("dashboard");
 header("Location: /?v=$token");
 exit;
-
