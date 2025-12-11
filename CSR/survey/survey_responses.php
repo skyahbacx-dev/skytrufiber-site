@@ -1,15 +1,16 @@
 <?php
 require __DIR__ . "/../../db_connect.php";
 
-
+/* Determine view */
 $view = $_GET['view'] ?? 'responses';
 
 /* --------------------------------------
-   LOAD ANALYTICS PAGE
+   LOAD ANALYTICS PAGE (ENCRYPTED ROUTING FIX)
 --------------------------------------- */
 if ($view === 'analytics') {
-      include __DIR__ . "/analytics.php";
 
+    // Always include the correct local file
+    include __DIR__ . "/analytics.php";
     return;
 }
 
@@ -105,21 +106,32 @@ $dList = $conn->query("
 ")->fetchAll(PDO::FETCH_COLUMN);
 ?>
 
-<link rel="stylesheet" href="CSR/survey/survey_responses.css">
+<!-- Correct CSS path -->
+<link rel="stylesheet" href="/CSR/survey/survey_responses.css">
 
 <h1>📄 Survey Responses</h1>
+
 <!-- EXPORT BUTTONS -->
 <div class="export-buttons">
-    <a class="export-btn" href="CSR/survey/export_survey_pdf.php?<?= http_build_query($_GET) ?>" target="_blank">📄 Export PDF</a>
-    <a class="export-btn" href="CSR/survey/export_survey_excel.php?<?= http_build_query($_GET) ?>">📊 Export Excel</a>
-   <a class="export-btn" href="CSR/survey/print_survey.php?<?= http_build_query($_GET) ?>" target="_blank">🖨 Print View</a>
-
+    <a class="export-btn" href="/CSR/survey/export_survey_pdf.php?<?= http_build_query($_GET) ?>" target="_blank">📄 Export PDF</a>
+    <a class="export-btn" href="/CSR/survey/export_survey_excel.php?<?= http_build_query($_GET) ?>">📊 Export Excel</a>
+    <a class="export-btn" href="/CSR/survey/print_survey.php?<?= http_build_query($_GET) ?>" target="_blank">🖨 Print View</a>
 </div>
 
 <!-- SUB NAV TABS -->
 <div class="survey-tabs">
-    <a href="?tab=survey&view=responses" class="<?= $view === 'responses' ? 'active' : '' ?>">📝 Responses</a>
-    <a href="?tab=survey&view=analytics" class="<?= $view === 'analytics' ? 'active' : '' ?>">📊 Analytics</a>
+
+    <!-- Responses -->
+    <a href="?tab=survey&view=responses" 
+       class="<?= $view === 'responses' ? 'active' : '' ?>">
+       📝 Responses
+    </a>
+
+    <!-- Analytics (FIXED LINK) -->
+    <a href="?tab=survey&view=analytics" 
+       class="<?= $view === 'analytics' ? 'active' : '' ?>">
+       📊 Analytics
+    </a>
 </div>
 
 <!-- FILTER BAR -->
@@ -162,26 +174,27 @@ $dList = $conn->query("
             </tr>
         </thead>
         <tbody>
+
         <?php foreach ($rows as $r): ?>
             <tr>
-                <td><?= htmlspecialchars($r['client_name'] ?? '') ?></td>
-                <td><?= htmlspecialchars($r['account_number'] ?? '') ?></td>
-                <td><?= htmlspecialchars($r['email'] ?? '') ?></td>
-                <td><?= htmlspecialchars($r['district'] ?? '') ?></td>
-                <td><?= htmlspecialchars($r['location'] ?? '') ?></td>
-                <td><?= htmlspecialchars($r['feedback'] ?? '') ?></td>
-                <td><?= !empty($r['created_at']) ? date("Y-m-d", strtotime($r['created_at'])) : '' ?></td>
+                <td><?= htmlspecialchars($r['client_name']) ?></td>
+                <td><?= htmlspecialchars($r['account_number']) ?></td>
+                <td><?= htmlspecialchars($r['email']) ?></td>
+                <td><?= htmlspecialchars($r['district']) ?></td>
+                <td><?= htmlspecialchars($r['location']) ?></td>
+                <td><?= htmlspecialchars($r['feedback']) ?></td>
+                <td><?= date("Y-m-d", strtotime($r['created_at'])) ?></td>
 
-                <!-- USER CONNECTION STATUS -->
                 <td>
                     <?php if (!empty($r['linked_name'])): ?>
-                        <span style="color:#05702e; font-weight:bold;">✔ Linked (<?= htmlspecialchars($r['linked_name']) ?>)</span>
+                        <span style="color:#05702e;font-weight:bold;">✔ Linked (<?= htmlspecialchars($r['linked_name']) ?>)</span>
                     <?php else: ?>
-                        <span style="color:#c00; font-weight:bold;">✖ No User</span>
+                        <span style="color:#c00;font-weight:bold;">✖ No User</span>
                     <?php endif; ?>
                 </td>
             </tr>
         <?php endforeach ?>
+
         </tbody>
     </table>
 </div>
@@ -190,7 +203,13 @@ $dList = $conn->query("
 <div class="pagination">
 <?php for ($i = 1; $i <= $totalPages; $i++): ?>
     <a class="<?= $i == $page ? 'active' : '' ?>"
-       href="?tab=survey&page=<?= $i ?>&search=<?= urlencode($search) ?>&district=<?= urlencode($district) ?>&date_from=<?= urlencode($date_from) ?>&date_to=<?= urlencode($date_to) ?>&sort=<?= urlencode($sort) ?>&dir=<?= urlencode($dir) ?>">
+       href="?tab=survey&page=<?= $i ?>
+            &search=<?= urlencode($search) ?>
+            &district=<?= urlencode($district) ?>
+            &date_from=<?= urlencode($date_from) ?>
+            &date_to=<?= urlencode($date_to) ?>
+            &sort=<?= urlencode($sort) ?>
+            &dir=<?= urlencode($dir) ?>">
        <?= $i ?>
     </a>
 <?php endfor ?>
@@ -200,7 +219,9 @@ $dList = $conn->query("
 function sortBy(col){
     const url = new URL(window.location.href);
     url.searchParams.set("sort", col);
-    url.searchParams.set("dir", url.searchParams.get("dir") === "ASC" ? "DESC" : "ASC");
+    url.searchParams.set("dir",
+        url.searchParams.get("dir") === "ASC" ? "DESC" : "ASC"
+    );
     window.location.href = url.toString();
 }
 </script>
