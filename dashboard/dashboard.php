@@ -20,7 +20,8 @@
     </a>
 
     <!-- FIXED: correct path to SkyTruFiber -->
-    <a href="/SKYTRUFIBER/skytrufiber.php" target="_blank">
+      <a href="/fiber" target="_blank">
+
       <img src="/SKYTRUFIBER.png" height="60">
     </a>
 
