@@ -68,7 +68,8 @@ function matchFilter($m, $filter) {
 
 <h2>📄 Ticket #<?= $ticketID ?> — <?= strtoupper($status) ?></h2>
 
-<a href="../dashboard/csr_dashboard.php?tab=clients&client=<?= $clientID ?>" class="back-btn">
+href="/home.php?v=<?= urlencode(base64_encode('csr_clients|' . time())) ?>&ticket=<?= $t['id'] ?>"
+ class="back-btn">
     ← Back to Ticket History
 </a>
 
