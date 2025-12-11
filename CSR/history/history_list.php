@@ -57,8 +57,8 @@ $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!-- LOAD HISTORY CSS & JS (correct paths for csr_dashboard.php wrapper) -->
-<link rel="stylesheet" href="../history/history.css?v=<?= time(); ?>">
-<script src="../history/history.js?v=<?= time(); ?>"></script>
+<link rel="stylesheet" href="/history/history.css?v=<?= time(); ?>">
+<script src="/history/history.js?v=<?= time(); ?>"></script>
 
 <div class="history-container">
 
@@ -120,7 +120,8 @@ $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
         ?>
 
             <a class="ticket-item"
-               href="../dashboard/csr_dashboard.php?tab=clients&ticket=<?= $t['id'] ?>">
+              href="/home.php?v=<?= urlencode(base64_encode('csr_clients|' . time())) ?>&ticket=<?= $t['id'] ?>"
+
 
                 <div class="ticket-title">Ticket #<?= $t["id"] ?></div>
 
