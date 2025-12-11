@@ -308,7 +308,7 @@ a:hover { text-decoration:underline; }
     <a id="backToLogin">Back to Login</a>
 </form>
 
-<p>No account yet? <a href="consent.php">Register here</a></p>
+<p>No account yet? <a href="/SKYTRUFIBER/consent.php">Register here</a></p>
 
 </div>
 
