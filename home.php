@@ -1,8 +1,21 @@
 <?php
 /* ============================================================
-   🔐 ENCRYPT / DECRYPT SYSTEM
+   SESSION — must be first
 ============================================================ */
+session_start();
 
+/* ============================================================
+   🔥 BLOCK DIRECT ACCESS TO /home.php
+   (Prevents public homepage from loading)
+============================================================ */
+if (!isset($_GET["v"])) {
+    header("Location: /csr");
+    exit;
+}
+
+/* ============================================================
+   🔐 ENCRYPTION / DECRYPTION
+============================================================ */
 function encrypt_route($route) {
     return urlencode(base64_encode($route . "|" . time()));
 }
@@ -17,20 +30,20 @@ function decrypt_route($token) {
     list($route, $timestamp) = explode("|", $decoded);
 
     // Token expires after 10 minutes
-    if (time() - $timestamp > 600) return false;
+    if (time() - $timestamp > 600) {
+        return false;
+    }
 
     return $route;
 }
 
-
 /* ============================================================
-   🧭 CLEAN CSR ROUTES (PUBLIC ENTRY POINTS)
+   🧭 PUBLIC ENTRY ROUTER (Handles /csr, /csr/dashboard, /csr/logout)
 ============================================================ */
 
-session_start();
 $uri = strtok($_SERVER["REQUEST_URI"], "?");
 
-/* 1️⃣ /csr → LOGIN or DASHBOARD */
+/* /csr → Login or Dashboard */
 if ($uri === "/csr") {
 
     if (!empty($_SESSION["csr_user"])) {
@@ -43,7 +56,7 @@ if ($uri === "/csr") {
     exit;
 }
 
-/* 2️⃣ /csr/dashboard → Always Dashboard */
+/* /csr/dashboard */
 if ($uri === "/csr/dashboard") {
 
     if (!empty($_SESSION["csr_user"])) {
@@ -56,12 +69,16 @@ if ($uri === "/csr/dashboard") {
     exit;
 }
 
-/* 3️⃣ /csr/logout → Proper Logout */
+/* /csr/logout */
 if ($uri === "/csr/logout") {
 
     $_SESSION = [];
-    if (session_id()) session_destroy();
+    
+    if (session_id()) {
+        session_destroy();
+    }
 
+    // ALWAYS return to clean login route
     header("Location: /csr");
     exit;
 }
@@ -71,66 +88,59 @@ if ($uri === "/csr/logout") {
    🎯 HANDLE ENCRYPTED ROUTES (?v=TOKEN)
 ============================================================ */
 
-if (isset($_GET["v"])) {
+$route = decrypt_route($_GET["v"]);
 
-    $route = decrypt_route($_GET["v"]);
-
-    if (!$route) {
-        die("⛔ Invalid or expired access token.");
-    }
-
-    switch ($route) {
-
-        /* CSR Login */
-        case "csr_login":
-            require __DIR__ . "/CSR/csr_login.php";
-            exit;
-
-        /* CSR Dashboard (default tab = chat) */
-        case "csr_dashboard":
-            if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized access.");
-            $GLOBALS["CSR_TAB"] = "chat";
-            require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
-            exit;
-
-        /* CSR → Chat Tab */
-        case "csr_chat":
-            if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
-            $GLOBALS["CSR_TAB"] = "chat";
-            require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
-            exit;
-
-        /* CSR → Clients Tab */
-        case "csr_clients":
-            if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
-            $GLOBALS["CSR_TAB"] = "clients";
-            require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
-            exit;
-
-        /* CSR → Reminders Tab */
-        case "csr_reminders":
-            if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
-            $GLOBALS["CSR_TAB"] = "reminders";
-            require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
-            exit;
-
-        /* CSR → Survey Tab */
-        case "csr_survey":
-            if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
-            $GLOBALS["CSR_TAB"] = "survey";
-            require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
-            exit;
-
-        default:
-            die("⛔ Unknown encrypted route: " . htmlspecialchars($route));
-    }
+if (!$route) {
+    die("⛔ Invalid or expired access token.");
 }
 
+switch ($route) {
+
+    /* CSR Login */
+    case "csr_login":
+        require __DIR__ . "/CSR/csr_login.php";
+        exit;
+
+    /* CSR Dashboard */
+    case "csr_dashboard":
+        if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized access.");
+        $GLOBALS["CSR_TAB"] = "CHAT";
+        require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
+        exit;
+
+    /* Tabs */
+    case "csr_chat":
+        if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
+        $GLOBALS["CSR_TAB"] = "CHAT";
+        require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
+        exit;
+
+    case "csr_clients":
+        if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
+        $GLOBALS["CSR_TAB"] = "CLIENTS";
+        require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
+        exit;
+
+    case "csr_reminders":
+        if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
+        $GLOBALS["CSR_TAB"] = "REMINDERS";
+        require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
+        exit;
+
+    case "csr_survey":
+        if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
+        $GLOBALS["CSR_TAB"] = "SURVEY";
+        require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
+        exit;
+
+    default:
+        die("⛔ Unknown encrypted route: " . htmlspecialchars($route));
+}
 
 /* ============================================================
-   🏠 DEFAULT → ALWAYS redirect to clean route /csr
-   (This prevents falling back to any other router)
+   🚫 SHOULD NEVER REACH HERE
 ============================================================ */
-
 header("Location: /csr");
 exit;
+
+?>
