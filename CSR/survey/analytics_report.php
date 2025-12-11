@@ -1,6 +1,7 @@
 <?php
 require_once("../../vendor/autoload.php");
-include "../../db_connect.php";
+require __DIR__ . "/../../db_connect.php";
+
 
 /* -------------------------
    HANDLE WEEKLY MODE
