@@ -11,88 +11,108 @@ function decrypt_route($token) {
     $decoded = base64_decode($token);
     if (!$decoded || !str_contains($decoded, "|")) return false;
 
+    // format: route|timestamp
     list($route, $timestamp) = explode("|", $decoded);
 
-    // Token expires in 10 minutes
+    // Expire after 10 minutes
     if (time() - $timestamp > 600) return false;
 
     return $route;
 }
 
+
 /* ============================================================
-   📌 CLEAN URL ROUTES → USER FRIENDLY ENTRY POINTS
+   📌 CLEAN URL ROUTES (PUBLIC ENTRY POINTS)
 ============================================================ */
 
-$uri = strtok($_SERVER["REQUEST_URI"], "?"); // remove query string safely
+$uri = strtok($_SERVER["REQUEST_URI"], "?"); // Remove query string
 
-// Ensure trailing slash does not break routing
-$uri = rtrim($uri, "/");
-
-switch ($uri) {
-
-    case "/fiber":
-        header("Location: /?v=" . encrypt_route("fiber"));
-        exit;
-
-    case "/fiber/consent":
-        header("Location: /?v=" . encrypt_route("fiber_consent"));
-        exit;
-
-    case "/fiber/register":
-        header("Location: /?v=" . encrypt_route("fiber_register"));
-        exit;
-
-    case "/fiber/chat":
-        header("Location: /?v=" . encrypt_route("fiber_chat"));
-        exit;
-
+// ---------- Landing: /fiber ----------
+if ($uri === "/fiber") {
+    $token = encrypt_route("fiber");
+    header("Location: /?v=$token");
+    exit;
 }
 
+// ---------- /fiber/consent ----------
+if ($uri === "/fiber/consent") {
+    $token = encrypt_route("fiber_consent");
+    header("Location: /?v=$token");
+    exit;
+}
+
+// ---------- /fiber/register ----------
+if ($uri === "/fiber/register") {
+    $token = encrypt_route("fiber_register");
+    header("Location: /?v=$token");
+    exit;
+}
+
+// ---------- /fiber/chat/{ticket} ----------
+if (preg_match("#^/fiber/chat/([0-9]+)$#", $uri, $match)) {
+
+    $ticketId = $match[1];
+
+    // encrypt: fiber_chat|8
+    $token = encrypt_route("fiber_chat|" . $ticketId);
+
+    header("Location: /?v=$token");
+    exit;
+}
+
+
 /* ============================================================
-   🎯 HANDLE ENCRYPTED TOKEN ROUTING
+   🎯 HANDLE ENCRYPTED ROUTING
 ============================================================ */
+
 if (isset($_GET["v"])) {
 
     $route = decrypt_route($_GET["v"]);
+    if (!$route) die("Invalid or expired token.");
 
-    if (!$route) {
-        die("Invalid or expired encrypted token.");
+    // ---------- CHAT ROUTE (fiber_chat|ticketId) ----------
+    if (str_starts_with($route, "fiber_chat")) {
+
+        // restore ticket ID
+        list($label, $ticketId) = explode("|", $route);
+
+        $_GET["ticket"] = $ticketId;
+
+        require __DIR__ . "/SKYTRUFIBER/chat/chat_support.php";
+        exit;
     }
 
+    // ---------- STANDARD ROUTES ----------
     switch ($route) {
 
-        /* Dashboard */
         case "dashboard":
             require __DIR__ . "/dashboard/dashboard.php";
             exit;
 
-        /* SkyTruFiber Login Page */
         case "fiber":
             require __DIR__ . "/SKYTRUFIBER/skytrufiber.php";
             exit;
 
-        /* Consent Page */
         case "fiber_consent":
             require __DIR__ . "/SKYTRUFIBER/consent.php";
             exit;
 
-        /* Registration Page */
         case "fiber_register":
             require __DIR__ . "/SKYTRUFIBER/register.php";
             exit;
 
-        /* Chat UI Page */
-        case "fiber_chat":
-            require __DIR__ . "/SKYTRUFIBER/chat/chat_support.php";
-            exit;
-
         default:
-            die("Unknown encrypted route: " . htmlspecialchars($route));
+            die("Unknown route: " . htmlspecialchars($route));
     }
 }
 
+
 /* ============================================================
-   🏠 DEFAULT LANDING → ENCRYPTED DASHBOARD REDIRECT
+   🏠 DEFAULT LANDING → GO TO DASHBOARD
 ============================================================ */
-header("Location: /?v=" . encrypt_route("dashboard"));
+
+$token = encrypt_route("dashboard");
+header("Location: /?v=$token");
 exit;
+
+?>
