@@ -100,7 +100,8 @@ $(document).ready(function () {
                 setTimeout(() => {
                     loadClientInfo(currentClientID);
                     loadMessages(true);
-                   
+                   loadClients();
+                }, 220);
                 }
 
             } else {
