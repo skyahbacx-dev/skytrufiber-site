@@ -1,26 +1,26 @@
 <?php
 session_start();
-require_once __DIR__ . '/../db_connect.php';
-
+require_once __DIR__ . '/../db_connect.php';   // correct include path
 
 $message = '';
 
-// Handle login POST
+/* ============================================================
+   LOGIN HANDLER
+============================================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['password'])) {
 
-    $input   = trim($_POST['full_name']);
+    $input    = trim($_POST['full_name']);
     $password = $_POST['password'];
     $concern  = trim($_POST['concern'] ?? '');
 
     if ($input && $password) {
         try {
 
-            // Fetch user by email or full name
+            // Fetch user
             $stmt = $conn->prepare("
                 SELECT *
                 FROM users
                 WHERE email = :input OR full_name = :input
-                ORDER BY id ASC
                 LIMIT 1
             ");
             $stmt->execute([':input' => $input]);
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
                 session_regenerate_id(true);
 
-                // Retrieve latest ticket
+                // Fetch latest ticket
                 $ticketStmt = $conn->prepare("
                     SELECT id, status
                     FROM tickets
@@ -51,48 +51,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                     $newTicket->execute([':cid' => $user['id']]);
 
                     $ticketId = $conn->lastInsertId();
-                    $ticketWasEmpty = true;
 
                 } else {
                     $ticketId = $lastTicket['id'];
-                    $ticketWasEmpty = false;
                 }
 
-                // Session variables
-                $_SESSION['client_id']   = $user['id'];
-                $_SESSION['client_name'] = $user['full_name'];
-                $_SESSION['email']       = $user['email'];
-                $_SESSION['ticket_id']   = $ticketId;
+                // Store session
+                $_SESSION['client_id'] = $user['id'];
+                $_SESSION['ticket_id'] = $ticketId;
 
-                // Check chat history
-                $checkMsgs = $conn->prepare("
-                    SELECT COUNT(*) FROM chat
-                    WHERE ticket_id = :tid
-                ");
-                $checkMsgs->execute([':tid' => $ticketId]);
-                $hasExistingMsgs = ($checkMsgs->fetchColumn() > 0);
-
-                // CSR Greeting (first)
-                if (!$hasExistingMsgs) {
-
-                    $autoGreet = $conn->prepare("
-                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
-                        VALUES (:tid, :cid, 'csr', 'Good day! How may we assist you today?', TRUE, FALSE, NOW())
-                    ");
-                    $autoGreet->execute([
-                        ':tid' => $ticketId,
-                        ':cid' => $user['id']
-                    ]);
-
-                    $_SESSION['show_suggestions'] = true;
-                }
-
-                // Insert user's initial concern (second)
+                // Insert initial concern
                 if (!empty($concern)) {
-
                     $insert = $conn->prepare("
-                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
-                        VALUES (:tid, :cid, 'client', :msg, TRUE, FALSE, NOW())
+                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
+                        VALUES (:tid, :cid, 'client', :msg, TRUE, NOW())
                     ");
                     $insert->execute([
                         ':tid' => $ticketId,
@@ -102,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 }
 
                 // Redirect to chat UI
-                header("Location: chat/chat_support.php?ticket=" . $ticketId);
+                header("Location: chat/chat_support.php?ticket=$ticketId");
                 exit;
 
             } else {
@@ -116,6 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
         $message = "⚠ Please fill in all fields.";
     }
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -152,34 +125,26 @@ body {
     overflow:hidden;
 }
 
-/* ------------------------------------------------------------
-   MOBILE FIX (CORRECT VERSION)
------------------------------------------------------------- */
+/* RESPONSIVE FIX */
 @media (max-width: 600px) {
-
     body {
         display:block !important;
         padding-top:24px !important;
         min-height:auto !important;
     }
-
     .container {
         width:92% !important;
         padding:24px !important;
         border-radius:16px;
         margin:0 auto;
     }
-
-    /* FIX LOGO */
     .container img {
         width:120px !important;
         margin-bottom:12px;
     }
 }
 
-/* ------------------------------------------------------------
-   LOGO
------------------------------------------------------------- */
+/* LOGO */
 .container img {
     width:150px; 
     border-radius:50%; 
@@ -187,13 +152,10 @@ body {
     transition:.3s;
 }
 
-/* ------------------------------------------------------------
-   FORM ANIMATION
------------------------------------------------------------- */
+/* FORM ANIMATION */
 form { 
     transition:opacity .6s ease, transform .6s ease; 
 }
-
 .hidden { 
     opacity:0; 
     transform:translateY(-20px); 
@@ -204,9 +166,7 @@ form {
     width:100%; 
 }
 
-/* ------------------------------------------------------------
-   INPUTS
------------------------------------------------------------- */
+/* INPUTS */
 input, textarea {
     width:100%;
     padding:12px;
@@ -216,19 +176,9 @@ input, textarea {
     font-size:15px;
     box-sizing:border-box;
 }
-
 textarea { height:80px; resize:none; }
 
-@media (max-width:600px) {
-    input, textarea {
-        padding:14px;
-        font-size:16px;
-    }
-}
-
-/* ------------------------------------------------------------
-   BUTTON
------------------------------------------------------------- */
+/* BUTTON */
 button {
     width:100%;
     padding:12px;
@@ -242,41 +192,24 @@ button {
     margin-top:10px;
     transition:.2s;
 }
-
 button:hover { background:#008c96; transform:translateY(-2px); }
-button:active { transform:scale(.97); }
 
-@media (max-width:600px) {
-    button {
-        padding:14px;
-        font-size:18px;
-    }
-}
-
-/* ------------------------------------------------------------
-   LINKS
------------------------------------------------------------- */
+/* LINKS */
 a { 
     display:block; 
     margin-top:10px; 
     color:#0077a3; 
     text-decoration:none; 
     cursor:pointer; 
-    font-size:14px;
 }
-
 a:hover { text-decoration:underline; }
 
-/* ------------------------------------------------------------
-   MESSAGE TEXT
------------------------------------------------------------- */
+/* MESSAGE */
 .message { 
     font-size:0.9em; 
     margin-bottom:8px; 
 }
-
 .message.error { color:red; }
-.message.success { color:green; }
 </style>
 </head>
 
@@ -308,7 +241,8 @@ a:hover { text-decoration:underline; }
     <a id="backToLogin">Back to Login</a>
 </form>
 
-<p>No account yet? <a href="/SKYTRUFIBER/consent.php">Register here</a></p>
+<!-- IMPORTANT: Clean route so index.php encrypts it -->
+<p>No account yet? <a href="/fiber/consent">Register here</a></p>
 
 </div>
 
