@@ -49,7 +49,7 @@ $(document).ready(function () {
         loadClientInfo(currentClientID);
 
         if (messageInterval) clearInterval(messageInterval);
-        messageInterval = setInterval(fetchNewMessages, 1000);
+        setTimeout(() => {     messageInterval = setInterval(fetchNewMessages, 1200); }, 500);
     });
 
     // SEND MESSAGE ------------------------------------------------
