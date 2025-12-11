@@ -1,16 +1,16 @@
 <?php
-session_start();
-require_once __DIR__ . '/../db_connect.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-/* ============================================================
-   🔐 IF ALREADY LOGGED IN → GO TO ENCRYPTED CSR DASHBOARD
-============================================================ */
-if (!empty($_SESSION['csr_user'])) {
-    header("Location: /csr/dashboard");
+require_once '../db_connect.php';
+
+if (isset($_SESSION['csr_user']) && $_SESSION['csr_user'] !== '') {
+    header("Location: dashboard/csr_dashboard.php");
     exit;
 }
 
-$error = "";
+$error = '';
 
 /* ============================================================
    🔑 LOGIN PROCESS
