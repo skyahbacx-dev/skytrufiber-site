@@ -1,7 +1,7 @@
 <?php
 
 /* ============================================================
-   🔐 ENCRYPT / DECRYPT
+   🔐 ENCRYPT / DECRYPT HELPERS
 ============================================================ */
 function encrypt_route($route) {
     return urlencode(base64_encode($route . "|" . time()));
@@ -13,45 +13,46 @@ function decrypt_route($token) {
 
     list($route, $timestamp) = explode("|", $decoded);
 
-    // Token expires after 10 minutes
+    // token expires in 10 minutes
     if (time() - $timestamp > 600) return false;
 
     return $route;
 }
 
 /* ============================================================
-   📌 CLEAN URL ROUTES
+   📌 CLEAN URL ROUTES (PUBLIC ENTRY POINTS)
 ============================================================ */
 
+$uri = strtok($_SERVER["REQUEST_URI"], "?"); // remove query string
+
 // /fiber → encrypted skytrufiber portal
-if (preg_match("#^/fiber$#", $_SERVER["REQUEST_URI"])) {
+if ($uri === "/fiber") {
     $token = encrypt_route("fiber");
     header("Location: /?v=$token");
     exit;
 }
 
 // /fiber/consent → encrypted consent page
-if (preg_match("#^/fiber/consent$#", $_SERVER["REQUEST_URI"])) {
+if ($uri === "/fiber/consent") {
     $token = encrypt_route("fiber_consent");
     header("Location: /?v=$token");
     exit;
 }
 
 // /fiber/register → encrypted register page
-if (preg_match("#^/fiber/register$#", $_SERVER["REQUEST_URI"])) {
+if ($uri === "/fiber/register") {
     $token = encrypt_route("fiber_register");
     header("Location: /?v=$token");
     exit;
 }
 
-
 /* ============================================================
-   🎯 HANDLE ENCRYPTED TOKEN ROUTES
+   🎯 HANDLE ENCRYPTED ROUTING
 ============================================================ */
 if (isset($_GET["v"])) {
 
     $route = decrypt_route($_GET["v"]);
-    if (!$route) die("Invalid or expired token");
+    if (!$route) die("Invalid or expired token.");
 
     switch ($route) {
 
@@ -72,13 +73,14 @@ if (isset($_GET["v"])) {
             exit;
 
         default:
-            die("Unknown route.");
+            die("Unknown route: " . htmlspecialchars($route));
     }
 }
 
 /* ============================================================
-   🏠 DEFAULT LANDING → ENCRYPTED DASHBOARD
+   🏠 DEFAULT LANDING → ALWAYS ENCRYPT DASHBOARD
 ============================================================ */
 $token = encrypt_route("dashboard");
 header("Location: /?v=$token");
 exit;
+
