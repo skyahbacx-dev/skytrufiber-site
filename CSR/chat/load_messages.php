@@ -1,4 +1,7 @@
 <?php
+// ------------------------------------------------------------
+// Prevent caching so CSR always sees real-time messages
+// ------------------------------------------------------------
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Expires: 0");
 header("Pragma: no-cache");
@@ -6,20 +9,20 @@ header("Pragma: no-cache");
 if (!isset($_SESSION)) session_start();
 require __DIR__ . "/../../db_connect.php";
 
-/* ============================================================
-   READ ticket_id
-============================================================ */
 $ticket_id = intval($_POST["ticket_id"] ?? 0);
 if ($ticket_id <= 0) exit("<p>Invalid ticket.</p>");
 
 /* ============================================================
-   FETCH TICKET + CLIENT
+   FETCH TICKET META
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT 
         t.status AS ticket_status,
-        t.client_id
+        t.client_id,
+        u.assigned_csr,
+        u.ticket_lock
     FROM tickets t
+    LEFT JOIN users u ON u.id = t.client_id
     WHERE t.id = ?
     LIMIT 1
 ");
@@ -29,9 +32,12 @@ $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$ticket) exit("<p>Ticket not found.</p>");
 
 $ticketStatus = strtolower($ticket["ticket_status"]);
+$ticketLocked = ($ticket["ticket_lock"] ? true : false);
+$csrUser      = $_SESSION["csr_user"] ?? null;
+$isAssigned   = ($ticket["assigned_csr"] === $csrUser);
 
 /* ============================================================
-   BLOCK LOADING IF TICKET RESOLVED
+   IF TICKET RESOLVED → SHOW READ-ONLY
 ============================================================ */
 if ($ticketStatus === "resolved") {
     echo "
@@ -43,13 +49,26 @@ if ($ticketStatus === "resolved") {
 }
 
 /* ============================================================
-   LOAD MESSAGES
+   IF CSR NOT ASSIGNED / LOCKED → READ ONLY
+============================================================ */
+if (!$isAssigned || $ticketLocked) {
+    // Still show chat history—CSR just cannot respond
+}
+
+/* ============================================================
+   FETCH ALL MESSAGES
 ============================================================ */
 $stmt = $conn->prepare("
-    SELECT id, sender_type, message, deleted, edited, created_at
+    SELECT 
+        id, 
+        sender_type, 
+        message, 
+        deleted, 
+        edited, 
+        created_at
     FROM chat
     WHERE ticket_id = ?
-    ORDER BY created_at ASC
+    ORDER BY id ASC
 ");
 $stmt->execute([$ticket_id]);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -60,50 +79,54 @@ if (!$rows) {
 }
 
 /* ============================================================
-   RENDER MESSAGES
+   RENDER CHAT MESSAGE BUBBLES
 ============================================================ */
-foreach ($rows as $msg) {
+foreach ($rows as $msg):
 
     $id      = $msg["id"];
-    $sender  = $msg["sender_type"];
-    $msgTime = date("M j g:i A", strtotime($msg["created_at"]));
+    $sender  = $msg["sender_type"];   // 'csr' or 'client'
+    $deleted = $msg["deleted"];
+    $edited  = $msg["edited"];
+    $bubble  = nl2br(htmlspecialchars($msg["message"]));
+    $msgTime = date("M j • g:i A", strtotime($msg["created_at"]));
     $side    = ($sender === "csr") ? "sent" : "received";
 
-    echo "<div class='message $side' data-msg-id='$id'>";
-
-    if ($side === "received") {
-        echo "
-        <div class='message-avatar'>
-            <img src='/upload/default-avatar.png'>
-        </div>";
-    } else {
-        echo "<div class='message-avatar'></div>";
-    }
-
-    echo "<div class='message-content'>";
-
-    if ($sender === "csr" && !$msg["deleted"]) {
-        echo "<button class='more-btn' data-id='$id'>
-                <i class='fa-solid fa-ellipsis-vertical'></i>
-              </button>";
-    }
-
-    echo "<div class='message-bubble'>";
-
-    if ($msg["deleted"]) {
-        echo "<div class='deleted-text'>🗑️ <i>This message was deleted</i></div>";
-    } else {
-        echo "<div class='msg-text'>" . nl2br(htmlspecialchars($msg["message"])) . "</div>";
-    }
-
-    echo "</div>";
-
-    if ($msg["edited"] && !$msg["deleted"]) {
-        echo "<div class='edited-label'>(edited)</div>";
-    }
-
-    echo "<div class='message-time'>$msgTime</div>";
-
-    echo "</div></div>";
-}
 ?>
+<div class="message <?= $side ?>" data-msg-id="<?= $id ?>">
+
+    <!-- Avatar for client only -->
+    <?php if ($side === "received"): ?>
+        <div class="message-avatar">
+            <img src="/upload/default-avatar.png">
+        </div>
+    <?php else: ?>
+        <div class="message-avatar"></div>
+    <?php endif; ?>
+
+    <div class="message-content">
+
+        <!-- CSR action button only if NOT deleted AND CSR owns the message -->
+        <?php if ($sender === "csr" && !$deleted): ?>
+            <button class="more-btn" data-id="<?= $id ?>">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+            </button>
+        <?php endif; ?>
+
+        <div class="message-bubble">
+            <?php if ($deleted): ?>
+                <div class="deleted-text">🗑️ <i>This message was deleted</i></div>
+            <?php else: ?>
+                <div class="msg-text"><?= $bubble ?></div>
+            <?php endif; ?>
+        </div>
+
+        <?php if ($edited && !$deleted): ?>
+            <div class="edited-label">(edited)</div>
+        <?php endif; ?>
+
+        <div class="message-time"><?= $msgTime ?></div>
+
+    </div>
+</div>
+
+<?php endforeach; ?>
