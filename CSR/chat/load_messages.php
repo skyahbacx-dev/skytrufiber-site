@@ -1,6 +1,6 @@
 <?php
 if (!isset($_SESSION)) session_start();
-require "../../db_connect.php";
+require __DIR__ . "/../../db_connect.php";
 
 /* ============================================================
    READ ticket_id
@@ -25,25 +25,21 @@ $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$ticket) exit("<p>Ticket not found.</p>");
 
 $ticketStatus = strtolower($ticket["ticket_status"]);
-$client_id    = intval($ticket["client_id"]);
 
 /* ============================================================
-   IF TICKET IS RESOLVED → DO NOT LOAD OLD MESSAGES
+   BLOCK LOADING IF TICKET RESOLVED
 ============================================================ */
 if ($ticketStatus === "resolved") {
-
     echo "
     <p style='text-align:center;color:#777;padding:20px;'>
         This ticket has been <strong>resolved</strong>.<br>
         Chat history is available in <b>My Clients → Chat History</b>.
-    </p>
-    ";
-
+    </p>";
     exit;
 }
 
 /* ============================================================
-   FETCH CHAT MESSAGES — ONLY FOR THIS ACTIVE TICKET
+   LOAD MESSAGES
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT id, sender_type, message, deleted, edited, created_at
@@ -54,52 +50,40 @@ $stmt = $conn->prepare("
 $stmt->execute([$ticket_id]);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* ============================================================
-   NO MESSAGES YET
-============================================================ */
 if (!$rows) {
     echo "<p style='text-align:center;color:#999;padding:10px;'>No messages yet.</p>";
     exit;
 }
 
 /* ============================================================
-   RENDER CHAT THREAD
+   RENDER MESSAGES
 ============================================================ */
 foreach ($rows as $msg) {
 
     $id      = $msg["id"];
     $sender  = $msg["sender_type"];
-    $msgTime = strtotime($msg["created_at"]);
-    $timeFmt = date("M j g:i A", $msgTime);
-
-    /* Determine the bubble side */
-    $side = ($sender === "csr") ? "sent" : "received";
+    $msgTime = date("M j g:i A", strtotime($msg["created_at"]));
+    $side    = ($sender === "csr") ? "sent" : "received";
 
     echo "<div class='message $side' data-msg-id='$id'>";
 
-    /* Avatar for client messages */
     if ($side === "received") {
         echo "
-            <div class='message-avatar'>
-                <img src='/upload/default-avatar.png'>
-            </div>
-        ";
+        <div class='message-avatar'>
+            <img src='/upload/default-avatar.png'>
+        </div>";
     } else {
         echo "<div class='message-avatar'></div>";
     }
 
     echo "<div class='message-content'>";
 
-    /* CSR message menu */
     if ($sender === "csr" && !$msg["deleted"]) {
-        echo "
-            <button class='more-btn' data-id='$id'>
+        echo "<button class='more-btn' data-id='$id'>
                 <i class='fa-solid fa-ellipsis-vertical'></i>
-            </button>
-        ";
+              </button>";
     }
 
-    /* Message Bubble */
     echo "<div class='message-bubble'>";
 
     if ($msg["deleted"]) {
@@ -108,17 +92,14 @@ foreach ($rows as $msg) {
         echo "<div class='msg-text'>" . nl2br(htmlspecialchars($msg["message"])) . "</div>";
     }
 
-    echo "</div>"; // bubble end
+    echo "</div>";
 
-    /* Edited label */
     if ($msg["edited"] && !$msg["deleted"]) {
         echo "<div class='edited-label'>(edited)</div>";
     }
 
-    /* Timestamp */
-    echo "<div class='message-time'>$timeFmt</div>";
+    echo "<div class='message-time'>$msgTime</div>";
 
-    echo "</div></div>"; // content + wrapper end
+    echo "</div></div>";
 }
-
 ?>
