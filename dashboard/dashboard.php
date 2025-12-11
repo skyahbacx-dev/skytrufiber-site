@@ -4,19 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AHBA Development</title>
-  <link rel="stylesheet" href="style.css">
+
+  <!-- FIXED: absolute path so CSS ALWAYS loads -->
+  <link rel="stylesheet" href="/dashboard/style.css">
 </head>
 
 <body>
 
 <header>
   <div class="logo-group">
+
+    <!-- FIXED: absolute path -->
     <a href="javascript:void(0)" onclick="smoothScroll('#home')">
-      <img src="../AHBALOGO.png" height="72">
+      <img src="/AHBALOGO.png" height="72">
     </a>
-    <a href="/fiber" target="_blank">
-      <img src="../SKYTRUFIBER.png" height="60">
+
+    <!-- FIXED: correct path to SkyTruFiber -->
+    <a href="/SKYTRUFIBER/skytrufiber.php" target="_blank">
+      <img src="/SKYTRUFIBER.png" height="60">
     </a>
+
   </div>
 
   <nav>
@@ -48,7 +55,7 @@
       With over 20 years of experience in the industry,
       <b>A.Halili Business Aid Professional Services Inc.</b> with the registered trademark of
       <b>AHBA Development</b>, is committed to delivering high-quality value-added services nationwide.
-      SEC Reg. <b>CS200902226</b> | DOLE Reg.<b> NCR-MPFO-72600-5-15-12-016-LR</b> | TIN <b>007-246-379-000</b>
+      SEC Reg. <b>CS200902226</b> | DOLE Reg.<b>NCR-MPFO-72600-5-15-12-016-LR</b> | TIN <b>007-246-379-000</b>
     </p>
   </div>
 
@@ -104,28 +111,33 @@
 
 <section id="management" class="section reveal team-section">
   <h2 class="team-title">Our Leadership Team</h2>
-  <div class="team-card reveal"><img src="alex.jpg" class="team-photo"><div><h3>Alex G. Halili, CEO</h3></div></div>
-  <div class="team-card reveal"><img src="amy.jpg" class="team-photo"><div><h3>Amy A. Halili, CFO</h3></div></div>
-  <div class="team-card reveal"><img src="allec.jpg" class="team-photo"><div><h3>Allec Zandre A. Halili, COO</h3></div></div>
-</section>
 
+  <!-- FIXED: team photos absolute paths -->
+  <div class="team-card reveal"><img src="/dashboard/alex.jpg" class="team-photo"><div><h3>Alex G. Halili, CEO</h3></div></div>
+  <div class="team-card reveal"><img src="/dashboard/amy.jpg" class="team-photo"><div><h3>Amy A. Halili, CFO</h3></div></div>
+  <div class="team-card reveal"><img src="/dashboard/allec.jpg" class="team-photo"><div><h3>Allec Zandre A. Halili, COO</h3></div></div>
+
+</section>
 
 <!-- GALLERY START -->
 <section id="gallery" class="section reveal gallery-section">
   <h2 class="gallery-title">Gallery</h2>
 
-  <!-- SLIDESHOW -->
   <div class="slider">
     <div class="slides">
-      <img src="gallery/1.jpg" class="slide active" onclick="openModal(this)">
-      <img src="gallery/2.jpg" class="slide" onclick="openModal(this)">
-      <img src="gallery/3.jpg" class="slide" onclick="openModal(this)">
-      <img src="gallery/4.jpg" class="slide" onclick="openModal(this)">
+
+      <!-- FIXED: absolute paths -->
+      <img src="/dashboard/gallery/1.jpg" class="slide active" onclick="openModal(this)">
+      <img src="/dashboard/gallery/2.jpg" class="slide" onclick="openModal(this)">
+      <img src="/dashboard/gallery/3.jpg" class="slide" onclick="openModal(this)">
+      <img src="/dashboard/gallery/4.jpg" class="slide" onclick="openModal(this)">
+
     </div>
 
     <button class="prev" onclick="changeSlide(-1)">❮</button>
     <button class="next" onclick="changeSlide(1)">❯</button>
   </div>
+
   <div class="dots">
     <span class="dot active" onclick="goToSlide(0)"></span>
     <span class="dot" onclick="goToSlide(1)"></span>
@@ -135,23 +147,24 @@
 
   <!-- MASONRY GRID -->
   <div class="masonry reveal">
-    <img src="gallery/5.jpg" onclick="openModal(this)">
-    <img src="gallery/6.jpg" onclick="openModal(this)">
-    <img src="gallery/7.jpg" onclick="openModal(this)">
-    <img src="gallery/8.jpg" onclick="openModal(this)">
-    <img src="gallery/9.jpg" onclick="openModal(this)">
-    <img src="gallery/10.jpg" onclick="openModal(this)">
-    <img src="gallery/11.jpg" onclick="openModal(this)">
-    <img src="gallery/12.jpg" onclick="openModal(this)">
+
+    <!-- FIXED: absolute paths -->
+    <img src="/dashboard/gallery/5.jpg" onclick="openModal(this)">
+    <img src="/dashboard/gallery/6.jpg" onclick="openModal(this)">
+    <img src="/dashboard/gallery/7.jpg" onclick="openModal(this)">
+    <img src="/dashboard/gallery/8.jpg" onclick="openModal(this)">
+    <img src="/dashboard/gallery/9.jpg" onclick="openModal(this)">
+    <img src="/dashboard/gallery/10.jpg" onclick="openModal(this)">
+    <img src="/dashboard/gallery/11.jpg" onclick="openModal(this)">
+    <img src="/dashboard/gallery/12.jpg" onclick="openModal(this)">
   </div>
 
-  <!-- VIDEO EXAMPLE -->
   <video class="gallery-video" controls>
-    <source src="gallery/video.mp4" type="video/mp4">
+    <source src="/dashboard/gallery/video.mp4" type="video/mp4">
   </video>
+
 </section>
 <!-- GALLERY END -->
-
 
 <section id="contact" class="section reveal contact-section">
   <div class="contact-box reveal">
@@ -174,8 +187,8 @@
   📍 1454 Newton Street, Barangay San Isidro, Makati City | ✉️ ahbadevelopment@ahba.ph
 </footer>
 
-
-<script src="script.js"></script>
+<!-- FIXED: absolute JS path -->
+<script src="/dashboard/script.js"></script>
 
 </body>
 </html>
