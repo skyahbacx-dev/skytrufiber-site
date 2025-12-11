@@ -1,9 +1,17 @@
 <?php
 if (!isset($_SESSION)) session_start();
-if (!isset($_SESSION['csr_user'])) {
-    header("Location: ../csr_login.php");
+
+/* ============================================
+   ✔ AUTH CHECK — Must use encrypted CSR routing
+=============================================== */
+if (empty($_SESSION["csr_user"])) {
+
+    // Redirect to encrypted CSR login instead of raw file path
+    $token = urlencode(base64_encode("csr_login|" . time()));
+    header("Location: /home.php?v=$token");
     exit;
 }
+
 $csrUser = $_SESSION["csr_user"];
 ?>
 <!DOCTYPE html>
@@ -17,13 +25,13 @@ $csrUser = $_SESSION["csr_user"];
 <link rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-<!-- CHAT CSS (FIXED PATH) -->
+<!-- FIXED CHAT CSS — Absolute path -->
 <link rel="stylesheet" href="/CSR/chat/chat.css?v=<?= time(); ?>">
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <style>
-/* Keeps your original look — only fixes overlap */
+/* Keeps your UI the same — fixes overlaps only */
 .chat-wrapper {
     display: flex;
     flex-direction: column;
@@ -87,7 +95,7 @@ $csrUser = $_SESSION["csr_user"];
         <div id="client-list" class="client-list"></div>
     </div>
 
-    <!-- MIDDLE CHAT -->
+    <!-- MIDDLE PANEL -->
     <div class="chat-middle-panel" id="ticket-border-panel">
         
         <div class="chat-wrapper">
@@ -147,8 +155,11 @@ $csrUser = $_SESSION["csr_user"];
 
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
 
-<!-- FIXED PATH -->
+<!-- FIXED ABSOLUTE PATH for Sortable -->
 <script src="/CSR/vendor/js/Sortable.min.js"></script>
+
+<!-- FIXED Chat JS -->
+<script src="/CSR/chat/chat.js?v=<?= time(); ?>"></script>
 
 </body>
 </html>
