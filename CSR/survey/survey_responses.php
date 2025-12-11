@@ -8,7 +8,8 @@ $view = $_GET['view'] ?? 'responses';
    LOAD ANALYTICS PAGE
 --------------------------------------- */
 if ($view === 'analytics') {
-    include "CSR/survey/analytics.php";
+      include __DIR__ . "/analytics.php";
+
     return;
 }
 
