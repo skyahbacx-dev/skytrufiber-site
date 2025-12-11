@@ -5,7 +5,8 @@ if (!isset($_SESSION["csr_user"])) {
     exit;
 }
 
-require "../../db_connect.php";
+require __DIR__ . "/../../db_connect.php";
+
 
 $ticketID = intval($_GET["ticket"] ?? 0);
 if ($ticketID <= 0) exit("<h2>Invalid ticket ID.</h2>");
