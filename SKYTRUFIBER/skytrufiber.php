@@ -30,7 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
                 session_regenerate_id(true);
 
-                // Fetch latest ticket
+                /* ============================================================
+                   FETCH LATEST TICKET
+                ============================================================= */
                 $ticketStmt = $conn->prepare("
                     SELECT id, status
                     FROM tickets
@@ -52,15 +54,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
                     $ticketId = $conn->lastInsertId();
 
+                    $isNewTicket = true;
+
                 } else {
                     $ticketId = $lastTicket['id'];
+                    $isNewTicket = false;
                 }
 
                 // Store session
                 $_SESSION['client_id'] = $user['id'];
                 $_SESSION['ticket_id'] = $ticketId;
 
-                // Insert initial concern
+                /* ============================================================
+                   AUTO GREET (ONLY IF NO CHAT HISTORY)
+                ============================================================= */
+
+                // Check if existing chat messages
+                $checkMsgs = $conn->prepare("
+                    SELECT COUNT(*) FROM chat
+                    WHERE ticket_id = :tid
+                ");
+                $checkMsgs->execute([':tid' => $ticketId]);
+                $hasMessages = ($checkMsgs->fetchColumn() > 0);
+
+                if (!$hasMessages) {
+                    $greet = $conn->prepare("
+                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
+                        VALUES (:tid, :cid, 'csr', 'Good day! How may we assist you today?', TRUE, FALSE, NOW())
+                    ");
+                    $greet->execute([
+                        ':tid' => $ticketId,
+                        ':cid' => $user['id']
+                    ]);
+                }
+
+                /* ============================================================
+                   INSERT USER INITIAL CONCERN
+                ============================================================= */
                 if (!empty($concern)) {
                     $insert = $conn->prepare("
                         INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
@@ -73,9 +103,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                     ]);
                 }
 
-                // Redirect to chat UI
-                header("Location: /SKYTRUFIBER/chat/chat_support.php?ticket=$ticketId");
+                /* ============================================================
+                   REDIRECT TO CHAT UI (NO ENCRYPT HERE — handled by index)
+                ============================================================= */
 
+                header("Location: /SKYTRUFIBER/chat/chat_support.php?ticket=$ticketId");
                 exit;
 
             } else {
@@ -128,21 +160,9 @@ body {
 
 /* RESPONSIVE FIX */
 @media (max-width: 600px) {
-    body {
-        display:block !important;
-        padding-top:24px !important;
-        min-height:auto !important;
-    }
-    .container {
-        width:92% !important;
-        padding:24px !important;
-        border-radius:16px;
-        margin:0 auto;
-    }
-    .container img {
-        width:120px !important;
-        margin-bottom:12px;
-    }
+    body { display:block !important; padding-top:24px !important; }
+    .container { width:92% !important; padding:24px !important; border-radius:16px; }
+    .container img { width:120px !important; }
 }
 
 /* LOGO */
@@ -150,21 +170,6 @@ body {
     width:150px; 
     border-radius:50%; 
     margin-bottom:15px;
-    transition:.3s;
-}
-
-/* FORM ANIMATION */
-form { 
-    transition:opacity .6s ease, transform .6s ease; 
-}
-.hidden { 
-    opacity:0; 
-    transform:translateY(-20px); 
-    pointer-events:none; 
-    position:absolute; 
-    top:0; 
-    left:0; 
-    width:100%; 
 }
 
 /* INPUTS */
@@ -175,7 +180,6 @@ input, textarea {
     border-radius:10px;
     border:1px solid #ccc;
     font-size:15px;
-    box-sizing:border-box;
 }
 textarea { height:80px; resize:none; }
 
@@ -191,26 +195,15 @@ button {
     font-weight:bold;
     font-size:16px;
     margin-top:10px;
-    transition:.2s;
 }
-button:hover { background:#008c96; transform:translateY(-2px); }
+button:hover { background:#008c96; }
 
 /* LINKS */
-a { 
-    display:block; 
-    margin-top:10px; 
-    color:#0077a3; 
-    text-decoration:none; 
-    cursor:pointer; 
-}
+a { display:block; margin-top:10px; color:#0077a3; text-decoration:none; }
 a:hover { text-decoration:underline; }
 
 /* MESSAGE */
-.message { 
-    font-size:0.9em; 
-    margin-bottom:8px; 
-}
-.message.error { color:red; }
+.message { font-size:0.9em; margin-bottom:8px; color:red; }
 </style>
 </head>
 
@@ -221,7 +214,7 @@ a:hover { text-decoration:underline; }
     <h2>Customer Service Portal</h2>
 
 <?php if ($message): ?>
-<p class="message error"><?= htmlspecialchars($message) ?></p>
+<p class="message"><?= htmlspecialchars($message) ?></p>
 <?php endif; ?>
 
 <!-- LOGIN FORM -->
@@ -238,11 +231,11 @@ a:hover { text-decoration:underline; }
     <p>Enter your email to receive your account number:</p>
     <input type="email" name="forgot_email" placeholder="Email" required>
     <button type="submit">Send my account number</button>
-    <p class="message" id="forgotMessage"></p>
+    <p id="forgotMessage"></p>
     <a id="backToLogin">Back to Login</a>
 </form>
 
-<!-- IMPORTANT: Clean route so index.php encrypts it -->
+<!-- Clean route (index.php will encrypt it) -->
 <p>No account yet? <a href="/fiber/consent">Register here</a></p>
 
 </div>
@@ -250,20 +243,18 @@ a:hover { text-decoration:underline; }
 <script>
 const loginForm = document.getElementById('loginForm');
 const forgotForm = document.getElementById('forgotForm');
-const forgotLink = document.getElementById('forgotLink');
-const backToLogin = document.getElementById('backToLogin');
 
-forgotLink.addEventListener('click', e => {
+document.getElementById('forgotLink').onclick = e => {
     e.preventDefault();
     loginForm.classList.add('hidden');
     forgotForm.classList.remove('hidden');
-});
+};
 
-backToLogin.addEventListener('click', e => {
+document.getElementById('backToLogin').onclick = e => {
     e.preventDefault();
     forgotForm.classList.add('hidden');
     loginForm.classList.remove('hidden');
-});
+};
 </script>
 
 </body>
