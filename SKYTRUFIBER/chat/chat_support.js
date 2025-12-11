@@ -191,48 +191,29 @@ function sendMessage() {
         message: msg
     }).done(raw => {
 
-        if (raw === "FORCE_LOGOUT" || raw.trim() === "FORCE_LOGOUT") {
-            window.location.href = "/SKYTRUFIBER/chat/logout.php";
-            return;
-        }
-
         let res = {};
-        try {
-            res = JSON.parse(raw);
-        } catch (e) {
-            console.error("Invalid JSON response:", raw);
-            $(`.message[data-msg-id='${tempId}']`).remove();
-            fetchNewMessages();
-            return;
+        try { res = JSON.parse(raw); } catch {}
+
+        // remove temp immediately
+        $(`.message[data-msg-id='${tempId}']`).remove();
+
+        // now fetch actual DB message
+        fetchNewMessages();
+
+        if (res.first_message === true) {
+            insertSuggestionBubble();
         }
 
-        if (res.status === "ok") {
-
-            if (res.first_message === true) {
-                insertSuggestionBubble();
-            }
-
-            $(`.message[data-msg-id='${tempId}']`).remove();
-            fetchNewMessages();
-        }
-
-        if (res.status === "blocked") {
-            alert("Ticket is resolved. Closing chat.");
-            window.location.href = "/SKYTRUFIBER/chat/logout.php";
-        }
-
-    }).fail(err => {
-        console.error("Send failed:", err);
-        alert("Message failed to send.");
     });
 }
+
 
 
 function appendClientBubble(msg) {
     const id = "temp-" + Date.now();
 
     $("#chat-messages").append(`
-        <div class="message sent" data-msg-id="${id}">
+        <div class="message sent temp-msg" data-msg-id="${id}">
             <div class="message-content">
                 <div class="message-bubble">${msg}</div>
                 <div class="message-time">Sending...</div>
@@ -243,6 +224,7 @@ function appendClientBubble(msg) {
     scrollToBottom();
     return id;
 }
+
 
 /* ============================================================
 LOAD MESSAGES (FULL)
@@ -268,6 +250,7 @@ function loadMessages(scrollBottom = false) {
 FETCH NEW MESSAGES
 ============================================================ */
 function fetchNewMessages() {
+
     $.post("/SKYTRUFIBER/chat/load_messages_client.php", { ticket: ticketId })
     .done(html => {
 
@@ -276,10 +259,15 @@ function fetchNewMessages() {
             return;
         }
 
+        // 🔥 FIX #1 — always remove temp messages BEFORE updating the chat
+        $("#chat-messages .temp-msg").remove();
+
         const temp = $("<div>").html(html);
 
         temp.find(".message").each(function () {
             const id = $(this).data("msg-id");
+
+            // Only append message if it doesn't exist yet
             if (!$(`.message[data-msg-id='${id}']`).length) {
                 $("#chat-messages").append($(this));
             }
@@ -289,6 +277,7 @@ function fetchNewMessages() {
         updateScrollButton();
     });
 }
+
 
 /* ============================================================
 SCROLL
