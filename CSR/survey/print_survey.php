@@ -1,5 +1,6 @@
 <?php
-include "../../db_connect.php";
+require __DIR__ . "/../../db_connect.php";
+
 
 /* Filters (same as survey_responses.php) */
 $search     = $_GET['search'] ?? '';
