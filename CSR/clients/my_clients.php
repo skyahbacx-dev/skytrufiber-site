@@ -12,7 +12,7 @@ $csrUser = $_SESSION["csr_user"];
 $search = trim($_GET["search"] ?? "");
 ?>
 
-<link rel="stylesheet" href="../clients/my_clients.css">
+<link rel="stylesheet" href="CSR/clients/my_clients.css">
 
 <h1>👥 My Clients</h1>
 
