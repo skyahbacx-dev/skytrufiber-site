@@ -14,9 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
     $concern  = trim($_POST['concern'] ?? '');
 
     if ($input && $password) {
-        try {
 
-            // Fetch user
+        try {
+            // Fetch matching user
             $stmt = $conn->prepare("
                 SELECT *
                 FROM users
@@ -30,7 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
                 session_regenerate_id(true);
 
-                // Fetch latest ticket
+                /* ============================================================
+                   FETCH LAST TICKET
+                ============================================================ */
                 $ticketStmt = $conn->prepare("
                     SELECT id, status
                     FROM tickets
@@ -41,10 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 $ticketStmt->execute([':cid' => $user['id']]);
                 $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
 
-                /* =====================================================
+                /* ============================================================
                    CREATE NEW TICKET IF NONE OR RESOLVED
-                   AND ENABLE AUTO-SUGGESTIONS ONLY ON NEW TICKET
-                ===================================================== */
+                ============================================================ */
                 if (!$lastTicket || $lastTicket['status'] === 'resolved') {
 
                     $newTicket = $conn->prepare("
@@ -55,18 +56,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
                     $ticketId = $conn->lastInsertId();
 
-                    // Enable auto-suggestions for FIRST client message
+                    // Enable auto-suggestions (first greeting package)
                     $_SESSION['show_suggestions'] = true;
 
                 } else {
                     $ticketId = $lastTicket['id'];
                 }
 
-                // Store session
+                /* ============================================================
+                   SAVE SESSION
+                ============================================================ */
                 $_SESSION['client_id'] = $user['id'];
                 $_SESSION['ticket_id'] = $ticketId;
 
-                // Insert FIRST client message (initial concern)
+                /* ============================================================
+                   INSERT FIRST CLIENT MESSAGE
+                ============================================================ */
                 if (!empty($concern)) {
                     $insert = $conn->prepare("
                         INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
@@ -79,8 +84,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                     ]);
                 }
 
-                // Redirect to chat
-                header("Location: /SKYTRUFIBER/chat/chat_support.php?ticket=$ticketId");
+                /* ============================================================
+                   REDIRECT TO CHAT UI
+                ============================================================ */
+                header("Location: /fiber/chat"); // index.php encrypts this
                 exit;
 
             } else {
@@ -90,6 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
         } catch (PDOException $e) {
             $message = "⚠ Database error: " . htmlspecialchars($e->getMessage());
         }
+
     } else {
         $message = "⚠ Please fill in all fields.";
     }
@@ -103,7 +111,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 <title>SkyTruFiber Customer Portal</title>
 
 <style>
-/* GLOBAL LAYOUT */
 body { 
     margin:0; 
     font-family:"Segoe UI", Arial, sans-serif; 
@@ -114,7 +121,6 @@ body {
     min-height:100vh; 
 }
 
-/* FORM CONTAINER */
 .container {
     background:rgba(255,255,255,0.55);
     padding:30px;
@@ -125,21 +131,18 @@ body {
     text-align:center;
 }
 
-/* MOBILE FIX */
 @media (max-width: 600px) {
-    body { display:block !important; padding-top:24px !important; min-height:auto !important; }
+    body { display:block !important; padding-top:24px !important; }
     .container { width:92% !important; padding:24px !important; border-radius:16px; }
     .container img { width:120px !important; }
 }
 
-/* LOGO */
 .container img {
     width:150px; 
     border-radius:50%; 
     margin-bottom:15px;
 }
 
-/* INPUT FIELDS */
 input, textarea {
     width:100%;
     padding:12px;
@@ -150,7 +153,6 @@ input, textarea {
 }
 textarea { height:80px; resize:none; }
 
-/* BUTTON */
 button {
     width:100%;
     padding:12px;
@@ -161,30 +163,20 @@ button {
     cursor:pointer;
     font-weight:bold;
     font-size:16px;
-    margin-top:10px;
 }
 button:hover { background:#008c96; }
 
-/* LINKS */
-a { 
-    display:block; 
-    margin-top:10px; 
-    color:#0077a3; 
-    text-decoration:none; 
-}
+a { display:block; margin-top:10px; color:#0077a3; text-decoration:none; }
 a:hover { text-decoration:underline; }
 
-/* ERROR MESSAGE */
-.message { 
-    font-size:0.9em; 
-    margin-bottom:8px; 
-    color:red; 
-}
+.message { color:red; font-size:0.9em; margin-bottom:8px; }
+
 .hidden { display:none; }
 </style>
 </head>
 
 <body>
+
 <div class="container">
 
     <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
@@ -194,25 +186,23 @@ a:hover { text-decoration:underline; }
 <p class="message"><?= htmlspecialchars($message) ?></p>
 <?php endif; ?>
 
-<!-- LOGIN FORM -->
 <form id="loginForm" method="POST">
     <input type="text" name="full_name" placeholder="Email or Full Name" required>
     <input type="password" name="password" placeholder="Password" required>
     <textarea name="concern" placeholder="Concern / Inquiry"></textarea>
     <button type="submit">Submit</button>
-    <a id="forgotLink" href="#">Forgot Password?</a>
+    <a id="forgotLink">Forgot Password?</a>
 </form>
 
-<!-- FORGOT PASSWORD FORM -->
 <form id="forgotForm" class="hidden">
     <p>Enter your email to receive your account number:</p>
     <input type="email" name="forgot_email" placeholder="Email" required>
     <button type="submit">Send my account number</button>
     <p id="forgotMessage"></p>
-    <a id="backToLogin" href="#">Back to Login</a>
+    <a id="backToLogin">Back to Login</a>
 </form>
 
-<!-- ROUTE IS CLEAN → index.php encrypts it -->
+<!-- Clean route — index.php encrypts -->
 <p>No account yet? <a href="/fiber/consent">Register here</a></p>
 
 </div>
