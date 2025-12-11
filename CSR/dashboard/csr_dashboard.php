@@ -1,5 +1,5 @@
 <?php
-session_start();
+
 
 if (!isset($_SESSION['csr_user'])) {
     header("Location: ../csr_login.php");
@@ -8,9 +8,8 @@ if (!isset($_SESSION['csr_user'])) {
 
 $csrUser     = $_SESSION["csr_user"];
 $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
-$tab         = $_GET['tab'] ?? 'chat';
 
-/* OPTIONAL history parameters */
+// History parameters (still valid inside dashboard)
 $clientID = intval($_GET["client"] ?? 0);
 $ticketID = intval($_GET["ticket"] ?? 0);
 ?>
@@ -26,14 +25,14 @@ $ticketID = intval($_GET["ticket"] ?? 0);
 <link rel="stylesheet" href="/CSR/chat/chat.css?v=3">
 <link rel="stylesheet" href="/CSR/history/history.css?v=3">
 
-<!-- FontAwesome (NO integrity, NO crossorigin) -->
+<!-- FontAwesome -->
 <link rel="stylesheet" 
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <!-- JS LIBRARIES -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<!-- Sortable LOCAL FIX -->
+<!-- Sortable -->
 <script src="/CSR/vendor/js/Sortable.min.js"></script>
 
 <!-- Dashboard JS -->
@@ -46,21 +45,37 @@ $ticketID = intval($_GET["ticket"] ?? 0);
 <script src="/CSR/history/history.js?v=3"></script>
 
 <script>
+/* ===========================================================
+   🔐 ENCRYPTED ROUTE NAVIGATION FOR CSR
+=========================================================== */
+
+// Sends user to /home.php?v=ENCRYPTED(route)
+function navigateEncrypted(routeName) {
+    window.location.href = "/home.php?v=" + btoa(routeName + "|" + Date.now());
+}
+
+// Buttons – converted to encrypted navigation
+function goChat()      { navigateEncrypted("csr_chat"); }
+function goClients()   { navigateEncrypted("csr_clients"); }
+function goReminders() { navigateEncrypted("csr_reminders"); }
+function goSurvey()    { navigateEncrypted("csr_survey"); }
+
 const csrUser     = "<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>";
 const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 </script>
+
+<style>
+.nav-btn.active { background:#008cff; color:white; }
+.side-item.active { background:#e0f0ff; font-weight:bold; }
+</style>
+
 </head>
-
-
-
 <body>
 
 <!-- GLOBAL LOADER -->
-<div id="loadingOverlay">
-    <div class="spinner"></div>
-</div>
+<div id="loadingOverlay"><div class="spinner"></div></div>
 
-<!-- TOP NAVBAR -->
+<!-- TOP NAVIGATION BAR -->
 <div class="topnav">
     <button class="hamburger" onclick="toggleSidebar()">☰</button>
 
@@ -70,84 +85,78 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     </div>
 
     <div class="nav-buttons">
-        <button class="nav-btn <?= $tab==='chat'?'active':'' ?>" onclick="navigate('chat')">💬 CHAT</button>
-        <button class="nav-btn <?= $tab==='clients'?'active':'' ?>" onclick="navigate('clients')">👥 MY CLIENTS</button>
-        <button class="nav-btn <?= $tab==='reminders'?'active':'' ?>" onclick="navigate('reminders')">⏱ REMINDERS</button>
-        <button class="nav-btn <?= $tab==='survey'?'active':'' ?>" onclick="navigate('survey')">📄 SURVEY</button>
+        <button class="nav-btn" onclick="goChat()">💬 CHAT</button>
+        <button class="nav-btn" onclick="goClients()">👥 MY CLIENTS</button>
+        <button class="nav-btn" onclick="goReminders()">⏱ REMINDERS</button>
+        <button class="nav-btn" onclick="goSurvey()">📄 SURVEY</button>
         <a href="../csr_logout.php" class="logout-btn">Logout</a>
     </div>
 </div>
 
-<!-- PERMANENT ICON SIDEBAR (collapsed mode) -->
+<!-- MINI ICON SIDEBAR -->
 <div class="sidebar-collapsed">
-    <button class="icon-btn" onclick="navigate('chat')" title="Chat">💬</button>
-    <button class="icon-btn" onclick="navigate('clients')" title="My Clients">👥</button>
-    <button class="icon-btn" onclick="navigate('reminders')" title="Reminders">⏱</button>
-    <button class="icon-btn" onclick="navigate('survey')" title="Survey">📄</button>
+    <button class="icon-btn" onclick="goChat()" title="Chat">💬</button>
+    <button class="icon-btn" onclick="goClients()" title="My Clients">👥</button>
+    <button class="icon-btn" onclick="goReminders()" title="Reminders">⏱</button>
+    <button class="icon-btn" onclick="goSurvey()" title="Survey">📄</button>
     <button class="icon-btn logout" onclick="window.location='../csr_logout.php'" title="Logout">🚪</button>
 </div>
 
-<!-- EXPANDING SIDEBAR -->
+<!-- FULL SIDEBAR -->
 <div class="sidebar" id="sidebar">
     <div class="side-title">MENU</div>
 
-    <button class="side-item <?= $tab==='chat'?'active':'' ?>" onclick="navigate('chat')">💬 Chat Dashboard</button>
-    <button class="side-item <?= $tab==='clients'?'active':'' ?>" onclick="navigate('clients')">👥 My Clients</button>
-    <button class="side-item <?= $tab==='reminders'?'active':'' ?>" onclick="navigate('reminders')">⏱ Reminders</button>
-    <button class="side-item <?= $tab==='survey'?'active':'' ?>" onclick="navigate('survey')">📄 Survey Responses</button>
+    <button class="side-item" onclick="goChat()">💬 Chat Dashboard</button>
+    <button class="side-item" onclick="goClients()">👥 My Clients</button>
+    <button class="side-item" onclick="goReminders()">⏱ Reminders</button>
+    <button class="side-item" onclick="goSurvey()">📄 Survey Responses</button>
 
     <button class="side-item logout" onclick="window.location='../csr_logout.php'">🚪 Logout</button>
 </div>
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<!-- MAIN PAGE CONTENT -->
+<!-- MAIN CONTENT -->
 <div class="dashboard-container">
-
 <?php
-switch ($tab) {
 
-    // ==========================
-    //       MY CLIENTS TAB
-    // ==========================
-    case 'clients':
+/* ===========================================================
+   CONTENT ENGINE (CSR DASHBOARD)
+   - home.php already decrypts to csr_chat, csr_clients, etc.
+=========================================================== */
 
-        // If user clicked a specific TICKET
-        if ($ticketID > 0) {
-            include "../history/history_view.php";
-        }
-        // If user clicked HISTORY for a CLIENT
-        else if ($clientID > 0) {
-            include "../history/history_list.php";
-        }
-        // Default My Clients Page
-        else {
-            include "../clients/my_clients.php";
-        }
-        break;
+// home.php determines what page loads.
+// here, we ONLY read which file home.php already included.
 
-    // ==========================
-    //       REMINDERS
-    // ==========================
-    case 'reminders':
-        include "../reminders/reminders.php";
-        break;
+if (isset($GLOBALS["CSR_TAB"])) {
 
-    // ==========================
-    //       SURVEY
-    // ==========================
-    case 'survey':
-        include "../survey/survey_responses.php";
-        break;
+    switch ($GLOBALS["CSR_TAB"]) {
 
-    // ==========================
-    //       CHAT DASHBOARD
-    // ==========================
-    default:
-    case 'chat':
-        include "../chat/chat.php";
-        break;
+        case "CLIENTS":
+            if ($ticketID > 0) {
+                include "../history/history_view.php";
+            } elseif ($clientID > 0) {
+                include "../history/history_list.php";
+            } else {
+                include "../clients/my_clients.php";
+            }
+            break;
+
+        case "REMINDERS":
+            include "../reminders/reminders.php";
+            break;
+
+        case "SURVEY":
+            include "../survey/survey_responses.php";
+            break;
+
+        default:
+        case "CHAT":
+            include "../chat/chat.php";
+            break;
+    }
 }
+
 ?>
 </div>
 
