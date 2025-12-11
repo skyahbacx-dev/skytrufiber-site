@@ -136,8 +136,8 @@ APPLY TICKET STATUS (RELIABLE STATUS CONTROL)
 ============================================================ */
 function applyTicketStatus(status) {
 
-    // Update the header live
-    $("#ticket-status-text").text(status.toUpperCase());
+    // Update header status text
+    $("#ticket-status-label").text("Status: " + status.toUpperCase());
 
     const input = $("#message-input");
     const sendBtn = $("#send-btn");
@@ -169,6 +169,7 @@ function applyTicketStatus(status) {
     input.prop("disabled", false);
     sendBtn.prop("disabled", false);
 }
+
 
 
 
