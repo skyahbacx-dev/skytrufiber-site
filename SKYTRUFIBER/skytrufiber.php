@@ -4,9 +4,7 @@ require_once __DIR__ . '/../db_connect.php';   // correct include path
 
 $message = '';
 
-/* ============================================================
-   LOGIN HANDLER
-============================================================ */
+// LOGIN HANDLER
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['password'])) {
 
     $input    = trim($_POST['full_name']);
@@ -30,9 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
                 session_regenerate_id(true);
 
-                /* ============================================================
-                   FETCH LATEST TICKET
-                ============================================================= */
+                // Fetch latest ticket
                 $ticketStmt = $conn->prepare("
                     SELECT id, status
                     FROM tickets
@@ -54,43 +50,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
                     $ticketId = $conn->lastInsertId();
 
-                    $isNewTicket = true;
+                    // FIRST TIME → ENABLE AUTO SUGGESTIONS
+                    $_SESSION['show_suggestions'] = true;
 
                 } else {
                     $ticketId = $lastTicket['id'];
-                    $isNewTicket = false;
                 }
 
                 // Store session
                 $_SESSION['client_id'] = $user['id'];
                 $_SESSION['ticket_id'] = $ticketId;
 
-                /* ============================================================
-                   AUTO GREET (ONLY IF NO CHAT HISTORY)
-                ============================================================= */
-
-                // Check if existing chat messages
-                $checkMsgs = $conn->prepare("
-                    SELECT COUNT(*) FROM chat
-                    WHERE ticket_id = :tid
-                ");
-                $checkMsgs->execute([':tid' => $ticketId]);
-                $hasMessages = ($checkMsgs->fetchColumn() > 0);
-
-                if (!$hasMessages) {
-                    $greet = $conn->prepare("
-                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
-                        VALUES (:tid, :cid, 'csr', 'Good day! How may we assist you today?', TRUE, FALSE, NOW())
-                    ");
-                    $greet->execute([
-                        ':tid' => $ticketId,
-                        ':cid' => $user['id']
-                    ]);
-                }
-
-                /* ============================================================
-                   INSERT USER INITIAL CONCERN
-                ============================================================= */
+                // Insert initial concern message (first client message)
                 if (!empty($concern)) {
                     $insert = $conn->prepare("
                         INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
@@ -102,10 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                         ':msg' => $concern
                     ]);
                 }
-
-                /* ============================================================
-                   REDIRECT TO CHAT UI (NO ENCRYPT HERE — handled by index)
-                ============================================================= */
 
                 header("Location: /SKYTRUFIBER/chat/chat_support.php?ticket=$ticketId");
                 exit;
@@ -121,6 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
         $message = "⚠ Please fill in all fields.";
     }
 }
+
 
 ?>
 <!DOCTYPE html>
