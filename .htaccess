@@ -1,11 +1,16 @@
 RewriteEngine On
 RewriteBase /
 
-# Route /csr → CSR/csr_login.php
-RewriteRule ^csr$ CSR/csr_login.php [L]
+# Route CSR
+RewriteRule ^csr/?$ CSR/csr_login.php [L]
 
-# Route /dashboard → dashboard/dashboard.php
-RewriteRule ^dashboard$ dashboard/dashboard.php [L]
+# Route Dashboard
+RewriteRule ^dashboard/?$ dashboard/dashboard.php [L]
 
-# Route /skytrufiber → SKYTRUFIBER/skytrufiber.php
-RewriteRule ^skytrufiber$ SKYTRUFIBER/skytrufiber.php [L]
+# Route SkyTruFiber
+RewriteRule ^skytrufiber/?$ SKYTRUFIBER/skytrufiber.php [L]
+
+# Fallback: if file exists, serve; else try .php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.+)$ $1.php [L,QSA]
