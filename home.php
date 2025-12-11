@@ -24,14 +24,13 @@ function decrypt_route($token) {
 
 
 /* ============================================================
-   🧭 CLEAN CSR ROUTES (LINKS CLIENTS CAN TYPE)
+   🧭 CLEAN CSR ROUTES (PUBLIC ENTRY POINTS)
 ============================================================ */
 
+session_start();
 $uri = strtok($_SERVER["REQUEST_URI"], "?");
 
-session_start();
-
-/* 1️⃣ /csr → CSR LOGIN OR DASHBOARD */
+/* 1️⃣ /csr → LOGIN or DASHBOARD */
 if ($uri === "/csr") {
 
     if (!empty($_SESSION["csr_user"])) {
@@ -44,7 +43,7 @@ if ($uri === "/csr") {
     exit;
 }
 
-/* 2️⃣ /csr/dashboard */
+/* 2️⃣ /csr/dashboard → Always Dashboard */
 if ($uri === "/csr/dashboard") {
 
     if (!empty($_SESSION["csr_user"])) {
@@ -57,17 +56,19 @@ if ($uri === "/csr/dashboard") {
     exit;
 }
 
-/* 3️⃣ /csr/logout */
+/* 3️⃣ /csr/logout → Proper Logout */
 if ($uri === "/csr/logout") {
+
     $_SESSION = [];
-    session_destroy();
+    if (session_id()) session_destroy();
+
     header("Location: /csr");
     exit;
 }
 
 
 /* ============================================================
-   🎯 HANDLE ENCRYPTED ROUTES FROM ?v=
+   🎯 HANDLE ENCRYPTED ROUTES (?v=TOKEN)
 ============================================================ */
 
 if (isset($_GET["v"])) {
@@ -80,67 +81,43 @@ if (isset($_GET["v"])) {
 
     switch ($route) {
 
-        /* ----------------------------------------------
-           CSR LOGIN PAGE
-        ---------------------------------------------- */
+        /* CSR Login */
         case "csr_login":
             require __DIR__ . "/CSR/csr_login.php";
             exit;
 
-        /* ----------------------------------------------
-           CSR DASHBOARD (default tab)
-        ---------------------------------------------- */
+        /* CSR Dashboard (default tab = chat) */
         case "csr_dashboard":
-            if (empty($_SESSION["csr_user"])) {
-                die("⛔ Unauthorized access.");
-            }
-
-            $GLOBALS["CSR_TAB"] = "CHAT";
-
+            if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized access.");
+            $GLOBALS["CSR_TAB"] = "chat";
             require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
             exit;
 
-        /* ----------------------------------------------
-           CSR – TAB: CHAT
-        ---------------------------------------------- */
+        /* CSR → Chat Tab */
         case "csr_chat":
             if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
-
-            $GLOBALS["CSR_TAB"] = "CHAT";
-
+            $GLOBALS["CSR_TAB"] = "chat";
             require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
             exit;
 
-        /* ----------------------------------------------
-           CSR – TAB: CLIENTS
-        ---------------------------------------------- */
+        /* CSR → Clients Tab */
         case "csr_clients":
             if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
-
-            $GLOBALS["CSR_TAB"] = "CLIENTS";
-
+            $GLOBALS["CSR_TAB"] = "clients";
             require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
             exit;
 
-        /* ----------------------------------------------
-           CSR – TAB: REMINDERS
-        ---------------------------------------------- */
+        /* CSR → Reminders Tab */
         case "csr_reminders":
             if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
-
-            $GLOBALS["CSR_TAB"] = "REMINDERS";
-
+            $GLOBALS["CSR_TAB"] = "reminders";
             require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
             exit;
 
-        /* ----------------------------------------------
-           CSR – TAB: SURVEY
-        ---------------------------------------------- */
+        /* CSR → Survey Tab */
         case "csr_survey":
             if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
-
-            $GLOBALS["CSR_TAB"] = "SURVEY";
-
+            $GLOBALS["CSR_TAB"] = "survey";
             require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
             exit;
 
@@ -151,9 +128,9 @@ if (isset($_GET["v"])) {
 
 
 /* ============================================================
-   🏠 DEFAULT → CSR LOGIN
+   🏠 DEFAULT → ALWAYS redirect to clean route /csr
+   (This prevents falling back to any other router)
 ============================================================ */
 
-$token = encrypt_route("csr_login");
-header("Location: /home.php?v=$token");
+header("Location: /csr");
 exit;
