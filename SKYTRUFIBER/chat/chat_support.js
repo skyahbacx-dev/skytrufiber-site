@@ -191,22 +191,42 @@ function sendMessage() {
         message: msg
     }).done(raw => {
 
-        if (typeof raw === "string" && raw.trim() === "FORCE_LOGOUT") {
+        if (raw === "FORCE_LOGOUT" || raw.trim() === "FORCE_LOGOUT") {
             window.location.href = "/SKYTRUFIBER/chat/logout.php";
             return;
         }
 
         let res = {};
-        try { res = JSON.parse(raw); } catch {}
-
-        if (res.first_message === true) {
-            insertSuggestionBubble();
+        try {
+            res = JSON.parse(raw);
+        } catch (e) {
+            console.error("Invalid JSON response:", raw);
+            $(`.message[data-msg-id='${tempId}']`).remove();
+            fetchNewMessages();
+            return;
         }
 
-        $(`.message[data-msg-id='${tempId}']`).remove();
-        fetchNewMessages();
+        if (res.status === "ok") {
+
+            if (res.first_message === true) {
+                insertSuggestionBubble();
+            }
+
+            $(`.message[data-msg-id='${tempId}']`).remove();
+            fetchNewMessages();
+        }
+
+        if (res.status === "blocked") {
+            alert("Ticket is resolved. Closing chat.");
+            window.location.href = "/SKYTRUFIBER/chat/logout.php";
+        }
+
+    }).fail(err => {
+        console.error("Send failed:", err);
+        alert("Message failed to send.");
     });
 }
+
 
 function appendClientBubble(msg) {
     const id = "temp-" + Date.now();
