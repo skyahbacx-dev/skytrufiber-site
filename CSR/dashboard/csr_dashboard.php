@@ -143,10 +143,10 @@ switch ($tab) {
     case "CLIENTS":
 
         if ($ticketID > 0) {
-            include __DIR__ . "/../history/history_view.php";
+            include __DIR__ . "/CSR/history/history_view.php";
 
         } elseif ($clientID > 0) {
-            include __DIR__ . "/../history/history_list.php";
+            include __DIR__ . "/CSR/history/history_list.php";
 
         } else {
             include __DIR__ . "/../clients/my_clients.php";
