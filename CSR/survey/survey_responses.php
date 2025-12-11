@@ -104,7 +104,7 @@ $dList = $conn->query("
 ")->fetchAll(PDO::FETCH_COLUMN);
 ?>
 
-<link rel="stylesheet" href="../survey/survey_responses.css">
+<link rel="stylesheet" href="CSR/survey/survey_responses.css">
 
 <h1>📄 Survey Responses</h1>
 <!-- EXPORT BUTTONS -->
