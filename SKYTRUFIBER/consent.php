@@ -38,7 +38,7 @@ label { display:block; text-align:left; margin-top:12px; font-size:15px; }
 <body>
 
 <div class="container" id="step1">
-  <img src="../SKYTRUFIBER.png" width="120" style="border-radius:50%; margin-bottom:15px;">
+  <img src="/SKYTRUFIBER/SKYTRUFIBER.png" width="120" style="border-radius:50%; margin-bottom:15px;">
   <h2 style="color:#003d66; margin:0;">Data Privacy Notice</h2>
 
   <p style="font-size:15px; text-align:justify;">
@@ -46,22 +46,19 @@ label { display:block; text-align:left; margin-top:12px; font-size:15px; }
     We collect, process and store your data for service installation, support, updates and inquiries.
   </p>
 
-  <label><input type="radio" name="consent" value="yes"> YES, I agree and allow SkyTruFiber by AHBA Developmet to process my information.</label>
+  <label><input type="radio" name="consent" value="yes"> YES, I agree and allow SkyTruFiber by AHBA Development to process my information.</label>
   <label><input type="radio" name="consent" value="no"> NO, I do not agree.</label>
 
   <button onclick="nextStep()">Continue</button>
 
   <br><br>
-  <a href="skytrufiber.php" style="
-    display:inline-block; text-decoration:none;
-    color:#004466; font-weight:bold;">⬅ Go back to Customer Portal
-  </a>
+  <a href="/SKYTRUFIBER/skytrufiber.php" style="color:#004466; font-weight:bold;">⬅ Go back to Customer Portal</a>
 </div>
 
 
 
 <div class="container hidden" id="step2">
-  <img src="../SKYTRUFIBER.png" width="120" style="border-radius:50%; margin-bottom:15px;">
+  <img src="/SKYTRUFIBER/SKYTRUFIBER.png" width="120" style="border-radius:50%; margin-bottom:15px;">
   <h2 style="color:#003d66;">Where did you learn about this site?</h2>
 
   <label><input type="radio" name="source" value="QR Code"> QR Code</label>
@@ -71,10 +68,7 @@ label { display:block; text-align:left; margin-top:12px; font-size:15px; }
   <button onclick="goRegister()">Submit</button>
 
   <br><br>
-  <a href="skytrufiber.php" style="
-    display:inline-block; text-decoration:none;
-    color:#004466; font-weight:bold;">⬅ Go back to Customer Portal
-  </a>
+  <a href="/SKYTRUFIBER/skytrufiber.php" style="color:#004466; font-weight:bold;">⬅ Go back to Customer Portal</a>
 </div>
 
 
@@ -87,14 +81,14 @@ function nextStep() {
     document.getElementById("step1").classList.add("hidden");
     document.getElementById("step2").classList.remove("hidden");
   } else {
-    window.location.href = "no_consent.php";
+    window.location.href = "/SKYTRUFIBER/no_consent.php";
   }
 }
 
 function goRegister() {
   const src = document.querySelector('input[name="source"]:checked');
   if (!src) { alert("⚠ Please choose a source."); return; }
-  window.location.href = "register.php?source=" + encodeURIComponent(src.value);
+  window.location.href = "/SKYTRUFIBER/register.php?source=" + encodeURIComponent(src.value);
 }
 </script>
 
