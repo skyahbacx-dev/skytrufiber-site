@@ -100,8 +100,8 @@ $(document).ready(function () {
                 setTimeout(() => {
                     loadClientInfo(currentClientID);
                     loadMessages(true);
-                    loadClients();
-                }, 220);
+                   
+                }
 
             } else {
                 alert("Failed to update ticket: " + res);
