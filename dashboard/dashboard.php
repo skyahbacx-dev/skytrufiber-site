@@ -14,7 +14,7 @@
     <a href="javascript:void(0)" onclick="smoothScroll('#home')">
       <img src="../AHBALOGO.png" height="72">
     </a>
-    <a href="/SKYTRUFIBER/skytrufiber.php" target="_blank">
+    <a href="/fiber" target="_blank">
       <img src="../SKYTRUFIBER.png" height="60">
     </a>
   </div>
