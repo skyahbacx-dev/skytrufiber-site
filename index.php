@@ -1,25 +1,70 @@
 <?php
-// If encrypted token ?v= exists → decrypt and route
-if (isset($_GET['v'])) {
 
-    $decoded = base64_decode($_GET['v']);
+/* ============================================================
+   🔐 ENCRYPT / DECRYPT FUNCTIONS
+============================================================ */
 
-    // Format should be: dashboard|timestamp
-    list($route, $timestamp) = explode("|", $decoded);
+function encrypt_route($route) {
+    return urlencode(base64_encode($route . "|" . time()));
+}
 
-    // Optional security: token expires after 5 minutes
-    if (time() - $timestamp > 300) {
-        die("Token expired.");
+function decrypt_route($token) {
+
+    $decoded = base64_decode($token);
+
+    if (!$decoded || !str_contains($decoded, "|")) {
+        return false;
     }
 
-    // Route to dashboard
-    if ($route === "dashboard") {
-        require __DIR__ . "/dashboard/dashboard.php";
-        exit;
+    list($route, $timestamp) = explode("|", $decoded);
+
+    // token expires after 10 minutes
+    if (time() - $timestamp > 600) return false;
+
+    return $route;
+}
+
+/* ============================================================
+   📌 CLEAN ROUTES (pretty URLs)
+============================================================ */
+
+// /fiber → encrypted redirect to SkyTruFiber
+if (preg_match("#/fiber$#", $_SERVER["REQUEST_URI"])) {
+    $token = encrypt_route("fiber");
+    header("Location: /?v=$token");
+    exit;
+}
+
+/* ============================================================
+   🎯 ENCRYPTED TOKEN ROUTES
+============================================================ */
+
+if (isset($_GET["v"])) {
+
+    $route = decrypt_route($_GET["v"]);
+
+    if (!$route) {
+        die("Invalid or expired access token.");
+    }
+
+    switch ($route) {
+        case "dashboard":
+            require __DIR__ . "/dashboard/dashboard.php";
+            exit;
+
+        case "fiber":
+            require __DIR__ . "/SKYTRUFIBER/skytrufiber.php";
+            exit;
+
+        default:
+            die("Unknown route.");
     }
 }
 
-// Default behavior (no token)
-$token = base64_encode("dashboard|" . time());
-header("Location: ?v=" . urlencode($token));
+/* ============================================================
+   🏠 DEFAULT: always send to encrypted dashboard
+============================================================ */
+$token = encrypt_route("dashboard");
+header("Location: /?v=$token");
 exit;
+
