@@ -2,96 +2,113 @@
 /* ============================================================
    🔐 ENCRYPT / DECRYPT SYSTEM
 ============================================================ */
+
 function encrypt_route($route) {
     return urlencode(base64_encode($route . "|" . time()));
 }
 
 function decrypt_route($token) {
+
     $decoded = base64_decode($token);
-    if (!$decoded || !str_contains($decoded, "|")) return false;
+
+    if (!$decoded || !str_contains($decoded, "|")) {
+        return false;
+    }
 
     list($route, $timestamp) = explode("|", $decoded);
 
-    // Token is valid for 10 minutes
+    // Token expires after 10 minutes
     if (time() - $timestamp > 600) return false;
 
     return $route;
 }
 
+
 /* ============================================================
-   🧭 CLEAN PUBLIC CSR ROUTES
-   These URLs users can enter directly
+   🧭 CSR CLEAN ROUTES
+   These URLs users can type directly
 ============================================================ */
 
-/* /csr → CSR login OR CSR dashboard */
-if (preg_match("#^/csr/?$#", $_SERVER["REQUEST_URI"])) {
+$uri = strtok($_SERVER["REQUEST_URI"], "?");
+
+/* 1️⃣ /csr → Load CSR login */
+if ($uri === "/csr") {
+
     session_start();
 
-    $token = encrypt_route(
-        isset($_SESSION["csr_user"]) ? "csr_dashboard" : "csr_login"
-    );
+    // If logged in → skip to dashboard
+    if (!empty($_SESSION["csr_user"])) {
+        $token = encrypt_route("csr_dashboard");
+    } else {
+        $token = encrypt_route("csr_login");
+    }
 
     header("Location: /home.php?v=$token");
     exit;
 }
 
-/* /csr/dashboard → CSR dashboard (must be logged in) */
-if (preg_match("#^/csr/dashboard/?$#", $_SERVER["REQUEST_URI"])) {
+/* 2️⃣ /csr/dashboard → Dashboard */
+if ($uri === "/csr/dashboard") {
+
     session_start();
 
-    $token = encrypt_route(
-        isset($_SESSION["csr_user"]) ? "csr_dashboard" : "csr_login"
-    );
+    if (!empty($_SESSION["csr_user"])) {
+        $token = encrypt_route("csr_dashboard");
+    } else {
+        $token = encrypt_route("csr_login");
+    }
 
     header("Location: /home.php?v=$token");
     exit;
 }
 
-/* /csr/logout → logout and redirect to login */
-if (preg_match("#^/csr/logout/?$#", $_SERVER["REQUEST_URI"])) {
+/* 3️⃣ /csr/logout → proper logout */
+if ($uri === "/csr/logout") {
     session_start();
     session_destroy();
     header("Location: /csr");
     exit;
 }
 
+
 /* ============================================================
-   🎯 DECRYPT ROUTE & LOAD THE CORRECT CSR FILE
+   🎯 HANDLE DECRYPTED ROUTES FROM ?v=
 ============================================================ */
+
 if (isset($_GET["v"])) {
 
-    session_start();
     $route = decrypt_route($_GET["v"]);
 
     if (!$route) {
-        die("⛔ Invalid or expired CSR access token.");
+        die("⛔ Invalid or expired access token.");
     }
+
+    session_start();
 
     switch ($route) {
 
-        /* CSR LOGIN PAGE */
+        /* CSR LOGIN */
         case "csr_login":
             require __DIR__ . "/CSR/csr_login.php";
             exit;
 
-        /* CSR DASHBOARD PAGE */
+        /* CSR DASHBOARD (requires login) */
         case "csr_dashboard":
-            if (!isset($_SESSION["csr_user"])) {
-                die("⛔ Access denied. You are not logged in.");
+            if (empty($_SESSION["csr_user"])) {
+                die("⛔ Unauthorized access.");
             }
             require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
             exit;
 
         default:
-            die("⛔ Unknown CSR route.");
+            die("⛔ Unknown encrypted route.");
     }
 }
 
+
 /* ============================================================
-   🏠 DEFAULT FALLBACK
-   If route did not match → go to CSR login
+   🏠 DEFAULT: Always go to CSR login
 ============================================================ */
 $token = encrypt_route("csr_login");
 header("Location: /home.php?v=$token");
 exit;
-?>
