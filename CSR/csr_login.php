@@ -1,33 +1,37 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+/* ============================================================
+   CSR LOGIN — UPDATED FOR ENCRYPTED ROUTING (2025)
+============================================================ */
 
-require_once '../db_connect.php';
+if (!isset($_SESSION)) session_start();
+require_once __DIR__ . '/../db_connect.php';
 
-if (isset($_SESSION['csr_user']) && $_SESSION['csr_user'] !== '') {
-    header("Location: dashboard/csr_dashboard.php");
+/* If already logged in → go to encrypted dashboard */
+if (!empty($_SESSION['csr_user'])) {
+    header("Location: /csr/dashboard");
     exit;
 }
 
 $error = '';
 
 /* ============================================================
-   🔑 LOGIN PROCESS
+   HANDLE LOGIN SUBMISSION
 ============================================================ */
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-    $username = trim($_POST["username"] ?? "");
-    $password = $_POST["password"] ?? "";
+    $username = trim($_POST["username"] ?? '');
+    $pass     = $_POST["password"] ?? '';
 
-    if ($username === "" || $password === "") {
+    if ($username === "" || $pass === "") {
+
         $error = "Please enter username & password.";
+
     } else {
 
         $stmt = $conn->prepare("
-            SELECT username, full_name, password, status
-            FROM csr_users
-            WHERE username = :u
+            SELECT username, full_name, password, status 
+            FROM csr_users 
+            WHERE username = :u 
             LIMIT 1
         ");
         $stmt->execute([":u" => $username]);
@@ -35,26 +39,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         if ($row && strtolower($row["status"]) === "active") {
 
-            if (password_verify($password, $row["password"])) {
+            if (password_verify($pass, $row["password"])) {
 
                 session_regenerate_id(true);
 
-                $_SESSION["csr_user"] = $row["username"];
+                $_SESSION["csr_user"]     = $row["username"];
                 $_SESSION["csr_fullname"] = $row["full_name"];
 
-                // Update last seen
-                $upd = $conn->prepare("
-                    UPDATE csr_users SET last_seen = NOW() WHERE username = :u
-                ");
-                $upd->execute([":u" => $row["username"]]);
+                $conn->prepare("
+                    UPDATE csr_users 
+                    SET last_seen = NOW() 
+                    WHERE username = :u
+                ")->execute([":u" => $row["username"]]);
 
-                // Redirect using encrypted clean route
                 header("Location: /csr/dashboard");
                 exit;
 
             } else {
                 $error = "Invalid password.";
             }
+
         } else {
             $error = "Account not found or inactive.";
         }
@@ -87,7 +91,7 @@ body::before{
     content:"";
     position:absolute;
     inset:0;
-    background:url('/AHBALOGO.png') no-repeat center center;
+    background:url('../AHBALOGO.png') no-repeat center center;
     background-size:600px auto;
     opacity:.08;
     z-index:0;
@@ -166,12 +170,14 @@ button:hover{background:var(--green-dark);}
 }
 </style>
 </head>
+
 <body>
 
 <div class="login-box">
     <h2>CSR LOGIN</h2>
 
     <form method="POST">
+
         <div class="field">
             <label>Username</label>
             <input type="text" name="username" required>
@@ -188,19 +194,20 @@ button:hover{background:var(--green-dark);}
 
         <button type="submit">Login</button>
 
-        <?php if ($error): ?>
+        <?php if($error): ?>
             <div class="error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
+
     </form>
 
     <div class="footer">
-        Back to <a href="/">Home</a>
+        Back to <a href="/csr">Home</a>
     </div>
 </div>
 
 <script>
-function togglePass(){
-    let p = document.getElementById("pwd");
+function togglePass() {
+    const p = document.getElementById("pwd");
     p.type = (p.type === "password") ? "text" : "password";
 }
 </script>
