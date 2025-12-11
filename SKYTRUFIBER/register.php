@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $barangay       = trim($_POST['location']);
     $date_installed = trim($_POST['date_installed']);
     $remarks        = trim($_POST['remarks']);
-    $password       = $account_number;
+    $password       = $account_number; 
     $source         = trim($_POST['source']);
 
     if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
@@ -25,9 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt = $conn->prepare("
                 INSERT INTO users 
-                (account_number, full_name, email, password, district, barangay, date_installed, privacy_consent, source, created_at)
+                    (account_number, full_name, email, password, district, barangay, date_installed, privacy_consent, source, created_at)
                 VALUES 
-                (:acc, :name, :email, :pw, :district, :barangay, :installed, 'yes', :source, NOW())
+                    (:acc, :name, :email, :pw, :district, :barangay, :installed, 'yes', :source, NOW())
             ");
 
             $stmt->execute([
@@ -66,9 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->rollBack();
             $message = "❌ Database error: " . htmlspecialchars($e->getMessage());
         }
-
     } else {
-        $message = "⚠️ Please fill in all required fields.";
+        $message = "⚠ Please fill in all required fields.";
     }
 }
 ?>
@@ -79,144 +78,223 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Customer Registration – SkyTruFiber</title>
 
 <style>
-/* same CSS you had */
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
+    margin: 0;
+    padding-top: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.logo-container img {
+    width: 150px;
+    border-radius: 50%;
+    margin-bottom: 20px;
+}
+
+form {
+    background: #fff;
+    padding: 25px;
+    border-radius: 15px;
+    width: 430px;
+    max-width: 92%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    margin-top: 6px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: #0099cc;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 18px;
+    font-size: 16px;
+    font-weight: bold;
+}
+button:hover { background: #007a99; }
+
+.message { color: red; text-align: center; }
+
+/* NEW SMART DROPDOWN */
+.dropdown-wrapper {
+    position: relative;
+}
+
+.searchable-select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    background: white;
+}
+
+.dropdown-list {
+    position: absolute;
+    width: 100%;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 2px;
+    max-height: 220px;
+    overflow-y: auto;
+    display: none;
+    z-index: 9999;
+}
+
+.dropdown-item {
+    padding: 10px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.dropdown-item:hover {
+    background: #e8f4ff;
+}
 </style>
 </head>
 
 <body>
 
 <div class="logo-container">
-    <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+  <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
 </div>
 
 <form method="POST">
-    <h2>Customer Registration & Feedback</h2>
+  <h2>Customer Registration & Feedback</h2>
 
-    <input type="hidden" name="source" value="<?= htmlspecialchars($source) ?>">
+  <input type="hidden" name="source" value="<?= htmlspecialchars($source) ?>">
 
-    <label>Account Number:</label>
-    <input type="text" name="account_number" required>
+  <label>Account Number:</label>
+  <input type="text" name="account_number" required>
 
-    <label>Full Name:</label>
-    <input type="text" name="full_name" required>
+  <label>Full Name:</label>
+  <input type="text" name="full_name" required>
 
-    <label>Email:</label>
-    <input type="email" name="email" required>
+  <label>Email:</label>
+  <input type="email" name="email" required>
 
-    <label>District:</label>
-    <select id="district" name="district" required>
-        <option value="">Select District</option>
-        <option value="District 1">District 1</option>
-        <option value="District 3">District 3</option>
-        <option value="District 4">District 4</option>
-    </select>
+  <label>District:</label>
+  <select id="district" name="district" required>
+      <option value="">Select District</option>
+      <option value="District 1">District 1</option>
+      <option value="District 3">District 3</option>
+      <option value="District 4">District 4</option>
+  </select>
 
-    <label>Barangay:</label>
-    <div style="position:relative;">
-        <input id="barangaySearch" type="text" placeholder="Search barangay..." autocomplete="off">
-        <input type="hidden" id="location" name="location" required>
-        <div id="dropdownList" class="dropdown-panel"></div>
-    </div>
+  <label>Barangay:</label>
+  <div class="dropdown-wrapper">
+      <input type="text" id="barangaySelector" class="searchable-select" placeholder="Search or select barangay..." autocomplete="off">
+      <input type="hidden" id="location" name="location" required>
+      <div id="dropdownList" class="dropdown-list"></div>
+  </div>
 
-    <label>Date Installed:</label>
-    <input type="date" id="date_installed" name="date_installed" required>
+  <label>Date Installed:</label>
+  <input type="date" id="date_installed" name="date_installed" required>
 
-    <label>Feedback / Comments (Optional):</label>
-    <textarea name="remarks"></textarea>
+  <label>Feedback / Comments (Optional):</label>
+  <textarea name="remarks"></textarea>
 
-    <button type="submit">Submit</button>
+  <button type="submit">Submit</button>
 
-    <?php if ($message): ?>
-        <p class="message"><?= htmlspecialchars($message) ?></p>
-    <?php endif; ?>
+  <?php if ($message): ?>
+      <p class="message"><?= htmlspecialchars($message) ?></p>
+  <?php endif; ?>
 
-    <p style="text-align:center; margin-top:10px;">
-        Already registered? <a href="/fiber">Login here</a>
-    </p>
+  <p style="text-align:center;">Already registered?  
+      <a href="/fiber">Login here</a>
+  </p>
 </form>
 
 <script>
-// FULL BARANGAY LIST RESTORED (WORKING)
+/* FULL BARANGAY DATA (unchanged) */
 const barangays = {
   "District 1": [
-"Alicia (Bago Bantay)","Bagong Pag-asa","Bahay Toro","Balingasa",
-"Bungad","Damar","Damayan","Del Monte","Katipunan","Lourdes",
-"Maharlika","Manresa","Mariblo","Masambong","N.S. Amoranto",
-"Nayong Kanluran","Paang Bundok","Pag-ibig sa Nayon","Paltok",
-"Paraiso","Phil-Am","Project 6","Ramon Magsaysay","Saint Peter",
-"Salvacion","San Antonio","San Isidro Labrador","San Jose",
-"Santa Cruz","Santa Teresita","Santo Domingo","Siena",
+"Alicia (Bago Bantay)","Bagong Pag-asa","Bahay Toro","Balingasa","Bungad","Damar","Damayan",
+"Del Monte","Katipunan","Lourdes","Maharlika","Manresa","Mariblo","Masambong",
+"N.S. Amoranto","Nayong Kanluran","Paang Bundok","Pag-ibig sa Nayon","Paltok","Paraiso",
+"Phil-Am","Project 6","Ramon Magsaysay","Saint Peter","Salvacion","San Antonio",
+"San Isidro Labrador","San Jose","Santa Cruz","Santa Teresita","Santo Domingo","Siena",
 "Sto. Cristo","Talayan","Vasra","Veterans Village","West Triangle"
   ],
   "District 3": [
-"Camp Aguinaldo","Pansol","Mangga","San Roque","Silangan","Socorro",
-"Bagumbayan","Libis","Ugong Norte","Masagana","Loyola Heights",
-"Matandang Balara","East Kamias","Quirino 2-A","Quirino 2-B","Quirino 2-C",
-"Amihan","Claro","Duyan-duyan","Quirino 3-A","Bagumbuhay","Bayanihan",
-"Blue Ridge A","Blue Ridge B","Dioquino Zobel","Escopa I","Escopa II",
-"Escopa III","Escopa IV","Marilag","Milagrosa","Tagumpay",
-"Villa Maria Clara","E. Rodriguez","West Kamias","St. Ignatius",
-"White Plains"
+"Camp Aguinaldo","Pansol","Mangga","San Roque","Silangan","Socorro","Bagumbayan","Libis","Ugong Norte",
+"Masagana","Loyola Heights","Matandang Balara","East Kamias","Quirino 2-A","Quirino 2-B","Quirino 2-C",
+"Amihan","Claro","Duyan-duyan","Quirino 3-A","Bagumbuhay","Bayanihan","Blue Ridge A","Blue Ridge B",
+"Dioquino Zobel","Escopa I","Escopa II","Escopa III","Escopa IV","Marilag","Milagrosa","Tagumpay",
+"Villa Maria Clara","E. Rodriguez","West Kamias","St. Ignatius","White Plains"
   ],
   "District 4": [
-"Bagong Lipunan ng Crame","Botocan","Central","Damayang Lagi",
-"Don Manuel","Doña Aurora","Doña Imelda","Doña Josefa","Horseshoe",
-"Immaculate Concepcion","Kalusugan","Kamuning","Kaunlaran","Kristong Hari",
-"Krus na Ligas","Laging Handa","Malaya","Mariana","Obrero",
-"Old Capitol Site","Paligsahan","Pinagkaisahan","Pinyahan","Roxas",
-"Sacred Heart","San Isidro Galas","San Martin de Porres","San Vicente",
-"Santol","Sikatuna Village","South Triangle","Sto. Niño","Tatalon",
-"Teacher's Village East","Teacher's Village West","U.P. Campus",
-"U.P. Village","Valencia"
+"Bagong Lipunan ng Crame","Botocan","Central","Damayang Lagi","Don Manuel","Doña Aurora","Doña Imelda",
+"Doña Josefa","Horseshoe","Immaculate Concepcion","Kalusugan","Kamuning","Kaunlaran","Kristong Hari",
+"Krus na Ligas","Laging Handa","Malaya","Mariana","Obrero","Old Capitol Site","Paligsahan",
+"Pinagkaisahan","Pinyahan","Roxas","Sacred Heart","San Isidro Galas","San Martin de Porres",
+"San Vicente","Santol","Sikatuna Village","South Triangle","Sto. Niño","Tatalon",
+"Teacher's Village East","Teacher's Village West","U.P. Campus","U.P. Village","Valencia"
   ]
 };
 
 const districtSelect = document.getElementById('district');
-const barangaySearch = document.getElementById('barangaySearch');
+const searchInput = document.getElementById('barangaySelector');
 const dropdownList = document.getElementById('dropdownList');
 const hiddenBarangay = document.getElementById('location');
 
-districtSelect.addEventListener('change', () => {
-    barangaySearch.value = "";
-    hiddenBarangay.value = "";
-    dropdownList.style.display = "none";
+/* Show full dropdown on click */
+searchInput.addEventListener("focus", () => {
+    populateDropdown("");
+    dropdownList.style.display = "block";
 });
 
-barangaySearch.addEventListener('input', updateDropdown);
+/* Live search */
+searchInput.addEventListener("input", () => {
+    populateDropdown(searchInput.value.toLowerCase());
+    dropdownList.style.display = "block";
+});
 
-document.addEventListener("click", e => {
-    if (!dropdownList.contains(e.target) && e.target !== barangaySearch) {
+/* Click outside to close */
+document.addEventListener("click", (e) => {
+    if (!dropdownList.contains(e.target) && e.target !== searchInput) {
         dropdownList.style.display = "none";
     }
 });
 
-function updateDropdown() {
-    const district = districtSelect.value;
-    const text = barangaySearch.value.toLowerCase();
-
+function populateDropdown(filter) {
     dropdownList.innerHTML = "";
+    const district = districtSelect.value;
 
     if (!barangays[district]) return;
 
-    const filtered = barangays[district].filter(b =>
-        b.toLowerCase().includes(text)
-    );
+    barangays[district]
+        .filter(b => b.toLowerCase().includes(filter))
+        .forEach(brgy => {
+            let div = document.createElement("div");
+            div.className = "dropdown-item";
+            div.textContent = brgy;
 
-    filtered.forEach(brgy => {
-        const item = document.createElement("div");
-        item.className = "dropdown-item";
-        item.textContent = brgy;
-        item.onclick = () => {
-            barangaySearch.value = brgy;
-            hiddenBarangay.value = brgy;
-            dropdownList.style.display = "none";
-        };
-        dropdownList.appendChild(item);
-    });
+            div.onclick = () => {
+                searchInput.value = brgy;
+                hiddenBarangay.value = brgy;
+                dropdownList.style.display = "none";
+            };
 
-    dropdownList.style.display = "block";
+            dropdownList.appendChild(div);
+        });
 }
 
+/* Auto-fill date */
 document.addEventListener("DOMContentLoaded", () => {
     const d = new Date();
     document.getElementById("date_installed").value =
