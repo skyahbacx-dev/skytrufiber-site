@@ -1,30 +1,40 @@
 <?php
-session_start();
+// Start session ONLY if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 /* ------------------------------------------
    CLEAR ALL SESSION DATA
 ------------------------------------------ */
 $_SESSION = [];
 
-/* Delete session cookie */
+/* ------------------------------------------
+   DELETE SESSION COOKIE SAFELY
+------------------------------------------ */
 if (ini_get("session.use_cookies")) {
     $params = session_get_cookie_params();
+
     setcookie(
         session_name(),
         '',
         time() - 42000,
-        $params["path"],
-        $params["domain"],
-        $params["secure"],
-        $params["httponly"]
+        $params["path"] ?? '/',
+        $params["domain"] ?? '',
+        $params["secure"] ?? false,
+        $params["httponly"] ?? true
     );
 }
 
-/* Destroy the session completely */
-session_destroy();
+/* ------------------------------------------
+   DESTROY THE SESSION COMPLETELY
+------------------------------------------ */
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_destroy();
+}
 
 /* ------------------------------------------
-   REDIRECT USING CLEAN ROUTE
+   REDIRECT TO CLEAN ROUTE
    /csr → home.php → encrypted csr_login
 ------------------------------------------ */
 header("Location: /csr");
