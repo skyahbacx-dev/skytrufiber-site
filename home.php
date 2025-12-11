@@ -25,15 +25,18 @@ function decrypt_route($token) {
 
 /* ============================================================
    🧭 CLEAN PUBLIC ACCESS ROUTES
-   These URLs users can type safely
 ============================================================ */
 
-/* 1️⃣ ahbadevt.com/csr → CSR login */
-if (preg_match("#/csr$#", $_SERVER["REQUEST_URI"])) {
+$uri = strtok($_SERVER["REQUEST_URI"], "?");  // Remove query string
+session_start();
 
-    session_start();
+/* -------------------------------
+   1️⃣ /csr → CSR Login
+-------------------------------- */
+if (preg_match("#^/csr/?$#", $uri)) {
+
     if (isset($_SESSION["csr_user"])) {
-        // If already logged in → go to encrypted dashboard
+        // Already logged in
         $token = encrypt_route("csr_dashboard");
     } else {
         $token = encrypt_route("csr_login");
@@ -43,12 +46,13 @@ if (preg_match("#/csr$#", $_SERVER["REQUEST_URI"])) {
     exit;
 }
 
-/* 2️⃣ ahbadevt.com/csr/dashboard → CSR dashboard */
-if (preg_match("#/csr/dashboard$#", $_SERVER["REQUEST_URI"])) {
+/* -------------------------------
+   2️⃣ /csr/dashboard → CSR Dashboard
+-------------------------------- */
+if (preg_match("#^/csr/dashboard/?$#", $uri)) {
 
-    session_start();
     if (!isset($_SESSION["csr_user"])) {
-        // Not logged in → Force login
+        // No session → login first
         $token = encrypt_route("csr_login");
     } else {
         $token = encrypt_route("csr_dashboard");
@@ -59,7 +63,7 @@ if (preg_match("#/csr/dashboard$#", $_SERVER["REQUEST_URI"])) {
 }
 
 /* ============================================================
-   🎯 HANDLE DECRYPTED ROUTES
+   🎯 HANDLE ENCRYPTED ROUTES
 ============================================================ */
 
 if (isset($_GET["v"])) {
@@ -69,16 +73,14 @@ if (isset($_GET["v"])) {
         die("⛔ Invalid or expired access token.");
     }
 
-    session_start();
-
     switch ($route) {
 
-        /* === CSR LOGIN === */
+        /* === CSR LOGIN PAGE === */
         case "csr_login":
             require __DIR__ . "/CSR/csr_login.php";
             exit;
 
-        /* === CSR DASHBOARD (requires login) === */
+        /* === CSR DASHBOARD PAGE (protected) === */
         case "csr_dashboard":
             if (!isset($_SESSION["csr_user"])) {
                 die("⛔ Unauthorized access.");
@@ -92,7 +94,7 @@ if (isset($_GET["v"])) {
 }
 
 /* ============================================================
-   🏠 Default action: redirect to CSR login
+   🏠 Default → redirect to CSR login
 ============================================================ */
 
 $token = encrypt_route("csr_login");
