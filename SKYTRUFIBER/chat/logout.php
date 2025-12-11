@@ -1,6 +1,8 @@
 <?php
 session_start();
+session_unset();
 session_destroy();
-header("Location: ../skytrufiber.php");
+
+// Redirect to /fiber (index.php will encrypt automatically)
+header("Location: /fiber");
 exit;
-?>
