@@ -1,18 +1,17 @@
 <?php
 if (!isset($_SESSION)) session_start();
 if (!isset($_SESSION['csr_user'])) {
-    header("Location: ../csr_login.php");
+    header("Location: /csr");
     exit;
 }
 
 require __DIR__ . "/../../db_connect.php";
 
-
 $csrUser = $_SESSION["csr_user"];
-$search = trim($_GET["search"] ?? "");
+$search  = trim($_GET["search"] ?? "");
 ?>
 
-<link rel="stylesheet" href="CSR/clients/my_clients.css">
+<link rel="stylesheet" href="/CSR/clients/my_clients.css">
 
 <h1>👥 My Clients</h1>
 
@@ -59,12 +58,28 @@ $query .= " ORDER BY full_name ASC";
 $stmt = $conn->prepare($query);
 $stmt->execute($params);
 $clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$total = count($clients);
+$total   = count($clients);
 ?>
 
 <div class="client-summary">
     <strong>Total Assigned Clients:</strong> <?= $total ?>
 </div>
+
+<script>
+// --- ENCRYPTED ROUTE GENERATOR ---
+function enc(route) {
+    return "/home.php?v=" + btoa(route + "|" + Date.now());
+}
+
+// --- Open dashboard with correct tab + client ID ---
+function openChat(clientID) {
+    window.location.href = enc("csr_chat") + "&client_id=" + clientID;
+}
+
+function openHistory(clientID) {
+    window.location.href = enc("csr_clients") + "&client=" + clientID;
+}
+</script>
 
 <!-- CLIENT TABLE -->
 <div class="table-wrapper">
@@ -96,21 +111,18 @@ $total = count($clients);
             <td><?= htmlspecialchars($c['barangay']) ?></td>
             <td><?= htmlspecialchars($c['date_installed']) ?></td>
 
-            <!-- OPEN CHAT DASHBOARD WITH CORRECT client_id -->
+            <!-- OPEN CHAT (Encrypted) -->
             <td>
-                <a href="../dashboard/csr_dashboard.php?tab=chat&client_id=<?= $c['id'] ?>" 
-                   class="chat-btn">
-                   💬 Chat
-                </a>
+                <button class="chat-btn" onclick="openChat(<?= $c['id'] ?>)">
+                    💬 Chat
+                </button>
             </td>
 
-            <!-- OPEN CHAT HISTORY PAGE -->
+            <!-- OPEN HISTORY (Encrypted) -->
             <td>
-               <a href="../dashboard/csr_dashboard.php?tab=clients&client=<?= $c['id'] ?>" 
-               class="history-btn">
-                 📜 History
-                </a>
-
+                <button class="history-btn" onclick="openHistory(<?= $c['id'] ?>)">
+                    📜 History
+                </button>
             </td>
         </tr>
     <?php endforeach; ?>
