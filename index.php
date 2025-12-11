@@ -1,39 +1,25 @@
 <?php
-/* --------------------------------------------
-   ROUTER + URL ENCRYPTION SYSTEM (Railway Safe)
-----------------------------------------------*/
+// If encrypted token ?v= exists → decrypt and route
+if (isset($_GET['v'])) {
 
-// IMPORTANT: change this key → long, random, private
-define("ENC_KEY", "REPLACE_WITH_A_32_CHAR_SECRET_KEY");
+    $decoded = base64_decode($_GET['v']);
 
-/* Encrypt path */
-function encrypt_path($path) {
-    return urlencode(
-        base64_encode(
-            openssl_encrypt($path, 'AES-256-ECB', ENC_KEY)
-        )
-    );
-}
+    // Format should be: dashboard|timestamp
+    list($route, $timestamp) = explode("|", $decoded);
 
-/* Decrypt path */
-function decrypt_path($hash) {
-    $decoded = base64_decode($hash);
-    return openssl_decrypt($decoded, 'AES-256-ECB', ENC_KEY);
-}
-
-/* If page encoded exists */
-if (isset($_GET['p'])) {
-    $page = decrypt_path($_GET['p']);
-
-    if ($page && file_exists($page)) {
-        require $page;
-        exit;
+    // Optional security: token expires after 5 minutes
+    if (time() - $timestamp > 300) {
+        die("Token expired.");
     }
 
-    http_response_code(404);
-    echo "404 Page Not Found";
-    exit;
+    // Route to dashboard
+    if ($route === "dashboard") {
+        require __DIR__ . "/dashboard/dashboard.php";
+        exit;
+    }
 }
 
-// DEFAULT HOME PAGE
-echo "<h2>Welcome to AHB A Devt</h2>";
+// Default behavior (no token)
+$token = base64_encode("dashboard|" . time());
+header("Location: ?v=" . urlencode($token));
+exit;
