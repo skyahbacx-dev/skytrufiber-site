@@ -23,7 +23,6 @@ body {
 
 @keyframes fade { from{opacity:0;} to{opacity:1;} }
 
-/* Checkmark Animation */
 .checkmark {
   width:80px; height:80px; border-radius:50%;
   border:4px solid #28a745;
@@ -48,7 +47,6 @@ body {
 
 @keyframes draw { to { stroke-dashoffset:0; } }
 
-/* Buttons */
 .btn {
   margin-top:15px;
   padding:12px 25px;
@@ -88,7 +86,7 @@ body {
 
   <button class="btn" onclick="window.print()">🖨 Print Confirmation</button>
 
-  <a href="skytrufiber.php" class="linkbtn" style="color:#004466; text-decoration:none; font-weight:bold;">
+  <a href="/SKYTRUFIBER/skytrufiber.php" class="linkbtn" style="color:#004466; text-decoration:none; font-weight:bold;">
     ⬅ Go back to Customer Portal
   </a>
 
