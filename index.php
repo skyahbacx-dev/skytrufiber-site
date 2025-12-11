@@ -13,74 +13,86 @@ function decrypt_route($token) {
 
     list($route, $timestamp) = explode("|", $decoded);
 
-    // token expires in 10 minutes
+    // Token expires in 10 minutes
     if (time() - $timestamp > 600) return false;
 
     return $route;
 }
 
 /* ============================================================
-   📌 CLEAN URL ROUTES (PUBLIC ENTRY POINTS)
+   📌 CLEAN URL ROUTES → USER FRIENDLY ENTRY POINTS
 ============================================================ */
 
-$uri = strtok($_SERVER["REQUEST_URI"], "?"); // remove query string
+$uri = strtok($_SERVER["REQUEST_URI"], "?"); // remove query string safely
 
-// /fiber → encrypted skytrufiber portal
-if ($uri === "/fiber") {
-    $token = encrypt_route("fiber");
-    header("Location: /?v=$token");
-    exit;
-}
+// Ensure trailing slash does not break routing
+$uri = rtrim($uri, "/");
 
-// /fiber/consent → encrypted consent page
-if ($uri === "/fiber/consent") {
-    $token = encrypt_route("fiber_consent");
-    header("Location: /?v=$token");
-    exit;
-}
+switch ($uri) {
 
-// /fiber/register → encrypted register page
-if ($uri === "/fiber/register") {
-    $token = encrypt_route("fiber_register");
-    header("Location: /?v=$token");
-    exit;
+    case "/fiber":
+        header("Location: /?v=" . encrypt_route("fiber"));
+        exit;
+
+    case "/fiber/consent":
+        header("Location: /?v=" . encrypt_route("fiber_consent"));
+        exit;
+
+    case "/fiber/register":
+        header("Location: /?v=" . encrypt_route("fiber_register"));
+        exit;
+
+    case "/fiber/chat":
+        header("Location: /?v=" . encrypt_route("fiber_chat"));
+        exit;
+
 }
 
 /* ============================================================
-   🎯 HANDLE ENCRYPTED ROUTING
+   🎯 HANDLE ENCRYPTED TOKEN ROUTING
 ============================================================ */
 if (isset($_GET["v"])) {
 
     $route = decrypt_route($_GET["v"]);
-    if (!$route) die("Invalid or expired token.");
+
+    if (!$route) {
+        die("Invalid or expired encrypted token.");
+    }
 
     switch ($route) {
 
+        /* Dashboard */
         case "dashboard":
             require __DIR__ . "/dashboard/dashboard.php";
             exit;
 
+        /* SkyTruFiber Login Page */
         case "fiber":
             require __DIR__ . "/SKYTRUFIBER/skytrufiber.php";
             exit;
 
+        /* Consent Page */
         case "fiber_consent":
             require __DIR__ . "/SKYTRUFIBER/consent.php";
             exit;
 
+        /* Registration Page */
         case "fiber_register":
             require __DIR__ . "/SKYTRUFIBER/register.php";
             exit;
 
+        /* Chat UI Page */
+        case "fiber_chat":
+            require __DIR__ . "/SKYTRUFIBER/chat/chat_support.php";
+            exit;
+
         default:
-            die("Unknown route: " . htmlspecialchars($route));
+            die("Unknown encrypted route: " . htmlspecialchars($route));
     }
 }
 
 /* ============================================================
-   🏠 DEFAULT LANDING → ALWAYS ENCRYPT DASHBOARD
+   🏠 DEFAULT LANDING → ENCRYPTED DASHBOARD REDIRECT
 ============================================================ */
-$token = encrypt_route("dashboard");
-header("Location: /?v=$token");
+header("Location: /?v=" . encrypt_route("dashboard"));
 exit;
-
