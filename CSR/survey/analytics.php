@@ -1,5 +1,6 @@
 <?php
-include '../../db_connect.php';
+require __DIR__ . "/../../db_connect.php";
+
 
 /* Total responses */
 $total = $conn->query("SELECT COUNT(*) FROM survey_responses")->fetchColumn();
