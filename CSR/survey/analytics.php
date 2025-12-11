@@ -28,7 +28,7 @@ $feedback = $conn->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<link rel="stylesheet" href="../survey/survey_responses.css">
+<link rel="stylesheet" href="CSR/survey/survey_responses.css">
 
 <div class="survey-analytics-container">
 
