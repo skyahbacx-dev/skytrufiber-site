@@ -87,8 +87,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 /* ============================================================
                    REDIRECT TO CHAT UI
                 ============================================================ */
-                header("Location: /fiber/chat"); // index.php encrypts this
-                exit;
+               header("Location: /fiber/chat?ticket=$ticketId");
+               exit;
+
 
             } else {
                 $message = "❌ Invalid email/full name or password.";
