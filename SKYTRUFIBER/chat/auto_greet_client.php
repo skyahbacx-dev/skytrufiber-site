@@ -1,9 +1,8 @@
 <?php
 if (!isset($_SESSION)) session_start();
-require_once "../../db_connect.php";
+require_once __DIR__ . "/../../db_connect.php";
 
 $username = trim($_POST["username"] ?? "");
-
 if (!$username) exit("NO_USER");
 
 // Find client
@@ -13,36 +12,34 @@ $stmt = $conn->prepare("
     LIMIT 1
 ");
 $stmt->execute([$username, $username]);
-$client = $stmt->fetch(PDO::FETCH_ASSOC);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$client) exit("NO_CLIENT");
+if (!$user) exit("NO_CLIENT");
 
-$client_id = $client["id"];
+$clientId = $user["id"];
 
-// Count messages
-$m = $conn->prepare("SELECT COUNT(*) FROM chat WHERE client_id = ?");
-$m->execute([$client_id]);
-$count = (int)$m->fetchColumn();
+// Check CSR messages exist
+$check = $conn->prepare("
+    SELECT COUNT(*) FROM chat
+    WHERE client_id = ? AND sender_type = 'csr'
+");
+$check->execute([$clientId]);
 
-// If already has a conversation → no greeting
-if ($count > 0) exit("NO_GREETING");
+if ($check->fetchColumn() > 0) exit("NO_GREETING");
 
-// Determine greeting
-$hour = (int)date("H");
-if ($hour < 12) {
-    $greet = "Good morning! How may we assist you today?";
-} elseif ($hour < 18) {
-    $greet = "Good afternoon! How may we assist you today?";
-} else {
-    $greet = "Good evening! How may we assist you today?";
-}
+// Choose greeting
+$hour = date("H");
+$greet = ($hour < 12)
+    ? "Good morning! How may we assist you today?"
+    : (($hour < 18)
+        ? "Good afternoon! How may we assist you today?"
+        : "Good evening! How may we assist you today?");
 
-// Insert greeting as CSR message
+// Insert greeting
 $insert = $conn->prepare("
     INSERT INTO chat (client_id, sender_type, message, delivered, seen, created_at)
     VALUES (?, 'csr', ?, TRUE, FALSE, NOW())
 ");
-$insert->execute([$client_id, $greet]);
+$insert->execute([$clientId, $greet]);
 
 echo "GREETED";
-?>
