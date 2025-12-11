@@ -56,12 +56,18 @@ if ($uri === "/fiber/register") {
 --------------------------- */
 if ($uri === "/fiber/chat") {
 
-    // Pass ticket safely
-    $ticket = $_GET["ticket"] ?? '';
+    // read raw query string manually to avoid loss
+    parse_str($_SERVER["QUERY_STRING"] ?? '', $qs);
+
+    $ticket = $qs["ticket"] ?? "";
+
+    if ($ticket === "") {
+        die("Missing ticket.");
+    }
 
     $token = encrypt_route("fiber_chat");
 
-    header("Location: /?v=$token&ticket=" . urlencode($ticket));
+    header("Location: /?v=$token&ticket=$ticket");
     exit;
 }
 
