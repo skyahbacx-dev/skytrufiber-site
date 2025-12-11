@@ -1,24 +1,11 @@
 RewriteEngine On
+RewriteBase /
 
-###########################################
-# 1. Allow pretty URLs
-###########################################
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.+)$ $1.php [L,QSA]
+# Route /csr → CSR/csr_login.php
+RewriteRule ^csr$ CSR/csr_login.php [L]
 
-###########################################
-# 2. Domain → Folder Routing
-###########################################
+# Route /dashboard → dashboard/dashboard.php
+RewriteRule ^dashboard$ dashboard/dashboard.php [L]
 
-# ahbadevt.com → dashboard
-RewriteCond %{HTTP_HOST} ^ahbadevt\.com$ [NC]
-RewriteRule ^$ dashboard/dashboard.php [L]
-
-# skytrufiber.com → SKYTRUFIBER
-RewriteCond %{HTTP_HOST} ^skytrufiber\.com$ [NC]
-RewriteRule ^$ SKYTRUFIBER/skytrufiber.php [L]
-
-# ahba-csr.com → CSR login
-RewriteCond %{HTTP_HOST} ^ahba-csr\.com$ [NC]
-RewriteRule ^$ CSR/csr_login.php [L]
+# Route /skytrufiber → SKYTRUFIBER/skytrufiber.php
+RewriteRule ^skytrufiber$ SKYTRUFIBER/skytrufiber.php [L]
