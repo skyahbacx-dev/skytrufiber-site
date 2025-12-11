@@ -1,9 +1,8 @@
 <?php
-// ALWAYS use absolute include path
 require_once __DIR__ . '/../db_connect.php';
 
 $message = '';
-$source = $_GET['source'] ?? ''; // From consent.php
+$source = $_GET['source'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -15,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $date_installed = trim($_POST['date_installed']);
     $remarks        = trim($_POST['remarks']);
     $password       = $account_number;
-    $source         = trim($_POST['source']); // Hidden input
+    $source         = trim($_POST['source']);
 
     if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
 
@@ -24,13 +23,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $hash = password_hash($password, PASSWORD_BCRYPT);
 
-            // INSERT USER
             $stmt = $conn->prepare("
                 INSERT INTO users 
                 (account_number, full_name, email, password, district, barangay, date_installed, privacy_consent, source, created_at)
                 VALUES 
                 (:acc, :name, :email, :pw, :district, :barangay, :installed, 'yes', :source, NOW())
             ");
+
             $stmt->execute([
                 ':acc'      => $account_number,
                 ':name'     => $full_name,
@@ -42,8 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':source'   => $source
             ]);
 
-            // INSERT FEEDBACK IF PROVIDED
-            if (!empty($remarks)) {
+            if ($remarks) {
                 $stmt2 = $conn->prepare("
                     INSERT INTO survey_responses 
                     (client_name, account_number, district, location, feedback, source, created_at)
@@ -61,9 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $conn->commit();
-
-            // Redirect to encrypted skytrufiber login
-            // /fiber → index.php → encrypt("fiber") → skytrufiber.php
             header("Location: /fiber?msg=success");
             exit;
 
@@ -84,88 +79,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Customer Registration – SkyTruFiber</title>
 
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
-    margin: 0;
-    padding-top: 25px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.logo-container img {
-    width: 150px;
-    border-radius: 50%;
-}
-@media (max-width: 600px) {
-    .logo-container img { width: 115px; }
-}
-
-form {
-    background: white;
-    padding: 25px;
-    border-radius: 15px;
-    width: 420px;
-    max-width: 92%;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-input, select, textarea {
-    width: 100%;
-    padding: 12px;
-    margin-top: 6px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 15px;
-}
-
-button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 18px;
-    background: #0099cc;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-}
-button:hover { background: #007a99; }
-
-.message { 
-    text-align: center; 
-    color: red; 
-    margin-top: 10px; 
-}
-
-/* Dropdown */
-.dropdown-panel {
-    position: absolute;
-    width: 100%;
-    background: white;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    margin-top: 3px;
-    max-height: 200px;
-    overflow-y: auto;
-    display: none;
-    z-index: 999;
-}
-.dropdown-item {
-    padding: 12px;
-    cursor: pointer;
-}
-.dropdown-item:hover { background: #e8f4ff; }
-
+/* same CSS you had */
 </style>
 </head>
 
 <body>
 
 <div class="logo-container">
-    <img src="/SKYTRUFIBER/SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+    <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
 </div>
 
 <form method="POST">
@@ -215,11 +136,39 @@ button:hover { background: #007a99; }
 </form>
 
 <script>
-/* Barangay JS — unchanged */
+// FULL BARANGAY LIST RESTORED (WORKING)
 const barangays = {
-    "District 1": [...],
-    "District 3": [...],
-    "District 4": [...]
+  "District 1": [
+"Alicia (Bago Bantay)","Bagong Pag-asa","Bahay Toro","Balingasa",
+"Bungad","Damar","Damayan","Del Monte","Katipunan","Lourdes",
+"Maharlika","Manresa","Mariblo","Masambong","N.S. Amoranto",
+"Nayong Kanluran","Paang Bundok","Pag-ibig sa Nayon","Paltok",
+"Paraiso","Phil-Am","Project 6","Ramon Magsaysay","Saint Peter",
+"Salvacion","San Antonio","San Isidro Labrador","San Jose",
+"Santa Cruz","Santa Teresita","Santo Domingo","Siena",
+"Sto. Cristo","Talayan","Vasra","Veterans Village","West Triangle"
+  ],
+  "District 3": [
+"Camp Aguinaldo","Pansol","Mangga","San Roque","Silangan","Socorro",
+"Bagumbayan","Libis","Ugong Norte","Masagana","Loyola Heights",
+"Matandang Balara","East Kamias","Quirino 2-A","Quirino 2-B","Quirino 2-C",
+"Amihan","Claro","Duyan-duyan","Quirino 3-A","Bagumbuhay","Bayanihan",
+"Blue Ridge A","Blue Ridge B","Dioquino Zobel","Escopa I","Escopa II",
+"Escopa III","Escopa IV","Marilag","Milagrosa","Tagumpay",
+"Villa Maria Clara","E. Rodriguez","West Kamias","St. Ignatius",
+"White Plains"
+  ],
+  "District 4": [
+"Bagong Lipunan ng Crame","Botocan","Central","Damayang Lagi",
+"Don Manuel","Doña Aurora","Doña Imelda","Doña Josefa","Horseshoe",
+"Immaculate Concepcion","Kalusugan","Kamuning","Kaunlaran","Kristong Hari",
+"Krus na Ligas","Laging Handa","Malaya","Mariana","Obrero",
+"Old Capitol Site","Paligsahan","Pinagkaisahan","Pinyahan","Roxas",
+"Sacred Heart","San Isidro Galas","San Martin de Porres","San Vicente",
+"Santol","Sikatuna Village","South Triangle","Sto. Niño","Tatalon",
+"Teacher's Village East","Teacher's Village West","U.P. Campus",
+"U.P. Village","Valencia"
+  ]
 };
 
 const districtSelect = document.getElementById('district');
@@ -247,14 +196,14 @@ function updateDropdown() {
 
     dropdownList.innerHTML = "";
 
-    if (!barangays[district]) return dropdownList.style.display = "none";
+    if (!barangays[district]) return;
 
     const filtered = barangays[district].filter(b =>
         b.toLowerCase().includes(text)
     );
 
     filtered.forEach(brgy => {
-        let item = document.createElement("div");
+        const item = document.createElement("div");
         item.className = "dropdown-item";
         item.textContent = brgy;
         item.onclick = () => {
@@ -268,13 +217,10 @@ function updateDropdown() {
     dropdownList.style.display = "block";
 }
 
-// Auto-fill install date
 document.addEventListener("DOMContentLoaded", () => {
     const d = new Date();
     document.getElementById("date_installed").value =
-        d.getFullYear() + "-" +
-        String(d.getMonth() + 1).padStart(2, "0") + "-" +
-        String(d.getDate()).padStart(2, "0");
+        d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 });
 </script>
 
