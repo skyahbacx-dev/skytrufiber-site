@@ -11,78 +11,68 @@ function decrypt_route($token) {
     $decoded = base64_decode($token);
     if (!$decoded || !str_contains($decoded, "|")) return false;
 
-    // format: route|timestamp
     list($route, $timestamp) = explode("|", $decoded);
 
-    // Expire after 10 minutes
+    // token expires in 10 minutes
     if (time() - $timestamp > 600) return false;
 
     return $route;
 }
 
-
 /* ============================================================
    📌 CLEAN URL ROUTES (PUBLIC ENTRY POINTS)
 ============================================================ */
 
-$uri = strtok($_SERVER["REQUEST_URI"], "?"); // Remove query string
+$uri = strtok($_SERVER["REQUEST_URI"], "?"); // remove query string
 
-// ---------- Landing: /fiber ----------
+/* --------------------------
+   SKYTRUFIBER ROUTES
+--------------------------- */
+
+// /fiber → encrypted skytrufiber portal
 if ($uri === "/fiber") {
     $token = encrypt_route("fiber");
     header("Location: /?v=$token");
     exit;
 }
 
-// ---------- /fiber/consent ----------
+// /fiber/consent → encrypted consent page
 if ($uri === "/fiber/consent") {
     $token = encrypt_route("fiber_consent");
     header("Location: /?v=$token");
     exit;
 }
 
-// ---------- /fiber/register ----------
+// /fiber/register → encrypted register page
 if ($uri === "/fiber/register") {
     $token = encrypt_route("fiber_register");
     header("Location: /?v=$token");
     exit;
 }
 
-// ---------- /fiber/chat/{ticket} ----------
-if (preg_match("#^/fiber/chat/([0-9]+)$#", $uri, $match)) {
+/* --------------------------
+   NEW FIX:
+   /fiber/chat → encrypted chat route
+--------------------------- */
+if ($uri === "/fiber/chat") {
 
-    $ticketId = $match[1];
+    // Pass ticket safely
+    $ticket = $_GET["ticket"] ?? '';
 
-    // encrypt: fiber_chat|8
-    $token = encrypt_route("fiber_chat|" . $ticketId);
+    $token = encrypt_route("fiber_chat");
 
-    header("Location: /?v=$token");
+    header("Location: /?v=$token&ticket=" . urlencode($ticket));
     exit;
 }
-
 
 /* ============================================================
    🎯 HANDLE ENCRYPTED ROUTING
 ============================================================ */
-
 if (isset($_GET["v"])) {
 
     $route = decrypt_route($_GET["v"]);
     if (!$route) die("Invalid or expired token.");
 
-    // ---------- CHAT ROUTE (fiber_chat|ticketId) ----------
-    if (str_starts_with($route, "fiber_chat")) {
-
-        // restore ticket ID
-        list($label, $ticketId) = explode("|", $route);
-
-        $_GET["ticket"] = $ticketId;
-
-        require __DIR__ . "/SKYTRUFIBER/chat/chat_support.php";
-        exit;
-    }
-
-    // ---------- STANDARD ROUTES ----------
     switch ($route) {
 
         case "dashboard":
@@ -101,18 +91,19 @@ if (isset($_GET["v"])) {
             require __DIR__ . "/SKYTRUFIBER/register.php";
             exit;
 
+        case "fiber_chat":
+            require __DIR__ . "/SKYTRUFIBER/chat/chat_support.php";
+            exit;
+
         default:
             die("Unknown route: " . htmlspecialchars($route));
     }
 }
 
-
 /* ============================================================
-   🏠 DEFAULT LANDING → GO TO DASHBOARD
+   🏠 DEFAULT LANDING → ALWAYS ENCRYPT DASHBOARD
 ============================================================ */
-
 $token = encrypt_route("dashboard");
 header("Location: /?v=$token");
 exit;
 
-?>
