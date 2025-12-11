@@ -122,17 +122,18 @@ $dList = $conn->query("
 <div class="survey-tabs">
 
     <!-- Responses -->
-    <a href="?tab=survey&view=responses" 
-       class="<?= $view === 'responses' ? 'active' : '' ?>">
-       📝 Responses
-    </a>
+    <a href="/home.php?v=<?= encrypt_route('csr_survey') ?>" 
+      class="<?= $view === 'responses' ? 'active' : '' ?>">
+         📝 Responses
+   </a>
+
 
     <!-- Analytics (FIXED LINK) -->
-    <a href="?tab=survey&view=analytics" 
-       class="<?= $view === 'analytics' ? 'active' : '' ?>">
-       📊 Analytics
-    </a>
-</div>
+      <a href="/home.php?v=<?= encrypt_route('csr_survey_analytics') ?>" 
+      class="<?= $view === 'analytics' ? 'active' : '' ?>">
+      📊 Analytics
+   </a>
+
 
 <!-- FILTER BAR -->
 <form method="GET" class="filter-bar">
