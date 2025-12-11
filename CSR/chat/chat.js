@@ -12,12 +12,11 @@ let currentTicketFilter = "all"; // all | unresolved | pending | resolved
 
 $(document).ready(function () {
 
-    // INITIAL LOAD (FAST)
+    // INITIAL LOAD
     loadClients();
     clientRefreshInterval = setInterval(() => {
-    loadClients(false); // don't redraw selected client
-    }, 6000); // slower refresh = less lag
-
+        loadClients(false); // Reduce redraw lag
+    }, 6000);
 
     // SEARCH FILTER
     $("#client-search").on("keyup", function () {
@@ -79,7 +78,7 @@ $(document).ready(function () {
     });
 
     // ============================================================
-    // CHANGE TICKET STATUS (FAST + NO CACHE)
+    // CHANGE TICKET STATUS (FIXED SYNTAX)
     // ============================================================
     $(document).on("change", "#ticket-status-dropdown", function () {
 
@@ -95,22 +94,18 @@ $(document).ready(function () {
             console.log("TICKET UPDATE RESPONSE:", res);
 
             if (res.trim() === "OK") {
-
-                // Small delay to allow DB update
                 setTimeout(() => {
                     loadClientInfo(currentClientID);
                     loadMessages(true);
-                   loadClients();
+                    loadClients(false); // avoid lag
                 }, 220);
-                }
-
             } else {
                 alert("Failed to update ticket: " + res);
             }
         });
     });
 
-    // ASSIGN / TRANSFER ACTIONS
+    // ASSIGN / TRANSFER HANDLERS ----------------------------
     $(document).on("click", ".assign-btn", function () {
         $.post("/CSR/chat/assign_client.php", {
             action: "assign",
@@ -128,7 +123,7 @@ $(document).ready(function () {
         }, res => {
             alert(res.msg);
             loadClientInfo(id);
-            loadClients();
+            loadClients(false);
         });
     });
 
@@ -140,7 +135,7 @@ $(document).ready(function () {
         }, res => {
             alert(res.msg);
             loadClientInfo(currentClientID);
-            loadClients();
+            loadClients(false);
         });
     });
 
@@ -152,7 +147,7 @@ $(document).ready(function () {
         }, res => {
             alert(res.msg);
             loadClientInfo(currentClientID);
-            loadClients();
+            loadClients(false);
         });
     });
 
@@ -164,10 +159,11 @@ $(document).ready(function () {
         }, res => {
             alert(res.msg);
             loadClientInfo(currentClientID);
-            loadClients();
+            loadClients(false);
         });
     });
 });
+
 
 // ============================================================
 // ASSIGN RESPONSE HANDLER
@@ -177,20 +173,19 @@ function handleAssignResponse(res) {
     if (res.status === "ok") {
         alert(res.msg);
         loadClientInfo(currentClientID);
-        loadClients();
+        loadClients(false);
         return;
     }
 
     if (res.status === "transfer_required") {
         if (confirm(`${res.msg}\nAssigned to: ${res.assigned_to}\nRequest transfer?`)) {
-
             $.post("/CSR/chat/assign_client.php", {
                 action: "request_transfer",
                 client_id: currentClientID
             }, out => {
                 alert(out.msg);
                 loadClientInfo(currentClientID);
-                loadClients();
+                loadClients(false);
             });
         }
         return;
@@ -198,6 +193,7 @@ function handleAssignResponse(res) {
 
     alert(res.msg);
 }
+
 
 // ============================================================
 // SCROLL TO BOTTOM
@@ -207,11 +203,16 @@ function scrollToBottom() {
     box.stop().animate({ scrollTop: box[0].scrollHeight }, 160);
 }
 
+
 // ============================================================
-// LOAD CLIENT LIST (FAST + NO CACHE)
+// LOAD CLIENT LIST
 // ============================================================
 function loadClients(preserve = true) {
-    $.post("/CSR/chat/load_clients.php", { filter: currentTicketFilter }, html => {
+
+    $.post("/CSR/chat/load_clients.php", {
+        filter: currentTicketFilter,
+        nocache: Date.now()
+    }, html => {
 
         $("#client-list").html(html);
 
@@ -223,7 +224,7 @@ function loadClients(preserve = true) {
 
 
 // ============================================================
-// LOAD CLIENT INFO (FIXED CACHE + FASTER)
+// LOAD CLIENT INFO
 // ============================================================
 function loadClientInfo(id) {
 
@@ -251,6 +252,7 @@ function loadClientInfo(id) {
         loadMessages(true);
     });
 }
+
 
 // ============================================================
 // PERMISSION CONTROL
@@ -285,8 +287,9 @@ function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
     input.attr("placeholder", "Type a message...");
 }
 
+
 // ============================================================
-// LOAD MESSAGES (NO CACHE)
+// LOAD MESSAGES
 // ============================================================
 function loadMessages(scrollBottom = false) {
 
@@ -303,6 +306,7 @@ function loadMessages(scrollBottom = false) {
         if (scrollBottom) scrollToBottom();
     });
 }
+
 
 // ============================================================
 // FETCH NEW MESSAGES
@@ -332,6 +336,7 @@ function fetchNewMessages() {
     });
 }
 
+
 // ============================================================
 // SEND MESSAGE
 // ============================================================
@@ -360,6 +365,7 @@ function sendMessage() {
     });
 }
 
+
 // ============================================================
 // TEMP BUBBLE
 // ============================================================
@@ -379,13 +385,14 @@ function appendTempBubble(msg) {
     scrollToBottom();
 }
 
+
 // ============================================================
 // ACTION MENU
 // ============================================================
 function bindActionButtons() {
     $(".more-btn").off("click").on("click", function (e) {
         e.stopPropagation();
-        openActionPopup($(this).data("msg-id"), this);
+        openActionPopup($(this).data("id"), this);
     });
 }
 
@@ -409,6 +416,7 @@ function openActionPopup(id, anchor) {
 function closeActionPopup() {
     $("#msg-action-popup").removeClass("show").hide();
 }
+
 
 // ============================================================
 // EDIT MESSAGE
@@ -454,6 +462,7 @@ $(document).on("click", ".edit-cancel", () => {
     editing = false;
     loadMessages(false);
 });
+
 
 // ============================================================
 // DELETE MESSAGE
