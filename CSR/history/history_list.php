@@ -5,7 +5,8 @@ if (!isset($_SESSION["csr_user"])) {
     exit;
 }
 
-require "../../db_connect.php";
+require __DIR__ . "/../../db_connect.php";
+
 
 $clientID = intval($_GET["client"] ?? 0);
 if ($clientID <= 0) exit("<h2>Invalid client</h2>");
