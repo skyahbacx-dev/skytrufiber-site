@@ -34,10 +34,11 @@ if (!$u) exit("<p>Client not found.</p>");
 $csrUser = $_SESSION["csr_user"] ?? '';
 
 $isAssignedToMe = ($u["assigned_csr"] === $csrUser) ? "yes" : "no";
-$isLocked       = ($u["ticket_lock"] ? "true" : "false");
+$isLocked       = $u["ticket_lock"] ? "true" : "false";
 
 /* ============================================================
-   FETCH MOST RECENT TICKET
+   FETCH MOST RECENT TICKET — FIXED VERSION
+   Ensures updated ticket status is always returned
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT 
@@ -51,11 +52,17 @@ $stmt = $conn->prepare("
 $stmt->execute([$clientID]);
 $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$ticketID     = $ticket["id"] ?? 0;
-$ticketStatus = strtolower($ticket["status"] ?? "none");
+$ticketID = intval($ticket["id"] ?? 0);
+
+/*
+    FIX #1:
+    ticket_status must NEVER be "none".
+    Default unresolved so chat.js does not break.
+*/
+$ticketStatus = strtolower($ticket["status"] ?? "unresolved");
 
 /* ============================================================
-   SEND META FOR chat.js
+   SEND META FOR chat.js — FIXED FOR CORRECT STATUS HANDLING
 ============================================================ */
 echo "
 <div id='client-meta'
@@ -70,6 +77,7 @@ echo "
      CLIENT INFO PANEL HTML
 =============================================================== -->
 <div class="client-info-panel">
+
     <h3><?= htmlspecialchars($u["full_name"]) ?></h3>
 
     <p><strong>Account Number:</strong> <?= htmlspecialchars($u["account_number"]) ?></p>
@@ -103,9 +111,7 @@ echo "
         ?>
     </p>
 
-    <p><strong>Locked:</strong>
-        <?= $u["ticket_lock"] ? "Yes" : "No" ?>
-    </p>
+    <p><strong>Locked:</strong> <?= $u["ticket_lock"] ? "Yes" : "No" ?></p>
 
     <?php if ($u["transfer_request"]): ?>
         <p><strong>Transfer Requested By:</strong>
