@@ -14,7 +14,10 @@ $(document).ready(function () {
 
     // INITIAL LOAD (FAST)
     loadClients();
-    clientRefreshInterval = setInterval(loadClients, 4500);
+    clientRefreshInterval = setInterval(() => {
+    loadClients(false); // don't redraw selected client
+    }, 6000); // slower refresh = less lag
+
 
     // SEARCH FILTER
     $("#client-search").on("keyup", function () {
@@ -206,20 +209,17 @@ function scrollToBottom() {
 // ============================================================
 // LOAD CLIENT LIST (FAST + NO CACHE)
 // ============================================================
-function loadClients() {
-
-    $.post("/CSR/chat/load_clients.php", {
-        filter: currentTicketFilter,
-        nocache: Date.now()
-    }, html => {
+function loadClients(preserve = true) {
+    $.post("/CSR/chat/load_clients.php", { filter: currentTicketFilter }, html => {
 
         $("#client-list").html(html);
 
-        if (currentClientID) {
+        if (preserve && currentClientID) {
             $(`.client-item[data-id='${currentClientID}']`).addClass("active-client");
         }
     });
 }
+
 
 // ============================================================
 // LOAD CLIENT INFO (FIXED CACHE + FASTER)
