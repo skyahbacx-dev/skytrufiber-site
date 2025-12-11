@@ -136,17 +136,12 @@ APPLY TICKET STATUS (RELIABLE STATUS CONTROL)
 ============================================================ */
 function applyTicketStatus(status) {
 
+    // Update the header live
+    $("#ticket-status-text").text(status.toUpperCase());
+
     const input = $("#message-input");
     const sendBtn = $("#send-btn");
 
-    // Normalize all possible returned formats
-    status = status.replace(/"/g, "").trim().toLowerCase();
-
-    console.log("CLIENT TICKET STATUS:", status);
-
-    /* ----------------------------------------------
-       STATUS: RESOLVED → Disable chat & auto-logout
-    ------------------------------------------------*/
     if (status === "resolved") {
 
         input.prop("disabled", true);
@@ -171,12 +166,10 @@ function applyTicketStatus(status) {
         return;
     }
 
-    /* ----------------------------------------------
-       Ticket not resolved → allow messaging
-    ------------------------------------------------*/
     input.prop("disabled", false);
     sendBtn.prop("disabled", false);
 }
+
 
 
 /* ============================================================
