@@ -1,21 +1,24 @@
 <?php
-/* ============================================================
-   CSR LOGIN — UPDATED FOR ENCRYPTED ROUTING (2025)
-============================================================ */
-
-if (!isset($_SESSION)) session_start();
+session_start();
 require_once __DIR__ . '/../db_connect.php';
 
-/* If already logged in → go to encrypted dashboard */
+/* ============================================================
+   Already logged in? → Go to encrypted dashboard
+============================================================ */
 if (!empty($_SESSION['csr_user'])) {
-    header("Location: /csr/dashboard");
+
+    require_once __DIR__ . '/../home.php'; 
+    // This builds the encrypted redirect
+    $token = encrypt_route("csr_dashboard");
+
+    header("Location: /home.php?v=$token");
     exit;
 }
 
 $error = '';
 
 /* ============================================================
-   HANDLE LOGIN SUBMISSION
+   LOGIN HANDLER
 ============================================================ */
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
@@ -23,7 +26,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $pass     = $_POST["password"] ?? '';
 
     if ($username === "" || $pass === "") {
-
         $error = "Please enter username & password.";
 
     } else {
@@ -46,13 +48,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $_SESSION["csr_user"]     = $row["username"];
                 $_SESSION["csr_fullname"] = $row["full_name"];
 
+                // update last seen
                 $conn->prepare("
-                    UPDATE csr_users 
-                    SET last_seen = NOW() 
-                    WHERE username = :u
+                    UPDATE csr_users SET last_seen = NOW() WHERE username = :u
                 ")->execute([":u" => $row["username"]]);
 
-                header("Location: /csr/dashboard");
+                // build encrypted redirect
+                require_once __DIR__ . '/../home.php';
+                $token = encrypt_route("csr_dashboard");
+
+                header("Location: /home.php?v=$token");
                 exit;
 
             } else {
@@ -170,14 +175,12 @@ button:hover{background:var(--green-dark);}
 }
 </style>
 </head>
-
 <body>
 
 <div class="login-box">
     <h2>CSR LOGIN</h2>
 
     <form method="POST">
-
         <div class="field">
             <label>Username</label>
             <input type="text" name="username" required>
@@ -195,19 +198,18 @@ button:hover{background:var(--green-dark);}
         <button type="submit">Login</button>
 
         <?php if($error): ?>
-            <div class="error"><?= htmlspecialchars($error) ?></div>
+            <div class="error"><?= $error ?></div>
         <?php endif; ?>
-
     </form>
 
     <div class="footer">
-        Back to <a href="/csr">Home</a>
+        Back to <a href="/csr">CSR Portal</a>
     </div>
 </div>
 
 <script>
-function togglePass() {
-    const p = document.getElementById("pwd");
+function togglePass(){
+    let p = document.getElementById("pwd");
     p.type = (p.type === "password") ? "text" : "password";
 }
 </script>
