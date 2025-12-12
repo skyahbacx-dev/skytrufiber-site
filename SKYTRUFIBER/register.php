@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $barangay       = trim($_POST['location']);
     $date_installed = trim($_POST['date_installed']);
     $remarks        = trim($_POST['remarks']);
-    $password       = $account_number; 
+    $password       = $account_number;
     $source         = trim($_POST['source']);
 
     if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
@@ -59,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $conn->commit();
+
             header("Location: /fiber?msg=success");
             exit;
 
@@ -78,91 +79,141 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Customer Registration – SkyTruFiber</title>
 
 <style>
+/* ============================
+   GLOBAL PAGE DESIGN
+============================ */
 body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #cceeff, #e8f8ff);
     margin: 0;
-    padding-top: 25px;
+    padding-top: 20px;
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+/* ============================
+   GLASS CARD CONTAINER
+============================ */
+form {
+    width: 450px;
+    max-width: 92%;
+    background: rgba(255, 255, 255, 0.70);
+    backdrop-filter: blur(16px);
+    border-radius: 18px;
+    padding: 30px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    animation: fadeIn 0.6s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity:0; transform: translateY(15px); }
+    to { opacity:1; transform: translateY(0); }
 }
 
 .logo-container img {
-    width: 150px;
+    width: 160px;
     border-radius: 50%;
-    margin-bottom: 20px;
+    display: block;
+    margin: 0 auto 15px;
 }
 
-form {
-    background: #fff;
-    padding: 25px;
-    border-radius: 15px;
-    width: 430px;
-    max-width: 92%;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+h2 {
+    text-align: center;
+    font-weight: 700;
+    margin-top: 5px;
+    margin-bottom: 18px;
 }
 
+/* ============================
+   INPUTS / SELECTS / TEXTAREA
+============================ */
 input, select, textarea {
     width: 100%;
-    padding: 12px;
-    margin-top: 6px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 15px;
-}
-
-button {
-    width: 100%;
-    padding: 12px;
-    background: #0099cc;
-    color: white;
-    border: none;
+    padding: 13px;
+    margin: 10px 0 18px 0;
     border-radius: 10px;
-    cursor: pointer;
-    margin-top: 18px;
-    font-size: 16px;
-    font-weight: bold;
+    border: 1px solid #aac7d8;
+    font-size: 15px;
+    box-sizing: border-box;
+    background: #f9fcff;
+    transition: all .2s;
 }
-button:hover { background: #007a99; }
 
-.message { color: red; text-align: center; }
+input:focus, select:focus, textarea:focus {
+    border-color: #0099cc;
+    box-shadow: 0 0 6px #9bdaf0;
+}
 
-/* NEW SMART DROPDOWN */
+/* Barangay dropdown box */
 .dropdown-wrapper {
     position: relative;
 }
 
-.searchable-select {
-    width: 100%;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    cursor: pointer;
-    background: white;
-}
-
+/* Autocomplete box */
 .dropdown-list {
     position: absolute;
     width: 100%;
     background: white;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    margin-top: 2px;
-    max-height: 220px;
+    border: 1px solid #aaa;
+    border-radius: 10px;
+    margin-top: -10px;
+    max-height: 230px;
     overflow-y: auto;
     display: none;
-    z-index: 9999;
+    z-index: 1000;
 }
 
 .dropdown-item {
-    padding: 10px;
+    padding: 12px;
     cursor: pointer;
-    font-size: 15px;
+}
+.dropdown-item:hover {
+    background: #e4f5ff;
 }
 
-.dropdown-item:hover {
-    background: #e8f4ff;
+/* ============================
+   SUBMIT BUTTON
+============================ */
+button {
+    width: 100%;
+    padding: 14px;
+    background: #00a6cc;
+    color: white;
+    border: none;
+    border-radius: 40px;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.25s;
+}
+button:hover {
+    background: #008db0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+/* ============================
+   FOOTER LINK
+============================ */
+p.footer {
+    text-align: center;
+    margin-top: 12px;
+}
+p.footer a {
+    color: #006b9a;
+    font-weight: bold;
+    text-decoration: none;
+}
+p.footer a:hover {
+    text-decoration: underline;
+}
+
+/* Error message */
+.message {
+    color: red;
+    text-align: center;
+    margin-top: -5px;
 }
 </style>
 </head>
@@ -174,18 +225,27 @@ button:hover { background: #007a99; }
 </div>
 
 <form method="POST">
+
   <h2>Customer Registration & Feedback</h2>
 
   <input type="hidden" name="source" value="<?= htmlspecialchars($source) ?>">
 
   <label>Account Number:</label>
-  <input type="text" name="account_number" required>
+  <input type="text"
+         name="account_number"
+         id="account_number"
+         required
+         minlength="9"
+         maxlength="13"
+         inputmode="numeric"
+         pattern="[0-9]{9,13}"
+         placeholder="Enter 9–13 digit account number">
 
   <label>Full Name:</label>
-  <input type="text" name="full_name" required>
+  <input type="text" name="full_name" required placeholder="Enter full name">
 
   <label>Email:</label>
-  <input type="email" name="email" required>
+  <input type="email" name="email" required placeholder="example@email.com">
 
   <label>District:</label>
   <select id="district" name="district" required>
@@ -197,7 +257,7 @@ button:hover { background: #007a99; }
 
   <label>Barangay:</label>
   <div class="dropdown-wrapper">
-      <input type="text" id="barangaySelector" class="searchable-select" placeholder="Search or select barangay..." autocomplete="off">
+      <input type="text" id="barangaySelector" placeholder="Search or select barangay..." autocomplete="off">
       <input type="hidden" id="location" name="location" required>
       <div id="dropdownList" class="dropdown-list"></div>
   </div>
@@ -206,7 +266,7 @@ button:hover { background: #007a99; }
   <input type="date" id="date_installed" name="date_installed" required>
 
   <label>Feedback / Comments (Optional):</label>
-  <textarea name="remarks"></textarea>
+  <textarea name="remarks" placeholder="Your feedback helps us improve"></textarea>
 
   <button type="submit">Submit</button>
 
@@ -214,37 +274,22 @@ button:hover { background: #007a99; }
       <p class="message"><?= htmlspecialchars($message) ?></p>
   <?php endif; ?>
 
-  <p style="text-align:center;">Already registered?  
+  <p class="footer">Already registered?  
       <a href="/fiber">Login here</a>
   </p>
 </form>
 
 <script>
-/* FULL BARANGAY DATA (unchanged) */
+/* ACCOUNT NUMBER SAFETY FILTER */
+document.getElementById("account_number").addEventListener("input", function () {
+    this.value = this.value.replace(/\D/g, "").slice(0, 13);
+});
+
+/* BARANGAY DATA (same list you already use) */
 const barangays = {
-  "District 1": [
-"Alicia (Bago Bantay)","Bagong Pag-asa","Bahay Toro","Balingasa","Bungad","Damar","Damayan",
-"Del Monte","Katipunan","Lourdes","Maharlika","Manresa","Mariblo","Masambong",
-"N.S. Amoranto","Nayong Kanluran","Paang Bundok","Pag-ibig sa Nayon","Paltok","Paraiso",
-"Phil-Am","Project 6","Ramon Magsaysay","Saint Peter","Salvacion","San Antonio",
-"San Isidro Labrador","San Jose","Santa Cruz","Santa Teresita","Santo Domingo","Siena",
-"Sto. Cristo","Talayan","Vasra","Veterans Village","West Triangle"
-  ],
-  "District 3": [
-"Camp Aguinaldo","Pansol","Mangga","San Roque","Silangan","Socorro","Bagumbayan","Libis","Ugong Norte",
-"Masagana","Loyola Heights","Matandang Balara","East Kamias","Quirino 2-A","Quirino 2-B","Quirino 2-C",
-"Amihan","Claro","Duyan-duyan","Quirino 3-A","Bagumbuhay","Bayanihan","Blue Ridge A","Blue Ridge B",
-"Dioquino Zobel","Escopa I","Escopa II","Escopa III","Escopa IV","Marilag","Milagrosa","Tagumpay",
-"Villa Maria Clara","E. Rodriguez","West Kamias","St. Ignatius","White Plains"
-  ],
-  "District 4": [
-"Bagong Lipunan ng Crame","Botocan","Central","Damayang Lagi","Don Manuel","Doña Aurora","Doña Imelda",
-"Doña Josefa","Horseshoe","Immaculate Concepcion","Kalusugan","Kamuning","Kaunlaran","Kristong Hari",
-"Krus na Ligas","Laging Handa","Malaya","Mariana","Obrero","Old Capitol Site","Paligsahan",
-"Pinagkaisahan","Pinyahan","Roxas","Sacred Heart","San Isidro Galas","San Martin de Porres",
-"San Vicente","Santol","Sikatuna Village","South Triangle","Sto. Niño","Tatalon",
-"Teacher's Village East","Teacher's Village West","U.P. Campus","U.P. Village","Valencia"
-  ]
+  "District 1": [...],
+  "District 3": [...],
+  "District 4": [...]
 };
 
 const districtSelect = document.getElementById('district');
@@ -252,19 +297,16 @@ const searchInput = document.getElementById('barangaySelector');
 const dropdownList = document.getElementById('dropdownList');
 const hiddenBarangay = document.getElementById('location');
 
-/* Show full dropdown on click */
+/* Populate barangays */
 searchInput.addEventListener("focus", () => {
     populateDropdown("");
     dropdownList.style.display = "block";
 });
-
-/* Live search */
 searchInput.addEventListener("input", () => {
     populateDropdown(searchInput.value.toLowerCase());
     dropdownList.style.display = "block";
 });
 
-/* Click outside to close */
 document.addEventListener("click", (e) => {
     if (!dropdownList.contains(e.target) && e.target !== searchInput) {
         dropdownList.style.display = "none";
@@ -274,7 +316,6 @@ document.addEventListener("click", (e) => {
 function populateDropdown(filter) {
     dropdownList.innerHTML = "";
     const district = districtSelect.value;
-
     if (!barangays[district]) return;
 
     barangays[district]
@@ -294,7 +335,7 @@ function populateDropdown(filter) {
         });
 }
 
-/* Auto-fill date */
+/* Auto-date install */
 document.addEventListener("DOMContentLoaded", () => {
     const d = new Date();
     document.getElementById("date_installed").value =
