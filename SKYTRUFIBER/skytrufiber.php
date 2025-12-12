@@ -7,19 +7,16 @@ $message = '';
 /* ============================================================
    LOGIN HANDLER
 ============================================================ */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['password'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login_request'])) {
 
     $input    = trim($_POST['full_name']);
     $password = $_POST['password'];
     $concern  = trim($_POST['concern_text'] ?? $_POST['concern_dropdown'] ?? '');
 
     if ($input && $password) {
-
         try {
-            // Fetch user
             $stmt = $conn->prepare("
-                SELECT *
-                FROM users
+                SELECT * FROM users
                 WHERE email = :input OR full_name = :input
                 LIMIT 1
             ");
@@ -30,10 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
                 session_regenerate_id(true);
 
-                /* Fetch last ticket */
                 $ticketStmt = $conn->prepare("
-                    SELECT id, status
-                    FROM tickets
+                    SELECT id, status FROM tickets
                     WHERE client_id = :cid
                     ORDER BY created_at DESC
                     LIMIT 1
@@ -41,27 +36,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 $ticketStmt->execute([':cid' => $user['id']]);
                 $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
 
-                /* Create new ticket if needed */
                 if (!$lastTicket || $lastTicket['status'] === 'resolved') {
-
                     $newTicket = $conn->prepare("
                         INSERT INTO tickets (client_id, status, created_at)
                         VALUES (:cid, 'unresolved', NOW())
                     ");
                     $newTicket->execute([':cid' => $user['id']]);
-
                     $ticketId = $conn->lastInsertId();
                     $_SESSION['show_suggestions'] = true;
-
                 } else {
                     $ticketId = $lastTicket['id'];
                 }
 
-                /* Save Session */
                 $_SESSION['client_id'] = $user['id'];
                 $_SESSION['ticket_id'] = $ticketId;
 
-                /* Insert first client message */
                 if (!empty($concern)) {
                     $insert = $conn->prepare("
                         INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
@@ -80,11 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
             } else {
                 $message = "❌ Invalid login credentials.";
             }
-
         } catch (PDOException $e) {
             $message = "⚠ Database error: " . htmlspecialchars($e->getMessage());
         }
-
     } else {
         $message = "⚠ Please fill in all fields.";
     }
@@ -96,15 +83,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 <meta charset="UTF-8">
 <title>SkyTruFiber Customer Portal</title>
 
+<!-- SweetAlert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <style>
 body { 
-    margin:0; 
-    font-family:"Segoe UI", Arial, sans-serif; 
+    margin:0;
+    font-family:"Segoe UI", Arial, sans-serif;
     background:linear-gradient(to bottom right, #cceeff, #e6f7ff);
-    display:flex; 
-    justify-content:center; 
-    align-items:center; 
-    min-height:100vh; 
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
 }
 
 .container {
@@ -114,7 +104,28 @@ body {
     box-shadow:0 5px 18px rgba(0,0,0,0.18);
     width:380px;
     text-align:center;
+    position: relative;
+    overflow: hidden;
 }
+
+/* Fade + Lift Animation */
+.fadeLiftOut {
+    animation: fadeLiftOut 0.35s forwards ease-in-out;
+}
+.fadeLiftIn {
+    animation: fadeLiftIn 0.35s forwards ease-in-out;
+}
+
+@keyframes fadeLiftOut {
+    from { opacity:1; transform:translateY(0); }
+    to   { opacity:0; transform:translateY(-20px); }
+}
+@keyframes fadeLiftIn {
+    from { opacity:0; transform:translateY(20px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+
+.hidden { display:none; }
 
 .container img {
     width:150px;
@@ -128,13 +139,12 @@ input, select, textarea {
     border-radius:10px;
     border:1px solid #ccc;
     font-size:15px;
-    box-sizing:border-box;
 }
 
-textarea { 
-    height:80px; 
-    resize:none; 
-    display:none; 
+textarea {
+    height:80px;
+    resize:none;
+    display:none;
 }
 
 button {
@@ -148,24 +158,27 @@ button {
     font-weight:bold;
     font-size:16px;
 }
+
 button:hover { background:#008c96; }
 
 .small-links {
     margin-top:12px;
     font-size:14px;
 }
-
 .small-links a {
     color:#0077a3;
-    text-decoration:none;
-    margin:0 5px;
+    cursor:pointer;
 }
-.small-links a:hover { text-decoration:underline; }
 
-.message { 
-    color:red; 
-    font-size:0.9em; 
-    margin-bottom:8px; 
+.message {
+    color:red;
+    font-size:0.9em;
+    margin-bottom:8px;
+}
+
+/* Forgot Password Form */
+#forgotForm input {
+    margin-top: 15px;
 }
 </style>
 </head>
@@ -181,13 +194,13 @@ button:hover { background:#008c96; }
 <p class="message"><?= htmlspecialchars($message) ?></p>
 <?php endif; ?>
 
+<!-- LOGIN FORM -->
 <form id="loginForm" method="POST">
+    <input type="hidden" name="login_request" value="1">
 
     <input type="text" name="full_name" placeholder="Email or Full Name" required>
-
     <input type="password" name="password" placeholder="Password" required>
 
-    <!-- Concern dropdown -->
     <select name="concern_dropdown" id="concernSelect">
         <option value="">Select Concern / Inquiry</option>
         <option>Slow Internet</option>
@@ -199,31 +212,94 @@ button:hover { background:#008c96; }
         <option value="others">Others…</option>
     </select>
 
-    <!-- Textarea appears only if "Others" is selected -->
     <textarea id="concernText" name="concern_text" placeholder="Type your concern here..."></textarea>
 
     <button type="submit">Submit</button>
 </form>
 
+<!-- FORGOT PASSWORD FORM (hidden by default) -->
+<form id="forgotForm" class="hidden">
+    <h3>Recover Account Number</h3>
+    <p>Enter your email to retrieve your account number.</p>
+
+    <input type="email" id="forgotEmail" placeholder="Enter your email" required>
+
+    <button type="button" id="sendRecovery">Send Email</button>
+
+    <br>
+    <a id="backToLogin" style="cursor:pointer; color:#0077a3;">← Back to Login</a>
+</form>
+
 <div class="small-links">
     <a href="/fiber/consent">Register here</a> |
-    <a href="#" id="forgotLink">Forgot Password?</a>
+    <a id="forgotLink">Forgot Password?</a>
 </div>
 
 </div>
 
 <script>
+// Handle "Others" dropdown
 const concernSelect = document.getElementById("concernSelect");
 const concernText   = document.getElementById("concernText");
 
-concernSelect.addEventListener("change", function () {
-    if (this.value === "others") {
-        concernText.style.display = "block";
-    } else {
-        concernText.style.display = "none";
-        concernText.value = "";
-    }
+concernSelect.addEventListener("change", () => {
+    concernText.style.display = (concernSelect.value === "others") ? "block" : "none";
 });
+
+// Animation Switching
+const loginForm = document.getElementById("loginForm");
+const forgotForm = document.getElementById("forgotForm");
+const forgotLink = document.getElementById("forgotLink");
+const backToLogin = document.getElementById("backToLogin");
+
+// Switch to Forgot Password
+forgotLink.onclick = () => {
+    loginForm.classList.add("fadeLiftOut");
+    setTimeout(() => {
+        loginForm.classList.add("hidden");
+        forgotForm.classList.remove("hidden");
+        forgotForm.classList.add("fadeLiftIn");
+    }, 300);
+};
+
+// Switch back to Login
+backToLogin.onclick = () => {
+    forgotForm.classList.add("fadeLiftOut");
+    setTimeout(() => {
+        forgotForm.classList.add("hidden");
+        loginForm.classList.remove("hidden");
+        loginForm.classList.add("fadeLiftIn");
+    }, 300);
+};
+
+// AJAX Forgot Password Sender
+document.getElementById("sendRecovery").onclick = () => {
+    let email = document.getElementById("forgotEmail").value.trim();
+
+    if (email === "") {
+        Swal.fire("Missing Email", "Please enter your email.", "warning");
+        return;
+    }
+
+    fetch("/fiber/forgot_password.php", {
+        method: "POST",
+        headers: {"Content-Type":"application/x-www-form-urlencoded"},
+        body: "email=" + encodeURIComponent(email)
+    })
+    .then(r => r.json())
+    .then(res => {
+        Swal.fire({
+            title: res.success ? "Email Sent!" : "Error",
+            text: res.message,
+            icon: res.success ? "success" : "error",
+            confirmButtonColor: "#00a6b6"
+        });
+
+        if (res.success) {
+            setTimeout(() => backToLogin.onclick(), 1500);
+        }
+    });
+};
 </script>
 
 </body>
