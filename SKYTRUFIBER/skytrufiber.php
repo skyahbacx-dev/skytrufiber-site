@@ -3,6 +3,84 @@ session_start();
 require_once __DIR__ . '/../db_connect.php';
 
 $message = '';
+
+/* ============================================================
+   LOGIN HANDLER (unchanged)
+============================================================ */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['password'])) {
+
+    $input    = trim($_POST['full_name']);
+    $password = $_POST['password'];
+    $concern  = trim($_POST['concern_text'] ?? $_POST['concern_dropdown'] ?? '');
+
+    if ($input && $password) {
+
+        try {
+            $stmt = $conn->prepare("
+                SELECT *
+                FROM users
+                WHERE email = :input OR full_name = :input
+                LIMIT 1
+            ");
+            $stmt->execute([':input' => $input]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($user && password_verify($password, $user['password'])) {
+
+                session_regenerate_id(true);
+
+                $ticketStmt = $conn->prepare("
+                    SELECT id, status
+                    FROM tickets
+                    WHERE client_id = :cid
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                ");
+                $ticketStmt->execute([':cid' => $user['id']]);
+                $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
+
+                if (!$lastTicket || $lastTicket['status'] === 'resolved') {
+                    $newTicket = $conn->prepare("
+                        INSERT INTO tickets (client_id, status, created_at)
+                        VALUES (:cid, 'unresolved', NOW())
+                    ");
+                    $newTicket->execute([':cid' => $user['id']]);
+                    $ticketId = $conn->lastInsertId();
+                    $_SESSION['show_suggestions'] = true;
+                } else {
+                    $ticketId = $lastTicket['id'];
+                }
+
+                $_SESSION['client_id'] = $user['id'];
+                $_SESSION['ticket_id'] = $ticketId;
+
+                if (!empty($concern)) {
+                    $insert = $conn->prepare("
+                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
+                        VALUES (:tid, :cid, 'client', :msg, TRUE, NOW())
+                    ");
+                    $insert->execute([
+                        ':tid' => $ticketId,
+                        ':cid' => $user['id'],
+                        ':msg' => $concern
+                    ]);
+                }
+
+                header("Location: /fiber/chat?ticket=$ticketId");
+                exit;
+
+            } else {
+                $message = "❌ Invalid login credentials.";
+            }
+
+        } catch (PDOException $e) {
+            $message = "⚠ Database error: " . htmlspecialchars($e->getMessage());
+        }
+
+    } else {
+        $message = "⚠ Please fill in all fields.";
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -13,84 +91,49 @@ $message = '';
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
-body{
-    margin:0;
-    font-family:"Segoe UI", Arial;
+body { 
+    margin:0; 
+    font-family:"Segoe UI", Arial, sans-serif; 
     background:linear-gradient(to bottom right, #cceeff, #e6f7ff);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
+    display:flex; 
+    justify-content:center; 
+    align-items:center; 
+    min-height:100vh; 
 }
 
-.container{
+.container {
     background:white;
     padding:32px;
     border-radius:20px;
+    box-shadow:0 5px 18px rgba(0,0,0,0.18);
     width:380px;
-    box-shadow:0 5px 18px rgba(0,0,0,.18);
     text-align:center;
     position:relative;
     overflow:hidden;
-    height:520px; /* Fix height so forms don't stretch container */
 }
 
-.container img{
+.container img {
     width:150px;
-    margin-top:10px;
+    margin-bottom:15px;
 }
 
-/* ---------- FORM SYSTEM (POSITION ABSOLUTE TO PREVENT STRETCH) ---------- */
-.form-box{
-    position:absolute;
-    top:140px;
-    left:0;
-    width:100%;
-    padding:0 32px;
-    transition:opacity .35s ease, transform .35s ease;
-}
-
-/* DEFAULT STATE FORMS */
-#loginForm{
-    opacity:1;
-    transform:translateX(0);
-}
-
-#forgotForm{
-    opacity:0;
-    transform:translateX(40px);
-    pointer-events:none;
-}
-
-/* ACTIVE STATE */
-#forgotForm.show{
-    opacity:1 !important;
-    transform:translateX(0) !important;
-    pointer-events:auto;
-}
-
-#loginForm.hide{
-    opacity:0 !important;
-    transform:translateX(-40px) !important;
-    pointer-events:none;
-}
-
-input, select, textarea{
+input, select, textarea {
     width:100%;
     padding:12px;
     margin:10px 0;
     border-radius:10px;
     border:1px solid #ccc;
     font-size:15px;
+    box-sizing:border-box;
 }
 
-textarea{
-    height:80px;
-    resize:none;
-    display:none;
+textarea { 
+    height:80px; 
+    resize:none; 
+    display:none; 
 }
 
-button{
+button {
     width:100%;
     padding:12px;
     background:#00a6b6;
@@ -101,22 +144,41 @@ button{
     font-weight:bold;
     font-size:16px;
 }
-button:hover{ background:#008c96; }
+button:hover { background:#008c96; }
 
-.small-links{
+.small-links {
     margin-top:12px;
     font-size:14px;
 }
-.small-links a{
+
+.small-links a {
     color:#0077a3;
     text-decoration:none;
 }
-.small-links a:hover{ text-decoration:underline; }
 
-.message{
-    color:red;
-    font-size:0.9em;
-    margin-bottom:8px;
+.small-links a:hover { text-decoration:underline; }
+
+.message { 
+    color:red; 
+    font-size:0.9em; 
+    margin-bottom:8px; 
+}
+
+/* --- Smooth Transition --- */
+.form-box {
+    transition: opacity .3s ease, transform .3s ease;
+}
+
+.hidden {
+    opacity:0 !important;
+    transform:translateX(-20px);
+    pointer-events:none;
+}
+
+.visible {
+    opacity:1 !important;
+    transform:translateX(0) !important;
+    pointer-events:auto;
 }
 </style>
 </head>
@@ -127,88 +189,86 @@ button:hover{ background:#008c96; }
 
     <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
 
-    <!-- LOGIN FORM -->
-    <form id="loginForm" class="form-box" method="POST" action="/fiber">
-        
-        <h2>Customer Service Portal</h2>
+    <h2>Customer Service Portal</h2>
 
-        <?php if ($message): ?>
-            <p class="message"><?= htmlspecialchars($message) ?></p>
-        <?php endif; ?>
+<?php if ($message): ?>
+<p class="message"><?= htmlspecialchars($message) ?></p>
+<?php endif; ?>
 
-        <input type="text" name="full_name" placeholder="Email or Full Name" required>
-        <input type="password" name="password" placeholder="Password" required>
+<!-- LOGIN FORM -->
+<form id="loginForm" class="form-box visible" method="POST">
 
-        <select name="concern_dropdown" id="concernSelect">
-            <option value="">Select Concern / Inquiry</option>
-            <option>Slow Internet</option>
-            <option>No Connection</option>
-            <option>Router LOS Light On</option>
-            <option>Intermittent Internet</option>
-            <option>Billing Concern</option>
-            <option>Account Verification</option>
-            <option value="others">Others…</option>
-        </select>
+    <input type="text" name="full_name" placeholder="Email or Full Name" required>
+    <input type="password" name="password" placeholder="Password" required>
 
-        <textarea id="concernText" name="concern_text" placeholder="Type your concern here..."></textarea>
+    <select name="concern_dropdown" id="concernSelect">
+        <option value="">Select Concern / Inquiry</option>
+        <option>Slow Internet</option>
+        <option>No Connection</option>
+        <option>Router LOS Light On</option>
+        <option>Intermittent Internet</option>
+        <option>Billing Concern</option>
+        <option>Account Verification</option>
+        <option value="others">Others…</option>
+    </select>
 
-        <button type="submit">Submit</button>
+    <textarea id="concernText" name="concern_text" placeholder="Type your concern here..."></textarea>
 
-        <div class="small-links">
-            <a href="/fiber/consent">Register here</a> |
-            <a href="#" id="forgotLink">Forgot Password?</a>
-        </div>
-    </form>
+    <button type="submit">Submit</button>
+</form>
 
+<!-- FORGOT PASSWORD FORM -->
+<form id="forgotForm" class="form-box hidden" onsubmit="return false;">
 
-    <!-- FORGOT PASSWORD FORM -->
-    <form id="forgotForm" class="form-box" onsubmit="return false;">
+    <h2>Forgot Password</h2>
+    <p style="font-size:14px;">Enter your email and we will send your account number.</p>
 
-        <h2>Forgot Password</h2>
-        <p style="font-size:14px;">Enter your email and we will send your account number.</p>
+    <input type="email" id="forgotEmail" placeholder="Your Email" required>
 
-        <input type="email" id="forgotEmail" placeholder="Your Email" required>
+    <button id="sendForgotBtn">Send Email</button>
 
-        <button id="sendForgotBtn">Send Email</button>
+    <div class="small-links" style="margin-top:15px;">
+        <a href="#" id="backToLogin">← Back to Login</a>
+    </div>
+</form>
 
-        <div class="small-links" style="margin-top:15px;">
-            <a href="#" id="backToLogin">← Back to Login</a>
-        </div>
-
-    </form>
+<div class="small-links">
+    <a href="/fiber/consent">Register here</a> |
+    <a href="#" id="forgotLink">Forgot Password?</a>
+</div>
 
 </div>
 
 <script>
-// Show textarea for "Others"
+// Show textarea when "Others" selected
 document.getElementById("concernSelect").addEventListener("change", function(){
     const txt = document.getElementById("concernText");
-    if(this.value === "others"){
-        txt.style.display = "block";
-    } else {
-        txt.style.display = "none";
-        txt.value = "";
-    }
+    txt.style.display = (this.value === "others") ? "block" : "none";
 });
 
-// Switch to forgot password
-document.getElementById("forgotLink").onclick = e => {
+// Switch to Forgot Password
+forgotLink.onclick = e => {
     e.preventDefault();
-    loginForm.classList.add("hide");
-    forgotForm.classList.add("show");
+    loginForm.classList.remove("visible");
+    loginForm.classList.add("hidden");
+
+    forgotForm.classList.remove("hidden");
+    forgotForm.classList.add("visible");
 };
 
-// Back to login
-document.getElementById("backToLogin").onclick = e => {
+// Back to Login
+backToLogin.onclick = e => {
     e.preventDefault();
-    forgotForm.classList.remove("show");
-    loginForm.classList.remove("hide");
+    forgotForm.classList.remove("visible");
+    forgotForm.classList.add("hidden");
+
+    loginForm.classList.remove("hidden");
+    loginForm.classList.add("visible");
 };
 
-// SEND EMAIL AJAX
-document.getElementById("sendForgotBtn").onclick = async () => {
-
-    let email = document.getElementById("forgotEmail").value.trim();
+// Send Email AJAX
+sendForgotBtn.onclick = async () => {
+    let email = forgotEmail.value.trim();
 
     if (!email) {
         Swal.fire("Missing Email", "Please enter your email.", "warning");
@@ -231,7 +291,7 @@ document.getElementById("sendForgotBtn").onclick = async () => {
     let data = await response.json();
 
     if (data.success) {
-        Swal.fire("Email Sent!", data.message, "success");
+        Swal.fire("Success!", data.message, "success");
         forgotEmail.value = "";
     } else {
         Swal.fire("Error", data.message, "error");
