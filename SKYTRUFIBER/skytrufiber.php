@@ -108,6 +108,8 @@ body {
     box-shadow:0 5px 18px rgba(0,0,0,0.18);
     width:380px;
     text-align:center;
+    position:relative;
+    overflow:hidden;
 }
 
 .container img {
@@ -168,16 +170,24 @@ button:hover { background:#008c96; }
 }
 
 .hidden {
-    opacity:0 !important;
-    transform:translateX(-20px);
-    pointer-events:none;
+    opacity: 0;
+    transform: translateX(-20px);
+    pointer-events: none;
+    height: 0;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
 }
 
+
 .visible {
-    opacity:1 !important;
-    transform:translateX(0) !important;
-    pointer-events:auto;
+    opacity: 1 !important;
+    transform: translateX(0) !important;
+    pointer-events: auto;
+    height: auto;
+    padding: 0; /* Remove if you want default padding */
 }
+
 </style>
 </head>
 
