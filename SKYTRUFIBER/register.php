@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $conn->commit();
 
-            header("Location: /fiber/register.php?success=1");
+            header("Location: /fiber/register?success=1");
             exit;
 
         } catch (PDOException $e) {
