@@ -13,11 +13,6 @@ $message = '';
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
-html, body {
-    height: 100%;
-    overflow-x: hidden;
-}
-
 body{
     margin:0;
     font-family:"Segoe UI", Arial;
@@ -37,23 +32,47 @@ body{
     text-align:center;
     position:relative;
     overflow:hidden;
-    z-index:5;
-}
-
-/* ----- FORM TRANSITION ----- */
-.form-box{
-    transition:opacity .35s ease, transform .35s ease;
-}
-
-.hidden{
-    opacity:0;
-    transform:translateX(-30px);
-    pointer-events:none;
+    height:520px; /* Fix height so forms don't stretch container */
 }
 
 .container img{
     width:150px;
-    margin-bottom:10px;
+    margin-top:10px;
+}
+
+/* ---------- FORM SYSTEM (POSITION ABSOLUTE TO PREVENT STRETCH) ---------- */
+.form-box{
+    position:absolute;
+    top:140px;
+    left:0;
+    width:100%;
+    padding:0 32px;
+    transition:opacity .35s ease, transform .35s ease;
+}
+
+/* DEFAULT STATE FORMS */
+#loginForm{
+    opacity:1;
+    transform:translateX(0);
+}
+
+#forgotForm{
+    opacity:0;
+    transform:translateX(40px);
+    pointer-events:none;
+}
+
+/* ACTIVE STATE */
+#forgotForm.show{
+    opacity:1 !important;
+    transform:translateX(0) !important;
+    pointer-events:auto;
+}
+
+#loginForm.hide{
+    opacity:0 !important;
+    transform:translateX(-40px) !important;
+    pointer-events:none;
 }
 
 input, select, textarea{
@@ -63,7 +82,6 @@ input, select, textarea{
     border-radius:10px;
     border:1px solid #ccc;
     font-size:15px;
-    box-sizing:border-box;
 }
 
 textarea{
@@ -83,24 +101,22 @@ button{
     font-weight:bold;
     font-size:16px;
 }
-
 button:hover{ background:#008c96; }
 
 .small-links{
     margin-top:12px;
     font-size:14px;
 }
-
 .small-links a{
     color:#0077a3;
     text-decoration:none;
 }
-
 .small-links a:hover{ text-decoration:underline; }
 
-/* Disable SweetAlert blur */
-.swal2-container {
-    backdrop-filter:none !important;
+.message{
+    color:red;
+    font-size:0.9em;
+    margin-bottom:8px;
 }
 </style>
 </head>
@@ -109,12 +125,16 @@ button:hover{ background:#008c96; }
 
 <div class="container">
 
-    <img src="../SKYTRUFIBER.png">
+    <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
 
     <!-- LOGIN FORM -->
-    <form id="loginForm" class="form-box" method="POST" action="">
+    <form id="loginForm" class="form-box" method="POST" action="/fiber">
         
         <h2>Customer Service Portal</h2>
+
+        <?php if ($message): ?>
+            <p class="message"><?= htmlspecialchars($message) ?></p>
+        <?php endif; ?>
 
         <input type="text" name="full_name" placeholder="Email or Full Name" required>
         <input type="password" name="password" placeholder="Password" required>
@@ -142,7 +162,7 @@ button:hover{ background:#008c96; }
 
 
     <!-- FORGOT PASSWORD FORM -->
-    <form id="forgotForm" class="form-box hidden" onsubmit="return false;">
+    <form id="forgotForm" class="form-box" onsubmit="return false;">
 
         <h2>Forgot Password</h2>
         <p style="font-size:14px;">Enter your email and we will send your account number.</p>
@@ -160,7 +180,6 @@ button:hover{ background:#008c96; }
 </div>
 
 <script>
-
 // Show textarea for "Others"
 document.getElementById("concernSelect").addEventListener("change", function(){
     const txt = document.getElementById("concernText");
@@ -175,19 +194,18 @@ document.getElementById("concernSelect").addEventListener("change", function(){
 // Switch to forgot password
 document.getElementById("forgotLink").onclick = e => {
     e.preventDefault();
-    loginForm.classList.add("hidden");
-    forgotForm.classList.remove("hidden");
+    loginForm.classList.add("hide");
+    forgotForm.classList.add("show");
 };
 
 // Back to login
 document.getElementById("backToLogin").onclick = e => {
     e.preventDefault();
-    forgotForm.classList.add("hidden");
-    loginForm.classList.remove("hidden");
+    forgotForm.classList.remove("show");
+    loginForm.classList.remove("hide");
 };
 
-
-// ----- AJAX SEND EMAIL -----
+// SEND EMAIL AJAX
 document.getElementById("sendForgotBtn").onclick = async () => {
 
     let email = document.getElementById("forgotEmail").value.trim();
@@ -201,10 +219,7 @@ document.getElementById("sendForgotBtn").onclick = async () => {
         title: "Sending...",
         text: "Please wait...",
         allowOutsideClick: false,
-        allowEscapeKey: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
+        didOpen: () => Swal.showLoading()
     });
 
     let response = await fetch("/fiber/forgot_password.php", {
@@ -216,22 +231,12 @@ document.getElementById("sendForgotBtn").onclick = async () => {
     let data = await response.json();
 
     if (data.success) {
-        Swal.fire({
-            icon:"success",
-            title:"Email Sent!",
-            text:data.message,
-            confirmButtonColor:"#00a6b6"
-        });
+        Swal.fire("Email Sent!", data.message, "success");
         forgotEmail.value = "";
     } else {
-        Swal.fire({
-            icon:"error",
-            title:"Error",
-            text:data.message
-        });
+        Swal.fire("Error", data.message, "error");
     }
 };
-
 </script>
 
 </body>
