@@ -9,21 +9,7 @@ require __DIR__ . "/../../db_connect.php";
 
 $csrUser = $_SESSION["csr_user"];
 $search  = trim($_GET["search"] ?? "");
-?>
 
-<link rel="stylesheet" href="/CSR/clients/my_clients.css">
-
-<h1>👥 My Clients</h1>
-
-<!-- SEARCH BAR -->
-<form method="GET" class="search-bar">
-    <input type="hidden" name="tab" value="clients">
-    <input type="text" name="search" placeholder="Search clients..."
-           value="<?= htmlspecialchars($search) ?>">
-    <button>Search</button>
-</form>
-
-<?php
 /* ============================================================
    FETCH ASSIGNED CLIENTS
 ============================================================ */
@@ -58,11 +44,55 @@ $query .= " ORDER BY full_name ASC";
 $stmt = $conn->prepare($query);
 $stmt->execute($params);
 $clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$total   = count($clients);
+$total = count($clients);
+
+/* ============================================================
+   GET TODAY'S TICKET COUNTS
+============================================================ */
+$today = date("Y-m-d");
+
+$stats = $conn->prepare("
+    SELECT 
+        COUNT(*) FILTER (WHERE status = 'unresolved') AS unresolved,
+        COUNT(*) FILTER (WHERE status = 'pending') AS pending,
+        COUNT(*) FILTER (WHERE status = 'resolved') AS resolved,
+        COUNT(*) AS total
+    FROM tickets
+    WHERE assigned_csr = :csr
+      AND DATE(updated_at) = :today
+");
+$stats->execute([
+    ":csr" => $csrUser,
+    ":today" => $today
+]);
+$counts = $stats->fetch(PDO::FETCH_ASSOC);
 ?>
 
-<div class="client-summary">
-    <strong>Total Assigned Clients:</strong> <?= $total ?>
+<link rel="stylesheet" href="/CSR/clients/my_clients.css">
+
+<h1>👥 My Clients</h1>
+
+<!-- SEARCH BAR -->
+<form method="GET" class="search-bar">
+    <input type="hidden" name="tab" value="clients">
+    <input type="text" name="search" placeholder="Search clients..."
+           value="<?= htmlspecialchars($search) ?>">
+    <button>Search</button>
+</form>
+
+<!-- SUMMARY BOXES -->
+<div class="summary-container">
+    <div class="summary-box total">Total Clients: <strong><?= $total ?></strong></div>
+    <div class="summary-box unresolved">Unresolved Today: <strong><?= $counts['unresolved'] ?></strong></div>
+    <div class="summary-box pending">Pending Today: <strong><?= $counts['pending'] ?></strong></div>
+    <div class="summary-box resolved">Resolved Today: <strong><?= $counts['resolved'] ?></strong></div>
+</div>
+
+<!-- EXPORT DAILY TICKET REPORT -->
+<div class="export-panel">
+    <a href="/CSR/clients/print_daily_report.php" class="export-btn" target="_blank">
+        🖨 Print Daily Ticket Summary
+    </a>
 </div>
 
 <script>
