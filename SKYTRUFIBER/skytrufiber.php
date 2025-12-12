@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
     $input    = trim($_POST['full_name']);
     $password = $_POST['password'];
 
-    // FIXED CONCERN HANDLING
+    /* Proper concern handling */
     $concern = "";
     if (!empty($_POST['concern_text'])) {
         $concern = trim($_POST['concern_text']);
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
                 session_regenerate_id(true);
 
-                // CHECK LAST TICKET
+                /* Fetch last ticket */
                 $ticketStmt = $conn->prepare("
                     SELECT id, status
                     FROM tickets
@@ -48,25 +48,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
 
                 /* ============================================================
-                   NEW TICKET + CSR GREETING INSERT
+                   CREATE NEW TICKET + INSERT CSR GREETING
                 ============================================================ */
                 if (!$lastTicket || $lastTicket['status'] === 'resolved') {
 
-                    // Create new ticket
                     $newTicket = $conn->prepare("
                         INSERT INTO tickets (client_id, status, created_at)
                         VALUES (:cid, 'unresolved', NOW())
                     ");
                     $newTicket->execute([':cid' => $user['id']]);
+
                     $ticketId = $conn->lastInsertId();
 
-                    // Insert CSR greeting
-                   $greet = $conn->prepare("
-                      INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
-                      VALUES (:tid, NULL, 'csr', 'Hello! This is SkyTruFiber support. How may I assist you today?', TRUE, NOW())
-                     ");
-                        $greet->execute([':tid' => $ticketId]);
-
+                    /* Insert CSR Greeting */
+                    $greet = $conn->prepare("
+                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
+                        VALUES (:tid, NULL, 'csr', 
+                                'Hello! This is SkyTruFiber Support. How may I assist you today?', 
+                                TRUE, NOW())
+                    ");
+                    $greet->execute([':tid' => $ticketId]);
 
                     $_SESSION['show_suggestions'] = true;
 
@@ -74,11 +75,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                     $ticketId = $lastTicket['id'];
                 }
 
-                // SAVE SESSION
+                /* Save session info */
                 $_SESSION['client_id'] = $user['id'];
                 $_SESSION['ticket_id'] = $ticketId;
 
-                /* CLIENT CONCERN INSERT */
+                /* Insert client concern */
                 if (!empty($concern)) {
                     $insert = $conn->prepare("
                         INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
@@ -116,28 +117,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
-body { 
-    margin:0; 
-    font-family:"Segoe UI", Arial, sans-serif; 
+body{
+    margin:0;
+    font-family:"Segoe UI", Arial;
     background:linear-gradient(to bottom right, #cceeff, #e6f7ff);
-    display:flex; 
-    justify-content:center; 
-    align-items:center; 
-    min-height:100vh; 
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
 }
 
-.container {
+.container{
     background:white;
     padding:32px;
     border-radius:20px;
-    box-shadow:0 5px 18px rgba(0,0,0,0.18);
+    box-shadow:0 5px 18px rgba(0,0,0,.18);
     width:380px;
     text-align:center;
     position:relative;
     overflow:hidden;
 }
 
-.container img {
+.container img{
     width:150px;
     margin-bottom:15px;
 }
@@ -149,16 +150,15 @@ input, select, textarea {
     border-radius:10px;
     border:1px solid #ccc;
     font-size:15px;
-    box-sizing:border-box;
 }
 
-textarea { 
-    height:80px; 
-    resize:none; 
-    display:none; 
+textarea{
+    height:80px;
+    resize:none;
+    display:none;
 }
 
-button {
+button{
     width:100%;
     padding:12px;
     background:#00a6b6;
@@ -166,47 +166,50 @@ button {
     border:none;
     border-radius:50px;
     cursor:pointer;
-    font-weight:bold;
     font-size:16px;
+    font-weight:bold;
 }
-button:hover { background:#008c96; }
 
-.small-links {
+button:hover{ background:#008c96; }
+
+.small-links{
     margin-top:12px;
     font-size:14px;
 }
 
-.small-links a {
+.small-links a{
     color:#0077a3;
     text-decoration:none;
 }
 
-.small-links a:hover { text-decoration:underline; }
-
-.message { 
-    color:red; 
-    font-size:0.9em; 
-    margin-bottom:8px; 
+.small-links a:hover{
+    text-decoration:underline;
 }
 
-/* --- Smooth Transition Fix --- */
+.message{
+    color:red;
+    font-size:0.9em;
+    margin-bottom:8px;
+}
+
+/* Animation Fix */
 .form-box {
-    transition: opacity .3s ease, transform .3s ease;
+    transition: opacity .3s ease, transform .3s ease, height .3s ease;
 }
 
 .hidden {
     opacity: 0;
     transform: translateY(20px);
-    pointer-events: none;
     height: 0;
     overflow: hidden;
+    pointer-events: none;
 }
 
 .visible {
     opacity: 1;
     transform: translateY(0);
-    pointer-events: auto;
     height: auto;
+    pointer-events: auto;
 }
 </style>
 </head>
@@ -251,7 +254,7 @@ button:hover { background:#008c96; }
     <h2>Forgot Password</h2>
     <p style="font-size:14px;">Enter your email and we will send your account number.</p>
 
-    <input type="email" id="forgotEmail" placeholder="Your Email" required>
+    <input type="email" id="forgotEmail" placeholder="Your Email">
 
     <button id="sendForgotBtn">Send Email</button>
 
@@ -270,44 +273,37 @@ button:hover { background:#008c96; }
 <script>
 // Concern toggle
 document.getElementById("concernSelect").addEventListener("change", function(){
-    const txt = document.getElementById("concernText");
-    txt.style.display = (this.value === "others") ? "block" : "none";
+    concernText.style.display = (this.value === "others") ? "block" : "none";
 });
 
-// Show Forgot Password
+// Show forgot form
 forgotLink.onclick = e => {
     e.preventDefault();
-    loginForm.classList.remove("visible");
-    loginForm.classList.add("hidden");
-
-    forgotForm.classList.remove("hidden");
-    forgotForm.classList.add("visible");
+    loginForm.classList.replace("visible","hidden");
+    forgotForm.classList.replace("hidden","visible");
 };
 
-// Back to Login
+// Back to login
 backToLogin.onclick = e => {
     e.preventDefault();
-    forgotForm.classList.remove("visible");
-    forgotForm.classList.add("hidden");
-
-    loginForm.classList.remove("hidden");
-    loginForm.classList.add("visible");
+    forgotForm.classList.replace("visible","hidden");
+    loginForm.classList.replace("hidden","visible");
 };
 
-// Send forgot email AJAX
+// AJAX: Send email
 sendForgotBtn.onclick = async () => {
-    let email = forgotEmail.value.trim();
 
+    let email = forgotEmail.value.trim();
     if (!email) {
-        Swal.fire("Missing Email", "Please enter your email.", "warning");
+        Swal.fire("Missing Email","Please enter your email.","warning");
         return;
     }
 
     Swal.fire({
-        title: "Sending...",
-        text: "Please wait...",
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
+        title:"Sending...",
+        text:"Please wait...",
+        allowOutsideClick:false,
+        didOpen:()=>Swal.showLoading()
     });
 
     let response = await fetch("/fiber/forgot_password.php", {
@@ -318,7 +314,7 @@ sendForgotBtn.onclick = async () => {
 
     let data = await response.json();
 
-    if (data.success) {
+    if (data.success){
         Swal.fire("Success!", data.message, "success");
         forgotEmail.value = "";
     } else {
