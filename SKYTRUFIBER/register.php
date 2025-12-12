@@ -59,7 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $conn->commit();
-
             header("Location: /fiber?msg=success");
             exit;
 
@@ -79,217 +78,206 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Customer Registration – SkyTruFiber</title>
 
 <style>
-/* ============================
-   GLOBAL PAGE DESIGN
-============================ */
 body {
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: linear-gradient(135deg, #cceeff, #e8f8ff);
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom right, #cceeff, #d9f4ff);
     margin: 0;
-    padding-top: 20px;
+    padding-top: 40px;
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* ============================
-   GLASS CARD CONTAINER
-============================ */
+/* FORM CARD */
 form {
-    width: 450px;
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(10px);
+    padding: 35px 30px;
+    border-radius: 20px;
+    width: 430px;
     max-width: 92%;
-    background: rgba(255, 255, 255, 0.70);
-    backdrop-filter: blur(16px);
-    border-radius: 18px;
-    padding: 30px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    text-align: center;
     animation: fadeIn 0.6s ease;
 }
 
-@keyframes fadeIn {
-    from { opacity:0; transform: translateY(15px); }
-    to { opacity:1; transform: translateY(0); }
+/* LOGO DESIGN — centered + floating animation */
+.logo-container {
+    text-align: center;
+    margin-bottom: 10px;
 }
 
 .logo-container img {
-    width: 160px;
+    width: 140px;
+    height: 140px;
     border-radius: 50%;
-    display: block;
-    margin: 0 auto 15px;
+    object-fit: cover;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+    border: 3px solid white;
+    animation: floatLogo 3s infinite ease-in-out;
 }
 
-h2 {
-    text-align: center;
-    font-weight: 700;
-    margin-top: 5px;
-    margin-bottom: 18px;
+@keyframes floatLogo {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
 }
 
-/* ============================
-   INPUTS / SELECTS / TEXTAREA
-============================ */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* INPUTS */
 input, select, textarea {
     width: 100%;
-    padding: 13px;
-    margin: 10px 0 18px 0;
+    padding: 12px;
+    margin-top: 6px;
     border-radius: 10px;
-    border: 1px solid #aac7d8;
+    border: 1px solid #b9cfe0;
     font-size: 15px;
     box-sizing: border-box;
-    background: #f9fcff;
-    transition: all .2s;
 }
 
-input:focus, select:focus, textarea:focus {
-    border-color: #0099cc;
-    box-shadow: 0 0 6px #9bdaf0;
+/* SUBMIT BUTTON */
+button {
+    width: 100%;
+    padding: 14px;
+    background: #00a6d6;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    margin-top: 18px;
+    font-size: 16px;
+    font-weight: bold;
+    transition: 0.25s ease;
 }
 
-/* Barangay dropdown box */
-.dropdown-wrapper {
-    position: relative;
+button:hover {
+    background: #008bb3;
+    transform: translateY(-2px);
 }
 
-/* Autocomplete box */
+/* ERROR MESSAGE */
+.message { color: red; text-align: center; }
+
+/* LOGIN TEXT */
+form p a {
+    color: #006b9c;
+    text-decoration: none;
+}
+form p a:hover { text-decoration: underline; }
+
+/* BARANGAY DROPDOWN */
+.dropdown-wrapper { position: relative; }
+.searchable-select {
+    cursor: pointer;
+    background: white;
+}
 .dropdown-list {
     position: absolute;
     width: 100%;
     background: white;
-    border: 1px solid #aaa;
-    border-radius: 10px;
-    margin-top: -10px;
-    max-height: 230px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 2px;
+    max-height: 220px;
     overflow-y: auto;
     display: none;
-    z-index: 1000;
+    z-index: 9999;
 }
-
 .dropdown-item {
-    padding: 12px;
+    padding: 10px;
     cursor: pointer;
 }
-.dropdown-item:hover {
-    background: #e4f5ff;
-}
-
-/* ============================
-   SUBMIT BUTTON
-============================ */
-button {
-    width: 100%;
-    padding: 14px;
-    background: #00a6cc;
-    color: white;
-    border: none;
-    border-radius: 40px;
-    font-size: 17px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.25s;
-}
-button:hover {
-    background: #008db0;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-}
-
-/* ============================
-   FOOTER LINK
-============================ */
-p.footer {
-    text-align: center;
-    margin-top: 12px;
-}
-p.footer a {
-    color: #006b9a;
-    font-weight: bold;
-    text-decoration: none;
-}
-p.footer a:hover {
-    text-decoration: underline;
-}
-
-/* Error message */
-.message {
-    color: red;
-    text-align: center;
-    margin-top: -5px;
-}
+.dropdown-item:hover { background: #e8f4ff; }
 </style>
 </head>
 
 <body>
 
-<div class="logo-container">
-  <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
-</div>
-
 <form method="POST">
 
-  <h2>Customer Registration & Feedback</h2>
+    <div class="logo-container">
+        <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+    </div>
 
-  <input type="hidden" name="source" value="<?= htmlspecialchars($source) ?>">
+    <h2>Customer Registration & Feedback</h2>
 
-  <label>Account Number:</label>
-  <input type="text"
-         name="account_number"
-         id="account_number"
-         required
-         minlength="9"
-         maxlength="13"
-         inputmode="numeric"
-         pattern="[0-9]{9,13}"
-         placeholder="Enter 9–13 digit account number">
+    <input type="hidden" name="source" value="<?= htmlspecialchars($source) ?>">
 
-  <label>Full Name:</label>
-  <input type="text" name="full_name" required placeholder="Enter full name">
+    <label>Account Number:</label>
+    <input type="text" 
+           name="account_number"
+           required 
+           maxlength="13"
+           minlength="9"
+           pattern="[0-9]{9,13}"
+           placeholder="Enter 9–13 digit account number"
+           oninput="this.value=this.value.replace(/[^0-9]/g,'');">
 
-  <label>Email:</label>
-  <input type="email" name="email" required placeholder="example@email.com">
+    <label>Full Name:</label>
+    <input type="text" name="full_name" required placeholder="Enter full name">
 
-  <label>District:</label>
-  <select id="district" name="district" required>
-      <option value="">Select District</option>
-      <option value="District 1">District 1</option>
-      <option value="District 3">District 3</option>
-      <option value="District 4">District 4</option>
-  </select>
+    <label>Email:</label>
+    <input type="email" name="email" required placeholder="example@email.com">
 
-  <label>Barangay:</label>
-  <div class="dropdown-wrapper">
-      <input type="text" id="barangaySelector" placeholder="Search or select barangay..." autocomplete="off">
-      <input type="hidden" id="location" name="location" required>
-      <div id="dropdownList" class="dropdown-list"></div>
-  </div>
+    <label>District:</label>
+    <select id="district" name="district" required>
+        <option value="">Select District</option>
+        <option value="District 1">District 1</option>
+        <option value="District 3">District 3</option>
+        <option value="District 4">District 4</option>
+    </select>
 
-  <label>Date Installed:</label>
-  <input type="date" id="date_installed" name="date_installed" required>
+    <label>Barangay:</label>
+    <div class="dropdown-wrapper">
+        <input type="text" id="barangaySelector" class="searchable-select" placeholder="Search or select barangay..." autocomplete="off">
+        <input type="hidden" id="location" name="location" required>
+        <div id="dropdownList" class="dropdown-list"></div>
+    </div>
 
-  <label>Feedback / Comments (Optional):</label>
-  <textarea name="remarks" placeholder="Your feedback helps us improve"></textarea>
+    <label>Date Installed:</label>
+    <input type="date" id="date_installed" name="date_installed" required>
 
-  <button type="submit">Submit</button>
+    <label>Feedback / Comments (Optional):</label>
+    <textarea name="remarks" placeholder="Your feedback helps us improve"></textarea>
 
-  <?php if ($message): ?>
-      <p class="message"><?= htmlspecialchars($message) ?></p>
-  <?php endif; ?>
+    <button type="submit">Submit</button>
 
-  <p class="footer">Already registered?  
-      <a href="/fiber">Login here</a>
-  </p>
+    <?php if ($message): ?>
+        <p class="message"><?= htmlspecialchars($message) ?></p>
+    <?php endif; ?>
+
+    <p>Already registered? <a href="/fiber">Login here</a></p>
 </form>
 
 <script>
-/* ACCOUNT NUMBER SAFETY FILTER */
-document.getElementById("account_number").addEventListener("input", function () {
-    this.value = this.value.replace(/\D/g, "").slice(0, 13);
-});
-
-/* BARANGAY DATA (same list you already use) */
+/* FULL BARANGAY DATA */
 const barangays = {
-  "District 1": [...],
-  "District 3": [...],
-  "District 4": [...]
+  "District 1": [
+"Alicia (Bago Bantay)","Bagong Pag-asa","Bahay Toro","Balingasa","Bungad","Damar","Damayan",
+"Del Monte","Katipunan","Lourdes","Maharlika","Manresa","Mariblo","Masambong",
+"N.S. Amoranto","Nayong Kanluran","Paang Bundok","Pag-ibig sa Nayon","Paltok","Paraiso",
+"Phil-Am","Project 6","Ramon Magsaysay","Saint Peter","Salvacion","San Antonio",
+"San Isidro Labrador","San Jose","Santa Cruz","Santa Teresita","Santo Domingo","Siena",
+"Sto. Cristo","Talayan","Vasra","Veterans Village","West Triangle"
+  ],
+  "District 3": [
+"Camp Aguinaldo","Pansol","Mangga","San Roque","Silangan","Socorro","Bagumbayan","Libis","Ugong Norte",
+"Masagana","Loyola Heights","Matandang Balara","East Kamias","Quirino 2-A","Quirino 2-B","Quirino 2-C",
+"Amihan","Claro","Duyan-duyan","Quirino 3-A","Bagumbuhay","Bayanihan","Blue Ridge A","Blue Ridge B",
+"Dioquino Zobel","Escopa I","Escopa II","Escopa III","Escopa IV","Marilag","Milagrosa","Tagumpay",
+"Villa Maria Clara","E. Rodriguez","West Kamias","St. Ignatius","White Plains"
+  ],
+  "District 4": [
+"Bagong Lipunan ng Crame","Botocan","Central","Damayang Lagi","Don Manuel","Doña Aurora","Doña Imelda",
+"Doña Josefa","Horseshoe","Immaculate Concepcion","Kalusugan","Kamuning","Kaunlaran","Kristong Hari",
+"Krus na Ligas","Laging Handa","Malaya","Mariana","Obrero","Old Capitol Site","Paligsahan",
+"Pinagkaisahan","Pinyahan","Roxas","Sacred Heart","San Isidro Galas","San Martin de Porres",
+"San Vicente","Santol","Sikatuna Village","South Triangle","Sto. Niño","Tatalon",
+"Teacher's Village East","Teacher's Village West","U.P. Campus","U.P. Village","Valencia"
+  ]
 };
 
 const districtSelect = document.getElementById('district');
@@ -297,11 +285,11 @@ const searchInput = document.getElementById('barangaySelector');
 const dropdownList = document.getElementById('dropdownList');
 const hiddenBarangay = document.getElementById('location');
 
-/* Populate barangays */
 searchInput.addEventListener("focus", () => {
     populateDropdown("");
     dropdownList.style.display = "block";
 });
+
 searchInput.addEventListener("input", () => {
     populateDropdown(searchInput.value.toLowerCase());
     dropdownList.style.display = "block";
@@ -316,6 +304,7 @@ document.addEventListener("click", (e) => {
 function populateDropdown(filter) {
     dropdownList.innerHTML = "";
     const district = districtSelect.value;
+
     if (!barangays[district]) return;
 
     barangays[district]
@@ -335,7 +324,7 @@ function populateDropdown(filter) {
         });
 }
 
-/* Auto-date install */
+/* Auto-fill date */
 document.addEventListener("DOMContentLoaded", () => {
     const d = new Date();
     document.getElementById("date_installed").value =
