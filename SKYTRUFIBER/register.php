@@ -13,10 +13,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $barangay       = trim($_POST['location']);
     $date_installed = trim($_POST['date_installed']);
     $remarks        = trim($_POST['remarks']);
-    $password       = $account_number;
+    $password       = $account_number; 
     $source         = trim($_POST['source']);
 
-    if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
+    if (
+        preg_match("/^[0-9]{9,13}$/", $account_number) &&
+        $full_name && $email && $district && $barangay && $date_installed
+    ) {
 
         try {
             $conn->beginTransaction();
@@ -59,7 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $conn->commit();
-            header("Location: /fiber?msg=success");
+
+            header("Location: /fiber/register.php?success=1");
             exit;
 
         } catch (PDOException $e) {
@@ -67,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "❌ Database error: " . htmlspecialchars($e->getMessage());
         }
     } else {
-        $message = "⚠ Please fill in all required fields.";
+        $message = "⚠ Please fill out all required fields correctly.";
     }
 }
 ?>
@@ -77,144 +81,152 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="UTF-8">
 <title>Customer Registration – SkyTruFiber</title>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
 <style>
 body {
     font-family: Arial, sans-serif;
-    background: linear-gradient(to bottom right, #cceeff, #d9f4ff);
+    background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
     margin: 0;
-    padding-top: 40px;
+    padding: 30px 0;
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: center;
 }
 
-/* FORM CARD */
-form {
-    background: rgba(255,255,255,0.75);
-    backdrop-filter: blur(10px);
-    padding: 35px 30px;
-    border-radius: 20px;
-    width: 430px;
+.form-container {
+    background: #fff;
+    width: 500px;
     max-width: 92%;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
     text-align: center;
-    animation: fadeIn 0.6s ease;
 }
 
-/* LOGO DESIGN — centered + floating animation */
-.logo-container {
-    text-align: center;
+.logo-box {
+    width: 150px;
+    height: 150px;
+    overflow: hidden;
+    border-radius: 50%;
+    margin: 0 auto 10px auto;
+    border: 4px solid #0099cc;
+    padding: 5px;
+    background: white;
+}
+
+.logo-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+h2 {
     margin-bottom: 10px;
 }
 
-.logo-container img {
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    object-fit: cover;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.25);
-    border: 3px solid white;
-    animation: floatLogo 3s infinite ease-in-out;
+form label {
+    display: block;
+    text-align: left;
+    font-weight: bold;
+    margin-top: 12px;
+    margin-bottom: 4px;
+    color: #333;
 }
 
-@keyframes floatLogo {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* INPUTS */
 input, select, textarea {
     width: 100%;
     padding: 12px;
-    margin-top: 6px;
     border-radius: 10px;
-    border: 1px solid #b9cfe0;
+    border: 1px solid #ccc;
     font-size: 15px;
-    box-sizing: border-box;
+    transition: border 0.2s ease;
 }
 
-/* SUBMIT BUTTON */
+input:valid, textarea:valid {
+    border-color: #27ae60;
+}
+
+input:invalid:focus {
+    border-color: #e74c3c;
+}
+
 button {
     width: 100%;
-    padding: 14px;
-    background: #00a6d6;
+    padding: 12px;
+    background: #0099cc;
     color: white;
     border: none;
-    border-radius: 50px;
-    cursor: pointer;
-    margin-top: 18px;
-    font-size: 16px;
+    border-radius: 10px;
+    margin-top: 20px;
+    font-size: 17px;
     font-weight: bold;
-    transition: 0.25s ease;
-}
-
-button:hover {
-    background: #008bb3;
-    transform: translateY(-2px);
-}
-
-/* ERROR MESSAGE */
-.message { color: red; text-align: center; }
-
-/* LOGIN TEXT */
-form p a {
-    color: #006b9c;
-    text-decoration: none;
-}
-form p a:hover { text-decoration: underline; }
-
-/* BARANGAY DROPDOWN */
-.dropdown-wrapper { position: relative; }
-.searchable-select {
     cursor: pointer;
-    background: white;
 }
+button:hover {
+    background: #007a99;
+}
+
+.message {
+    color: red;
+    text-align: center;
+}
+
+.dropdown-wrapper { position: relative; }
+
+.searchable-select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
 .dropdown-list {
     position: absolute;
     width: 100%;
     background: white;
     border: 1px solid #ccc;
-    border-radius: 8px;
+    border-radius: 10px;
     margin-top: 2px;
     max-height: 220px;
     overflow-y: auto;
     display: none;
     z-index: 9999;
 }
+
 .dropdown-item {
     padding: 10px;
     cursor: pointer;
 }
-.dropdown-item:hover { background: #e8f4ff; }
+.dropdown-item:hover {
+    background: #e8f4ff;
+}
+
+.footer-text {
+    margin-top: 15px;
+    text-align: center;
+}
 </style>
 </head>
 
 <body>
 
-<form method="POST">
+<div class="form-container">
 
-    <div class="logo-container">
+    <div class="logo-box">
         <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
     </div>
 
     <h2>Customer Registration & Feedback</h2>
 
+<form method="POST">
+
     <input type="hidden" name="source" value="<?= htmlspecialchars($source) ?>">
 
     <label>Account Number:</label>
-    <input type="text" 
-           name="account_number"
-           required 
-           maxlength="13"
-           minlength="9"
-           pattern="[0-9]{9,13}"
-           placeholder="Enter 9–13 digit account number"
-           oninput="this.value=this.value.replace(/[^0-9]/g,'');">
+    <input type="text" name="account_number" required 
+        minlength="9" maxlength="13" pattern="[0-9]+"
+        placeholder="Enter 9–13 digit account number">
 
     <label>Full Name:</label>
     <input type="text" name="full_name" required placeholder="Enter full name">
@@ -232,7 +244,8 @@ form p a:hover { text-decoration: underline; }
 
     <label>Barangay:</label>
     <div class="dropdown-wrapper">
-        <input type="text" id="barangaySelector" class="searchable-select" placeholder="Search or select barangay..." autocomplete="off">
+        <input type="text" id="barangaySelector" class="searchable-select" 
+               placeholder="Search or select barangay..." autocomplete="off">
         <input type="hidden" id="location" name="location" required>
         <div id="dropdownList" class="dropdown-list"></div>
     </div>
@@ -249,35 +262,35 @@ form p a:hover { text-decoration: underline; }
         <p class="message"><?= htmlspecialchars($message) ?></p>
     <?php endif; ?>
 
-    <p>Already registered? <a href="/fiber">Login here</a></p>
+    <p class="footer-text">Already registered?  
+        <a href="/fiber">Login here</a>
+    </p>
+
 </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<?php if (isset($_GET["success"])): ?>
+<script>
+Swal.fire({
+    title: "Registration Successful!",
+    text: "Welcome to SkyTruFiber! Redirecting...",
+    icon: "success",
+    showConfirmButton: false,
+    timer: 2500
+}).then(() => {
+    window.location.href = "/fiber";
+});
+</script>
+<?php endif; ?>
 
 <script>
-/* FULL BARANGAY DATA */
+/* Barangay lists */
 const barangays = {
-  "District 1": [
-"Alicia (Bago Bantay)","Bagong Pag-asa","Bahay Toro","Balingasa","Bungad","Damar","Damayan",
-"Del Monte","Katipunan","Lourdes","Maharlika","Manresa","Mariblo","Masambong",
-"N.S. Amoranto","Nayong Kanluran","Paang Bundok","Pag-ibig sa Nayon","Paltok","Paraiso",
-"Phil-Am","Project 6","Ramon Magsaysay","Saint Peter","Salvacion","San Antonio",
-"San Isidro Labrador","San Jose","Santa Cruz","Santa Teresita","Santo Domingo","Siena",
-"Sto. Cristo","Talayan","Vasra","Veterans Village","West Triangle"
-  ],
-  "District 3": [
-"Camp Aguinaldo","Pansol","Mangga","San Roque","Silangan","Socorro","Bagumbayan","Libis","Ugong Norte",
-"Masagana","Loyola Heights","Matandang Balara","East Kamias","Quirino 2-A","Quirino 2-B","Quirino 2-C",
-"Amihan","Claro","Duyan-duyan","Quirino 3-A","Bagumbuhay","Bayanihan","Blue Ridge A","Blue Ridge B",
-"Dioquino Zobel","Escopa I","Escopa II","Escopa III","Escopa IV","Marilag","Milagrosa","Tagumpay",
-"Villa Maria Clara","E. Rodriguez","West Kamias","St. Ignatius","White Plains"
-  ],
-  "District 4": [
-"Bagong Lipunan ng Crame","Botocan","Central","Damayang Lagi","Don Manuel","Doña Aurora","Doña Imelda",
-"Doña Josefa","Horseshoe","Immaculate Concepcion","Kalusugan","Kamuning","Kaunlaran","Kristong Hari",
-"Krus na Ligas","Laging Handa","Malaya","Mariana","Obrero","Old Capitol Site","Paligsahan",
-"Pinagkaisahan","Pinyahan","Roxas","Sacred Heart","San Isidro Galas","San Martin de Porres",
-"San Vicente","Santol","Sikatuna Village","South Triangle","Sto. Niño","Tatalon",
-"Teacher's Village East","Teacher's Village West","U.P. Campus","U.P. Village","Valencia"
-  ]
+  "District 1": ["Alicia (Bago Bantay)","Bagong Pag-asa","Bahay Toro","Balingasa","Bungad","Damar","Damayan","Del Monte"],
+  "District 3": ["Camp Aguinaldo","Pansol","San Roque","Silangan","Socorro","Bagumbayan","Libis"],
+  "District 4": ["Bagong Lipunan","Botocan","Central","Damayang Lagi","Don Manuel","Horseshoe","Immaculate Concepcion"]
 };
 
 const districtSelect = document.getElementById('district');
@@ -324,7 +337,7 @@ function populateDropdown(filter) {
         });
 }
 
-/* Auto-fill date */
+/* Auto fill today's date */
 document.addEventListener("DOMContentLoaded", () => {
     const d = new Date();
     document.getElementById("date_installed").value =
