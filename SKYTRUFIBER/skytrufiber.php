@@ -13,6 +13,11 @@ $message = '';
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
+html, body {
+    height: 100%;
+    overflow-x: hidden;
+}
+
 body{
     margin:0;
     font-family:"Segoe UI", Arial;
@@ -22,6 +27,7 @@ body{
     align-items:center;
     min-height:100vh;
 }
+
 .container{
     background:white;
     padding:32px;
@@ -31,15 +37,17 @@ body{
     text-align:center;
     position:relative;
     overflow:hidden;
+    z-index:5;
 }
 
 /* ----- FORM TRANSITION ----- */
 .form-box{
-    transition:opacity .25s ease, transform .25s ease;
+    transition:opacity .35s ease, transform .35s ease;
 }
+
 .hidden{
     opacity:0;
-    transform:translateX(-20px);
+    transform:translateX(-30px);
     pointer-events:none;
 }
 
@@ -55,8 +63,14 @@ input, select, textarea{
     border-radius:10px;
     border:1px solid #ccc;
     font-size:15px;
+    box-sizing:border-box;
 }
-textarea{height:80px; resize:none; display:none;}
+
+textarea{
+    height:80px;
+    resize:none;
+    display:none;
+}
 
 button{
     width:100%;
@@ -69,17 +83,25 @@ button{
     font-weight:bold;
     font-size:16px;
 }
+
 button:hover{ background:#008c96; }
 
 .small-links{
     margin-top:12px;
     font-size:14px;
 }
+
 .small-links a{
     color:#0077a3;
     text-decoration:none;
 }
+
 .small-links a:hover{ text-decoration:underline; }
+
+/* Disable SweetAlert blur */
+.swal2-container {
+    backdrop-filter:none !important;
+}
 </style>
 </head>
 
@@ -138,6 +160,7 @@ button:hover{ background:#008c96; }
 </div>
 
 <script>
+
 // Show textarea for "Others"
 document.getElementById("concernSelect").addEventListener("change", function(){
     const txt = document.getElementById("concernText");
@@ -178,7 +201,10 @@ document.getElementById("sendForgotBtn").onclick = async () => {
         title: "Sending...",
         text: "Please wait...",
         allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
+        allowEscapeKey: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
     });
 
     let response = await fetch("/fiber/forgot_password.php", {
@@ -190,12 +216,22 @@ document.getElementById("sendForgotBtn").onclick = async () => {
     let data = await response.json();
 
     if (data.success) {
-        Swal.fire("Email Sent!", data.message, "success");
+        Swal.fire({
+            icon:"success",
+            title:"Email Sent!",
+            text:data.message,
+            confirmButtonColor:"#00a6b6"
+        });
         forgotEmail.value = "";
     } else {
-        Swal.fire("Error", data.message, "error");
+        Swal.fire({
+            icon:"error",
+            title:"Error",
+            text:data.message
+        });
     }
 };
+
 </script>
 
 </body>
