@@ -97,42 +97,6 @@ function matchFilter($m, $filter) {
     background: #08498d;
 }
 
-.history-two-col {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr;
-    gap: 20px;
-}
-
-.timeline-col, .chat-col {
-    background: white;
-    padding: 18px;
-    border-radius: 10px;
-    border: 1px solid #dcdcdc;
-}
-
-.section-header {
-    font-size: 18px;
-    margin-bottom: 12px;
-    font-weight: bold;
-}
-
-.timeline .log-entry {
-    padding: 10px 12px;
-    border-left: 4px solid #999;
-    margin-bottom: 10px;
-    background: #f9f9f9;
-    border-radius: 6px;
-}
-
-.log-entry.unresolved { border-color: #d32f2f; }
-.log-entry.resolved { border-color: #388e3c; }
-.log-entry.pending { border-color: #fbc02d; }
-.log-entry.assigned { border-color: #1565c0; }
-.log-entry.unassigned { border-color: #6a1b9a; }
-
-.log-action { font-weight: bold; }
-.log-by { font-size: 13px; color: #555; }
-.log-time { font-size: 12px; color: #777; margin-top: 2px; }
 
 
 </style>
