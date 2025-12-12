@@ -1,12 +1,23 @@
 <?php
+session_start();
 require_once __DIR__ . '/../db_connect.php';
 
 $message = '';
 $source = $_GET['source'] ?? '';
 
-/* Show success modal if ok=registered */
-$justRegistered = isset($_GET['ok']) && $_GET['ok'] === 'registered';
+/* ============================================================
+   VALIDATE ONE-TIME REGISTRATION TOKEN
+============================================================ */
+$tokenProvided = $_GET['rt'] ?? '';
+$tokenStored   = $_SESSION['registration_token'] ?? null;
 
+if (!$tokenStored || $tokenProvided !== $tokenStored) {
+    die("Invalid or expired registration token.");
+}
+
+/* ============================================================
+   FORM SUBMISSION HANDLER
+============================================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $account_number = trim($_POST['account_number']);
@@ -22,8 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
 
         try {
-
-            // 🔐 PREVENT DUPLICATES
+            /* Prevent duplicates */
             $check = $conn->prepare("
                 SELECT id FROM users 
                 WHERE account_number = :acc 
@@ -42,16 +52,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
 
                 $conn->beginTransaction();
-
                 $hash = password_hash($password, PASSWORD_BCRYPT);
 
+                /* Insert user */
                 $stmt = $conn->prepare("
                     INSERT INTO users 
                         (account_number, full_name, email, password, district, barangay, date_installed, privacy_consent, source, created_at)
                     VALUES 
                         (:acc, :name, :email, :pw, :district, :barangay, :installed, 'yes', :source, NOW())
                 ");
-
                 $stmt->execute([
                     ':acc'      => $account_number,
                     ':name'     => $full_name,
@@ -63,12 +72,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':source'   => $source
                 ]);
 
+                /* Insert optional feedback */
                 if ($remarks) {
                     $stmt2 = $conn->prepare("
                         INSERT INTO survey_responses 
-                        (client_name, account_number, district, location, feedback, source, created_at)
+                            (client_name, account_number, district, location, feedback, source, created_at)
                         VALUES 
-                        (:name, :acc, :district, :barangay, :feedback, :source, NOW())
+                            (:name, :acc, :district, :barangay, :feedback, :source, NOW())
                     ");
                     $stmt2->execute([
                         ':name'     => $full_name,
@@ -82,7 +92,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $conn->commit();
 
-                header("Location: /fiber/register?ok=registered");
+                /* Clear used token */
+                unset($_SESSION['registration_token']);
+
+                /* Redirect to success page */
+                header("Location: /fiber/register/success");
                 exit;
             }
 
@@ -102,9 +116,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="UTF-8">
 <title>Customer Registration – SkyTruFiber</title>
 
-<!-- SweetAlert -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <style>
 body {
     font-family: Arial, sans-serif;
@@ -116,7 +127,7 @@ body {
     align-items: center;
 }
 
-/* Form container */
+/* Form */
 form {
     background: #fff;
     padding: 35px;
@@ -127,7 +138,7 @@ form {
     position: relative;
 }
 
-/* Logo inside the form container */
+/* Logo inside form */
 .logo-inside {
     display: flex;
     justify-content: center;
@@ -146,7 +157,7 @@ h2 {
     margin-bottom: 15px;
 }
 
-/* Labels aligned left */
+/* Labels */
 label {
     display: block;
     margin-top: 12px;
@@ -163,7 +174,7 @@ input, select, textarea {
     font-size: 15px;
 }
 
-/* Acc number strict formatting */
+/* Account number formatting */
 input[name='account_number'] {
     letter-spacing: 1px;
 }
@@ -182,13 +193,15 @@ button {
 }
 button:hover { background: #007a99; }
 
-.message { color: red; text-align: center; margin-top: 10px; }
-
-/* Dropdown */
-.dropdown-wrapper { position: relative; }
-.searchable-select {
-    cursor: pointer;
+.message {
+    color: red;
+    text-align: center;
+    margin-top: 10px;
 }
+
+/* Barangay dropdown */
+.dropdown-wrapper { position: relative; }
+.searchable-select { cursor: pointer; }
 .dropdown-list {
     position: absolute;
     width: 100%;
@@ -207,10 +220,9 @@ button:hover { background: #007a99; }
 .dropdown-item:hover {
     background: #e8f4ff;
 }
-
 </style>
-</head>
 
+</head>
 <body>
 
 <form method="POST">
@@ -224,7 +236,7 @@ button:hover { background: #007a99; }
     <input type="hidden" name="source" value="<?= htmlspecialchars($source) ?>">
 
     <label>Account Number:</label>
-    <input type="text" name="account_number" minlength="9" maxlength="13" 
+    <input type="text" name="account_number" minlength="9" maxlength="13"
            pattern="[0-9]{9,13}" placeholder="Enter 9–13 digit account number" required>
 
     <label>Full Name:</label>
@@ -263,22 +275,8 @@ button:hover { background: #007a99; }
     <p style="text-align:center;">Already registered?
         <a href="/fiber">Login here</a>
     </p>
+
 </form>
-
-<script>
-/* ---------- SWEETALERT SUCCESS POPUP ---------- */
-<?php if ($justRegistered): ?>
-Swal.fire({
-    title: "Registration Successful!",
-    text: "Thank you! You may now log in to your SkyTruFiber account.",
-    icon: "success",
-    confirmButtonColor: "#0099cc"
-});
-/* Remove token from URL so popup doesn't repeat */
-history.replaceState({}, document.title, "/fiber/register");
-<?php endif; ?>
-</script>
-
 
 <script>
 /* ---------- BARANGAY SEARCH SYSTEM ---------- */
@@ -313,7 +311,6 @@ const searchInput = document.getElementById("barangaySelector");
 const dropdownList = document.getElementById("dropdownList");
 const hiddenBarangay = document.getElementById("location");
 
-/* Populate dropdown */
 function populateDropdown(filter) {
     dropdownList.innerHTML = "";
     const district = districtSelect.value;
@@ -325,41 +322,41 @@ function populateDropdown(filter) {
             let div = document.createElement("div");
             div.className = "dropdown-item";
             div.textContent = brgy;
-
             div.onclick = () => {
                 searchInput.value = brgy;
                 hiddenBarangay.value = brgy;
                 dropdownList.style.display = "none";
             };
-
             dropdownList.appendChild(div);
         });
 }
 
-/* Show full dropdown on click */
+/* Show dropdown */
 searchInput.addEventListener("focus", () => {
     populateDropdown("");
     dropdownList.style.display = "block";
 });
 
-/* Search filter */
+/* Live search */
 searchInput.addEventListener("input", () => {
     populateDropdown(searchInput.value.toLowerCase());
     dropdownList.style.display = "block";
 });
 
-/* Hide when clicking outside */
+/* Close when clicking outside */
 document.addEventListener("click", (e) => {
     if (!dropdownList.contains(e.target) && e.target !== searchInput) {
         dropdownList.style.display = "none";
     }
 });
 
-/* Auto-fill date */
+/* Auto-fill date today */
 document.addEventListener("DOMContentLoaded", () => {
     const d = new Date();
     document.getElementById("date_installed").value =
-        d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+        d.getFullYear() + "-" +
+        String(d.getMonth()+1).padStart(2,"0") + "-" +
+        String(d.getDate()).padStart(2,"0");
 });
 </script>
 
