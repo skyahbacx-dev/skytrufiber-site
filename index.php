@@ -65,8 +65,23 @@ if ($uri === "/fiber/register") {
     exit;
 }
 
+/* ============================================================
+   NEW: SUCCESS PAGE ROUTE
+   /fiber/register/success → encrypted success page
+============================================================ */
+if ($uri === "/fiber/register/success") {
+    session_start();
+
+    // generate one-time token for success page
+    $successToken = bin2hex(random_bytes(16));
+    $_SESSION["success_token"] = $successToken;
+
+    $token = encrypt_route("fiber_register_success");
+    header("Location: /?v=$token&st=$successToken");
+    exit;
+}
+
 /* --------------------------
-   NEW FIX:
    /fiber/chat → encrypted chat route
 --------------------------- */
 if ($uri === "/fiber/chat") {
@@ -107,6 +122,10 @@ if (isset($_GET["v"])) {
 
         case "fiber_register":
             require __DIR__ . "/SKYTRUFIBER/register.php";
+            exit;
+
+        case "fiber_register_success":
+            require __DIR__ . "/SKYTRUFIBER/register_success.php";
             exit;
 
         case "fiber_chat":
