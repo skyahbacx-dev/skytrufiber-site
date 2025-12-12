@@ -108,8 +108,6 @@ body {
     box-shadow:0 5px 18px rgba(0,0,0,0.18);
     width:380px;
     text-align:center;
-    position:relative;
-    overflow:hidden;
 }
 
 .container img {
