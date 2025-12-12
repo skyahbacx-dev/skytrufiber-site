@@ -11,19 +11,24 @@ $csrUser = $_SESSION["csr_user"];
 $search  = trim($_GET["search"] ?? "");
 
 /* ============================================================
-   FETCH ASSIGNED CLIENTS
+   FETCH CLIENTS ASSIGNED TO CSR  (COLUMN FIXED)
 ============================================================ */
 $query = "
     SELECT 
-        id, 
-        account_number, 
-        full_name, 
-        email, 
-        district, 
-        barangay, 
-        date_installed
-    FROM users
-    WHERE assigned_csr = :csr
+        u.id, 
+        u.account_number, 
+        u.full_name, 
+        u.email, 
+        u.district, 
+        u.barangay, 
+        u.date_installed,
+
+        (SELECT status FROM tickets 
+         WHERE client_id = u.id 
+         ORDER BY id DESC LIMIT 1) AS latest_status
+
+    FROM users u
+    WHERE u.assigned_csr_user = :csr
 ";
 
 $params = [":csr" => $csrUser];
@@ -31,46 +36,61 @@ $params = [":csr" => $csrUser];
 if ($search !== "") {
     $query .= " 
         AND (
-            full_name ILIKE :s OR 
-            account_number ILIKE :s OR 
-            email ILIKE :s
+            u.full_name ILIKE :s OR 
+            u.account_number ILIKE :s OR 
+            u.email ILIKE :s
         )
     ";
     $params[":s"] = "%$search%";
 }
 
-$query .= " ORDER BY full_name ASC";
+$query .= " ORDER BY u.full_name ASC";
 
 $stmt = $conn->prepare($query);
 $stmt->execute($params);
 $clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$total = count($clients);
+$total   = count($clients);
 
 /* ============================================================
-   GET TODAY'S TICKET COUNTS
+   COUNT TICKETS: UNRESOLVED / PENDING / RESOLVED
 ============================================================ */
-$today = date("Y-m-d");
-
-$stats = $conn->prepare("
+$countQuery = "
     SELECT 
-        COUNT(*) FILTER (WHERE status = 'unresolved') AS unresolved,
-        COUNT(*) FILTER (WHERE status = 'pending') AS pending,
-        COUNT(*) FILTER (WHERE status = 'resolved') AS resolved,
+        status,
         COUNT(*) AS total
     FROM tickets
     WHERE assigned_csr = :csr
-      AND DATE(updated_at) = :today
-");
-$stats->execute([
-    ":csr" => $csrUser,
-    ":today" => $today
-]);
-$counts = $stats->fetch(PDO::FETCH_ASSOC);
+    GROUP BY status
+";
+
+$countStmt = $conn->prepare($countQuery);
+$countStmt->execute([":csr" => $csrUser]);
+$stats = $countStmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+$unresolved = $stats["unresolved"] ?? 0;
+$pending    = $stats["pending"] ?? 0;
+$resolved   = $stats["resolved"] ?? 0;
+
 ?>
 
 <link rel="stylesheet" href="/CSR/clients/my_clients.css">
 
 <h1>👥 My Clients</h1>
+
+<!-- SUMMARY BAR -->
+<div class="client-summary">
+    <strong>Total Clients:</strong> <?= $total ?> &nbsp; | &nbsp;
+    <strong>Unresolved:</strong> <?= $unresolved ?> &nbsp; | &nbsp;
+    <strong>Pending:</strong> <?= $pending ?> &nbsp; | &nbsp;
+    <strong>Resolved:</strong> <?= $resolved ?>
+</div>
+
+<!-- EXPORT BUTTON -->
+<div style="margin-bottom:15px;">
+    <a href="/CSR/clients/print_daily_report.php" target="_blank" class="export-btn">
+        📄 Export Daily Report (PDF)
+    </a>
+</div>
 
 <!-- SEARCH BAR -->
 <form method="GET" class="search-bar">
@@ -80,34 +100,17 @@ $counts = $stats->fetch(PDO::FETCH_ASSOC);
     <button>Search</button>
 </form>
 
-<!-- SUMMARY BOXES -->
-<div class="summary-container">
-    <div class="summary-box total">Total Clients: <strong><?= $total ?></strong></div>
-    <div class="summary-box unresolved">Unresolved Today: <strong><?= $counts['unresolved'] ?></strong></div>
-    <div class="summary-box pending">Pending Today: <strong><?= $counts['pending'] ?></strong></div>
-    <div class="summary-box resolved">Resolved Today: <strong><?= $counts['resolved'] ?></strong></div>
-</div>
-
-<!-- EXPORT DAILY TICKET REPORT -->
-<div class="export-panel">
-    <a href="/CSR/clients/print_daily_report.php" class="export-btn" target="_blank">
-        🖨 Print Daily Ticket Summary
-    </a>
-</div>
-
 <script>
-// --- ENCRYPTED ROUTE GENERATOR ---
 function enc(route) {
     return "/home.php?v=" + btoa(route + "|" + Date.now());
 }
 
-// --- Open dashboard with correct tab + client ID ---
-function openChat(clientID) {
-    window.location.href = enc("csr_chat") + "&client_id=" + clientID;
+function openChat(id) {
+    window.location.href = enc("csr_chat") + "&client_id=" + id;
 }
 
-function openHistory(clientID) {
-    window.location.href = enc("csr_clients") + "&client=" + clientID;
+function openHistory(id) {
+    window.location.href = enc("csr_clients") + "&client=" + id;
 }
 </script>
 
@@ -122,6 +125,7 @@ function openHistory(clientID) {
             <th>District</th>
             <th>Barangay</th>
             <th>Date Installed</th>
+            <th>Status</th>
             <th>Chat</th>
             <th>History</th>
         </tr>
@@ -129,10 +133,20 @@ function openHistory(clientID) {
     <tbody>
 
     <?php if ($total == 0): ?>
-        <tr><td colspan="8" style="text-align:center;">No clients found</td></tr>
+        <tr><td colspan="9" style="text-align:center;">No clients found</td></tr>
     <?php endif; ?>
 
-    <?php foreach ($clients as $c): ?>
+    <?php foreach ($clients as $c):
+
+        $status = strtolower($c["latest_status"] ?? "unresolved");
+
+        switch ($status) {
+            case "pending":  $badge = "<span class='badge pending'>PENDING</span>"; break;
+            case "resolved": $badge = "<span class='badge resolved'>RESOLVED</span>"; break;
+            default:         $badge = "<span class='badge unresolved'>UNRESOLVED</span>"; break;
+        }
+    ?>
+
         <tr>
             <td><?= htmlspecialchars($c['account_number']) ?></td>
             <td><?= htmlspecialchars($c['full_name']) ?></td>
@@ -140,21 +154,17 @@ function openHistory(clientID) {
             <td><?= htmlspecialchars($c['district']) ?></td>
             <td><?= htmlspecialchars($c['barangay']) ?></td>
             <td><?= htmlspecialchars($c['date_installed']) ?></td>
+            <td><?= $badge ?></td>
 
-            <!-- OPEN CHAT (Encrypted) -->
             <td>
-                <button class="chat-btn" onclick="openChat(<?= $c['id'] ?>)">
-                    💬 Chat
-                </button>
+                <button class="chat-btn" onclick="openChat(<?= $c['id'] ?>)">💬 Chat</button>
             </td>
 
-            <!-- OPEN HISTORY (Encrypted) -->
             <td>
-                <button class="history-btn" onclick="openHistory(<?= $c['id'] ?>)">
-                    📜 History
-                </button>
+                <button class="history-btn" onclick="openHistory(<?= $c['id'] ?>)">📜 History</button>
             </td>
         </tr>
+
     <?php endforeach; ?>
 
     </tbody>
