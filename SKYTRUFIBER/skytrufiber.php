@@ -5,13 +5,20 @@ require_once __DIR__ . '/../db_connect.php';
 $message = '';
 
 /* ============================================================
-   LOGIN HANDLER (unchanged)
+   LOGIN HANDLER
 ============================================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['password'])) {
 
     $input    = trim($_POST['full_name']);
     $password = $_POST['password'];
-    $concern  = trim($_POST['concern_text'] ?? $_POST['concern_dropdown'] ?? '');
+
+    // FIXED CONCERN HANDLING
+    $concern = "";
+    if (!empty($_POST['concern_text'])) {
+        $concern = trim($_POST['concern_text']);
+    } elseif (!empty($_POST['concern_dropdown']) && $_POST['concern_dropdown'] !== "others") {
+        $concern = trim($_POST['concern_dropdown']);
+    }
 
     if ($input && $password) {
 
@@ -29,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
                 session_regenerate_id(true);
 
+                // CHECK LAST TICKET
                 $ticketStmt = $conn->prepare("
                     SELECT id, status
                     FROM tickets
@@ -39,21 +47,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 $ticketStmt->execute([':cid' => $user['id']]);
                 $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
 
+                /* ============================================================
+                   NEW TICKET + CSR GREETING INSERT
+                ============================================================ */
                 if (!$lastTicket || $lastTicket['status'] === 'resolved') {
+
+                    // Create new ticket
                     $newTicket = $conn->prepare("
                         INSERT INTO tickets (client_id, status, created_at)
                         VALUES (:cid, 'unresolved', NOW())
                     ");
                     $newTicket->execute([':cid' => $user['id']]);
                     $ticketId = $conn->lastInsertId();
+
+                    // Insert CSR greeting
+                    $greet = $conn->prepare("
+                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
+                        VALUES (:tid, 0, 'csr', 'Hello! This is SkyTruFiber support. How may I assist you today?', TRUE, NOW())
+                    ");
+                    $greet->execute([':tid' => $ticketId]);
+
                     $_SESSION['show_suggestions'] = true;
+
                 } else {
                     $ticketId = $lastTicket['id'];
                 }
 
+                // SAVE SESSION
                 $_SESSION['client_id'] = $user['id'];
                 $_SESSION['ticket_id'] = $ticketId;
 
+                /* CLIENT CONCERN INSERT */
                 if (!empty($concern)) {
                     $insert = $conn->prepare("
                         INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
@@ -164,30 +188,25 @@ button:hover { background:#008c96; }
     margin-bottom:8px; 
 }
 
-/* --- Smooth Transition --- */
+/* --- Smooth Transition Fix --- */
 .form-box {
     transition: opacity .3s ease, transform .3s ease;
 }
 
 .hidden {
     opacity: 0;
-    transform: translateX(-20px);
+    transform: translateY(20px);
     pointer-events: none;
     height: 0;
     overflow: hidden;
-    margin: 0;
-    padding: 0;
 }
-
 
 .visible {
-    opacity: 1 !important;
-    transform: translateX(0) !important;
+    opacity: 1;
+    transform: translateY(0);
     pointer-events: auto;
     height: auto;
-    padding: 0; /* Remove if you want default padding */
 }
-
 </style>
 </head>
 
@@ -248,13 +267,13 @@ button:hover { background:#008c96; }
 </div>
 
 <script>
-// Show textarea when "Others" selected
+// Concern toggle
 document.getElementById("concernSelect").addEventListener("change", function(){
     const txt = document.getElementById("concernText");
     txt.style.display = (this.value === "others") ? "block" : "none";
 });
 
-// Switch to Forgot Password
+// Show Forgot Password
 forgotLink.onclick = e => {
     e.preventDefault();
     loginForm.classList.remove("visible");
@@ -274,7 +293,7 @@ backToLogin.onclick = e => {
     loginForm.classList.add("visible");
 };
 
-// Send Email AJAX
+// Send forgot email AJAX
 sendForgotBtn.onclick = async () => {
     let email = forgotEmail.value.trim();
 
