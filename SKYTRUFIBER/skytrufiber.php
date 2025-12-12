@@ -61,11 +61,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                     $ticketId = $conn->lastInsertId();
 
                     // Insert CSR greeting
-                    $greet = $conn->prepare("
-                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
-                        VALUES (:tid, 0, 'csr', 'Hello! This is SkyTruFiber support. How may I assist you today?', TRUE, NOW())
-                    ");
-                    $greet->execute([':tid' => $ticketId]);
+                   $greet = $conn->prepare("
+                      INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
+                      VALUES (:tid, NULL, 'csr', 'Hello! This is SkyTruFiber support. How may I assist you today?', TRUE, NOW())
+                     ");
+                        $greet->execute([':tid' => $ticketId]);
+
 
                     $_SESSION['show_suggestions'] = true;
 
