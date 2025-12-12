@@ -4,6 +4,9 @@ require_once __DIR__ . '/../db_connect.php';
 $message = '';
 $source = $_GET['source'] ?? '';
 
+/* Show success modal if ok=registered */
+$justRegistered = isset($_GET['ok']) && $_GET['ok'] === 'registered';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $account_number = trim($_POST['account_number']);
@@ -13,59 +16,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $barangay       = trim($_POST['location']);
     $date_installed = trim($_POST['date_installed']);
     $remarks        = trim($_POST['remarks']);
-    $password       = $account_number; 
+    $password       = $account_number;
     $source         = trim($_POST['source']);
 
     if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
 
         try {
-            $conn->beginTransaction();
 
-            $hash = password_hash($password, PASSWORD_BCRYPT);
-
-            $stmt = $conn->prepare("
-                INSERT INTO users 
-                    (account_number, full_name, email, password, district, barangay, date_installed, privacy_consent, source, created_at)
-                VALUES 
-                    (:acc, :name, :email, :pw, :district, :barangay, :installed, 'yes', :source, NOW())
+            // 🔐 PREVENT DUPLICATES
+            $check = $conn->prepare("
+                SELECT id FROM users 
+                WHERE account_number = :acc 
+                OR email = :email
+                OR full_name = :name
+                LIMIT 1
             ");
-
-            $stmt->execute([
-                ':acc'      => $account_number,
-                ':name'     => $full_name,
-                ':email'    => $email,
-                ':pw'       => $hash,
-                ':district' => $district,
-                ':barangay' => $barangay,
-                ':installed'=> $date_installed,
-                ':source'   => $source
+            $check->execute([
+                ':acc'   => $account_number,
+                ':email' => $email,
+                ':name'  => $full_name
             ]);
 
-            if ($remarks) {
-                $stmt2 = $conn->prepare("
-                    INSERT INTO survey_responses 
-                        (client_name, account_number, district, location, feedback, source, created_at)
+            if ($check->fetch()) {
+                $message = "⚠ This account number, email, or name is already registered.";
+            } else {
+
+                $conn->beginTransaction();
+
+                $hash = password_hash($password, PASSWORD_BCRYPT);
+
+                $stmt = $conn->prepare("
+                    INSERT INTO users 
+                        (account_number, full_name, email, password, district, barangay, date_installed, privacy_consent, source, created_at)
                     VALUES 
-                        (:name, :acc, :district, :barangay, :feedback, :source, NOW())
+                        (:acc, :name, :email, :pw, :district, :barangay, :installed, 'yes', :source, NOW())
                 ");
-                $stmt2->execute([
-                    ':name'     => $full_name,
+
+                $stmt->execute([
                     ':acc'      => $account_number,
+                    ':name'     => $full_name,
+                    ':email'    => $email,
+                    ':pw'       => $hash,
                     ':district' => $district,
                     ':barangay' => $barangay,
-                    ':feedback' => $remarks,
+                    ':installed'=> $date_installed,
                     ':source'   => $source
                 ]);
-            }
 
-            $conn->commit();
-            header("Location: /fiber/register?success=1");
-            exit;
+                if ($remarks) {
+                    $stmt2 = $conn->prepare("
+                        INSERT INTO survey_responses 
+                        (client_name, account_number, district, location, feedback, source, created_at)
+                        VALUES 
+                        (:name, :acc, :district, :barangay, :feedback, :source, NOW())
+                    ");
+                    $stmt2->execute([
+                        ':name'     => $full_name,
+                        ':acc'      => $account_number,
+                        ':district' => $district,
+                        ':barangay' => $barangay,
+                        ':feedback' => $remarks,
+                        ':source'   => $source
+                    ]);
+                }
+
+                $conn->commit();
+
+                header("Location: /fiber/register?ok=registered");
+                exit;
+            }
 
         } catch (PDOException $e) {
             $conn->rollBack();
             $message = "❌ Database error: " . htmlspecialchars($e->getMessage());
         }
+
     } else {
         $message = "⚠ Please fill in all required fields.";
     }
@@ -82,63 +107,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <style>
 body {
-    font-family: "Segoe UI", Arial, sans-serif;
+    font-family: Arial, sans-serif;
     background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
     margin: 0;
-    padding: 25px 0;
+    padding-top: 25px;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
 }
 
-.form-container {
+/* Form container */
+form {
     background: #fff;
-    width: 500px;
-    max-width: 92%;
-    border-radius: 18px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
     padding: 35px;
-    text-align: left;
+    border-radius: 20px;
+    width: 450px;
+    max-width: 92%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
     position: relative;
 }
 
-.logo {
+/* Logo inside the form container */
+.logo-inside {
     display: flex;
     justify-content: center;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
-
-.logo img {
-    width: 120px;
-    height: 120px;
+.logo-inside img {
+    width: 140px;
     border-radius: 50%;
-    object-fit: cover;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.25);
-    border: 4px solid white;
+    background: white;
+    padding: 10px;
+    border: 3px solid #0099cc;
 }
 
 h2 {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
+/* Labels aligned left */
 label {
-    font-weight: bold;
-    margin-top: 12px;
     display: block;
+    margin-top: 12px;
+    margin-bottom: 3px;
+    font-weight: bold;
 }
 
+/* Inputs */
 input, select, textarea {
     width: 100%;
     padding: 12px;
-    margin-top: 4px;
     border-radius: 10px;
-    border: 1px solid #bbb;
+    border: 1px solid #ccc;
     font-size: 15px;
 }
 
-textarea {
-    height: 80px;
-    resize: none;
+/* Acc number strict formatting */
+input[name='account_number'] {
+    letter-spacing: 1px;
 }
 
 button {
@@ -147,25 +174,21 @@ button {
     background: #0099cc;
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
-    margin-top: 18px;
+    margin-top: 20px;
     font-size: 17px;
     font-weight: bold;
 }
 button:hover { background: #007a99; }
 
-.message { color: red; text-align: center; }
+.message { color: red; text-align: center; margin-top: 10px; }
 
-/* Barangay dropdown */
-.dropdown-wrapper {
-    position: relative;
-}
-
+/* Dropdown */
+.dropdown-wrapper { position: relative; }
 .searchable-select {
-    width: 100%;
+    cursor: pointer;
 }
-
 .dropdown-list {
     position: absolute;
     width: 100%;
@@ -175,9 +198,8 @@ button:hover { background: #007a99; }
     max-height: 220px;
     overflow-y: auto;
     display: none;
-    z-index: 9999;
+    z-index: 999;
 }
-
 .dropdown-item {
     padding: 10px;
     cursor: pointer;
@@ -186,54 +208,24 @@ button:hover { background: #007a99; }
     background: #e8f4ff;
 }
 
-.footer {
-    margin-top: 12px;
-    text-align: center;
-}
-.footer a {
-    color: #0077a3;
-    font-weight: bold;
-}
 </style>
 </head>
 
 <body>
 
-<?php if (isset($_GET['success'])): ?>
-<script>
-Swal.fire({
-    title: "Registration Successful!",
-    text: "Redirecting to Login…",
-    icon: "success",
-    showConfirmButton: false,
-    timer: 1800
-});
-setTimeout(() => {
-    window.location.href = "/fiber";
-}, 1800);
-</script>
-<?php endif; ?>
+<form method="POST">
 
-<div class="form-container">
-
-    <div class="logo">
+    <div class="logo-inside">
         <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
     </div>
 
     <h2>Customer Registration & Feedback</h2>
 
-<form method="POST">
-
     <input type="hidden" name="source" value="<?= htmlspecialchars($source) ?>">
 
     <label>Account Number:</label>
-    <input type="text" 
-           name="account_number"
-           placeholder="Enter 9–13 digit account number"
-           minlength="9" maxlength="13"
-           inputmode="numeric"
-           pattern="[0-9]+"
-           required>
+    <input type="text" name="account_number" minlength="9" maxlength="13" 
+           pattern="[0-9]{9,13}" placeholder="Enter 9–13 digit account number" required>
 
     <label>Full Name:</label>
     <input type="text" name="full_name" placeholder="Enter full name" required>
@@ -268,13 +260,28 @@ setTimeout(() => {
         <p class="message"><?= htmlspecialchars($message) ?></p>
     <?php endif; ?>
 
-    <p class="footer">Already registered? <a href="/fiber">Login here</a></p>
-
+    <p style="text-align:center;">Already registered?
+        <a href="/fiber">Login here</a>
+    </p>
 </form>
-</div>
 
 <script>
-/* FULL BARANGAY DATA */
+/* ---------- SWEETALERT SUCCESS POPUP ---------- */
+<?php if ($justRegistered): ?>
+Swal.fire({
+    title: "Registration Successful!",
+    text: "Thank you! You may now log in to your SkyTruFiber account.",
+    icon: "success",
+    confirmButtonColor: "#0099cc"
+});
+/* Remove token from URL so popup doesn't repeat */
+history.replaceState({}, document.title, "/fiber/register");
+<?php endif; ?>
+</script>
+
+
+<script>
+/* ---------- BARANGAY SEARCH SYSTEM ---------- */
 const barangays = {
   "District 1": [
 "Alicia (Bago Bantay)","Bagong Pag-asa","Bahay Toro","Balingasa","Bungad","Damar","Damayan",
@@ -301,34 +308,15 @@ const barangays = {
   ]
 };
 
-const districtSelect = document.getElementById('district');
-const searchInput = document.getElementById('barangaySelector');
-const dropdownList = document.getElementById('dropdownList');
-const hiddenBarangay = document.getElementById('location');
+const districtSelect = document.getElementById("district");
+const searchInput = document.getElementById("barangaySelector");
+const dropdownList = document.getElementById("dropdownList");
+const hiddenBarangay = document.getElementById("location");
 
-/* Show dropdown */
-searchInput.addEventListener("focus", () => {
-    populateDropdown("");
-    dropdownList.style.display = "block";
-});
-
-/* Search filter */
-searchInput.addEventListener("input", () => {
-    populateDropdown(searchInput.value.toLowerCase());
-    dropdownList.style.display = "block";
-});
-
-/* Close dropdown when clicking outside */
-document.addEventListener("click", (e) => {
-    if (!dropdownList.contains(e.target) && e.target !== searchInput) {
-        dropdownList.style.display = "none";
-    }
-});
-
+/* Populate dropdown */
 function populateDropdown(filter) {
     dropdownList.innerHTML = "";
     const district = districtSelect.value;
-
     if (!barangays[district]) return;
 
     barangays[district]
@@ -347,6 +335,25 @@ function populateDropdown(filter) {
             dropdownList.appendChild(div);
         });
 }
+
+/* Show full dropdown on click */
+searchInput.addEventListener("focus", () => {
+    populateDropdown("");
+    dropdownList.style.display = "block";
+});
+
+/* Search filter */
+searchInput.addEventListener("input", () => {
+    populateDropdown(searchInput.value.toLowerCase());
+    dropdownList.style.display = "block";
+});
+
+/* Hide when clicking outside */
+document.addEventListener("click", (e) => {
+    if (!dropdownList.contains(e.target) && e.target !== searchInput) {
+        dropdownList.style.display = "none";
+    }
+});
 
 /* Auto-fill date */
 document.addEventListener("DOMContentLoaded", () => {
