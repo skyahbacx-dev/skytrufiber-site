@@ -43,10 +43,25 @@ if ($uri === "/fiber/consent") {
     exit;
 }
 
-// /fiber/register → encrypted register page
+/* ============================================================
+   UPDATED: /fiber/register  
+   ✔ Generates a real one-time token
+   ✔ Stores token in session
+   ✔ Prevents expired-key issues
+============================================================ */
 if ($uri === "/fiber/register") {
+
+    session_start();
+
+    // Generate one-time registration token
+    $regToken = bin2hex(random_bytes(16));
+    $_SESSION["registration_token"] = $regToken;
+
+    // Encrypt route
     $token = encrypt_route("fiber_register");
-    header("Location: /?v=$token");
+
+    // Pass both tokens
+    header("Location: /?v=$token&rt=$regToken");
     exit;
 }
 
@@ -56,17 +71,14 @@ if ($uri === "/fiber/register") {
 --------------------------- */
 if ($uri === "/fiber/chat") {
 
-    // read raw query string manually to avoid loss
     parse_str($_SERVER["QUERY_STRING"] ?? '', $qs);
 
     $ticket = $qs["ticket"] ?? "";
-
     if ($ticket === "") {
         die("Missing ticket.");
     }
 
     $token = encrypt_route("fiber_chat");
-
     header("Location: /?v=$token&ticket=$ticket");
     exit;
 }
@@ -112,4 +124,3 @@ if (isset($_GET["v"])) {
 $token = encrypt_route("dashboard");
 header("Location: /?v=$token");
 exit;
-
