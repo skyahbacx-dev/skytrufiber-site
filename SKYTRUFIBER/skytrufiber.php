@@ -196,7 +196,6 @@ button:hover { background:#008c96; }
         <option>Intermittent Internet</option>
         <option>Billing Concern</option>
         <option>Account Verification</option>
-        <option>Installation Request</option>
         <option value="others">Others…</option>
     </select>
 
