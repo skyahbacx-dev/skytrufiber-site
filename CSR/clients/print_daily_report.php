@@ -1,206 +1,200 @@
 <?php
 if (!isset($_SESSION)) session_start();
 if (!isset($_SESSION['csr_user'])) {
-    die("Unauthorized");
+    die("Unauthorized access");
 }
 
 require __DIR__ . "/../../db_connect.php";
 
-$csrUser = $_SESSION["csr_user"];
-$today = date("Y-m-d");
+$csrUser   = $_SESSION["csr_user"];
+$todayDate = date("Y-m-d");
 
-
-// -----------------------------------------
-// FETCH TODAY'S TICKET STATISTICS
-// -----------------------------------------
-$stats = $conn->prepare("
-    SELECT 
-        COUNT(*) FILTER (WHERE status = 'unresolved') AS unresolved,
-        COUNT(*) FILTER (WHERE status = 'pending') AS pending,
-        COUNT(*) FILTER (WHERE status = 'resolved') AS resolved,
-        COUNT(*) AS total
-    FROM tickets
-    WHERE assigned_csr = :csr
-      AND DATE(updated_at) = :today
-");
-$stats->execute([":csr" => $csrUser, ":today" => $today]);
-$counts = $stats->fetch(PDO::FETCH_ASSOC);
-
-
-// -----------------------------------------
-// FETCH TODAY'S TICKETS
-// -----------------------------------------
+/* ============================================================
+   FETCH TODAY'S TICKETS
+============================================================ */
 $stmt = $conn->prepare("
     SELECT 
-        t.id,
+        t.id AS ticket_id,
         t.status,
         t.created_at,
-        t.updated_at,
-        u.full_name AS client_name,
+        u.full_name,
         u.account_number,
         u.district,
         u.barangay
     FROM tickets t
-    JOIN users u ON u.id = t.client_id
-    WHERE t.assigned_csr = :csr
-      AND DATE(t.updated_at) = :today
-    ORDER BY t.updated_at DESC
+    LEFT JOIN users u ON u.id = t.client_id
+    WHERE DATE(t.created_at) = :today
+    ORDER BY t.created_at DESC
 ");
-$stmt->execute([
-    ":csr" => $csrUser,
-    ":today" => $today
-]);
+$stmt->execute([":today" => $todayDate]);
 $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+/* COUNT SUMMARY */
+$total = count($tickets);
+$unresolved = 0;
+$pending = 0;
+$resolved = 0;
+
+foreach ($tickets as $t) {
+    switch (strtolower($t["status"])) {
+        case "unresolved": $unresolved++; break;
+        case "pending":    $pending++; break;
+        case "resolved":   $resolved++; break;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-<title>Daily Ticket Summary</title>
+    <title>Daily Ticket Report - <?= $todayDate ?></title>
 
-<style>
-body {
-    font-family: Arial, sans-serif;
-    padding: 30px;
-    background: #fff;
-}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 25px;
+        }
 
-.header {
-    text-align: center;
-    margin-bottom: 20px;
-}
+        .logo {
+            text-align: center;
+            margin-bottom: 15px;
+        }
 
-.header img {
-    width: 120px;
-    margin-bottom: 10px;
-}
+        .logo img {
+            width: 160px;
+        }
 
-h2 {
-    margin: 5px 0;
-}
+        h2 {
+            text-align: center;
+            margin: 8px 0 20px;
+        }
 
-.summary-cards {
-    display: flex;
-    gap: 20px;
-    margin: 20px 0;
-}
+        /* Summary Boxes */
+        .summary-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
 
-.card {
-    padding: 15px 20px;
-    border-radius: 8px;
-    background: #f2f2f2;
-    font-size: 18px;
-    flex: 1;
-    text-align: center;
-}
+        .summary-box {
+            padding: 12px 20px;
+            border-radius: 6px;
+            color: #fff;
+            font-weight: bold;
+            min-width: 160px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
 
-.table-wrapper {
-    margin-top: 20px;
-}
+        .total { background: #007bff; }
+        .unresolved { background: #d9534f; }
+        .pending { background: #f0ad4e; }
+        .resolved { background: #5cb85c; }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 18px;
+            font-size: 14px;
+        }
 
-th {
-    background: #007bff;
-    color: white;
-    padding: 8px;
-    font-size: 14px;
-}
+        th {
+            background: #05702e;
+            color: #fff;
+            padding: 10px;
+            text-align: left;
+        }
 
-td {
-    padding: 8px;
-    border: 1px solid #ccc;
-    font-size: 13px;
-}
+        td {
+            padding: 9px;
+            border-bottom: 1px solid #ddd;
+        }
 
-.status-resolved {
-    color: green;
-    font-weight: bold;
-}
-.status-pending {
-    color: orange;
-    font-weight: bold;
-}
-.status-unresolved {
-    color: red;
-    font-weight: bold;
-}
+        tr:nth-child(even) td {
+            background: #f8f8f8;
+        }
 
-@media print {
-    .no-print {
-        display: none;
-    }
-}
-</style>
+        /* Footer note */
+        .footnote {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+
+        @media print {
+            #printBtn { display: none; }
+        }
+    </style>
 
 </head>
 <body>
 
-<div class="header">
-    <img src="/AHBA_LOGO.png" alt="AHBA Logo">
-    <h2>Daily Ticket Summary</h2>
-    <p>CSR: <strong><?= htmlspecialchars($csrUser) ?></strong></p>
-    <p>Date: <strong><?= $today ?></strong></p>
-</div>
+    <!-- LOGO -->
+    <div class="logo">
+        <img src="/SKYTRUFIBER.png" alt="AHBA Logo">
+    </div>
 
-<div class="summary-cards">
-    <div class="card">📌 Total Tickets: <strong><?= $counts['total'] ?></strong></div>
-    <div class="card">🟥 Unresolved: <strong><?= $counts['unresolved'] ?></strong></div>
-    <div class="card">🟧 Pending: <strong><?= $counts['pending'] ?></strong></div>
-    <div class="card">🟩 Resolved: <strong><?= $counts['resolved'] ?></strong></div>
-</div>
+    <h2>Daily Ticket Report — <?= date("F d, Y") ?></h2>
 
-<hr>
+    <!-- SUMMARY -->
+    <div class="summary-container">
+        <div class="summary-box total">Total Tickets: <?= $total ?></div>
+        <div class="summary-box unresolved">Unresolved: <?= $unresolved ?></div>
+        <div class="summary-box pending">Pending: <?= $pending ?></div>
+        <div class="summary-box resolved">Resolved: <?= $resolved ?></div>
+    </div>
 
-<h3>Today's Ticket Details</h3>
+    <!-- TABLE -->
+    <table>
+        <thead>
+            <tr>
+                <th>Ticket #</th>
+                <th>Client</th>
+                <th>Account #</th>
+                <th>District</th>
+                <th>Barangay</th>
+                <th>Status</th>
+                <th>Created</th>
+            </tr>
+        </thead>
 
-<?php if (!$tickets): ?>
-    <p>No tickets updated today.</p>
-<?php else: ?>
+        <tbody>
+        <?php if ($total == 0): ?>
+            <tr>
+                <td colspan="7" style="text-align:center; padding:20px; color:#777;">
+                    No tickets were created today.
+                </td>
+            </tr>
+        <?php else: ?>
+            <?php foreach ($tickets as $t): ?>
+            <tr>
+                <td>#<?= $t["ticket_id"] ?></td>
+                <td><?= htmlspecialchars($t["full_name"]) ?></td>
+                <td><?= htmlspecialchars($t["account_number"]) ?></td>
+                <td><?= htmlspecialchars($t["district"]) ?></td>
+                <td><?= htmlspecialchars($t["barangay"]) ?></td>
+                <td><?= strtoupper($t["status"]) ?></td>
+                <td><?= date("M d, Y g:i A", strtotime($t["created_at"])) ?></td>
+            </tr>
+            <?php endforeach; ?>
+        <?php endif; ?>
+        </tbody>
+    </table>
 
-<div class="table-wrapper">
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Client</th>
-            <th>District</th>
-            <th>Status</th>
-            <th>Date Created</th>
-            <th>Last Updated</th>
-        </tr>
-    </thead>
-    <tbody>
+    <button id="printBtn" onclick="window.print()" 
+            style="margin-top:20px;padding:10px 18px;background:#05702e;color:#fff;border:none;border-radius:6px;cursor:pointer;">
+        Print Report
+    </button>
 
-    <?php foreach ($tickets as $t): ?>
-        <tr>
-            <td><?= $t["id"] ?></td>
-            <td><?= htmlspecialchars($t["client_name"]) ?></td>
-            <td><?= htmlspecialchars($t["district"]) ?></td>
-            <td class="status-<?= strtolower($t["status"]) ?>">
-                <?= strtoupper($t["status"]) ?>
-            </td>
-            <td><?= substr($t["created_at"], 0, 16) ?></td>
-            <td><?= substr($t["updated_at"], 0, 16) ?></td>
-        </tr>
-    <?php endforeach; ?>
-
-    </tbody>
-</table>
-</div>
-
-<?php endif; ?>
-
-<br><br>
-
-<button class="no-print" onclick="window.print()" 
-style="padding:10px 20px;font-size:16px;background:#007bff;color:white;border:none;border-radius:5px;">
-    🖨 Print / Save as PDF
-</button>
+    <div class="footnote">
+        This report was auto-generated by the SkyTruFiber CSR System.
+    </div>
 
 </body>
+
+<script>
+// Auto-open print dialog when page loads
+window.onload = () => { window.print(); };
+</script>
+
 </html>
