@@ -11,12 +11,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
     $input    = trim($_POST['full_name']);
     $password = $_POST['password'];
-    $concern  = trim($_POST['concern'] ?? '');
+    $concern  = trim($_POST['concern_text'] ?? $_POST['concern_dropdown'] ?? '');
 
     if ($input && $password) {
 
         try {
-            // Fetch matching user
+            // Fetch user
             $stmt = $conn->prepare("
                 SELECT *
                 FROM users
@@ -30,9 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
                 session_regenerate_id(true);
 
-                /* ============================================================
-                   FETCH LAST TICKET
-                ============================================================ */
+                /* Fetch last ticket */
                 $ticketStmt = $conn->prepare("
                     SELECT id, status
                     FROM tickets
@@ -43,9 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                 $ticketStmt->execute([':cid' => $user['id']]);
                 $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
 
-                /* ============================================================
-                   CREATE NEW TICKET IF NONE OR RESOLVED
-                ============================================================ */
+                /* Create new ticket if needed */
                 if (!$lastTicket || $lastTicket['status'] === 'resolved') {
 
                     $newTicket = $conn->prepare("
@@ -55,23 +51,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                     $newTicket->execute([':cid' => $user['id']]);
 
                     $ticketId = $conn->lastInsertId();
-
-                    // Enable auto-suggestions (first greeting package)
                     $_SESSION['show_suggestions'] = true;
 
                 } else {
                     $ticketId = $lastTicket['id'];
                 }
 
-                /* ============================================================
-                   SAVE SESSION
-                ============================================================ */
+                /* Save Session */
                 $_SESSION['client_id'] = $user['id'];
                 $_SESSION['ticket_id'] = $ticketId;
 
-                /* ============================================================
-                   INSERT FIRST CLIENT MESSAGE
-                ============================================================ */
+                /* Insert first client message */
                 if (!empty($concern)) {
                     $insert = $conn->prepare("
                         INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
@@ -84,15 +74,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                     ]);
                 }
 
-                /* ============================================================
-                   REDIRECT TO CHAT UI
-                ============================================================ */
-               header("Location: /fiber/chat?ticket=$ticketId");
-               exit;
-
+                header("Location: /fiber/chat?ticket=$ticketId");
+                exit;
 
             } else {
-                $message = "❌ Invalid email/full name or password.";
+                $message = "❌ Invalid login credentials.";
             }
 
         } catch (PDOException $e) {
@@ -103,7 +89,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
         $message = "⚠ Please fill in all fields.";
     }
 }
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -123,36 +108,34 @@ body {
 }
 
 .container {
-    background:rgba(255,255,255,0.55);
-    padding:30px;
+    background:white;
+    padding:32px;
     border-radius:20px;
-    backdrop-filter:blur(12px);
-    box-shadow:0 8px 25px rgba(0,0,0,0.15);
+    box-shadow:0 5px 18px rgba(0,0,0,0.18);
     width:380px;
     text-align:center;
 }
 
-@media (max-width: 600px) {
-    body { display:block !important; padding-top:24px !important; }
-    .container { width:92% !important; padding:24px !important; border-radius:16px; }
-    .container img { width:120px !important; }
-}
-
 .container img {
-    width:150px; 
-    border-radius:50%; 
+    width:150px;
     margin-bottom:15px;
 }
 
-input, textarea {
+input, select, textarea {
     width:100%;
     padding:12px;
-    margin:8px 0;
+    margin:10px 0;
     border-radius:10px;
     border:1px solid #ccc;
     font-size:15px;
+    box-sizing:border-box;
 }
-textarea { height:80px; resize:none; }
+
+textarea { 
+    height:80px; 
+    resize:none; 
+    display:none; 
+}
 
 button {
     width:100%;
@@ -167,12 +150,23 @@ button {
 }
 button:hover { background:#008c96; }
 
-a { display:block; margin-top:10px; color:#0077a3; text-decoration:none; }
-a:hover { text-decoration:underline; }
+.small-links {
+    margin-top:12px;
+    font-size:14px;
+}
 
-.message { color:red; font-size:0.9em; margin-bottom:8px; }
+.small-links a {
+    color:#0077a3;
+    text-decoration:none;
+    margin:0 5px;
+}
+.small-links a:hover { text-decoration:underline; }
 
-.hidden { display:none; }
+.message { 
+    color:red; 
+    font-size:0.9em; 
+    margin-bottom:8px; 
+}
 </style>
 </head>
 
@@ -188,41 +182,49 @@ a:hover { text-decoration:underline; }
 <?php endif; ?>
 
 <form id="loginForm" method="POST">
+
     <input type="text" name="full_name" placeholder="Email or Full Name" required>
+
     <input type="password" name="password" placeholder="Password" required>
-    <textarea name="concern" placeholder="Concern / Inquiry"></textarea>
+
+    <!-- Concern dropdown -->
+    <select name="concern_dropdown" id="concernSelect">
+        <option value="">Select Concern / Inquiry</option>
+        <option>Slow Internet</option>
+        <option>No Connection</option>
+        <option>Router LOS Light On</option>
+        <option>Intermittent Internet</option>
+        <option>Billing Concern</option>
+        <option>Account Verification</option>
+        <option>Installation Request</option>
+        <option value="others">Others…</option>
+    </select>
+
+    <!-- Textarea appears only if "Others" is selected -->
+    <textarea id="concernText" name="concern_text" placeholder="Type your concern here..."></textarea>
+
     <button type="submit">Submit</button>
-    <a id="forgotLink">Forgot Password?</a>
 </form>
 
-<form id="forgotForm" class="hidden">
-    <p>Enter your email to receive your account number:</p>
-    <input type="email" name="forgot_email" placeholder="Email" required>
-    <button type="submit">Send my account number</button>
-    <p id="forgotMessage"></p>
-    <a id="backToLogin">Back to Login</a>
-</form>
-
-<!-- Clean route — index.php encrypts -->
-<p>No account yet? <a href="/fiber/consent">Register here</a></p>
+<div class="small-links">
+    <a href="/fiber/consent">Register here</a> |
+    <a href="#" id="forgotLink">Forgot Password?</a>
+</div>
 
 </div>
 
 <script>
-const loginForm = document.getElementById('loginForm');
-const forgotForm = document.getElementById('forgotForm');
+const concernSelect = document.getElementById("concernSelect");
+const concernText   = document.getElementById("concernText");
 
-document.getElementById('forgotLink').onclick = e => {
-    e.preventDefault();
-    loginForm.classList.add('hidden');
-    forgotForm.classList.remove('hidden');
-};
-
-document.getElementById('backToLogin').onclick = e => {
-    e.preventDefault();
-    forgotForm.classList.add('hidden');
-    loginForm.classList.remove('hidden');
-};
+concernSelect.addEventListener("change", function () {
+    if (this.value === "others") {
+        concernText.style.display = "block";
+    } else {
+        concernText.style.display = "none";
+        concernText.value = "";
+    }
+});
 </script>
 
 </body>
