@@ -36,7 +36,7 @@ h1 { text-align:center; }
 </head>
 <body>
 
-<img src="/AHBA.png" class="logo">
+<img src="/AHBALOGO.png" class="logo">
 
 <h1>Ticket Report #<?= $ticket ?></h1>
 
