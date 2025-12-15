@@ -1,6 +1,5 @@
 <?php
-ini_set("session.name", "CSRSESSID");
-session_start();
+if (!isset($_SESSION)) session_start();
 
 /* Correct DB path for /CSR/chat/ files */
 require __DIR__ . "/../../db_connect.php";
