@@ -1,24 +1,48 @@
 <?php
-// Prevent caching
+/* ============================================================
+   SESSION FIX — prevents CSR logout when customers log in
+============================================================ */
+ini_set("session.name", "CSRSESSID");
+if (!isset($_SESSION)) session_start();
+
+/* ============================================================
+   Prevent caching
+============================================================ */
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Expires: 0");
 header("Pragma: no-cache");
 
-if (!isset($_SESSION)) session_start();
 require __DIR__ . "/../../db_connect.php";
 
+/* ============================================================
+   Validate ticket ID
+============================================================ */
 $ticket_id = intval($_POST["ticket_id"] ?? 0);
-if ($ticket_id <= 0) exit("<p>Invalid ticket.</p>");
+if ($ticket_id <= 0) {
+    echo "<p>Invalid ticket.</p>";
+    exit;
+}
 
 /* ============================================================
-   FETCH TICKET & USER META (MATCHES YOUR REAL DB)
+   Ensure CSR session exists
+============================================================ */
+$csrUser = $_SESSION["csr_user"] ?? null;
+
+if (!$csrUser) {
+    // CSRs must NOT be logged out silently
+    echo "SESSION_EXPIRED";
+    exit;
+}
+
+/* ============================================================
+   FETCH TICKET + USER META (matches your DB)
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT 
         t.status AS ticket_status,
         t.client_id,
-        u.assigned_csr,     -- correct: users table
-        u.ticket_lock       -- correct: users table
+        u.assigned_csr,
+        u.ticket_lock
     FROM tickets t
     JOIN users u ON u.id = t.client_id
     WHERE t.id = ?
@@ -27,19 +51,17 @@ $stmt = $conn->prepare("
 $stmt->execute([$ticket_id]);
 $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$ticket) exit("<p>Ticket not found.</p>");
+if (!$ticket) {
+    echo "<p>Ticket not found.</p>";
+    exit;
+}
 
 $ticketStatus = strtolower($ticket["ticket_status"]);
-$ticketLocked = ($ticket["ticket_lock"] ? true : false);
-$csrUser      = $_SESSION["csr_user"] ?? null;
+$isAssigned   = ($ticket["assigned_csr"] === $csrUser);
+$isLocked     = ($ticket["ticket_lock"] ? true : false);
 
 /* ============================================================
-   FIXED ASSIGNMENT CHECK
-============================================================ */
-$isAssigned = ($ticket["assigned_csr"] === $csrUser);
-
-/* ============================================================
-   RESOLVED → SHOW READ ONLY
+   IF RESOLVED → READ ONLY MESSAGE
 ============================================================ */
 if ($ticketStatus === "resolved") {
     echo "
@@ -51,7 +73,7 @@ if ($ticketStatus === "resolved") {
 }
 
 /* ============================================================
-   FETCH CHAT MESSAGES
+   FETCH ALL CHAT MESSAGES
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT 
@@ -69,7 +91,7 @@ if (!$rows) {
 }
 
 /* ============================================================
-   RENDER MESSAGE BUBBLES
+   RENDER MESSAGES
 ============================================================ */
 foreach ($rows as $msg):
 
@@ -91,6 +113,7 @@ foreach ($rows as $msg):
 
     <div class="message-content">
 
+        <!-- CSR action menu (but not for deleted messages) -->
         <?php if ($sender === "csr" && !$deleted): ?>
             <button class="more-btn" data-id="<?= $id ?>">
                 <i class="fa-solid fa-ellipsis-vertical"></i>
