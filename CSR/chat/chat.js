@@ -297,23 +297,25 @@ function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
 // LOAD FULL MESSAGE LIST (ONLY WHEN CLIENT SELECTED)
 // ============================================================
 function loadMessages(scrollBottom = false) {
+    if (!currentTicketID) return;
 
     $.post("/CSR/chat/load_messages.php", {
         ticket_id: currentTicketID,
         nocache: Date.now()
     }, html => {
 
-        
+        $("#chat-messages").html(html); // ⭐ Load full message list
 
-        // Update last message ID
-        const lastMsg = $("#chat-messages .message").last();
-        lastMessageID = lastMsg.length ? parseInt(lastMsg.data("msg-id")) : 0;
+        // Read last message ID from hidden div
+        const lastID = $("#last-msg-id").data("last-id");
+        lastMessageID = lastID ? parseInt(lastID) : 0;
 
         bindActionButtons();
 
         if (scrollBottom) scrollToBottom();
     });
 }
+
 
 
 // ============================================================
