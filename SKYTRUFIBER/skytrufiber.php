@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
     if ($input && $password) {
 
         try {
+            /* Fetch user */
             $stmt = $conn->prepare("
                 SELECT *
                 FROM users
@@ -54,20 +55,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 
                     $newTicket = $conn->prepare("
                         INSERT INTO tickets (client_id, status, created_at)
-                        VALUES (:cid, 'unresolved', NOW())
+                        VALUES (:cid, 'pending', NOW())
                     ");
                     $newTicket->execute([':cid' => $user['id']]);
-
                     $ticketId = $conn->lastInsertId();
 
-                    /* Insert CSR Greeting */
+                    /* Personalized CSR Greeting (FULL NAME) */
+                    $csrGreeting = "Hello {$user['full_name']}! This is SkyTruFiber Support. How may I assist you today?";
+
                     $greet = $conn->prepare("
                         INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
-                        VALUES (:tid, NULL, 'csr', 
-                                'Hello! This is SkyTruFiber Support. How may I assist you today?', 
-                                TRUE, NOW())
+                        VALUES (:tid, NULL, 'csr', :msg, TRUE, NOW())
                     ");
-                    $greet->execute([':tid' => $ticketId]);
+                    $greet->execute([
+                        ':tid' => $ticketId,
+                        ':msg' => $csrGreeting
+                    ]);
 
                     $_SESSION['show_suggestions'] = true;
 
@@ -75,11 +78,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                     $ticketId = $lastTicket['id'];
                 }
 
-                /* Save session info */
+                /* Save session */
                 $_SESSION['client_id'] = $user['id'];
                 $_SESSION['ticket_id'] = $ticketId;
 
-                /* Insert client concern */
+                /* Insert Client Inquiry */
                 if (!empty($concern)) {
                     $insert = $conn->prepare("
                         INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
@@ -192,7 +195,7 @@ button:hover{ background:#008c96; }
     margin-bottom:8px;
 }
 
-/* Animation Fix */
+/* Animation */
 .form-box {
     transition: opacity .3s ease, transform .3s ease, height .3s ease;
 }
