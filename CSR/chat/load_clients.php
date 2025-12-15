@@ -1,20 +1,32 @@
 <?php
-// Disable caching to ensure real-time updates
+// ------------------------------------------------------------
+// Use CSR session only — prevents auto logout when client logs in
+// ------------------------------------------------------------
+ini_set("session.name", "CSRSESSID");
+if (!isset($_SESSION)) session_start();
+
+// Disable caching
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Expires: 0");
 header("Pragma: no-cache");
 
-if (!isset($_SESSION)) session_start();
 require __DIR__ . "/../../db_connect.php";
 
 $csrUser = $_SESSION["csr_user"] ?? null;
 $filter  = $_POST["filter"] ?? "all"; // all | unresolved | pending | resolved
 
-if (!$csrUser) exit("Session expired.");
+// If CSR session expired → return silent flag (chat.js will logout)
+if (!$csrUser) {
+    echo "<div data-session='expired'></div>";
+    exit;
+}
 
 /* ============================================================
-   FETCH CLIENT LIST — FASTEST POSSIBLE QUERY
-   Includes last message + ticket status
+   FETCH CLIENT LIST (FASTEST & ACCURATE)
+   Includes:
+   - Last chat message
+   - Last ticket status
+   - Assigned CSR
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT
@@ -65,7 +77,7 @@ if (!$clients) {
 }
 
 /* ============================================================
-   Helper: Match filter
+   FILTER FUNCTION
 ============================================================ */
 function matchFilter($status, $filter)
 {
@@ -75,9 +87,8 @@ function matchFilter($status, $filter)
 }
 
 /* ============================================================
-   RENDER CLIENT LIST
+   RENDER LIST
 ============================================================ */
-
 foreach ($clients as $row):
 
     $cid         = $row["id"];
@@ -88,27 +99,32 @@ foreach ($clients as $row):
 
     if (!matchFilter($status, $filter)) continue;
 
-    /* Badge */
+    /* Badge Colors */
     switch ($status) {
         case "resolved":
             $badge = "<span class='ticket-badge resolved'>RESOLVED</span>";
             break;
+
         case "pending":
             $badge = "<span class='ticket-badge pending'>PENDING</span>";
             break;
+
         default:
             $badge = "<span class='ticket-badge unresolved'>UNRESOLVED</span>";
             break;
     }
 
-    /* Assign / Unassign / Locked icon */
+    /* Assignment Logic */
     if (!$assignedTo) {
+        // No CSR assigned
         $icon = "<button class='assign-btn' data-id='$cid'>+</button>";
     }
     elseif ($assignedTo === $csrUser) {
+        // Assigned to ME
         $icon = "<button class='unassign-btn' data-id='$cid'>−</button>";
     }
     else {
+        // Assigned to ANOTHER CSR
         $icon = "<div class='locked-icon' data-id='$cid'>🔒</div>";
     }
 
@@ -119,6 +135,7 @@ foreach ($clients as $row):
 
 ?>
 <div class="client-item" data-id="<?= $cid ?>" data-name="<?= $name ?>">
+
     <div class="client-info">
         <strong><?= $name ?></strong>
         <div class="last-msg"><?= $lastMsg ?></div>
@@ -128,6 +145,7 @@ foreach ($clients as $row):
         <?= $badge ?>
         <?= $icon ?>
     </div>
+
 </div>
 
 <?php endforeach; ?>
