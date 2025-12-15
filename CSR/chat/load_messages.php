@@ -1,7 +1,5 @@
 <?php
-// ------------------------------------------------------------
-// Prevent caching so CSR always sees real-time messages
-// ------------------------------------------------------------
+// Prevent caching
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Expires: 0");
 header("Pragma: no-cache");
@@ -13,16 +11,16 @@ $ticket_id = intval($_POST["ticket_id"] ?? 0);
 if ($ticket_id <= 0) exit("<p>Invalid ticket.</p>");
 
 /* ============================================================
-   FETCH TICKET META
+   FETCH TICKET & USER META (MATCHES YOUR REAL DB)
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT 
         t.status AS ticket_status,
         t.client_id,
-        u.assigned_csr,
-        u.ticket_lock
+        u.assigned_csr,     -- correct: users table
+        u.ticket_lock       -- correct: users table
     FROM tickets t
-    LEFT JOIN users u ON u.id = t.client_id
+    JOIN users u ON u.id = t.client_id
     WHERE t.id = ?
     LIMIT 1
 ");
@@ -34,10 +32,14 @@ if (!$ticket) exit("<p>Ticket not found.</p>");
 $ticketStatus = strtolower($ticket["ticket_status"]);
 $ticketLocked = ($ticket["ticket_lock"] ? true : false);
 $csrUser      = $_SESSION["csr_user"] ?? null;
-$isAssigned   = ($ticket["assigned_csr"] === $csrUser);
 
 /* ============================================================
-   IF TICKET RESOLVED → SHOW READ-ONLY
+   FIXED ASSIGNMENT CHECK
+============================================================ */
+$isAssigned = ($ticket["assigned_csr"] === $csrUser);
+
+/* ============================================================
+   RESOLVED → SHOW READ ONLY
 ============================================================ */
 if ($ticketStatus === "resolved") {
     echo "
@@ -49,23 +51,11 @@ if ($ticketStatus === "resolved") {
 }
 
 /* ============================================================
-   IF CSR NOT ASSIGNED / LOCKED → READ ONLY
-============================================================ */
-if (!$isAssigned || $ticketLocked) {
-    // Still show chat history—CSR just cannot respond
-}
-
-/* ============================================================
-   FETCH ALL MESSAGES
+   FETCH CHAT MESSAGES
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT 
-        id, 
-        sender_type, 
-        message, 
-        deleted, 
-        edited, 
-        created_at
+        id, sender_type, message, deleted, edited, created_at
     FROM chat
     WHERE ticket_id = ?
     ORDER BY id ASC
@@ -79,33 +69,28 @@ if (!$rows) {
 }
 
 /* ============================================================
-   RENDER CHAT MESSAGE BUBBLES
+   RENDER MESSAGE BUBBLES
 ============================================================ */
 foreach ($rows as $msg):
 
     $id      = $msg["id"];
-    $sender  = $msg["sender_type"];   // 'csr' or 'client'
+    $sender  = $msg["sender_type"];
     $deleted = $msg["deleted"];
     $edited  = $msg["edited"];
     $bubble  = nl2br(htmlspecialchars($msg["message"]));
     $msgTime = date("M j • g:i A", strtotime($msg["created_at"]));
     $side    = ($sender === "csr") ? "sent" : "received";
-
 ?>
 <div class="message <?= $side ?>" data-msg-id="<?= $id ?>">
 
-    <!-- Avatar for client only -->
     <?php if ($side === "received"): ?>
-        <div class="message-avatar">
-            <img src="/upload/default-avatar.png">
-        </div>
+        <div class="message-avatar"><img src="/upload/default-avatar.png"></div>
     <?php else: ?>
         <div class="message-avatar"></div>
     <?php endif; ?>
 
     <div class="message-content">
 
-        <!-- CSR action button only if NOT deleted AND CSR owns the message -->
         <?php if ($sender === "csr" && !$deleted): ?>
             <button class="more-btn" data-id="<?= $id ?>">
                 <i class="fa-solid fa-ellipsis-vertical"></i>
