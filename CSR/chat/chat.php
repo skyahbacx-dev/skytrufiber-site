@@ -1,5 +1,7 @@
 <?php
-if (!isset($_SESSION)) session_start();
+ini_set("session.name", "CSRSESSID");
+session_start();
+
 
 /* ============================================
    ✔ AUTH CHECK — Must use encrypted CSR routing
