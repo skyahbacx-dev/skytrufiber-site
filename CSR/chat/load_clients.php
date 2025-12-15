@@ -1,20 +1,28 @@
 <?php
-// Disable caching to ensure real-time updates
+/* ============================================================
+   FORCE CSR SESSION — FIXES "Session expired" on refresh
+============================================================ */
+ini_set('session.name', 'CSRSESSID');
+session_start();
+
+/* Prevent caching */
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Expires: 0");
 header("Pragma: no-cache");
 
-if (!isset($_SESSION)) session_start();
 require __DIR__ . "/../../db_connect.php";
 
 $csrUser = $_SESSION["csr_user"] ?? null;
 $filter  = $_POST["filter"] ?? "all"; // all | unresolved | pending | resolved
 
-if (!$csrUser) exit("Session expired.");
+/* If CSR session is gone → return only this exact text */
+if (!$csrUser) {
+    echo "Session expired.";
+    exit;
+}
 
 /* ============================================================
-   FETCH CLIENT LIST — FASTEST POSSIBLE QUERY
-   Includes last message + ticket status
+   FETCH CLIENT LIST — with latest ticket + latest message
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT
@@ -65,7 +73,7 @@ if (!$clients) {
 }
 
 /* ============================================================
-   Helper: Match filter
+   FILTER FUNCTION
 ============================================================ */
 function matchFilter($status, $filter)
 {
@@ -82,13 +90,18 @@ foreach ($clients as $row):
 
     $cid         = $row["id"];
     $name        = htmlspecialchars($row["full_name"]);
-    $status      = strtolower($row["ticket_status"] ?? "unresolved");
+    $statusRaw   = strtolower($row["ticket_status"] ?? "unresolved");
+
+    /* Normalize default status */
+    $status = $statusRaw ?: "unresolved";
+
     $assignedTo  = $row["assigned_csr"];
     $isLocked    = ($row["ticket_lock"] ? true : false);
 
+    /* Skip if filter mismatch */
     if (!matchFilter($status, $filter)) continue;
 
-    /* Badge */
+    /* Badge style */
     switch ($status) {
         case "resolved":
             $badge = "<span class='ticket-badge resolved'>RESOLVED</span>";
@@ -101,7 +114,7 @@ foreach ($clients as $row):
             break;
     }
 
-    /* Assign / Unassign / Locked icon */
+    /* Right-side icons: assign / unassign / locked */
     if (!$assignedTo) {
         $icon = "<button class='assign-btn' data-id='$cid'>+</button>";
     }
@@ -112,12 +125,12 @@ foreach ($clients as $row):
         $icon = "<div class='locked-icon' data-id='$cid'>🔒</div>";
     }
 
-    /* Last message preview */
+    /* Preview of last chat */
     $lastMsg = $row["last_msg"]
         ? htmlspecialchars($row["last_msg"])
         : "No messages yet";
-
 ?>
+
 <div class="client-item" data-id="<?= $cid ?>" data-name="<?= $name ?>">
     <div class="client-info">
         <strong><?= $name ?></strong>
