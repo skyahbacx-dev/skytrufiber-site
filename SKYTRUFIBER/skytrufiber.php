@@ -61,16 +61,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
                     $ticketId = $conn->lastInsertId();
 
                     /* Personalized CSR Greeting (FULL NAME) */
-                    $csrGreeting = "Hello {$user['full_name']}! This is SkyTruFiber Support. How may I assist you today?";
+                 $csrGreeting = "Hello {$user['full_name']}! This is SkyTruFiber Support. How may I assist you today?";
 
-                    $greet = $conn->prepare("
-                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
-                        VALUES (:tid, NULL, 'csr', :msg, TRUE, NOW())
-                    ");
-                    $greet->execute([
-                        ':tid' => $ticketId,
-                        ':msg' => $csrGreeting
-                    ]);
+                  $greet = $conn->prepare("
+                   INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
+                   VALUES (:tid, NULL, 'csr', :msg, TRUE, TRUE, NOW())
+                  ");
+
+                  $greet->execute([
+                   ':tid' => $ticketId,
+                   ':msg' => $csrGreeting
+                  ]);
+
 
                     $_SESSION['show_suggestions'] = true;
 
