@@ -1,12 +1,13 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — FINAL REAL-TIME OPTIMIZED VERSION
+// SkyTruFiber CSR Chat System — FINAL FLICKER-FREE VERSION
 // ============================================================
 
 let currentClientID = null;
 let currentTicketID = null;
+let lastMessageID = 0;       // ⭐ NEW → Track last message to avoid flicker
 let editing = false;
 
-let currentTicketFilter = "all"; // all | unresolved | pending | resolved
+let currentTicketFilter = "all";
 
 let clientListInterval = null;
 let messageInterval = null;
@@ -17,16 +18,14 @@ $(document).ready(function () {
     // INITIAL LOAD
     loadClients();
 
-    // Refresh client list (left panel)
+    // AUTO-REFRESH CLIENT LIST (Left Panel)
     clientListInterval = setInterval(() => {
         loadClients(false);
     }, 6000);
 
-    // AUTO-REFRESH CLIENT INFO (IMPORTANT FIX)
+    // AUTO-REFRESH CLIENT INFO (Right Panel)
     clientInfoInterval = setInterval(() => {
-        if (currentClientID) {
-            loadClientInfo(currentClientID, false);
-        }
+        if (currentClientID) loadClientInfo(currentClientID, false);
     }, 3000);
 
     // SEARCH FILTER
@@ -58,12 +57,12 @@ $(document).ready(function () {
         $("#chat-client-name").text($(this).data("name"));
         $("#chat-messages").html("");
 
+        lastMessageID = 0; // RESET message tracking
+
         loadClientInfo(currentClientID, true);
 
         if (messageInterval) clearInterval(messageInterval);
-
-        // Faster polling for messages
-        messageInterval = setInterval(fetchNewMessages, 1000);
+        messageInterval = setInterval(fetchNewMessages, 900);
     });
 
     // SEND MESSAGE
@@ -75,7 +74,7 @@ $(document).ready(function () {
         }
     });
 
-    // SCROLL BUTTON
+    // SCROLL BUTTON CONTROL
     $("#chat-messages").on("scroll", function () {
         const box = this;
         const dist = box.scrollHeight - box.clientHeight - box.scrollTop;
@@ -90,8 +89,9 @@ $(document).ready(function () {
         }
     });
 
-    // CHANGE TICKET STATUS
+    // TICKET STATUS CHANGE
     $(document).on("change", "#ticket-status-dropdown", function () {
+
         if (!currentClientID || !currentTicketID) return;
 
         $.post("/CSR/chat/ticket_update.php", {
@@ -99,9 +99,9 @@ $(document).ready(function () {
             ticket_id: currentTicketID,
             status: $(this).val(),
             nocache: Date.now()
-        }, r => {
+        }, raw => {
 
-            const res = typeof r === "string" ? JSON.parse(r) : r;
+            const res = typeof raw === "string" ? JSON.parse(raw) : raw;
 
             if (!res.ok) {
                 alert("Failed: " + res.msg);
@@ -115,7 +115,8 @@ $(document).ready(function () {
         });
     });
 
-    // ASSIGN / TRANSFER HANDLERS
+    // ASSIGN / TRANSFER HANDLERS --------------------------------
+
     $(document).on("click", ".assign-btn", function () {
         $.post("/CSR/chat/assign_client.php", {
             action: "assign",
@@ -168,13 +169,14 @@ $(document).ready(function () {
             loadClients(false);
         });
     });
-
 });
 
+
 // ============================================================
-// ASSIGN RESPONSE HANDLER
+// ASSIGN RESPONSE
 // ============================================================
 function handleAssignResponse(res) {
+
     if (res.status === "ok") {
         alert(res.msg);
         loadClientInfo(currentClientID, true);
@@ -205,7 +207,7 @@ function handleAssignResponse(res) {
 // ============================================================
 function scrollToBottom() {
     const box = $("#chat-messages");
-    box.stop().animate({ scrollTop: box[0].scrollHeight }, 160);
+    box.stop().animate({ scrollTop: box[0].scrollHeight }, 150);
 }
 
 
@@ -217,6 +219,7 @@ function loadClients(preserve = true) {
         filter: currentTicketFilter,
         nocache: Date.now()
     }, html => {
+
         $("#client-list").html(html);
 
         if (preserve && currentClientID) {
@@ -247,18 +250,20 @@ function loadClientInfo(id, refreshMessages = true) {
         const locked = meta.data("locked") === "true";
         const ticketStatus = meta.data("ticket");
 
-        $("#ticket-status-dropdown").val(ticketStatus);
-        $("#ticket-status-dropdown").prop("disabled", !assignedToMe);
+        $("#ticket-status-dropdown").val(ticketStatus).prop("disabled", !assignedToMe);
 
         handleChatPermission(assignedToMe, locked, ticketStatus);
 
-        if (refreshMessages) loadMessages(true);
+        if (refreshMessages) {
+            lastMessageID = 0; // Reset
+            loadMessages(true);
+        }
     });
 }
 
 
 // ============================================================
-// CHAT PERMISSIONS
+// PERMISSIONS
 // ============================================================
 function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
 
@@ -268,34 +273,30 @@ function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
 
     if (!isAssignedToMe || isLocked) {
         bar.addClass("disabled");
-        input.prop("disabled", true);
-        btn.prop("disabled", true);
-        input.attr("placeholder",
+        input.prop("disabled", true).attr("placeholder",
             isLocked ? "🔒 Ticket locked." : "Assigned to another CSR — view only."
         );
+        btn.prop("disabled", true);
         return;
     }
 
     if (ticketStatus === "resolved") {
         bar.addClass("disabled");
-        input.prop("disabled", true);
+        input.prop("disabled", true).attr("placeholder", "Ticket resolved — chat closed.");
         btn.prop("disabled", true);
-        input.attr("placeholder", "Ticket resolved — chat closed.");
         return;
     }
 
     bar.removeClass("disabled");
-    input.prop("disabled", false);
+    input.prop("disabled", false).attr("placeholder", "Type a message...");
     btn.prop("disabled", false);
-    input.attr("placeholder", "Type a message...");
 }
 
 
 // ============================================================
-// LOAD MESSAGES
+// LOAD FULL MESSAGE LIST (ONLY WHEN CLIENT SELECTED)
 // ============================================================
 function loadMessages(scrollBottom = false) {
-    if (!currentTicketID) return;
 
     $.post("/CSR/chat/load_messages.php", {
         ticket_id: currentTicketID,
@@ -303,6 +304,11 @@ function loadMessages(scrollBottom = false) {
     }, html => {
 
         $("#chat-messages").html(html);
+
+        // Update last message ID
+        const lastMsg = $("#chat-messages .message").last();
+        lastMessageID = lastMsg.length ? parseInt(lastMsg.data("msg-id")) : 0;
+
         bindActionButtons();
 
         if (scrollBottom) scrollToBottom();
@@ -311,17 +317,27 @@ function loadMessages(scrollBottom = false) {
 
 
 // ============================================================
-// FETCH NEW MESSAGES (IMPROVED)
+// FLICKER-FREE AUTO FETCH (ONLY APPEND NEW MESSAGES)
 // ============================================================
 function fetchNewMessages() {
-    if (!currentTicketID) return;
 
     $.post("/CSR/chat/load_messages.php", {
         ticket_id: currentTicketID,
         nocache: Date.now()
     }, html => {
 
-        $("#chat-messages").html(html);
+        const temp = $("<div>").html(html);
+
+        temp.find(".message").each(function () {
+            const id = parseInt($(this).data("msg-id"));
+
+            if (id > lastMessageID) {
+                $("#chat-messages").append($(this));
+                lastMessageID = id;
+                scrollToBottom();
+            }
+        });
+
         bindActionButtons();
     });
 }
@@ -331,7 +347,6 @@ function fetchNewMessages() {
 // SEND MESSAGE
 // ============================================================
 function sendMessage() {
-
     const msg = $("#chat-input").val().trim();
     if (!msg || !currentClientID || !currentTicketID) return;
 
@@ -351,6 +366,7 @@ function sendMessage() {
         }
 
         $("#chat-input").val("");
+
         setTimeout(fetchNewMessages, 150);
     });
 }
@@ -377,7 +393,7 @@ function appendTempBubble(msg) {
 
 
 // ============================================================
-// ACTION MENU
+// ACTION MENU + EDIT / DELETE
 // ============================================================
 function bindActionButtons() {
     $(".more-btn").off("click").on("click", function (e) {
@@ -408,9 +424,7 @@ function closeActionPopup() {
 }
 
 
-// ============================================================
 // EDIT MESSAGE
-// ============================================================
 $(document).on("click", ".action-edit", function () {
     const id = $("#msg-action-popup").data("msg-id");
     startCSRMessageEdit(id);
@@ -418,7 +432,6 @@ $(document).on("click", ".action-edit", function () {
 });
 
 function startCSRMessageEdit(id) {
-
     editing = true;
 
     const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
@@ -434,7 +447,6 @@ function startCSRMessageEdit(id) {
 }
 
 $(document).on("click", ".edit-save", function () {
-
     const id = $(this).data("id");
     const text = $(this).closest(".message-bubble").find("textarea").val().trim();
 
@@ -454,9 +466,7 @@ $(document).on("click", ".edit-cancel", () => {
 });
 
 
-// ============================================================
 // DELETE MESSAGE
-// ============================================================
 $(document).on("click", ".action-delete, .action-unsend", function () {
 
     const id = $("#msg-action-popup").data("msg-id");
