@@ -303,7 +303,7 @@ function loadMessages(scrollBottom = false) {
         nocache: Date.now()
     }, html => {
 
-        $("#chat-messages").html(html);
+        
 
         // Update last message ID
         const lastMsg = $("#chat-messages .message").last();
@@ -320,6 +320,7 @@ function loadMessages(scrollBottom = false) {
 // FLICKER-FREE AUTO FETCH (ONLY APPEND NEW MESSAGES)
 // ============================================================
 function fetchNewMessages() {
+    if (!currentTicketID) return;
 
     $.post("/CSR/chat/load_messages.php", {
         ticket_id: currentTicketID,
@@ -331,6 +332,7 @@ function fetchNewMessages() {
         temp.find(".message").each(function () {
             const id = parseInt($(this).data("msg-id"));
 
+            // Only append NEW messages
             if (id > lastMessageID) {
                 $("#chat-messages").append($(this));
                 lastMessageID = id;
@@ -341,6 +343,7 @@ function fetchNewMessages() {
         bindActionButtons();
     });
 }
+
 
 
 // ============================================================
