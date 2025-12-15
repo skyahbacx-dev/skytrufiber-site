@@ -70,10 +70,11 @@ if ($currentStatus !== $status) {
 }
 
 if ($status === "resolved") {
+
+    // Do NOT unassign CSR — keep chat view intact
     $unlock = $conn->prepare("
         UPDATE users
-        SET assigned_csr = NULL,
-            is_locked = FALSE,
+        SET is_locked = FALSE,
             ticket_lock = FALSE,
             transfer_request = NULL
         WHERE id = ?
