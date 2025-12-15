@@ -44,26 +44,18 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Determine first CSR & client message
 $greetingMsgId = null;
-$firstClientMsgId = null;
 
 foreach ($messages as $m) {
     if ($greetingMsgId === null && $m["sender_type"] === "csr") {
         $greetingMsgId = $m["id"];
     }
-    if ($firstClientMsgId === null && $m["sender_type"] === "client") {
-        $firstClientMsgId = $m["id"];
-    }
 }
-
-// Suggestion trigger
-$triggerSuggestion = isset($_SESSION["show_suggestions"]);
-unset($_SESSION["show_suggestions"]);
 
 // ---------------------------------------------
 // RENDER MESSAGES
 // ---------------------------------------------
 foreach ($messages as $msg) {
-    
+
     $id     = $msg["id"];
     $isCSR  = $msg["sender_type"] === "csr";
     $type   = $isCSR ? "received" : "sent";
@@ -98,35 +90,6 @@ foreach ($messages as $msg) {
     }
 
     echo "</div></div>";
-
-    // -------------------------------
-    // INSERT SUGGESTION PACK
-    // -------------------------------
-    if (
-        $triggerSuggestion &&
-        $id == $firstClientMsgId &&
-        $greetingMsgId !== null
-    ) {
-
-        echo "
-        <div class='message received system-suggest animate-in'>
-            <div class='message-avatar'><img src='/SKYTRUFIBER.png'></div>
-            <div class='message-content'>
-                <div class='message-bubble'>
-                    Here are some quick answers you may need:
-                    <div class='suggest-buttons'>
-                        <button class='suggest-btn'>I am experiencing no internet.</button>
-                        <button class='suggest-btn'>My connection is slow.</button>
-                        <button class='suggest-btn'>My router is blinking red.</button>
-                        <button class='suggest-btn'>I already restarted my router.</button>
-                        <button class='suggest-btn'>Please assist me. Thank you.</button>
-                    </div>
-                </div>
-                <div class='message-time'>Just now</div>
-            </div>
-        </div>";
-
-        $triggerSuggestion = false;
-    }
 }
+
 ?>
