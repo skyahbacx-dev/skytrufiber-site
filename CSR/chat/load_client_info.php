@@ -1,12 +1,15 @@
 <?php
 // ------------------------------------------------------------
-// Disable caching (CSR must always receive up-to-date data)
+// Ensure CSR uses its own session — prevents auto logout
 // ------------------------------------------------------------
+ini_set("session.name", "CSRSESSID");
+if (!isset($_SESSION)) session_start();
+
+// Disable caching
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Expires: 0");
 header("Pragma: no-cache");
 
-if (!isset($_SESSION)) session_start();
 require __DIR__ . "/../../db_connect.php";
 
 $clientID = intval($_POST["client_id"] ?? 0);
@@ -38,14 +41,19 @@ $u = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$u) exit("<p>Client not found.</p>");
 
-$csrUser = $_SESSION["csr_user"] ?? '';
+$csrUser = $_SESSION["csr_user"] ?? null;
+
+// If CSR session expired, notify chat.js silently
+if (!$csrUser) {
+    echo "<div id='client-meta' data-session='expired'></div>";
+    exit;
+}
 
 $isAssignedToMe = ($u["assigned_csr"] === $csrUser) ? "yes" : "no";
 $isLocked       = $u["ticket_lock"] ? "true" : "false";
 
 /* ============================================================
-   FETCH MOST RECENT TICKET — FIXES “status not updating issue”
-   Uses ID instead of created_at because it's faster & accurate.
+   FETCH LATEST TICKET — Uses ID (fastest + accurate)
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT 
@@ -63,20 +71,23 @@ $ticketID     = intval($ticket["id"] ?? 0);
 $ticketStatus = strtolower($ticket["status"] ?? "unresolved");
 
 /* ============================================================
-   OUTPUT META — Used by chat.js to control UI & permissions
+   OUTPUT META FOR JAVASCRIPT — controls send button,
+   locking, resolved state, assignment, etc.
 ============================================================ */
 echo "
 <div id='client-meta'
+    data-session='active'
     data-ticket-id='{$ticketID}'
     data-ticket='{$ticketStatus}'
     data-assigned='{$isAssignedToMe}'
     data-locked='{$isLocked}'>
-</div>";
+</div>
+";
 ?>
 
 <!-- ============================================================
-     CLIENT INFO PANEL — Always refreshes correctly now
-=============================================================== -->
+     CLIENT INFORMATION PANEL
+============================================================ -->
 <div class="client-info-panel">
 
     <h3><?= htmlspecialchars($u["full_name"]) ?></h3>
@@ -112,11 +123,14 @@ echo "
         ?>
     </p>
 
-    <p><strong>Locked:</strong> <?= $u["ticket_lock"] ? "Yes" : "No" ?></p>
+    <p><strong>Locked:</strong>
+        <?= $u["ticket_lock"] ? "Yes" : "No" ?>
+    </p>
 
     <?php if ($u["transfer_request"]): ?>
         <p><strong>Transfer Requested By:</strong>
             <?= htmlspecialchars($u["transfer_request"]) ?>
         </p>
     <?php endif; ?>
+
 </div>
