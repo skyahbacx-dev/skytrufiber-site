@@ -1,19 +1,35 @@
 <?php
-// ------------------------------------------------------------
-// Disable caching (CSR must always receive up-to-date data)
-// ------------------------------------------------------------
+/* ============================================================
+   FORCE CSR SESSION — Prevents client session from overwriting CSR
+============================================================ */
+ini_set("session.name", "CSRSESSID");
+session_start();
+
+/* Prevent caching */
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Expires: 0");
 header("Pragma: no-cache");
 
-if (!isset($_SESSION)) session_start();
 require __DIR__ . "/../../db_connect.php";
 
+/* ============================================================
+   VALIDATE CSR SESSION
+============================================================ */
+if (empty($_SESSION["csr_user"])) {
+    echo "Session expired.";
+    exit;
+}
+
+$csrUser  = $_SESSION["csr_user"];
 $clientID = intval($_POST["client_id"] ?? 0);
-if ($clientID <= 0) exit("<p>Invalid client.</p>");
+
+if ($clientID <= 0) {
+    echo "<p>Invalid client.</p>";
+    exit;
+}
 
 /* ============================================================
-   FETCH CLIENT RECORD
+   FETCH CLIENT INFORMATION
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT 
@@ -36,34 +52,35 @@ $stmt = $conn->prepare("
 $stmt->execute([$clientID]);
 $u = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$u) exit("<p>Client not found.</p>");
+if (!$u) {
+    echo "<p>Client not found.</p>";
+    exit;
+}
 
-$csrUser = $_SESSION["csr_user"] ?? '';
-
+/* ============================================================
+   CHECK ASSIGNMENT + LOCK STATUS
+============================================================ */
 $isAssignedToMe = ($u["assigned_csr"] === $csrUser) ? "yes" : "no";
 $isLocked       = $u["ticket_lock"] ? "true" : "false";
 
 /* ============================================================
-   FETCH MOST RECENT TICKET — FIXES “status not updating issue”
-   Uses ID instead of created_at because it's faster & accurate.
+   FETCH MOST RECENT TICKET — BEST PERFORMANCE FIX
 ============================================================ */
 $stmt = $conn->prepare("
-    SELECT 
-        id,
-        status
+    SELECT id, status
     FROM tickets
     WHERE client_id = ?
     ORDER BY id DESC
     LIMIT 1
 ");
 $stmt->execute([$clientID]);
-$ticket = $stmt->fetch(PDO::FETCH_ASSOC);
+$ticketData = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$ticketID     = intval($ticket["id"] ?? 0);
-$ticketStatus = strtolower($ticket["status"] ?? "unresolved");
+$ticketID     = intval($ticketData["id"] ?? 0);
+$ticketStatus = strtolower($ticketData["status"] ?? "unresolved");
 
 /* ============================================================
-   OUTPUT META — Used by chat.js to control UI & permissions
+   META OUTPUT — REQUIRED BY chat.js
 ============================================================ */
 echo "
 <div id='client-meta'
@@ -75,8 +92,8 @@ echo "
 ?>
 
 <!-- ============================================================
-     CLIENT INFO PANEL — Always refreshes correctly now
-=============================================================== -->
+     CLIENT INFORMATION DISPLAY PANEL
+============================================================ -->
 <div class="client-info-panel">
 
     <h3><?= htmlspecialchars($u["full_name"]) ?></h3>
@@ -119,4 +136,5 @@ echo "
             <?= htmlspecialchars($u["transfer_request"]) ?>
         </p>
     <?php endif; ?>
+
 </div>
