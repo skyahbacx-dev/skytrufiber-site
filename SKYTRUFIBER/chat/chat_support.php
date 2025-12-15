@@ -110,7 +110,7 @@ try {
                 </button>
 
                 <!-- LOGOUT BUTTON -->
-                <button id="logout-btn" class="logout-btn" onclick="location.href='/fiber/logout'">
+                     <button id="logout-btn" class="logout-btn"> 
                     <i class="fa-solid fa-right-from-bracket"></i> Logout
                 </button>
 
