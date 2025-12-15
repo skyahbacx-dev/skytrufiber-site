@@ -70,8 +70,6 @@ if ($currentStatus !== $status) {
 }
 
 if ($status === "resolved") {
-
-    // Do NOT unassign CSR — keep chat view intact
     $unlock = $conn->prepare("
         UPDATE users
         SET is_locked = FALSE,
@@ -82,6 +80,6 @@ if ($status === "resolved") {
     $unlock->execute([$clientID]);
 }
 
-echo json_encode(["ok"=>true]);
+echo "OK";
 exit;
-?>
+
