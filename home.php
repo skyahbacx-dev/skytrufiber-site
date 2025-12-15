@@ -3,6 +3,10 @@
    🔐 ENCRYPT / DECRYPT SYSTEM
 ============================================================ */
 
+/* ❗ FIX: Use separate session name for CSR system */
+ini_set("session.name", "CSRSESSID");
+session_start();
+
 function encrypt_route($route) {
     return urlencode(base64_encode($route . "|" . time()));
 }
@@ -27,20 +31,15 @@ function decrypt_route($token) {
    🧭 CSR PUBLIC ROUTES (NO LOOPS, NO FALLBACK)
 ============================================================ */
 
-session_start();
 $uri = strtok($_SERVER["REQUEST_URI"], "?");
 
-/* ------------------------------------------
-   1️⃣  /csr  → Always handled here
------------------------------------------- */
+
+/* 1️⃣ /csr → redirect to login or dashboard */
 if ($uri === "/csr") {
 
-    // If logged in → go to dashboard
     if (!empty($_SESSION["csr_user"])) {
         $token = encrypt_route("csr_dashboard");
-    } 
-    // If not logged in → go to login
-    else {
+    } else {
         $token = encrypt_route("csr_login");
     }
 
@@ -48,23 +47,20 @@ if ($uri === "/csr") {
     exit;
 }
 
-/* ------------------------------------------
-   2️⃣  /csr/logout (reset session)
------------------------------------------- */
+
+/* 2️⃣ /csr/logout → clear only CSR session */
 if ($uri === "/csr/logout") {
 
     $_SESSION = [];
     session_destroy();
 
-    // ALWAYS send user to CSR login
     $token = encrypt_route("csr_login");
     header("Location: /home.php?v=$token");
     exit;
 }
 
-/* ------------------------------------------
-   3️⃣  /csr/dashboard (never loop)
------------------------------------------- */
+
+/* 3️⃣ /csr/dashboard → no loops */
 if ($uri === "/csr/dashboard") {
 
     if (!empty($_SESSION["csr_user"])) {
@@ -98,7 +94,6 @@ if (!empty($_GET["v"])) {
 
         case "csr_dashboard":
             if (empty($_SESSION["csr_user"])) {
-                // Not logged in → force login
                 $token = encrypt_route("csr_login");
                 header("Location: /home.php?v=$token");
                 exit;
@@ -131,11 +126,12 @@ if (!empty($_GET["v"])) {
             $GLOBALS["CSR_TAB"] = "SURVEY";
             require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
             exit;
+
         case "csr_survey_analytics":
-           if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
-           $GLOBALS["CSR_TAB"] = "SURVEY_ANALYTICS";
-           require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
-           exit;
+            if (empty($_SESSION["csr_user"])) die("⛔ Unauthorized.");
+            $GLOBALS["CSR_TAB"] = "SURVEY_ANALYTICS";
+            require __DIR__ . "/CSR/dashboard/csr_dashboard.php";
+            exit;
 
         default:
             die("⛔ Unknown encrypted route");
@@ -144,7 +140,7 @@ if (!empty($_GET["v"])) {
 
 
 /* ============================================================
-   🏁 NO ROUTE MATCHED → ALWAYS GO TO CSR LOGIN
+   🏁 DEFAULT → send to CSR login
 ============================================================ */
 
 $token = encrypt_route("csr_login");
