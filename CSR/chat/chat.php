@@ -1,6 +1,6 @@
 <?php
-ini_set("session.name", "CSRSESSID");
-session_start();
+if (!isset($_SESSION)) session_start();
+
 
 
 /* ============================================
