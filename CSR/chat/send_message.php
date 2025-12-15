@@ -1,34 +1,46 @@
 <?php
+/* ============================================================
+   SESSION FIX — Prevent conflict with client sessions
+============================================================ */
+ini_set("session.name", "CSRSESSID");
 if (!isset($_SESSION)) session_start();
-require "../../db_connect.php";
 
 header("Content-Type: application/json; charset=utf-8");
 
-$csrUser  = $_SESSION["csr_user"] ?? null;
+require "../../db_connect.php";
+
+/* ============================================================
+   VALIDATE SESSION
+============================================================ */
+$csrUser = $_SESSION["csr_user"] ?? null;
+
+if (!$csrUser) {
+    echo json_encode(["status" => "SESSION_EXPIRED"]);
+    exit;
+}
+
+/* ============================================================
+   INPUT VALIDATION
+============================================================ */
 $clientID = intval($_POST["client_id"] ?? 0);
 $ticketID = intval($_POST["ticket_id"] ?? 0);
 $message  = trim($_POST["message"] ?? "");
 
-if (!$csrUser) {
-    echo json_encode(["status" => "error", "msg" => "CSR not logged in"]);
-    exit;
-}
-
 if ($clientID <= 0 || $ticketID <= 0) {
-    echo json_encode(["status" => "error", "msg" => "Invalid client or ticket"]);
+    echo json_encode(["status" => "error", "msg" => "Invalid client or ticket."]);
     exit;
 }
 
 if ($message === "") {
-    echo json_encode(["status" => "error", "msg" => "Message cannot be empty"]);
+    echo json_encode(["status" => "error", "msg" => "Message cannot be empty."]);
     exit;
 }
 
 try {
 
-    /* ==========================================================
-       1) Validate ticket belongs to client & assignment
-    ========================================================== */
+    /* ============================================================
+       1) VALIDATE TICKET + USER MATCH
+    ============================================================= */
     $stmt = $conn->prepare("
         SELECT 
             t.status AS ticket_status,
@@ -43,7 +55,7 @@ try {
     $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$ticket) {
-        echo json_encode(["status" => "error", "msg" => "Ticket not found"]);
+        echo json_encode(["status" => "error", "msg" => "Ticket not found."]);
         exit;
     }
 
@@ -51,15 +63,14 @@ try {
     $assignedCSR  = $ticket["assigned_csr"];
     $dbClientID   = intval($ticket["client_id"]);
 
-    /* Ensure correct client–ticket mapping */
     if ($dbClientID !== $clientID) {
-        echo json_encode(["status" => "error", "msg" => "Ticket does not belong to this client"]);
+        echo json_encode(["status" => "error", "msg" => "Ticket does not belong to this client."]);
         exit;
     }
 
-    /* ==========================================================
-       2) Block messaging in resolved tickets
-    ========================================================== */
+    /* ============================================================
+       2) BLOCK IF TICKET IS RESOLVED
+    ============================================================= */
     if ($ticketStatus === "resolved") {
         echo json_encode([
             "status" => "blocked",
@@ -68,9 +79,9 @@ try {
         exit;
     }
 
-    /* ==========================================================
-       3) CSR assignment enforcement
-    ========================================================== */
+    /* ============================================================
+       3) BLOCK IF CSR IS NOT ASSIGNED TO THIS CLIENT
+    ============================================================= */
     if ($assignedCSR !== $csrUser) {
         echo json_encode([
             "status" => "locked",
@@ -79,10 +90,9 @@ try {
         exit;
     }
 
-    /* ==========================================================
-       4) INSERT MESSAGE (PostgreSQL-safe booleans)
-    ========================================================== */
-
+    /* ============================================================
+       4) INSERT CSR MESSAGE
+    ============================================================= */
     $insert = $conn->prepare("
         INSERT INTO chat (
             ticket_id,
@@ -99,10 +109,10 @@ try {
             :cid,
             'csr',
             :msg,
-            FALSE,   -- deleted
-            FALSE,   -- edited
-            TRUE,    -- delivered
-            FALSE,   -- seen
+            FALSE,
+            FALSE,
+            TRUE,
+            FALSE,
             NOW()
         )
     ");
