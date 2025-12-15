@@ -1,5 +1,7 @@
 <?php
-if (!isset($_SESSION)) session_start();
+ini_set("session.name", "CSRSESSID");
+session_start();
+
 require_once "../../db_connect.php";
 
 header("Content-Type: application/json; charset=utf-8");
