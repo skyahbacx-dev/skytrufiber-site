@@ -304,9 +304,10 @@ function loadMessages(scrollBottom = false) {
         nocache: Date.now()
     }, html => {
 
-        $("#chat-messages").html(html); // ⭐ Load full message list
+        // Reset messages completely
+        $("#chat-messages").html(html);
 
-        // Read last message ID from hidden div
+        // Read the last real message ID from hidden <div>
         const lastID = $("#last-msg-id").data("last-id");
         lastMessageID = lastID ? parseInt(lastID) : 0;
 
@@ -315,6 +316,7 @@ function loadMessages(scrollBottom = false) {
         if (scrollBottom) scrollToBottom();
     });
 }
+
 
 
 
