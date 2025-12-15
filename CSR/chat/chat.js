@@ -1,35 +1,35 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — STABLE & DUPLICATE-FREE VERSION
+// SkyTruFiber CSR Chat System — FINAL FLICKER-FREE VERSION
 // ============================================================
 
 let currentClientID = null;
 let currentTicketID = null;
 let lastMessageID = 0;
-let messageInterval = null;
-let clientListInterval = null;
-let clientInfoInterval = null;
 let editing = false;
 
 let currentTicketFilter = "all";
+
+let clientListInterval = null;
+let messageInterval = null;
+let clientInfoInterval = null;
 
 $(document).ready(function () {
 
     // INITIAL LOAD
     loadClients();
 
-    // CLIENT LIST AUTO REFRESH
+    // AUTO-REFRESH CLIENT LIST
     clientListInterval = setInterval(() => {
         loadClients(false);
     }, 6000);
 
-    // CLIENT INFO AUTO REFRESH (NO MESSAGE RESET)
+    // AUTO-REFRESH CLIENT INFO
     clientInfoInterval = setInterval(() => {
-        if (currentClientID) {
-            loadClientInfo(currentClientID, false);
-        }
-    }, 4000);
+        if (currentClientID) loadClientInfo(currentClientID, false);
+    }, 3000);
 
-    // SEARCH
+
+    // SEARCH FILTER
     $("#client-search").on("keyup", function () {
         const q = $(this).val().toLowerCase();
         $("#client-list .client-item").each(function () {
@@ -37,7 +37,8 @@ $(document).ready(function () {
         });
     });
 
-    // FILTER
+
+    // TICKET FILTER BUTTONS
     $(document).on("click", ".ticket-filter", function () {
         currentTicketFilter = $(this).data("filter");
         $(".ticket-filter").removeClass("active");
@@ -45,10 +46,12 @@ $(document).ready(function () {
         loadClients();
     });
 
+
     // SELECT CLIENT
     $(document).on("click", ".client-item", function (e) {
 
-        if ($(e.target).closest(".assign-btn,.unassign-btn,.locked-icon").length) return;
+        if ($(e.target).closest(".assign-btn, .unassign-btn, .locked-icon").length)
+            return;
 
         $(".client-item").removeClass("active-client");
         $(this).addClass("active-client");
@@ -56,24 +59,167 @@ $(document).ready(function () {
         currentClientID = $(this).data("id");
         $("#chat-client-name").text($(this).data("name"));
 
-        lastMessageID = 0;
         $("#chat-messages").html("");
+        lastMessageID = 0;
 
         loadClientInfo(currentClientID, true);
 
         if (messageInterval) clearInterval(messageInterval);
-        messageInterval = setInterval(fetchNewMessages, 1000);
+        messageInterval = setInterval(fetchNewMessages, 900);
     });
 
+
     // SEND MESSAGE
-    $("#send-btn").on("click", sendMessage);
-    $("#chat-input").on("keypress", e => {
+    $("#send-btn").click(sendMessage);
+    $("#chat-input").keypress(e => {
         if (e.which === 13) {
             e.preventDefault();
             sendMessage();
         }
     });
+
+
+    // SCROLL BUTTON CONTROL
+    $("#chat-messages").on("scroll", function () {
+        const box = this;
+        const dist = box.scrollHeight - box.clientHeight - box.scrollTop;
+        $("#scroll-bottom-btn").toggleClass("show", dist > 80);
+    });
+    $("#scroll-bottom-btn").click(scrollToBottom);
+
+
+    // CLOSE POPOVER
+    $(document).on("click", e => {
+        if (!$(e.target).closest("#msg-action-popup, .more-btn").length)
+            closeActionPopup();
+    });
+
+
+    // CHANGE TICKET STATUS
+    $(document).on("change", "#ticket-status-dropdown", function () {
+
+        if (!currentClientID || !currentTicketID) return;
+
+        $.post("/CSR/chat/ticket_update.php", {
+            client_id: currentClientID,
+            ticket_id: currentTicketID,
+            status: $(this).val(),
+            nocache: Date.now()
+        }, raw => {
+
+            const res = typeof raw === "string" ? JSON.parse(raw) : raw;
+
+            if (!res.ok) {
+                alert("Failed: " + res.msg);
+                return;
+            }
+
+            setTimeout(() => {
+                loadClientInfo(currentClientID, true);
+                loadClients(false);
+            }, 200);
+        });
+    });
+
+    // ASSIGN / TRANSFER HANDLERS
+    $(document).on("click", ".assign-btn", function () {
+        $.post("/CSR/chat/assign_client.php", {
+            action: "assign",
+            client_id: $(this).data("id")
+        }, handleAssignResponse);
+    });
+
+    $(document).on("click", ".unassign-btn", function () {
+
+        const id = $(this).data("id");
+
+        $.post("/CSR/chat/assign_client.php", {
+            action: "unassign",
+            client_id: id
+        }, res => {
+            alert(res.msg);
+            loadClientInfo(id, true);
+            loadClients(false);
+        });
+    });
+
+    $(document).on("click", ".request-transfer-btn", function () {
+
+        $.post("/CSR/chat/assign_client.php", {
+            action: "request_transfer",
+            client_id: $(this).data("id")
+        }, res => {
+            alert(res.msg);
+            loadClientInfo(currentClientID, true);
+            loadClients(false);
+        });
+    });
+
+    $(document).on("click", ".approve-transfer-btn", function () {
+
+        $.post("/CSR/chat/assign_client.php", {
+            action: "approve_transfer",
+            client_id: $(this).data("id")
+        }, res => {
+            alert(res.msg);
+            loadClientInfo(currentClientID, true);
+            loadClients(false);
+        });
+    });
+
+    $(document).on("click", ".deny-transfer-btn", function () {
+
+        $.post("/CSR/chat/assign_client.php", {
+            action: "deny_transfer",
+            client_id: $(this).data("id")
+        }, res => {
+            alert(res.msg);
+            loadClientInfo(currentClientID, true);
+            loadClients(false);
+        });
+    });
+
 });
+
+
+// ============================================================
+// ASSIGN RESPONSE HANDLER
+// ============================================================
+function handleAssignResponse(res) {
+
+    if (res.status === "ok") {
+        alert(res.msg);
+        loadClientInfo(currentClientID, true);
+        loadClients(false);
+        return;
+    }
+
+    if (res.status === "transfer_required") {
+        if (confirm(`${res.msg}\n\nAssigned to: ${res.assigned_to}\nRequest transfer?`)) {
+            $.post("/CSR/chat/assign_client.php", {
+                action: "request_transfer",
+                client_id: currentClientID
+            }, out => {
+                alert(out.msg);
+                loadClientInfo(currentClientID, true);
+                loadClients(false);
+            });
+        }
+        return;
+    }
+
+    alert(res.msg);
+}
+
+
+// ============================================================
+// SCROLL
+// ============================================================
+function scrollToBottom() {
+    const box = $("#chat-messages");
+    box.stop().animate({ scrollTop: box[0].scrollHeight }, 150);
+}
+
 
 // ============================================================
 // LOAD CLIENT LIST
@@ -92,10 +238,11 @@ function loadClients(preserve = true) {
     });
 }
 
+
 // ============================================================
-// LOAD CLIENT INFO (NEVER TOUCH MESSAGES UNLESS FORCED)
+// LOAD CLIENT INFO
 // ============================================================
-function loadClientInfo(id, reloadMessages = false) {
+function loadClientInfo(id, refreshMessages = true) {
 
     $.post("/CSR/chat/load_client_info.php", {
         client_id: id,
@@ -109,27 +256,58 @@ function loadClientInfo(id, reloadMessages = false) {
 
         currentTicketID = parseInt(meta.data("ticket-id")) || null;
 
-        const assigned = meta.data("assigned") === "yes";
+        const assignedToMe = meta.data("assigned") === "yes";
         const locked = meta.data("locked") === "true";
-        const status = meta.data("ticket");
+        const ticketStatus = meta.data("ticket");
 
         $("#ticket-status-dropdown")
-            .val(status)
-            .prop("disabled", !assigned);
+            .val(ticketStatus)
+            .prop("disabled", !assignedToMe);
 
-        handleChatPermission(assigned, locked, status);
+        handleChatPermission(assignedToMe, locked, ticketStatus);
 
-        if (reloadMessages) {
+        if (refreshMessages) {
+            lastMessageID = 0;
             loadMessages(true);
         }
     });
 }
 
+
 // ============================================================
-// LOAD FULL MESSAGE LIST (ONLY ON CLIENT SELECT)
+// PERMISSIONS
+// ============================================================
+function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
+
+    const input = $("#chat-input");
+    const btn = $("#send-btn");
+    const bar = $(".chat-input-area");
+
+    if (!isAssignedToMe || isLocked) {
+        bar.addClass("disabled");
+        input.prop("disabled", true)
+             .attr("placeholder", isLocked ? "🔒 Ticket locked." : "Assigned to another CSR — view only.");
+        btn.prop("disabled", true);
+        return;
+    }
+
+    if (ticketStatus === "resolved") {
+        bar.addClass("disabled");
+        input.prop("disabled", true).attr("placeholder", "Ticket resolved — chat closed.");
+        btn.prop("disabled", true);
+        return;
+    }
+
+    bar.removeClass("disabled");
+    input.prop("disabled", false).attr("placeholder", "Type a message...");
+    btn.prop("disabled", false);
+}
+
+
+// ============================================================
+// FULL LOAD MESSAGES (reset window)
 // ============================================================
 function loadMessages(scrollBottom = false) {
-    if (!currentTicketID) return;
 
     $.post("/CSR/chat/load_messages.php", {
         ticket_id: currentTicketID,
@@ -138,18 +316,21 @@ function loadMessages(scrollBottom = false) {
 
         $("#chat-messages").html(html);
 
-        const last = $("#last-msg-id").data("last-id");
-        lastMessageID = last ? parseInt(last) : 0;
+        const lastID = $("#last-msg-id").data("last-id");
+        lastMessageID = lastID ? parseInt(lastID) : 0;
 
         bindActionButtons();
+
         if (scrollBottom) scrollToBottom();
     });
 }
 
+
 // ============================================================
-// FETCH ONLY NEW MESSAGES (NO REPLACE, NO FLICKER)
+// FLICKER-FREE FETCH NEW MESSAGES
 // ============================================================
 function fetchNewMessages() {
+
     if (!currentTicketID) return;
 
     $.post("/CSR/chat/load_messages.php", {
@@ -161,8 +342,8 @@ function fetchNewMessages() {
 
         temp.find(".message").each(function () {
             const id = parseInt($(this).data("msg-id"));
+
             if (id > lastMessageID) {
-                $(".temp-msg").remove(); // 🔥 remove temp
                 $("#chat-messages").append($(this));
                 lastMessageID = id;
                 scrollToBottom();
@@ -173,8 +354,9 @@ function fetchNewMessages() {
     });
 }
 
+
 // ============================================================
-// SEND MESSAGE (TEMP REMOVED SAFELY)
+// SEND MESSAGE
 // ============================================================
 function sendMessage() {
 
@@ -182,7 +364,6 @@ function sendMessage() {
     if (!msg || !currentClientID || !currentTicketID) return;
 
     appendTempBubble(msg);
-    $("#chat-input").val("");
 
     $.post("/CSR/chat/send_message.php", {
         client_id: currentClientID,
@@ -193,14 +374,18 @@ function sendMessage() {
 
         if (res.status === "blocked" || res.status === "locked") {
             alert(res.msg);
-            $(".temp-msg").remove();
             loadClientInfo(currentClientID, true);
+            return;
         }
+
+        $("#chat-input").val("");
+        setTimeout(fetchNewMessages, 100);
     });
 }
 
+
 // ============================================================
-// TEMP MESSAGE
+// TEMP MESSAGE BUBBLE
 // ============================================================
 function appendTempBubble(msg) {
 
@@ -218,37 +403,9 @@ function appendTempBubble(msg) {
     scrollToBottom();
 }
 
-// ============================================================
-// PERMISSIONS
-// ============================================================
-function handleChatPermission(assigned, locked, status) {
-
-    const input = $("#chat-input");
-    const btn = $("#send-btn");
-    const bar = $(".chat-input-area");
-
-    if (!assigned || locked || status === "resolved") {
-        bar.addClass("disabled");
-        input.prop("disabled", true);
-        btn.prop("disabled", true);
-        return;
-    }
-
-    bar.removeClass("disabled");
-    input.prop("disabled", false);
-    btn.prop("disabled", false);
-}
 
 // ============================================================
-// SCROLL
-// ============================================================
-function scrollToBottom() {
-    const box = $("#chat-messages");
-    box.stop().animate({ scrollTop: box[0].scrollHeight }, 150);
-}
-
-// ============================================================
-// ACTION MENU
+// ACTION MENU HANDLERS
 // ============================================================
 function bindActionButtons() {
     $(".more-btn").off("click").on("click", function (e) {
@@ -258,10 +415,84 @@ function bindActionButtons() {
 }
 
 function openActionPopup(id, anchor) {
+
     const popup = $("#msg-action-popup");
-    popup.data("msg-id", id).show();
+    popup.data("msg-id", id);
+
+    const bubble = $(anchor).closest(".message-content");
+    const pos = bubble.offset();
+    const wrap = $(".chat-wrapper").offset();
+
+    let top = pos.top - wrap.top - popup.outerHeight() - 10;
+    let left = pos.left - wrap.left + bubble.outerWidth() - popup.outerWidth();
+
+    if (top < 10) top = 10;
+
+    popup.css({ top, left }).show().addClass("show");
 }
 
 function closeActionPopup() {
-    $("#msg-action-popup").hide();
+    $("#msg-action-popup").removeClass("show").hide();
 }
+
+
+// ============================================================
+// EDIT MESSAGE
+// ============================================================
+$(document).on("click", ".action-edit", function () {
+    const id = $("#msg-action-popup").data("msg-id");
+    startCSRMessageEdit(id);
+    closeActionPopup();
+});
+
+function startCSRMessageEdit(id) {
+    editing = true;
+
+    const bubble = $(`.message[data-msg-id='${id}'] .message-bubble`);
+    const old = bubble.text().trim();
+
+    bubble.html(`
+        <textarea class='edit-textarea'>${old}</textarea>
+        <div class='edit-actions'>
+            <button class='edit-save' data-id='${id}'>Save</button>
+            <button class='edit-cancel'>Cancel</button>
+        </div>
+    `);
+}
+
+$(document).on("click", ".edit-save", function () {
+    const id = $(this).data("id");
+    const text = $(this).closest(".message-bubble").find("textarea").val().trim();
+
+    $.post("/CSR/chat/edit_message.php", {
+        id,
+        message: text,
+        nocache: Date.now()
+    }, () => {
+        editing = false;
+        loadMessages(true);
+    });
+});
+
+$(document).on("click", ".edit-cancel", () => {
+    editing = false;
+    loadMessages(false);
+});
+
+
+// ============================================================
+// DELETE MESSAGE
+// ============================================================
+$(document).on("click", ".action-delete, .action-unsend", function () {
+
+    const id = $("#msg-action-popup").data("msg-id");
+
+    $.post("/CSR/chat/delete_message.php", {
+        id,
+        nocache: Date.now()
+    }, () => {
+        loadMessages(false);
+    });
+
+    closeActionPopup();
+});
