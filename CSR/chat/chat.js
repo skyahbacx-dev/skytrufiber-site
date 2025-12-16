@@ -1,5 +1,5 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — FINAL, HARDENED VERSION
+// SkyTruFiber CSR Chat System — FINAL, HARDENED VERSION (FIXED)
 // ============================================================
 
 let currentClientID = null;
@@ -180,7 +180,7 @@ function loadMessages(scrollBottom = false) {
 
 
 /* ============================================================
-   FETCH NEW MESSAGES (APPEND ONLY)
+   FETCH NEW MESSAGES
 ============================================================ */
 function fetchNewMessages() {
     if (!currentTicketID) return;
@@ -194,7 +194,6 @@ function fetchNewMessages() {
 
         temp.find(".message").each(function () {
             const id = parseInt($(this).data("msg-id"));
-
             if (id > lastMessageID) {
                 $(".temp-msg").remove();
                 $("#chat-messages").append($(this));
@@ -292,7 +291,7 @@ function handleScrollButton() {
 
 
 /* ============================================================
-   TICKET STATUS CHANGE
+   TICKET STATUS CHANGE — FIXED
 ============================================================ */
 $(document).on("change", "#ticket-status-dropdown", function () {
 
@@ -319,19 +318,22 @@ $(document).on("change", "#ticket-status-dropdown", function () {
         nocache: Date.now()
     })
     .done(res => {
+
+        if (!res || res.ok !== true) {
+            alert("Failed to update ticket status: " + (res?.msg || "Unknown error"));
+
+            dropdown
+                .removeClass("saving " + newStatus)
+                .addClass(oldStatus)
+                .val(oldStatus)
+                .data("current", oldStatus);
+
+            animateTicketBadge(oldStatus);
+            return;
+        }
+
         dropdown.removeClass("saving");
         loadClients(false);
-    })
-    .fail(() => {
-        alert("Failed to update ticket status.");
-
-        dropdown
-            .removeClass("saving " + newStatus)
-            .addClass(oldStatus)
-            .val(oldStatus)
-            .data("current", oldStatus);
-
-        animateTicketBadge(oldStatus);
     });
 });
 
