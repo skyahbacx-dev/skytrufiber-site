@@ -135,12 +135,24 @@ $csrUser = $_SESSION["csr_user"];
 
         </div>
 
-        <div id="msg-action-popup">
-            <button class="action-edit"><i class="fa-solid fa-pen"></i> Edit</button>
-            <button class="action-unsend"><i class="fa-solid fa-ban"></i> Unsend</button>
-            <button class="action-delete"><i class="fa-solid fa-trash"></i> Delete</button>
-            <button class="action-cancel">Cancel</button>
-        </div>
+        <div id="msg-action-popup" class="msg-action-popup">
+             <button data-action="edit">
+                 <i class="fa-solid fa-pen"></i> Edit
+             </button>
+
+             <button data-action="unsend">
+                 <i class="fa-solid fa-ban"></i> Unsend
+             </button>
+
+             <button data-action="delete">
+                 <i class="fa-solid fa-trash"></i> Delete
+             </button>
+
+             <button data-action="cancel">
+                 Cancel
+             </button>
+         </div>
+
 
     </div>
 
