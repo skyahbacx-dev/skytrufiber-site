@@ -34,7 +34,7 @@
   background-color: #eef6f0;
 
   /* 🖼️ watermark */
-  background-image: url("/assets/AHBALOGO.png");
+  background-image: url("CSR/AHBALOGO.png");
   background-repeat: no-repeat;
   background-position: center;
   background-size: 260px;
