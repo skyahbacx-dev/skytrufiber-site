@@ -1,11 +1,10 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — STABLE, NO DUPLICATES VERSION
+// SkyTruFiber CSR Chat System — STABLE, UPDATED VERSION
 // ============================================================
 
 let currentClientID = null;
 let currentTicketID = null;
 let lastMessageID = 0;
-let editing = false;
 
 let currentTicketFilter = "all";
 
@@ -65,17 +64,23 @@ $(document).ready(function () {
     });
 
     // SEND MESSAGE
-    $("#send-btn").click(sendMessage);
-    $("#chat-input").keypress(e => {
+    $("#send-btn").on("click", sendMessage);
+    $("#chat-input").on("keypress", function (e) {
         if (e.which === 13) {
             e.preventDefault();
             sendMessage();
         }
     });
 
-    // CLOSE ACTION MENU
-    $(document).on("click", e => {
-        if (!$(e.target).closest("#msg-action-popup, .more-btn").length) {
+    // SCROLL DETECTION (SHOW / HIDE SCROLL BUTTON)
+    $("#chat-messages").on("scroll", handleScrollButton);
+
+    // SCROLL BUTTON CLICK
+    $(document).on("click", ".scroll-bottom-btn", scrollToBottom);
+
+    // CLOSE ACTION MENU WHEN CLICKING OUTSIDE
+    $(document).on("click", function (e) {
+        if (!$(e.target).closest("#msg-action-popup, .message-more-btn").length) {
             closeActionPopup();
         }
     });
@@ -99,7 +104,7 @@ function loadClients(preserve = true) {
 
 
 // ============================================================
-// LOAD CLIENT INFO (NO AUTO MESSAGE RELOAD)
+// LOAD CLIENT INFO
 // ============================================================
 function loadClientInfo(id, loadMessagesNow = false) {
 
@@ -131,7 +136,7 @@ function loadClientInfo(id, loadMessagesNow = false) {
 
 
 // ============================================================
-// LOAD FULL MESSAGES (ONLY ON CLIENT SELECT)
+// LOAD FULL MESSAGES (ON CLIENT SELECT)
 // ============================================================
 function loadMessages(scrollBottom = false) {
     if (!currentTicketID) return;
@@ -170,7 +175,6 @@ function fetchNewMessages() {
 
             if (id > lastMessageID) {
 
-                // REMOVE TEMP BUBBLE WHEN REAL MESSAGE ARRIVES
                 $(".temp-msg").remove();
 
                 $("#chat-messages").append($(this));
@@ -185,7 +189,7 @@ function fetchNewMessages() {
 
 
 // ============================================================
-// SEND MESSAGE (TEMP BUBBLE SAFE)
+// SEND MESSAGE
 // ============================================================
 function sendMessage() {
 
@@ -205,7 +209,7 @@ function sendMessage() {
 
 
 // ============================================================
-// TEMP MESSAGE BUBBLE (SINGLE INSTANCE)
+// TEMP MESSAGE BUBBLE
 // ============================================================
 function appendTempBubble(msg) {
 
@@ -225,7 +229,7 @@ function appendTempBubble(msg) {
 
 
 // ============================================================
-// PERMISSIONS
+// CHAT PERMISSIONS
 // ============================================================
 function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
 
@@ -247,19 +251,31 @@ function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
 
 
 // ============================================================
-// SCROLL
+// SCROLL HANDLING
 // ============================================================
 function scrollToBottom() {
     const box = $("#chat-messages");
     box.stop().animate({ scrollTop: box[0].scrollHeight }, 120);
+    $(".scroll-bottom-btn").removeClass("show");
+}
+
+function handleScrollButton() {
+    const box = $("#chat-messages")[0];
+    const nearBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 120;
+
+    if (nearBottom) {
+        $(".scroll-bottom-btn").removeClass("show");
+    } else {
+        $(".scroll-bottom-btn").addClass("show");
+    }
 }
 
 
 // ============================================================
-// ACTION MENU
+// ACTION MENU (⋮)
 // ============================================================
 function bindActionButtons() {
-    $(".more-btn").off("click").on("click", function (e) {
+    $(".message-more-btn").off("click").on("click", function (e) {
         e.stopPropagation();
         openActionPopup($(this).data("id"), this);
     });
@@ -267,7 +283,14 @@ function bindActionButtons() {
 
 function openActionPopup(id, anchor) {
     const popup = $("#msg-action-popup");
-    popup.data("msg-id", id).show();
+
+    popup
+        .data("msg-id", id)
+        .css({
+            top: $(anchor).offset().top + 20,
+            left: $(anchor).offset().left - 120
+        })
+        .show();
 }
 
 function closeActionPopup() {
