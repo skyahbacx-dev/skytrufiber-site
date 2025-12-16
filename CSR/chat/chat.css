@@ -40,9 +40,7 @@
   color: #003900;
 }
 
-.ticket-filter:hover {
-  background: #dfffe4;
-}
+.ticket-filter:hover { background: #dfffe4; }
 
 .ticket-filter.active {
   background: #00a246;
@@ -62,6 +60,9 @@
   font-size: 14px;
 }
 
+/* ===========================================================
+   CLIENT LIST ITEMS
+=========================================================== */
 .client-item {
   display: flex;
   justify-content: space-between;
@@ -100,32 +101,40 @@
 }
 
 /* ===========================================================
-   CLIENT LIST TICKET STATUS COLORS (VISIBLE FIX)
+   TICKET BADGES (CLIENT LIST) + ANIMATION
 =========================================================== */
-.client-item .status {
-  font-size: 11px;
-  font-weight: bold;
+.ticket-badge {
   padding: 4px 10px;
+  font-size: 11px;
   border-radius: 12px;
+  font-weight: bold;
   white-space: nowrap;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
-/* UNRESOLVED */
-.client-item .status.UNRESOLVED {
+.ticket-badge.unresolved {
   background: #ffe1e1;
   color: #b10000;
 }
 
-/* RESOLVED */
-.client-item .status.RESOLVED {
+.ticket-badge.pending {
+  background: #fff5cc;
+  color: #c98200;
+}
+
+.ticket-badge.resolved {
   background: #d7ffe1;
   color: #007a1f;
 }
 
-/* PENDING */
-.client-item .status.PENDING {
-  background: #fff5cc;
-  color: #c98200;
+/* Pop animation when status changes */
+.ticket-badge.status-updated {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 6px rgba(0, 162, 70, 0.15);
 }
 
 /* ===========================================================
@@ -161,47 +170,51 @@
 }
 
 /* ===========================================================
-   TICKET STATUS DROPDOWN (AESTHETIC)
+   TICKET STATUS DROPDOWN (AESTHETIC + OPTIMISTIC)
 =========================================================== */
 #ticket-status-dropdown {
   appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
   padding: 6px 34px 6px 14px;
   border-radius: 14px;
   border: 1px solid #bcdcbc;
-  background:
-    linear-gradient(45deg, transparent 50%, #006d2c 50%),
-    linear-gradient(135deg, #006d2c 50%, transparent 50%),
-    linear-gradient(to right, #ffffff, #ffffff);
-  background-position:
-    calc(100% - 18px) 50%,
-    calc(100% - 12px) 50%,
-    0 0;
-  background-size: 6px 6px, 6px 6px, 100% 100%;
-  background-repeat: no-repeat;
-
   font-size: 13px;
   font-weight: 600;
-  color: #003700;
   cursor: pointer;
+  background: #ffffff;
 }
 
-/* Dropdown status colors */
 #ticket-status-dropdown.unresolved {
-  background-color: #ffecec;
+  background: #ffecec;
   color: #b10000;
 }
 
+#ticket-status-dropdown.pending {
+  background: #fff6d6;
+  color: #c98200;
+}
+
 #ticket-status-dropdown.resolved {
-  background-color: #e6ffe9;
+  background: #e6ffe9;
   color: #007a1f;
 }
 
-#ticket-status-dropdown:disabled {
+/* Saving shimmer */
+#ticket-status-dropdown.saving {
   opacity: 0.6;
-  cursor: not-allowed;
+  pointer-events: none;
+  background-image: linear-gradient(
+    90deg,
+    #e0e0e0 25%,
+    #f5f5f5 37%,
+    #e0e0e0 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
 }
 
 /* ===========================================================
@@ -215,7 +228,6 @@
   gap: 18px;
   overflow-y: auto;
   min-height: 0;
-
   background-color: #eef7f0;
   background-image: url("CSR/AHBALOGO.png");
   background-repeat: no-repeat;
@@ -263,7 +275,7 @@
 }
 
 /* ===========================================================
-   MESSAGES + GLASSMORPHISM
+   MESSAGE BUBBLES (GLASSMORPHISM)
 =========================================================== */
 .message {
   display: flex;
@@ -286,7 +298,6 @@
   height: 36px;
   border-radius: 50%;
   overflow: hidden;
-  flex-shrink: 0;
 }
 
 .message-content {
@@ -302,7 +313,6 @@
   line-height: 1.4;
   border-radius: 20px;
   backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255,255,255,0.35);
   box-shadow: 0 8px 22px rgba(0,0,0,0.12);
 }
@@ -334,7 +344,7 @@
 }
 
 /* ===========================================================
-   MORE BUTTON (ACTION TOOLBAR)
+   MORE BUTTON (⋮)
 =========================================================== */
 .message-more-btn {
   position: absolute;
@@ -344,40 +354,17 @@
   border-radius: 50%;
   border: none;
   background: rgba(255,255,255,0.9);
-  color: #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
   opacity: 0;
   z-index: 6;
-  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .message:hover .message-more-btn {
   opacity: 1;
 }
 
-.message.sent .message-more-btn {
-  left: -34px;
-}
-
-.message.received .message-more-btn {
-  right: -34px;
-}
-
-.message-more-btn:hover {
-  background: #00a246;
-  color: #ffffff;
-  transform: scale(1.1);
-}
-
-/* ===========================================================
-   ACTION POPUP
-=========================================================== */
-#msg-action-popup {
-  z-index: 99999;
-}
+.message.sent .message-more-btn { left: -34px; }
+.message.received .message-more-btn { right: -34px; }
 
 /* ===========================================================
    SCROLL TO BOTTOM BUTTON
@@ -391,7 +378,6 @@
   height: 46px;
   border-radius: 50%;
   background: #00a246;
-  border: none;
   display: none;
   justify-content: center;
   align-items: center;
@@ -400,10 +386,4 @@
   z-index: 50;
 }
 
-.scroll-bottom-btn.show {
-  display: flex;
-}
-
-.scroll-bottom-btn:hover {
-  transform: translateX(-50%) scale(1.1);
-}
+.scroll-bottom-btn.show { display: flex; }
