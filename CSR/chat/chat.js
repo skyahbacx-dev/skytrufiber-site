@@ -292,7 +292,7 @@ $(document).on("change", "#ticket-status-dropdown", function () {
 
     animateTicketBadge(newStatus);
 
-    $.post("/CSR/chat/update_ticket_status.php", {
+    $.post("/CSR/chat/ticket_update.php", {
         ticket_id: currentTicketID,
         status: newStatus,
         nocache: Date.now()
