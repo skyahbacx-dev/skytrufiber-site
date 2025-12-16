@@ -402,33 +402,32 @@
 ============================================================ */
 .msg-action-popup {
   position: absolute;
-  display: none;
-  min-width: 140px;
+  min-width: 160px;
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.18);
-  padding: 6px;
-  z-index: 99999;
+  padding: 6px 0;
+  z-index: 9999;
+  display: none;
 }
 
 .msg-action-popup button {
   width: 100%;
-  background: none;
+  padding: 10px 14px;
   border: none;
-  padding: 8px 12px;
+  background: none;
   text-align: left;
   font-size: 13px;
   cursor: pointer;
-  border-radius: 8px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .msg-action-popup button:hover {
-  background: #f0f8f3;
+  background: #f1f1f1;
 }
 
 .msg-action-popup button[data-action="delete"] {
-  color: #b10000;
+  color: #c62828;
 }
