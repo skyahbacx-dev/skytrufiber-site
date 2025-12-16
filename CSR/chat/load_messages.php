@@ -94,7 +94,7 @@ $today     = date("Y-m-d");
 $yesterday = date("Y-m-d", strtotime("-1 day"));
 
 /* ============================================================
-   RENDER MESSAGES WITH TODAY / YESTERDAY SEPARATORS
+   RENDER MESSAGES WITH DATE SEPARATORS
 ============================================================ */
 $lastDate = null;
 
@@ -108,9 +108,6 @@ foreach ($rows as $msg):
 
     $currentDate = date("Y-m-d", $createdAt);
 
-    /* --------------------------------------------
-       DATE LABEL LOGIC
-    --------------------------------------------- */
     if ($currentDate === $today) {
         $displayDate = "Today";
     } elseif ($currentDate === $yesterday) {
@@ -119,9 +116,6 @@ foreach ($rows as $msg):
         $displayDate = date("F j, Y", $createdAt);
     }
 
-    /* --------------------------------------------
-       INSERT DATE SEPARATOR (STICKY)
-    --------------------------------------------- */
     if ($currentDate !== $lastDate):
 ?>
         <div class="date-separator">
@@ -145,31 +139,29 @@ foreach ($rows as $msg):
         <div class="message-avatar"></div>
     <?php endif; ?>
 
-    <!-- MORE BUTTON (CSR ONLY, NOT DELETED) -->
-    <?php if ($sender === "csr" && !$deleted): ?>
-        <button class="message-more-btn" data-id="<?= $id ?>" title="More options">
-            <i class="fa-solid fa-ellipsis-vertical"></i>
-        </button>
-    <?php endif; ?>
+    <div class="message-content">
 
-    <div class="message-bubble">
-        <?php if ($deleted): ?>
-            <div class="deleted-text">🗑️ This message was deleted</div>
-        <?php else: ?>
-            <?= $bubble ?>
+        <?php if ($sender === "csr" && !$deleted): ?>
+            <button class="message-more-btn" data-id="<?= $id ?>" title="More options">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+            </button>
         <?php endif; ?>
-    </div>
 
-    <?php if ($edited && !$deleted): ?>
-        <div class="edited-label" style="font-size:11px;color:#777;margin-top:2px;">
-            (edited)
+        <div class="message-bubble">
+            <?php if ($deleted): ?>
+                <div class="deleted-text">🗑️ This message was deleted</div>
+            <?php else: ?>
+                <?= $bubble ?>
+            <?php endif; ?>
         </div>
-    <?php endif; ?>
 
-    <div class="message-time" style="font-size:11px;color:#777;margin-top:4px;">
-        <?= $msgTime ?>
+        <?php if ($edited && !$deleted): ?>
+            <div class="edited-label">(edited)</div>
+        <?php endif; ?>
+
+        <div class="message-time"><?= $msgTime ?></div>
+
     </div>
-
 </div>
 
 <?php endforeach; ?>
