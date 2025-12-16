@@ -119,7 +119,7 @@ $csrUser = $_SESSION["csr_user"];
 
             <div id="chat-messages" class="chat-messages"></div>
 
-            <button id="scroll-bottom-btn" class="scroll-bottom-btn">
+            <button class="scroll-bottom-btn">
                 <i class="fa-solid fa-arrow-down"></i>
             </button>
 
@@ -135,7 +135,7 @@ $csrUser = $_SESSION["csr_user"];
 
         </div>
 
-        <div id="msg-action-popup" class="msg-action-popup">
+        <div id="msg-action-popup">
             <button class="action-edit"><i class="fa-solid fa-pen"></i> Edit</button>
             <button class="action-unsend"><i class="fa-solid fa-ban"></i> Unsend</button>
             <button class="action-delete"><i class="fa-solid fa-trash"></i> Delete</button>
