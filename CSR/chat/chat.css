@@ -65,6 +65,7 @@
 .client-item {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 14px;
   cursor: pointer;
   border-bottom: 1px solid #f1f1f1;
@@ -99,6 +100,35 @@
 }
 
 /* ===========================================================
+   CLIENT LIST TICKET STATUS COLORS (VISIBLE FIX)
+=========================================================== */
+.client-item .status {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+/* UNRESOLVED */
+.client-item .status.UNRESOLVED {
+  background: #ffe1e1;
+  color: #b10000;
+}
+
+/* RESOLVED */
+.client-item .status.RESOLVED {
+  background: #d7ffe1;
+  color: #007a1f;
+}
+
+/* PENDING */
+.client-item .status.PENDING {
+  background: #fff5cc;
+  color: #c98200;
+}
+
+/* ===========================================================
    MIDDLE CHAT PANEL
 =========================================================== */
 .chat-middle-panel {
@@ -128,6 +158,50 @@
   justify-content: space-between;
   align-items: center;
   z-index: 5;
+}
+
+/* ===========================================================
+   TICKET STATUS DROPDOWN (AESTHETIC)
+=========================================================== */
+#ticket-status-dropdown {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  padding: 6px 34px 6px 14px;
+  border-radius: 14px;
+  border: 1px solid #bcdcbc;
+  background:
+    linear-gradient(45deg, transparent 50%, #006d2c 50%),
+    linear-gradient(135deg, #006d2c 50%, transparent 50%),
+    linear-gradient(to right, #ffffff, #ffffff);
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 12px) 50%,
+    0 0;
+  background-size: 6px 6px, 6px 6px, 100% 100%;
+  background-repeat: no-repeat;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #003700;
+  cursor: pointer;
+}
+
+/* Dropdown status colors */
+#ticket-status-dropdown.unresolved {
+  background-color: #ffecec;
+  color: #b10000;
+}
+
+#ticket-status-dropdown.resolved {
+  background-color: #e6ffe9;
+  color: #007a1f;
+}
+
+#ticket-status-dropdown:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ===========================================================
@@ -299,14 +373,14 @@
 }
 
 /* ===========================================================
-   ACTION POPUP (ENSURE VISIBILITY)
+   ACTION POPUP
 =========================================================== */
 #msg-action-popup {
   z-index: 99999;
 }
 
 /* ===========================================================
-   SCROLL TO BOTTOM BUTTON (RESTORED)
+   SCROLL TO BOTTOM BUTTON
 =========================================================== */
 .scroll-bottom-btn {
   position: absolute;
