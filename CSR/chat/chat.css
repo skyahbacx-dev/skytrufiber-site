@@ -173,7 +173,7 @@
   overflow: hidden;
 }
 
-/* WRAPPER FIX — REQUIRED */
+/* WRAPPER FIX */
 .chat-wrapper {
   display: flex;
   flex-direction: column;
@@ -203,7 +203,6 @@
   gap: 6px;
 }
 
-/* Lock Label */
 .client-locked-label {
   background: #777;
   padding: 3px 10px;
@@ -213,7 +212,7 @@
 }
 
 /* ===========================================================
-   CHAT MESSAGES AREA
+   CHAT MESSAGES AREA (MOSS GREEN + LOGO)
 =========================================================== */
 .chat-messages {
   flex: 1;
@@ -222,8 +221,28 @@
   flex-direction: column;
   gap: 18px;
   overflow-y: auto;
-  background: #f7fef8;
-  min-height: 0; /* FIX: prevents overflow beyond viewport */
+  min-height: 0;
+
+  background-color: #eef7f0;
+  background-image: url("CSR/AHBALOGO.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 320px auto;
+  background-attachment: fixed;
+  position: relative;
+}
+
+.chat-messages::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(238, 247, 240, 0.92);
+  z-index: 0;
+}
+
+.chat-messages > * {
+  position: relative;
+  z-index: 1;
 }
 
 .chat-messages::-webkit-scrollbar { width: 6px; }
@@ -238,12 +257,12 @@
   gap: 10px;
   max-width: 480px;
   animation: fadeInUp 0.2s;
+  position: relative;
 }
 
 .message.sent { align-self: flex-end; flex-direction: row-reverse; }
 .message.received { align-self: flex-start; }
 
-/* Avatar */
 .message-avatar {
   width: 36px;
   height: 36px;
@@ -258,25 +277,56 @@
   font-size: 15px;
 }
 
-/* CSR message */
+/* CSR */
 .message.sent .message-bubble {
-  background: #007bff !important;
-  color: white !important;
+  background: #007bff;
+  color: white;
   border-radius: 20px 20px 4px 20px;
 }
 
-/* Client message */
+/* Client */
 .message.received .message-bubble {
-  background: #e8f7e9 !important;
-  color: #103810 !important;
+  background: #e8f7e9;
+  color: #103810;
   border-radius: 20px 20px 20px 4px;
 }
 
-/* Deleted */
 .deleted-text {
   color: #777;
   font-style: italic;
   opacity: 0.7;
+}
+
+/* ===========================================================
+   MESSAGE MORE BUTTON (FIXED)
+=========================================================== */
+.message-more-btn {
+  position: absolute;
+  top: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.9);
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 5;
+}
+
+.message:hover .message-more-btn { opacity: 1; }
+
+.message.sent .message-more-btn { left: -34px; }
+.message.received .message-more-btn { right: -34px; }
+
+.message-more-btn:hover {
+  background: #00a246;
+  color: white;
+  transform: scale(1.1);
 }
 
 /* ===========================================================
@@ -292,6 +342,7 @@
   border: 1px solid #ddd;
   box-shadow: 0 5px 20px rgba(0,0,0,0.15);
   z-index: 9999;
+  transform-origin: top;
 }
 
 #msg-action-popup button {
