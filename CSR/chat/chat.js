@@ -1,5 +1,5 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — STABLE, UPDATED VERSION
+// SkyTruFiber CSR Chat System — STABLE, FIXED VERSION
 // ============================================================
 
 let currentClientID = null;
@@ -72,10 +72,8 @@ $(document).ready(function () {
         }
     });
 
-    // SCROLL DETECTION (SHOW / HIDE SCROLL BUTTON)
+    // SCROLL HANDLING
     $("#chat-messages").on("scroll", handleScrollButton);
-
-    // SCROLL BUTTON CLICK
     $(document).on("click", ".scroll-bottom-btn", scrollToBottom);
 
     // CLOSE ACTION MENU WHEN CLICKING OUTSIDE
@@ -83,6 +81,11 @@ $(document).ready(function () {
         if (!$(e.target).closest("#msg-action-popup, .message-more-btn").length) {
             closeActionPopup();
         }
+    });
+
+    // PREVENT POPUP FROM CLOSING WHEN CLICKED
+    $("#msg-action-popup").on("click", function (e) {
+        e.stopPropagation();
     });
 });
 
@@ -122,11 +125,15 @@ function loadClientInfo(id, loadMessagesNow = false) {
 
         const assignedToMe = meta.data("assigned") === "yes";
         const locked = meta.data("locked") === "true";
-        const ticketStatus = meta.data("ticket");
+        const ticketStatus = meta.data("ticket"); // unresolved | resolved | pending
 
-        $("#ticket-status-dropdown")
+        const dropdown = $("#ticket-status-dropdown");
+
+        dropdown
             .val(ticketStatus)
-            .prop("disabled", !assignedToMe);
+            .prop("disabled", !assignedToMe)
+            .removeClass("unresolved resolved pending")
+            .addClass(ticketStatus);
 
         handleChatPermission(assignedToMe, locked, ticketStatus);
 
@@ -136,7 +143,7 @@ function loadClientInfo(id, loadMessagesNow = false) {
 
 
 // ============================================================
-// LOAD FULL MESSAGES (ON CLIENT SELECT)
+// LOAD FULL MESSAGES
 // ============================================================
 function loadMessages(scrollBottom = false) {
     if (!currentTicketID) return;
@@ -174,9 +181,7 @@ function fetchNewMessages() {
             const id = parseInt($(this).data("msg-id"));
 
             if (id > lastMessageID) {
-
                 $(".temp-msg").remove();
-
                 $("#chat-messages").append($(this));
                 lastMessageID = id;
                 scrollToBottom();
@@ -272,23 +277,27 @@ function handleScrollButton() {
 
 
 // ============================================================
-// ACTION MENU (⋮)
+// ACTION MENU (⋮) — FIXED
 // ============================================================
 function bindActionButtons() {
     $(".message-more-btn").off("click").on("click", function (e) {
         e.stopPropagation();
-        openActionPopup($(this).data("id"), this);
+
+        const id = $(this).data("id");
+        const rect = this.getBoundingClientRect();
+
+        openActionPopup(id, rect);
     });
 }
 
-function openActionPopup(id, anchor) {
+function openActionPopup(id, rect) {
     const popup = $("#msg-action-popup");
 
     popup
         .data("msg-id", id)
         .css({
-            top: $(anchor).offset().top + 20,
-            left: $(anchor).offset().left - 120
+            top: rect.bottom + window.scrollY + 6,
+            left: rect.left + window.scrollX - 120
         })
         .show();
 }
