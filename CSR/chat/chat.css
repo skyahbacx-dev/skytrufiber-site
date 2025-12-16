@@ -11,7 +11,7 @@
 }
 
 /* ===========================================================
-   LEFT PANEL – CLIENTS (RESTORED)
+   LEFT PANEL – CLIENTS
 =========================================================== */
 .chat-left-panel {
   background: #ffffff;
@@ -37,13 +37,16 @@
   cursor: pointer;
   text-align: center;
   transition: 0.2s;
+  color: #003900;
 }
 
-.ticket-filter:hover { background: #dfffe4; }
+.ticket-filter:hover {
+  background: #dfffe4;
+}
 
 .ticket-filter.active {
   background: #00a246;
-  color: white;
+  color: #ffffff;
   border-color: #008639;
   font-weight: bold;
 }
@@ -119,11 +122,12 @@
 =========================================================== */
 .chat-header {
   padding: 14px 20px;
-  background: white;
+  background: #ffffff;
   border-bottom: 1px solid #dcdcdc;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  z-index: 5;
 }
 
 /* ===========================================================
@@ -170,6 +174,7 @@
   display: flex;
   justify-content: center;
   margin: 8px 0 14px;
+  pointer-events: none;
 }
 
 .date-separator span {
@@ -179,86 +184,4 @@
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  color: #1f4f2a;
-  border: 1px solid rgba(0,162,70,0.25);
-}
-
-/* ===========================================================
-   MESSAGES + GLASSMORPHISM
-=========================================================== */
-.message {
-  display: flex;
-  gap: 10px;
-  max-width: 100%;
-  position: relative;
-}
-
-.message.sent {
-  align-self: flex-end;
-  flex-direction: row-reverse;
-}
-
-.message.received {
-  align-self: flex-start;
-}
-
-.message-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.message-content {
-  max-width: 480px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.message-bubble {
-  padding: 12px 18px;
-  font-size: 15px;
-  line-height: 1.4;
-  border-radius: 20px;
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(255,255,255,0.35);
-}
-
-.message.sent .message-bubble {
-  background: rgba(0,123,255,0.65);
-  color: white;
-}
-
-.message.received .message-bubble {
-  background: rgba(214,241,221,0.75);
-  color: #103810;
-}
-
-/* ===========================================================
-   MESSAGE META
-=========================================================== */
-.message-time,
-.edited-label {
-  font-size: 11px;
-  color: #777;
-}
-
-.deleted-text {
-  font-style: italic;
-  opacity: 0.7;
-}
-
-/* ===========================================================
-   MORE BUTTON
-=========================================================== */
-.message-more-btn {
-  position: absolute;
-  top: 4px;
-  opacity: 0;
-}
-
-.message:hover .message-more-btn {
-  opacity: 1;
-}
+  color: #1f4f2
