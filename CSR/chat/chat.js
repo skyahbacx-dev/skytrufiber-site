@@ -1,5 +1,5 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — STABLE, FIXED VERSION
+// SkyTruFiber CSR Chat System — FINAL CONSOLIDATED VERSION
 // ============================================================
 
 let currentClientID = null;
@@ -22,7 +22,7 @@ $(document).ready(function () {
         loadClients(false);
     }, 6000);
 
-    // CLIENT INFO REFRESH (NO MESSAGE RELOAD)
+    // CLIENT INFO REFRESH
     clientInfoInterval = setInterval(() => {
         if (currentClientID) loadClientInfo(currentClientID, false);
     }, 3000);
@@ -76,14 +76,14 @@ $(document).ready(function () {
     $("#chat-messages").on("scroll", handleScrollButton);
     $(document).on("click", ".scroll-bottom-btn", scrollToBottom);
 
-    // CLOSE ACTION MENU WHEN CLICKING OUTSIDE
+    // CLOSE ACTION MENU OUTSIDE
     $(document).on("click", function (e) {
         if (!$(e.target).closest("#msg-action-popup, .message-more-btn").length) {
             closeActionPopup();
         }
     });
 
-    // PREVENT POPUP FROM CLOSING WHEN CLICKED
+    // PREVENT POPUP CLOSE ON CLICK
     $("#msg-action-popup").on("click", function (e) {
         e.stopPropagation();
     });
@@ -125,14 +125,15 @@ function loadClientInfo(id, loadMessagesNow = false) {
 
         const assignedToMe = meta.data("assigned") === "yes";
         const locked = meta.data("locked") === "true";
-        const ticketStatus = meta.data("ticket"); // unresolved | resolved | pending
+        const ticketStatus = meta.data("ticket");
 
         const dropdown = $("#ticket-status-dropdown");
 
         dropdown
             .val(ticketStatus)
+            .data("current", ticketStatus)
             .prop("disabled", !assignedToMe)
-            .removeClass("unresolved resolved pending")
+            .removeClass("unresolved pending resolved")
             .addClass(ticketStatus);
 
         handleChatPermission(assignedToMe, locked, ticketStatus);
@@ -165,7 +166,7 @@ function loadMessages(scrollBottom = false) {
 
 
 // ============================================================
-// FETCH NEW MESSAGES (APPEND ONLY)
+// FETCH NEW MESSAGES
 // ============================================================
 function fetchNewMessages() {
     if (!currentTicketID) return;
@@ -214,7 +215,7 @@ function sendMessage() {
 
 
 // ============================================================
-// TEMP MESSAGE BUBBLE
+// TEMP MESSAGE
 // ============================================================
 function appendTempBubble(msg) {
 
@@ -256,7 +257,7 @@ function handleChatPermission(isAssignedToMe, isLocked, ticketStatus) {
 
 
 // ============================================================
-// SCROLL HANDLING
+// SCROLL
 // ============================================================
 function scrollToBottom() {
     const box = $("#chat-messages");
@@ -268,32 +269,86 @@ function handleScrollButton() {
     const box = $("#chat-messages")[0];
     const nearBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 120;
 
-    if (nearBottom) {
-        $(".scroll-bottom-btn").removeClass("show");
-    } else {
-        $(".scroll-bottom-btn").addClass("show");
-    }
+    $(".scroll-bottom-btn").toggleClass("show", !nearBottom);
 }
 
 
 // ============================================================
-// ACTION MENU (⋮) — FIXED
+// TICKET STATUS CHANGE (OPTIMISTIC + ANIMATION)
+// ============================================================
+$(document).on("change", "#ticket-status-dropdown", function () {
+
+    if (!currentTicketID) return;
+
+    const dropdown = $(this);
+    const newStatus = dropdown.val();
+    const oldStatus = dropdown.data("current");
+
+    dropdown
+        .data("current", newStatus)
+        .removeClass("unresolved pending resolved")
+        .addClass(newStatus)
+        .addClass("saving");
+
+    animateTicketBadge(newStatus);
+
+    $.post("/CSR/chat/update_ticket_status.php", {
+        ticket_id: currentTicketID,
+        status: newStatus,
+        nocache: Date.now()
+    })
+    .done(() => {
+        dropdown.removeClass("saving");
+        loadClients(false);
+    })
+    .fail(() => {
+        alert("Failed to update ticket status.");
+
+        dropdown
+            .removeClass("saving")
+            .removeClass(newStatus)
+            .addClass(oldStatus)
+            .val(oldStatus)
+            .data("current", oldStatus);
+
+        animateTicketBadge(oldStatus);
+    });
+});
+
+
+// ============================================================
+// BADGE ANIMATION
+// ============================================================
+function animateTicketBadge(status) {
+
+    const badge = $(".client-item.active-client .ticket-badge");
+    if (!badge.length) return;
+
+    badge
+        .removeClass("unresolved pending resolved status-updated")
+        .addClass(status)
+        .addClass("status-updated");
+
+    setTimeout(() => {
+        badge.removeClass("status-updated");
+    }, 300);
+}
+
+
+// ============================================================
+// ACTION MENU (⋮) + ACTIONS
 // ============================================================
 function bindActionButtons() {
     $(".message-more-btn").off("click").on("click", function (e) {
         e.stopPropagation();
-
         const id = $(this).data("id");
         const rect = this.getBoundingClientRect();
-
         openActionPopup(id, rect);
     });
 }
 
 function openActionPopup(id, rect) {
-    const popup = $("#msg-action-popup");
-
-    popup
+    $("#msg-action-popup")
         .data("msg-id", id)
         .css({
             top: rect.bottom + window.scrollY + 6,
@@ -304,4 +359,73 @@ function openActionPopup(id, rect) {
 
 function closeActionPopup() {
     $("#msg-action-popup").hide();
+}
+
+
+// ============================================================
+// ACTION POPUP BUTTONS
+// ============================================================
+$(document).on("click", "#msg-action-popup button", function () {
+
+    const action = $(this).data("action");
+    const msgId = $("#msg-action-popup").data("msg-id");
+
+    if (!action || !msgId) return;
+
+    if (action === "delete") {
+        if (!confirm("Delete this message?")) return;
+        $.post("/CSR/chat/delete_message.php", { msg_id: msgId }, () => loadMessages(true));
+    }
+
+    if (action === "unsend") {
+        if (!confirm("Unsend this message?")) return;
+        $.post("/CSR/chat/unsend_message.php", { msg_id: msgId }, () => loadMessages(true));
+    }
+
+    if (action === "edit") {
+        startEditMessage(msgId);
+    }
+
+    closeActionPopup();
+});
+
+
+// ============================================================
+// EDIT MESSAGE
+// ============================================================
+function startEditMessage(msgId) {
+
+    const bubble = $(`.message[data-msg-id='${msgId}'] .message-bubble`);
+    if (!bubble.length) return;
+
+    const oldText = bubble.text().trim();
+
+    $("#chat-input").val(oldText).focus();
+
+    $("#send-btn")
+        .text("Update")
+        .off("click")
+        .on("click", function () {
+            updateMessage(msgId);
+        });
+}
+
+function updateMessage(msgId) {
+
+    const newText = $("#chat-input").val().trim();
+    if (!newText) return;
+
+    $.post("/CSR/chat/edit_message.php", {
+        msg_id: msgId,
+        message: newText
+    }, () => {
+
+        $("#send-btn")
+            .text("Send")
+            .off("click")
+            .on("click", sendMessage);
+
+        $("#chat-input").val("");
+        loadMessages(true);
+    });
 }
