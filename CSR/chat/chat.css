@@ -184,4 +184,152 @@
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  color: #1f4f2
+  color: #1f4f2a;
+  border: 1px solid rgba(0,162,70,0.25);
+}
+
+/* ===========================================================
+   MESSAGES + GLASSMORPHISM
+=========================================================== */
+.message {
+  display: flex;
+  gap: 10px;
+  max-width: 100%;
+  position: relative;
+}
+
+.message.sent {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.message.received {
+  align-self: flex-start;
+}
+
+.message-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.message-content {
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.message-bubble {
+  padding: 12px 18px;
+  font-size: 15px;
+  line-height: 1.4;
+  border-radius: 20px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.35);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.12);
+}
+
+.message.sent .message-bubble {
+  background: rgba(0,123,255,0.65);
+  color: #ffffff;
+  border-radius: 20px 20px 4px 20px;
+}
+
+.message.received .message-bubble {
+  background: rgba(214,241,221,0.75);
+  color: #103810;
+  border-radius: 20px 20px 20px 4px;
+}
+
+/* ===========================================================
+   MESSAGE META
+=========================================================== */
+.message-time,
+.edited-label {
+  font-size: 11px;
+  color: #777;
+}
+
+.deleted-text {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* ===========================================================
+   MORE BUTTON (ACTION TOOLBAR)
+=========================================================== */
+.message-more-btn {
+  position: absolute;
+  top: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.9);
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  z-index: 6;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.message:hover .message-more-btn {
+  opacity: 1;
+}
+
+.message.sent .message-more-btn {
+  left: -34px;
+}
+
+.message.received .message-more-btn {
+  right: -34px;
+}
+
+.message-more-btn:hover {
+  background: #00a246;
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+/* ===========================================================
+   ACTION POPUP (ENSURE VISIBILITY)
+=========================================================== */
+#msg-action-popup {
+  z-index: 99999;
+}
+
+/* ===========================================================
+   SCROLL TO BOTTOM BUTTON (RESTORED)
+=========================================================== */
+.scroll-bottom-btn {
+  position: absolute;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #00a246;
+  border: none;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  cursor: pointer;
+  z-index: 50;
+}
+
+.scroll-bottom-btn.show {
+  display: flex;
+}
+
+.scroll-bottom-btn:hover {
+  transform: translateX(-50%) scale(1.1);
+}
