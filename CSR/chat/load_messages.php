@@ -29,13 +29,12 @@ if ($ticket_id <= 0) {
 $csrUser = $_SESSION["csr_user"] ?? null;
 
 if (!$csrUser) {
-    // CSRs must NOT be logged out silently
     echo "SESSION_EXPIRED";
     exit;
 }
 
 /* ============================================================
-   FETCH TICKET + USER META (matches your DB)
+   FETCH TICKET + USER META
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT 
@@ -57,8 +56,6 @@ if (!$ticket) {
 }
 
 $ticketStatus = strtolower($ticket["ticket_status"]);
-$isAssigned   = ($ticket["assigned_csr"] === $csrUser);
-$isLocked     = ($ticket["ticket_lock"] ? true : false);
 
 /* ============================================================
    IF RESOLVED → READ ONLY MESSAGE
@@ -80,7 +77,7 @@ $stmt = $conn->prepare("
         id, sender_type, message, deleted, edited, created_at
     FROM chat
     WHERE ticket_id = ?
-    ORDER BY id ASC
+    ORDER BY created_at ASC, id ASC
 ");
 $stmt->execute([$ticket_id]);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -91,50 +88,88 @@ if (!$rows) {
 }
 
 /* ============================================================
-   RENDER MESSAGES
+   DATE HELPERS
 ============================================================ */
+$today     = date("Y-m-d");
+$yesterday = date("Y-m-d", strtotime("-1 day"));
+
+/* ============================================================
+   RENDER MESSAGES WITH TODAY / YESTERDAY SEPARATORS
+============================================================ */
+$lastDate = null;
+
 foreach ($rows as $msg):
 
-    $id      = $msg["id"];
-    $sender  = $msg["sender_type"];
-    $deleted = $msg["deleted"];
-    $edited  = $msg["edited"];
+    $id        = $msg["id"];
+    $sender    = $msg["sender_type"];
+    $deleted   = (bool)$msg["deleted"];
+    $edited    = (bool)$msg["edited"];
+    $createdAt = strtotime($msg["created_at"]);
+
+    $currentDate = date("Y-m-d", $createdAt);
+
+    /* --------------------------------------------
+       DATE LABEL LOGIC
+    --------------------------------------------- */
+    if ($currentDate === $today) {
+        $displayDate = "Today";
+    } elseif ($currentDate === $yesterday) {
+        $displayDate = "Yesterday";
+    } else {
+        $displayDate = date("F j, Y", $createdAt);
+    }
+
+    /* --------------------------------------------
+       INSERT DATE SEPARATOR (STICKY)
+    --------------------------------------------- */
+    if ($currentDate !== $lastDate):
+?>
+        <div class="date-separator">
+            <span><?= htmlspecialchars($displayDate) ?></span>
+        </div>
+<?php
+        $lastDate = $currentDate;
+    endif;
+
     $bubble  = nl2br(htmlspecialchars($msg["message"]));
-    $msgTime = date("M j • g:i A", strtotime($msg["created_at"]));
+    $msgTime = date("g:i A", $createdAt);
     $side    = ($sender === "csr") ? "sent" : "received";
 ?>
 <div class="message <?= $side ?>" data-msg-id="<?= $id ?>">
 
     <?php if ($side === "received"): ?>
-        <div class="message-avatar"><img src="/upload/default-avatar.png"></div>
+        <div class="message-avatar">
+            <img src="/upload/default-avatar.png" alt="Client">
+        </div>
     <?php else: ?>
         <div class="message-avatar"></div>
     <?php endif; ?>
 
-    <div class="message-content">
+    <!-- MORE BUTTON (CSR ONLY, NOT DELETED) -->
+    <?php if ($sender === "csr" && !$deleted): ?>
+        <button class="message-more-btn" data-id="<?= $id ?>" title="More options">
+            <i class="fa-solid fa-ellipsis-vertical"></i>
+        </button>
+    <?php endif; ?>
 
-        <!-- CSR action menu (but not for deleted messages) -->
-        <?php if ($sender === "csr" && !$deleted): ?>
-            <button class="more-btn" data-id="<?= $id ?>">
-                <i class="fa-solid fa-ellipsis-vertical"></i>
-            </button>
+    <div class="message-bubble">
+        <?php if ($deleted): ?>
+            <div class="deleted-text">🗑️ This message was deleted</div>
+        <?php else: ?>
+            <?= $bubble ?>
         <?php endif; ?>
-
-        <div class="message-bubble">
-            <?php if ($deleted): ?>
-                <div class="deleted-text">🗑️ <i>This message was deleted</i></div>
-            <?php else: ?>
-                <div class="msg-text"><?= $bubble ?></div>
-            <?php endif; ?>
-        </div>
-
-        <?php if ($edited && !$deleted): ?>
-            <div class="edited-label">(edited)</div>
-        <?php endif; ?>
-
-        <div class="message-time"><?= $msgTime ?></div>
-
     </div>
+
+    <?php if ($edited && !$deleted): ?>
+        <div class="edited-label" style="font-size:11px;color:#777;margin-top:2px;">
+            (edited)
+        </div>
+    <?php endif; ?>
+
+    <div class="message-time" style="font-size:11px;color:#777;margin-top:4px;">
+        <?= $msgTime ?>
+    </div>
+
 </div>
 
 <?php endforeach; ?>
