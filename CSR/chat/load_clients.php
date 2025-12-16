@@ -15,18 +15,14 @@ require __DIR__ . "/../../db_connect.php";
 $csrUser = $_SESSION["csr_user"] ?? null;
 $filter  = $_POST["filter"] ?? "all"; // all | unresolved | pending | resolved
 
-// If CSR session expired → return silent flag (chat.js will logout)
+// If CSR session expired → return silent flag
 if (!$csrUser) {
     echo "<div data-session='expired'></div>";
     exit;
 }
 
 /* ============================================================
-   FETCH CLIENT LIST (FASTEST & ACCURATE)
-   Includes:
-   - Last chat message
-   - Last ticket status
-   - Assigned CSR
+   FETCH CLIENT LIST
 ============================================================ */
 $stmt = $conn->prepare("
     SELECT
@@ -35,27 +31,24 @@ $stmt = $conn->prepare("
         u.assigned_csr,
         u.ticket_lock,
 
-        /* Latest chat message */
         (
-            SELECT message 
-            FROM chat 
-            WHERE client_id = u.id 
+            SELECT message
+            FROM chat
+            WHERE client_id = u.id
               AND deleted IS FALSE
-            ORDER BY id DESC 
+            ORDER BY id DESC
             LIMIT 1
         ) AS last_msg,
 
-        /* Latest chat timestamp */
         (
-            SELECT created_at 
-            FROM chat 
-            WHERE client_id = u.id 
+            SELECT created_at
+            FROM chat
+            WHERE client_id = u.id
               AND deleted IS FALSE
-            ORDER BY id DESC 
+            ORDER BY id DESC
             LIMIT 1
         ) AS last_time,
 
-        /* Latest ticket status */
         (
             SELECT status
             FROM tickets
@@ -91,50 +84,48 @@ function matchFilter($status, $filter)
 ============================================================ */
 foreach ($clients as $row):
 
-    $cid         = $row["id"];
-    $name        = htmlspecialchars($row["full_name"]);
-    $status      = strtolower($row["ticket_status"] ?? "unresolved");
-    $assignedTo  = $row["assigned_csr"];
-    $isLocked    = ($row["ticket_lock"] ? true : false);
+    $cid        = $row["id"];
+    $name       = htmlspecialchars($row["full_name"]);
+    $statusRaw  = strtolower($row["ticket_status"] ?? "unresolved");
+    $statusUC   = strtoupper($statusRaw);
+    $assignedTo = $row["assigned_csr"];
+    $isLocked   = ($row["ticket_lock"] ? true : false);
 
-    if (!matchFilter($status, $filter)) continue;
+    if (!matchFilter($statusRaw, $filter)) continue;
 
-    /* Badge Colors */
-    switch ($status) {
-        case "resolved":
-            $badge = "<span class='ticket-badge resolved'>RESOLVED</span>";
-            break;
+    /* ========================================================
+       STATUS BADGE (CSS-COMPATIBLE)
+       ✔ Works with new .status CSS
+       ✔ Does NOT break old styling
+    ========================================================= */
+    $badge = "
+        <span class='status {$statusUC}' data-status='{$statusRaw}'>
+            {$statusUC}
+        </span>
+    ";
 
-        case "pending":
-            $badge = "<span class='ticket-badge pending'>PENDING</span>";
-            break;
-
-        default:
-            $badge = "<span class='ticket-badge unresolved'>UNRESOLVED</span>";
-            break;
-    }
-
-    /* Assignment Logic */
+    /* ========================================================
+       ASSIGNMENT ICON
+    ========================================================= */
     if (!$assignedTo) {
-        // No CSR assigned
-        $icon = "<button class='assign-btn' data-id='$cid'>+</button>";
-    }
-    elseif ($assignedTo === $csrUser) {
-        // Assigned to ME
-        $icon = "<button class='unassign-btn' data-id='$cid'>−</button>";
-    }
-    else {
-        // Assigned to ANOTHER CSR
-        $icon = "<div class='locked-icon' data-id='$cid'>🔒</div>";
+        $icon = "<button class='assign-btn' data-id='{$cid}'>+</button>";
+    } elseif ($assignedTo === $csrUser) {
+        $icon = "<button class='unassign-btn' data-id='{$cid}'>−</button>";
+    } else {
+        $icon = "<div class='locked-icon' title='Assigned to another CSR'>🔒</div>";
     }
 
-    /* Last message preview */
+    /* ========================================================
+       LAST MESSAGE PREVIEW
+    ========================================================= */
     $lastMsg = $row["last_msg"]
         ? htmlspecialchars($row["last_msg"])
         : "No messages yet";
-
 ?>
-<div class="client-item" data-id="<?= $cid ?>" data-name="<?= $name ?>">
+<div class="client-item"
+     data-id="<?= $cid ?>"
+     data-name="<?= $name ?>"
+     data-status="<?= $statusRaw ?>">
 
     <div class="client-info">
         <strong><?= $name ?></strong>
