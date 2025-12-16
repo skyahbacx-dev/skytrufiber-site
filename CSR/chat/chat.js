@@ -293,10 +293,12 @@ $(document).on("change", "#ticket-status-dropdown", function () {
     animateTicketBadge(newStatus);
 
     $.post("/CSR/chat/ticket_update.php", {
+        client_id: currentClientID,   // 🔥 REQUIRED
         ticket_id: currentTicketID,
         status: newStatus,
         nocache: Date.now()
     })
+
     .done(() => {
         dropdown.removeClass("saving");
         loadClients(false);
