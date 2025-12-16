@@ -32,7 +32,7 @@ if (!$clientID || !$ticketID || !$status) {
 }
 
 $validStatuses = ["unresolved", "pending", "resolved"];
-if (!in_array($status, $validStatuses)) {
+if (!in_array($status, $validStatuses, true)) {
     echo json_encode(["ok" => false, "msg" => "INVALID_STATUS"]);
     exit;
 }
@@ -59,36 +59,31 @@ if (!$ticket) {
 }
 
 $currentStatus = strtolower($ticket["ticket_status"]);
-$dbClientID    = intval($ticket["client_id"]);
+$dbClientID    = (int)$ticket["client_id"];
 $assignedCSR   = $ticket["assigned_csr"];
 
 /* ============================================================
    SECURITY CHECKS
 ============================================================ */
 
-// 1. Ticket must match client
+// Ticket must match client
 if ($dbClientID !== $clientID) {
     echo json_encode(["ok" => false, "msg" => "CLIENT_TICKET_MISMATCH"]);
     exit;
 }
 
-// 2. CSR must be assigned
-if ($assignedCSR !== $csrUser) {
+// CSR must be assigned OR reopening their own resolved ticket
+if ($assignedCSR !== $csrUser && $currentStatus !== "resolved") {
     echo json_encode(["ok" => false, "msg" => "NOT_ASSIGNED"]);
     exit;
 }
 
-// 3. Already resolved → cannot change
-if ($currentStatus === "resolved") {
-    echo json_encode(["ok" => false, "msg" => "ALREADY_RESOLVED"]);
-    exit;
-}
-
 /* ============================================================
-   UPDATE STATUS (ONLY IF STATUS CHANGE)
+   UPDATE STATUS (ONLY IF CHANGED)
 ============================================================ */
 if ($currentStatus !== $status) {
 
+    // Update ticket status
     $update = $conn->prepare("
         UPDATE tickets
         SET status = :s
@@ -105,16 +100,18 @@ if ($currentStatus !== $status) {
         VALUES (:tid, :cid, :csr, :action, NOW())
     ");
     $log->execute([
-        ":tid"     => $ticketID,
-        ":cid"     => $clientID,
-        ":csr"     => $csrUser,
-        ":action"  => $status
+        ":tid"    => $ticketID,
+        ":cid"    => $clientID,
+        ":csr"    => $csrUser,
+        ":action" => $currentStatus . "_to_" . $status
     ]);
 }
 
 /* ============================================================
-   IF RESOLVED → UNASSIGN & UNLOCK USER
+   STATUS SIDE EFFECTS
 ============================================================ */
+
+/* ---- RESOLVED ---- */
 if ($status === "resolved") {
 
     $unlock = $conn->prepare("
@@ -129,9 +126,22 @@ if ($status === "resolved") {
     $unlock->execute([$clientID]);
 }
 
+/* ---- REOPEN (FROM RESOLVED) ---- */
+if ($currentStatus === "resolved" && $status !== "resolved") {
+
+    $reassign = $conn->prepare("
+        UPDATE users
+        SET 
+            assigned_csr = ?,
+            ticket_lock = TRUE,
+            is_locked = TRUE
+        WHERE id = ?
+    ");
+    $reassign->execute([$csrUser, $clientID]);
+}
+
 /* ============================================================
-   SUCCESS RESPONSE
+   SUCCESS
 ============================================================ */
 echo json_encode(["ok" => true]);
 exit;
-?>
