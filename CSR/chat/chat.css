@@ -57,7 +57,7 @@
 =========================================================== */
 .chat-messages {
   flex: 1;
-  padding: 22px 26px;
+  padding: 20px 25px;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -90,7 +90,7 @@
 .chat-messages::-webkit-scrollbar-thumb { background: #a7d9b7; }
 
 /* ===========================================================
-   STICKY DATE SEPARATORS
+   STICKY DATE SEPARATOR
 =========================================================== */
 .date-separator {
   position: sticky;
@@ -98,31 +98,30 @@
   z-index: 4;
   display: flex;
   justify-content: center;
-  margin: 6px 0 12px;
+  margin: 8px 0 14px;
   pointer-events: none;
 }
 
 .date-separator span {
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255,255,255,0.75);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   padding: 6px 16px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
   color: #1f4f2a;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
   border: 1px solid rgba(0,162,70,0.25);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
 }
 
 /* ===========================================================
-   MESSAGE BUBBLES (GLASSMORPHISM)
+   MESSAGE WRAPPER
 =========================================================== */
 .message {
   display: flex;
   align-items: flex-end;
   gap: 10px;
-  max-width: 480px;
+  max-width: 100%;
   animation: fadeInUp 0.2s;
   position: relative;
 }
@@ -136,12 +135,15 @@
   align-self: flex-start;
 }
 
-/* Avatar */
+/* ===========================================================
+   AVATAR
+=========================================================== */
 .message-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .message-avatar img {
@@ -149,33 +151,60 @@
   height: 100%;
 }
 
-/* GLASS BUBBLE BASE */
+/* ===========================================================
+   MESSAGE CONTENT (RESTORED)
+=========================================================== */
+.message-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 480px;
+}
+
+/* ===========================================================
+   GLASS MESSAGE BUBBLES
+=========================================================== */
 .message-bubble {
-  padding: 13px 18px;
-  border-radius: 20px;
+  padding: 12px 18px;
   font-size: 15px;
   line-height: 1.4;
+  border-radius: 20px;
+
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 10px 28px rgba(0,0,0,0.12);
   border: 1px solid rgba(255,255,255,0.35);
 }
 
-/* CSR GLASS */
+/* CSR */
 .message.sent .message-bubble {
-  background: rgba(0, 123, 255, 0.65);
-  color: #ffffff;
+  background: rgba(0,123,255,0.65);
+  color: white;
   border-radius: 20px 20px 4px 20px;
 }
 
-/* CLIENT GLASS */
+/* CLIENT */
 .message.received .message-bubble {
-  background: rgba(214, 241, 221, 0.75);
+  background: rgba(214,241,221,0.75);
   color: #103810;
   border-radius: 20px 20px 20px 4px;
 }
 
-/* Deleted */
+/* ===========================================================
+   MESSAGE META (RESTORED)
+=========================================================== */
+.message-time {
+  font-size: 11px;
+  color: #777;
+  margin-top: 2px;
+}
+
+.edited-label {
+  font-size: 11px;
+  color: #777;
+  margin-top: 2px;
+}
+
 .deleted-text {
   color: #555;
   font-style: italic;
@@ -183,7 +212,7 @@
 }
 
 /* ===========================================================
-   MESSAGE MORE BUTTON
+   MORE BUTTON (FIXED)
 =========================================================== */
 .message-more-btn {
   position: absolute;
@@ -212,22 +241,6 @@
   background: #00a246;
   color: white;
   transform: scale(1.1);
-}
-
-/* ===========================================================
-   ACTION POPUP
-=========================================================== */
-#msg-action-popup {
-  position: absolute;
-  background: white;
-  border-radius: 12px;
-  padding: 6px 0;
-  display: none;
-  width: 160px;
-  border: 1px solid #ddd;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-  z-index: 9999;
-  transform-origin: top;
 }
 
 /* ===========================================================
