@@ -87,7 +87,7 @@ body {
     position: fixed;
     top: 55px;
     left: 0;
-    width: 60px; /* collapsed width */
+    width: 60px;
     height: calc(100vh - 55px);
     background: #1c1c1c;
     display: flex;
@@ -98,10 +98,9 @@ body {
     z-index: 60;
 }
 
-/* Expanded state */
+/* Expanded */
 .sidebar.active {
     width: 260px;
-    background: #1c1c1c;
     box-shadow: 6px 0 18px rgba(0,0,0,0.08);
 }
 
@@ -112,10 +111,10 @@ body {
     padding: 12px 18px;
     font-weight: bold;
     font-size: 14px;
-    color: #006622;
+    color: #9dffb2;
     opacity: 0;
     transform: translateX(-10px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .sidebar.active .side-title {
@@ -138,11 +137,11 @@ body {
     gap: 14px;
     padding: 0 18px;
     font-size: 15px;
-    color: white;
+    color: #ffffff;
     transition: background 0.25s ease;
 }
 
-/* Icon always visible */
+/* Label animation */
 .side-item span {
     white-space: nowrap;
     opacity: 0;
@@ -150,15 +149,9 @@ body {
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
-/* Expanded label */
 .sidebar.active .side-item span {
     opacity: 1;
     transform: translateX(0);
-}
-
-/* Colors when expanded */
-.sidebar.active .side-item {
-    color: #014d1e;
 }
 
 /* Hover */
@@ -166,25 +159,18 @@ body {
     background: rgba(255,255,255,0.12);
 }
 
-.sidebar.active .side-item:hover {
-    background: #f3fff3;
-}
-
-/* Active */
+/* Active item */
 .side-item.active {
     background: rgba(255,255,255,0.18);
-}
-
-.sidebar.active .side-item.active {
-    background: white;
     font-weight: bold;
-    border-right: 4px solid #05702e;
+    border-right: 4px solid #0ba34d;
+    color: #ffffff;
 }
 
 /* Logout */
 .side-item.logout {
     margin-top: auto;
-    color: #ff4d4d;
+    color: #ff6b6b;
     font-weight: bold;
 }
 
@@ -221,7 +207,6 @@ body {
     transition: opacity 0.2s ease;
 }
 
-/* Show tooltip only when collapsed */
 .sidebar:not(.active) .side-item:hover::after,
 .sidebar:not(.active) .side-item:hover::before {
     opacity: 1;
@@ -245,7 +230,6 @@ body {
     opacity: 1;
     pointer-events: auto;
 }
-
 
 /* =====================
    MAIN CONTENT
