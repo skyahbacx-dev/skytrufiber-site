@@ -89,58 +89,38 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 </div>
 
 <!-- ======================================================
-     COLLAPSED ICON BAR (ALWAYS VISIBLE)
-====================================================== -->
-<div class="sidebar-collapsed">
-    <button class="icon-btn"
-            data-tooltip="Chat Dashboard"
-            onclick="navigateEncrypted('csr_chat')">💬</button>
-
-    <button class="icon-btn"
-            data-tooltip="My Clients"
-            onclick="navigateEncrypted('csr_clients')">👥</button>
-
-    <button class="icon-btn"
-            data-tooltip="Reminders"
-            onclick="navigateEncrypted('csr_reminders')">⏱</button>
-
-    <button class="icon-btn"
-            data-tooltip="Survey Responses"
-            onclick="navigateEncrypted('csr_survey')">📄</button>
-
-    <button class="icon-btn logout"
-            data-tooltip="Logout"
-            onclick="window.location='/csr/logout'">🚪</button>
-</div>
-
-<!-- ======================================================
-     EXPANDING SIDEBAR (SAME ICON BAR, WITH LABELS)
+     SINGLE SIDEBAR (ICONS ALWAYS VISIBLE)
 ====================================================== -->
 <div class="sidebar" id="sidebar">
 
     <div class="side-title">MENU</div>
 
     <button class="side-item <?= $tab==='CHAT'?'active':'' ?>"
-            onclick="navigateEncrypted('csr_chat')">
+            onclick="navigateEncrypted('csr_chat')"
+            data-tooltip="Chat Dashboard">
         💬 <span>Chat Dashboard</span>
     </button>
 
     <button class="side-item <?= $tab==='CLIENTS'?'active':'' ?>"
-            onclick="navigateEncrypted('csr_clients')">
+            onclick="navigateEncrypted('csr_clients')"
+            data-tooltip="My Clients">
         👥 <span>My Clients</span>
     </button>
 
     <button class="side-item <?= $tab==='REMINDERS'?'active':'' ?>"
-            onclick="navigateEncrypted('csr_reminders')">
+            onclick="navigateEncrypted('csr_reminders')"
+            data-tooltip="Reminders">
         ⏱ <span>Reminders</span>
     </button>
 
     <button class="side-item <?= $tab==='SURVEY'?'active':'' ?>"
-            onclick="navigateEncrypted('csr_survey')">
+            onclick="navigateEncrypted('csr_survey')"
+            data-tooltip="Survey Responses">
         📄 <span>Survey Responses</span>
     </button>
 
     <button class="side-item logout"
+            data-tooltip="Logout"
             onclick="window.location='/csr/logout'">
         🚪 <span>Logout</span>
     </button>
