@@ -62,8 +62,12 @@ $(document).ready(function () {
         currentClientID = $(this).data("id");
         $("#chat-client-name").text($(this).data("name"));
 
-        $("#chat-messages").empty();
+        const chatBox = $("#chat-messages");
+
+        chatBox.addClass("loading");
+        chatBox.empty();          // clear old messages
         lastMessageID = 0;
+
 
         loadClientInfo(currentClientID, true);
 
@@ -167,27 +171,34 @@ function loadClientInfo(id, loadMessagesNow = false) {
 function loadMessages(scrollBottom = false) {
     if (!currentTicketID) return;
 
+    const chatBox = $("#chat-messages");
+
     $.post("/CSR/chat/load_messages.php", {
         ticket_id: currentTicketID,
         nocache: Date.now()
     }, html => {
 
-        $("#chat-messages").html(html);
+        chatBox.html(html);
 
-        const last = $("#chat-messages .message").last();
+        const last = chatBox.find(".message").last();
         lastMessageID = last.length ? parseInt(last.data("msg-id")) : 0;
 
         bindActionButtons();
+
+        // 🔥 Fade messages back in
+        requestAnimationFrame(() => {
+            chatBox.removeClass("loading");
+        });
+
         if (scrollBottom) scrollToBottom();
     });
 }
-
 
 /* ============================================================
    FETCH NEW MESSAGES
 ============================================================ */
 function fetchNewMessages() {
-    if (!currentTicketID) return;
+    if (!currentTicketID || $("#chat-messages").hasClass("loading")) return;
 
     $.post("/CSR/chat/load_messages.php", {
         ticket_id: currentTicketID,
