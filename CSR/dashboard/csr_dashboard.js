@@ -1,28 +1,38 @@
 /* ============================================================
-   CSR DASHBOARD — CLEAN / FINAL JS
+   CSR DASHBOARD — CLEAN / FINAL JS (FIXED)
 ============================================================ */
 
+/* =========================
+   SIDEBAR TOGGLE
+========================= */
 function toggleSidebar() {
-    document.querySelector('.sidebar').classList.toggle('active');
-    document.querySelector('.sidebar-overlay').classList.toggle('active');
-    document.querySelector('.dashboard-container').classList.toggle('shifted');
-}
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.querySelector(".sidebar-overlay");
+    const dashboard = document.querySelector(".dashboard-container");
+
+    if (!sidebar || !overlay || !dashboard) return;
 
     const isActive = sidebar.classList.toggle("active");
     overlay.classList.toggle("active", isActive);
+    dashboard.classList.toggle("shifted", isActive);
 }
 
-// Navigation with loader
+/* =========================
+   NAVIGATION WITH LOADER
+========================= */
 function navigate(tab) {
     showLoader();
-    window.location = "csr_dashboard.php?tab=" + tab;
+    window.location.href = "csr_dashboard.php?tab=" + tab;
 }
 
-// Loader show / hide
+/* =========================
+   LOADER
+========================= */
 function showLoader() {
     const overlay = document.getElementById("loadingOverlay");
     if (overlay) overlay.style.display = "flex";
 }
+
 function hideLoader() {
     const overlay = document.getElementById("loadingOverlay");
     if (overlay) overlay.style.display = "none";
@@ -30,28 +40,32 @@ function hideLoader() {
 
 document.addEventListener("DOMContentLoaded", hideLoader);
 
-/* ============================================================
-   AUTO-CLOSE SIDEBAR ON OUTSIDE CLICK
-============================================================ */
+/* =========================
+   AUTO-CLOSE SIDEBAR
+========================= */
 document.addEventListener("click", function (e) {
     const sidebar = document.getElementById("sidebar");
     const overlay = document.querySelector(".sidebar-overlay");
+    const hamburger = document.querySelector(".hamburger");
 
+    if (!sidebar || !overlay) return;
     if (!sidebar.classList.contains("active")) return;
 
-    if (!sidebar.contains(e.target) &&
-        !e.target.classList.contains("hamburger") &&
-        !e.target.closest(".hamburger")) {
-
+    if (
+        !sidebar.contains(e.target) &&
+        !hamburger.contains(e.target)
+    ) {
         sidebar.classList.remove("active");
         overlay.classList.remove("active");
+        document.querySelector(".dashboard-container")
+            ?.classList.remove("shifted");
     }
 });
 
-/* ============================================================
-   SMART RESIZE BEHAVIOR
-============================================================ */
-let lastWidth = window.innerWidth; // <-- Only declared ONCE.
+/* =========================
+   RESPONSIVE BEHAVIOR
+========================= */
+let lastWidth = window.innerWidth;
 
 window.addEventListener("resize", () => {
     const now = window.innerWidth;
@@ -59,8 +73,11 @@ window.addEventListener("resize", () => {
     if (lastWidth <= 900 && now > 900) {
         const sidebar = document.getElementById("sidebar");
         const overlay = document.querySelector(".sidebar-overlay");
-        sidebar.classList.remove("active");
-        overlay.classList.remove("active");
+        const dashboard = document.querySelector(".dashboard-container");
+
+        sidebar?.classList.remove("active");
+        overlay?.classList.remove("active");
+        dashboard?.classList.remove("shifted");
     }
 
     lastWidth = now;
