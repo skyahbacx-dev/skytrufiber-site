@@ -431,3 +431,41 @@
 .msg-action-popup button[data-action="delete"] {
   color: #c62828;
 }
+/* ===============================
+   CLIENT LIST STATUS COLORS
+================================ */
+
+.client-status {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 14px;
+    display: inline-block;
+    min-width: 92px;
+    text-align: center;
+    letter-spacing: 0.3px;
+}
+
+/* UNRESOLVED */
+.client-status.unresolved {
+    background: #ffe1e1;
+    color: #b10000;
+    border: 1px solid #f5bcbc;
+}
+
+/* PENDING */
+.client-status.pending {
+    background: #fff3cd;
+    color: #b26a00;
+    border: 1px solid #ffe08a;
+}
+
+/* RESOLVED */
+.client-status.resolved {
+    background: #d7ffe1;
+    color: #007a1f;
+    border: 1px solid #9fe4b0;
+}
+.client-item:hover .client-status {
+    box-shadow: 0 0 0 4px rgba(0,0,0,0.04);
+}
