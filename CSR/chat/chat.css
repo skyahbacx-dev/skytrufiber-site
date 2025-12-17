@@ -100,6 +100,10 @@
   font-size: 12px;
   color: #777;
 }
+/* Hide placeholder text once client info is loaded */
+.client-info-panel:has(#client-info-content:not(:empty)) > p {
+  display: none;
+}
 
 /* ===========================================================
    TICKET BADGES
