@@ -102,7 +102,7 @@
 }
 
 /* ===========================================================
-   TICKET BADGES (CLIENT LIST)
+   TICKET BADGES
 =========================================================== */
 .ticket-badge {
   padding: 4px 10px;
@@ -199,7 +199,6 @@
   cursor: not-allowed;
 }
 
-/* Saving shimmer */
 #ticket-status-dropdown.saving {
   pointer-events: none;
   background-image: linear-gradient(
@@ -218,9 +217,10 @@
 }
 
 /* ===========================================================
-   CHAT MESSAGES AREA
+   CHAT MESSAGES AREA (POSITION CONTEXT)
 =========================================================== */
 .chat-messages {
+  position: relative; /* 🔥 REQUIRED FOR ACTION POPUP */
   flex: 1;
   padding: 20px 25px;
   display: flex;
@@ -234,7 +234,6 @@
   background-position: center;
   background-size: 320px auto;
   background-attachment: fixed;
-  position: relative;
 }
 
 .chat-messages::before {
@@ -291,13 +290,6 @@
 
 .message.received {
   align-self: flex-start;
-}
-
-.message-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  overflow: hidden;
 }
 
 .message-content {
@@ -397,9 +389,10 @@
 .scroll-bottom-btn.show {
   display: flex;
 }
-/* ============================================================
-   ACTION POPUP (FLOATING CONTEXT MENU)
-============================================================ */
+
+/* ===========================================================
+   ACTION POPUP (CONTEXT MENU)
+=========================================================== */
 .msg-action-popup {
   position: absolute;
   min-width: 160px;
