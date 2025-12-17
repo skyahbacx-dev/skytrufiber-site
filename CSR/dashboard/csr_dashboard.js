@@ -1,32 +1,26 @@
 /* ============================================================
-   CSR DASHBOARD — CLEAN / FINAL JS (FIXED)
+   CSR DASHBOARD — CLEAN / FINAL JS
 ============================================================ */
 
 /* =========================
    SIDEBAR TOGGLE
 ========================= */
 function toggleSidebar() {
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.querySelector(".sidebar-overlay");
+    const sidebar   = document.getElementById("sidebar");
+    const overlay   = document.querySelector(".sidebar-overlay");
     const dashboard = document.querySelector(".dashboard-container");
 
     if (!sidebar || !overlay || !dashboard) return;
 
-    const isActive = sidebar.classList.toggle("active");
+    const isActive = !sidebar.classList.contains("active");
+
+    sidebar.classList.toggle("active", isActive);
     overlay.classList.toggle("active", isActive);
     dashboard.classList.toggle("shifted", isActive);
 }
 
 /* =========================
-   NAVIGATION WITH LOADER
-========================= */
-function navigate(tab) {
-    showLoader();
-    window.location.href = "csr_dashboard.php?tab=" + tab;
-}
-
-/* =========================
-   LOADER
+   LOADER (NAVIGATION SAFE)
 ========================= */
 function showLoader() {
     const overlay = document.getElementById("loadingOverlay");
@@ -44,22 +38,36 @@ document.addEventListener("DOMContentLoaded", hideLoader);
    AUTO-CLOSE SIDEBAR
 ========================= */
 document.addEventListener("click", function (e) {
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.querySelector(".sidebar-overlay");
+    const sidebar   = document.getElementById("sidebar");
+    const overlay   = document.querySelector(".sidebar-overlay");
     const hamburger = document.querySelector(".hamburger");
+    const dashboard = document.querySelector(".dashboard-container");
 
-    if (!sidebar || !overlay) return;
+    if (!sidebar || !overlay || !hamburger) return;
     if (!sidebar.classList.contains("active")) return;
 
-    if (
-        !sidebar.contains(e.target) &&
-        !hamburger.contains(e.target)
-    ) {
+    const clickedInsideSidebar  = sidebar.contains(e.target);
+    const clickedHamburger      = hamburger.contains(e.target);
+    const clickedIconBar        = e.target.closest(".sidebar-collapsed");
+
+    if (!clickedInsideSidebar && !clickedHamburger && !clickedIconBar) {
         sidebar.classList.remove("active");
         overlay.classList.remove("active");
-        document.querySelector(".dashboard-container")
-            ?.classList.remove("shifted");
+        dashboard?.classList.remove("shifted");
     }
+});
+
+/* =========================
+   OVERLAY CLICK CLOSE
+========================= */
+document.querySelector(".sidebar-overlay")?.addEventListener("click", () => {
+    const sidebar   = document.getElementById("sidebar");
+    const overlay   = document.querySelector(".sidebar-overlay");
+    const dashboard = document.querySelector(".dashboard-container");
+
+    sidebar?.classList.remove("active");
+    overlay?.classList.remove("active");
+    dashboard?.classList.remove("shifted");
 });
 
 /* =========================
@@ -70,9 +78,10 @@ let lastWidth = window.innerWidth;
 window.addEventListener("resize", () => {
     const now = window.innerWidth;
 
+    // Close sidebar when switching to desktop width
     if (lastWidth <= 900 && now > 900) {
-        const sidebar = document.getElementById("sidebar");
-        const overlay = document.querySelector(".sidebar-overlay");
+        const sidebar   = document.getElementById("sidebar");
+        const overlay   = document.querySelector(".sidebar-overlay");
         const dashboard = document.querySelector(".dashboard-container");
 
         sidebar?.classList.remove("active");
