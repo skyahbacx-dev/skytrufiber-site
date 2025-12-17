@@ -5,17 +5,13 @@ if (!isset($_SESSION['csr_user'])) {
     exit;
 }
 
-
 $csrUser     = $_SESSION["csr_user"];
 $csrFullName = $_SESSION["csr_fullname"] ?? $csrUser;
 
-/* 
-   If home.php passed a tab, use it.
-   Else fallback to ?tab=
-*/
+/* Active tab */
 $tab = $GLOBALS["CSR_TAB"] ?? ($_GET["tab"] ?? "CHAT");
 
-/* History parameters */
+/* History params */
 $clientID = intval($_GET["client"] ?? 0);
 $ticketID = intval($_GET["ticket"] ?? 0);
 ?>
@@ -31,8 +27,8 @@ $ticketID = intval($_GET["ticket"] ?? 0);
 <link rel="stylesheet" href="/CSR/chat/chat.css?v=3">
 <link rel="stylesheet" href="/CSR/history/history.css?v=3">
 
-<!-- FontAwesome (NO integrity, NO crossorigin) -->
-<link rel="stylesheet" 
+<!-- FontAwesome -->
+<link rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <!-- jQuery -->
@@ -41,7 +37,7 @@ $ticketID = intval($_GET["ticket"] ?? 0);
 <!-- Sortable -->
 <script src="/CSR/vendor/js/Sortable.min.js"></script>
 
-<!-- JS modules -->
+<!-- JS -->
 <script src="/CSR/dashboard/csr_dashboard.js?v=3"></script>
 <script src="/CSR/chat/chat.js?v=3"></script>
 <script src="/CSR/history/history.js?v=3"></script>
@@ -50,7 +46,6 @@ $ticketID = intval($_GET["ticket"] ?? 0);
 function enc(route) {
     return "/home.php?v=" + btoa(route + "|" + Date.now());
 }
-
 function navigateEncrypted(route) {
     window.location.href = enc(route);
 }
@@ -62,10 +57,12 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
 
 <body>
 
-<!-- LOADING SCREEN -->
+<!-- LOADING OVERLAY -->
 <div id="loadingOverlay"><div class="spinner"></div></div>
 
-<!-- NAVBAR -->
+<!-- ======================================================
+     TOP NAVBAR
+====================================================== -->
 <div class="topnav">
     <button class="hamburger" onclick="toggleSidebar()">☰</button>
 
@@ -75,102 +72,117 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
     </div>
 
     <div class="nav-buttons">
-        <button class="nav-btn <?= $tab==='CHAT'?'active':'' ?>" 
+        <button class="nav-btn <?= $tab==='CHAT'?'active':'' ?>"
                 onclick="navigateEncrypted('csr_chat')">💬 CHAT</button>
 
-        <button class="nav-btn <?= $tab==='CLIENTS'?'active':'' ?>" 
+        <button class="nav-btn <?= $tab==='CLIENTS'?'active':'' ?>"
                 onclick="navigateEncrypted('csr_clients')">👥 MY CLIENTS</button>
 
-        <button class="nav-btn <?= $tab==='REMINDERS'?'active':'' ?>" 
+        <button class="nav-btn <?= $tab==='REMINDERS'?'active':'' ?>"
                 onclick="navigateEncrypted('csr_reminders')">⏱ REMINDERS</button>
 
-        <button class="nav-btn <?= $tab==='SURVEY'?'active':'' ?>" 
+        <button class="nav-btn <?= $tab==='SURVEY'?'active':'' ?>"
                 onclick="navigateEncrypted('csr_survey')">📄 SURVEY</button>
 
         <a href="/csr/logout" class="logout-btn">Logout</a>
-
     </div>
 </div>
 
-<!-- SIDE NAV -->
+<!-- ======================================================
+     COLLAPSED ICON BAR (ALWAYS VISIBLE)
+====================================================== -->
 <div class="sidebar-collapsed">
-    <button class="icon-btn" onclick="navigateEncrypted('csr_chat')" title="Chat">💬</button>
-    <button class="icon-btn" onclick="navigateEncrypted('csr_clients')" title="Clients">👥</button>
-    <button class="icon-btn" onclick="navigateEncrypted('csr_reminders')" title="Reminders">⏱</button>
-    <button class="icon-btn" onclick="navigateEncrypted('csr_survey')" title="Survey">📄</button>
-    <button class="icon-btn logout" onclick="window.location='/csr/logout'">🚪</button>
+    <button class="icon-btn"
+            data-tooltip="Chat Dashboard"
+            onclick="navigateEncrypted('csr_chat')">💬</button>
 
+    <button class="icon-btn"
+            data-tooltip="My Clients"
+            onclick="navigateEncrypted('csr_clients')">👥</button>
+
+    <button class="icon-btn"
+            data-tooltip="Reminders"
+            onclick="navigateEncrypted('csr_reminders')">⏱</button>
+
+    <button class="icon-btn"
+            data-tooltip="Survey Responses"
+            onclick="navigateEncrypted('csr_survey')">📄</button>
+
+    <button class="icon-btn logout"
+            data-tooltip="Logout"
+            onclick="window.location='/csr/logout'">🚪</button>
 </div>
 
+<!-- ======================================================
+     EXPANDING SIDEBAR (SAME ICON BAR, WITH LABELS)
+====================================================== -->
 <div class="sidebar" id="sidebar">
+
     <div class="side-title">MENU</div>
 
-    <button class="side-item <?= $tab==='CHAT'?'active':'' ?>" 
-            onclick="navigateEncrypted('csr_chat')">💬 Chat Dashboard</button>
+    <button class="side-item <?= $tab==='CHAT'?'active':'' ?>"
+            onclick="navigateEncrypted('csr_chat')">
+        💬 <span>Chat Dashboard</span>
+    </button>
 
-    <button class="side-item <?= $tab==='CLIENTS'?'active':'' ?>" 
-            onclick="navigateEncrypted('csr_clients')">👥 My Clients</button>
+    <button class="side-item <?= $tab==='CLIENTS'?'active':'' ?>"
+            onclick="navigateEncrypted('csr_clients')">
+        👥 <span>My Clients</span>
+    </button>
 
-    <button class="side-item <?= $tab==='REMINDERS'?'active':'' ?>" 
-            onclick="navigateEncrypted('csr_reminders')">⏱ Reminders</button>
+    <button class="side-item <?= $tab==='REMINDERS'?'active':'' ?>"
+            onclick="navigateEncrypted('csr_reminders')">
+        ⏱ <span>Reminders</span>
+    </button>
 
-    <button class="side-item <?= $tab==='SURVEY'?'active':'' ?>" 
-            onclick="navigateEncrypted('csr_survey')">📄 Survey Responses</button>
+    <button class="side-item <?= $tab==='SURVEY'?'active':'' ?>"
+            onclick="navigateEncrypted('csr_survey')">
+        📄 <span>Survey Responses</span>
+    </button>
 
-    <button class="side-item logout" onclick="window.location='/csr/logout'">🚪 Logout</button>
+    <button class="side-item logout"
+            onclick="window.location='/csr/logout'">
+        🚪 <span>Logout</span>
+    </button>
 
 </div>
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-
-<!-- MAIN DASHBOARD -->
+<!-- ======================================================
+     MAIN CONTENT
+====================================================== -->
 <div class="dashboard-container">
 
 <?php
 switch ($tab) {
 
-    /* ------------------------
-       CHAT TAB
-    ------------------------- */
     case "CHAT":
         include __DIR__ . "/../chat/chat.php";
         break;
 
-    /* ------------------------
-       CLIENTS TAB
-    ------------------------- */
     case "CLIENTS":
-    
-    if ($ticketID > 0) {
-        include __DIR__ . "/../history/history_view.php";
-
-    } elseif ($clientID > 0) {
-        include __DIR__ . "/../history/history_list.php";
-        
+        if ($ticketID > 0) {
+            include __DIR__ . "/../history/history_view.php";
+        } elseif ($clientID > 0) {
+            include __DIR__ . "/../history/history_list.php";
         } else {
             include __DIR__ . "/../clients/my_clients.php";
         }
         break;
 
-    /* ------------------------
-       REMINDERS TAB
-    ------------------------- */
     case "REMINDERS":
         include __DIR__ . "/../reminders/reminders.php";
         break;
 
-    /* ------------------------
-       SURVEY TAB
-    ------------------------- */
     case "SURVEY":
         include __DIR__ . "/../survey/survey_responses.php";
         break;
-    case "SURVEY_ANALYTICS":
-       include __DIR__ . "/../survey/analytics.php";
-       break;
 
-    /* FALLBACK → chat */
+    case "SURVEY_ANALYTICS":
+        include __DIR__ . "/../survey/analytics.php";
+        break;
+
     default:
         include __DIR__ . "/../chat/chat.php";
         break;
