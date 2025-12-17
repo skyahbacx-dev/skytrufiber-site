@@ -1,5 +1,5 @@
 /* ============================================================
-   CSR DASHBOARD — CLEAN / FINAL JS
+   CSR DASHBOARD — SINGLE SIDEBAR JS (FINAL)
 ============================================================ */
 
 /* =========================
@@ -12,15 +12,14 @@ function toggleSidebar() {
 
     if (!sidebar || !overlay || !dashboard) return;
 
-    const isActive = !sidebar.classList.contains("active");
+    const isActive = sidebar.classList.toggle("active");
 
-    sidebar.classList.toggle("active", isActive);
     overlay.classList.toggle("active", isActive);
     dashboard.classList.toggle("shifted", isActive);
 }
 
 /* =========================
-   LOADER (NAVIGATION SAFE)
+   LOADER
 ========================= */
 function showLoader() {
     const overlay = document.getElementById("loadingOverlay");
@@ -35,7 +34,7 @@ function hideLoader() {
 document.addEventListener("DOMContentLoaded", hideLoader);
 
 /* =========================
-   AUTO-CLOSE SIDEBAR
+   CLICK OUTSIDE TO CLOSE
 ========================= */
 document.addEventListener("click", function (e) {
     const sidebar   = document.getElementById("sidebar");
@@ -46,11 +45,10 @@ document.addEventListener("click", function (e) {
     if (!sidebar || !overlay || !hamburger) return;
     if (!sidebar.classList.contains("active")) return;
 
-    const clickedInsideSidebar  = sidebar.contains(e.target);
-    const clickedHamburger      = hamburger.contains(e.target);
-    const clickedIconBar        = e.target.closest(".sidebar-collapsed");
+    const clickedSidebar   = sidebar.contains(e.target);
+    const clickedHamburger = hamburger.contains(e.target);
 
-    if (!clickedInsideSidebar && !clickedHamburger && !clickedIconBar) {
+    if (!clickedSidebar && !clickedHamburger) {
         sidebar.classList.remove("active");
         overlay.classList.remove("active");
         dashboard?.classList.remove("shifted");
@@ -71,14 +69,14 @@ document.querySelector(".sidebar-overlay")?.addEventListener("click", () => {
 });
 
 /* =========================
-   RESPONSIVE BEHAVIOR
+   RESPONSIVE RESET
 ========================= */
 let lastWidth = window.innerWidth;
 
 window.addEventListener("resize", () => {
     const now = window.innerWidth;
 
-    // Close sidebar when switching to desktop width
+    // Reset sidebar when crossing breakpoint
     if (lastWidth <= 900 && now > 900) {
         const sidebar   = document.getElementById("sidebar");
         const overlay   = document.querySelector(".sidebar-overlay");
