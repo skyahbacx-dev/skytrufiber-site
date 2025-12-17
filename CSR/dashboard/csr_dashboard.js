@@ -2,10 +2,11 @@
    CSR DASHBOARD — CLEAN / FINAL JS
 ============================================================ */
 
-// Sidebar toggle
 function toggleSidebar() {
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.querySelector(".sidebar-overlay");
+    document.querySelector('.sidebar').classList.toggle('active');
+    document.querySelector('.sidebar-overlay').classList.toggle('active');
+    document.querySelector('.dashboard-container').classList.toggle('shifted');
+}
 
     const isActive = sidebar.classList.toggle("active");
     overlay.classList.toggle("active", isActive);
