@@ -89,7 +89,7 @@ body {
     left: 0;
     width: 60px; /* collapsed width */
     height: calc(100vh - 55px);
-    background: #1c1c1c;
+    background: white;
     display: flex;
     flex-direction: column;
     padding-top: 14px;
