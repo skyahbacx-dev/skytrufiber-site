@@ -1,22 +1,25 @@
 /* =======================================================
-   CSR DASHBOARD — CLEAN SHELL LAYOUT CSS (UPDATED)
-   ======================================================= */
+   CSR DASHBOARD — CLEAN SHELL LAYOUT CSS (FINAL FIXED)
+======================================================= */
 
-/* GLOBAL */
+/* =====================
+   GLOBAL
+===================== */
 * {
     box-sizing: border-box;
 }
+
 body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background:#F4FFF4;
+    background: #F4FFF4;
     overflow: hidden;
 }
 
-/* =======================================================
+/* =====================
    TOP NAVIGATION BAR
-   ======================================================= */
+===================== */
 .topnav {
     height: 55px;
     background: #05702e;
@@ -26,51 +29,58 @@ body {
     justify-content: space-between;
     padding: 6px 15px;
     border-bottom: 2px solid #006622;
+    z-index: 50;
 }
+
 .hamburger {
     font-size: 24px;
-    background:none;
-    border:none;
-    color:white;
-    cursor:pointer;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
 }
+
 .top-title {
-    display:flex;
-    align-items:center;
-    gap:10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
+
 .nav-logo {
     height: 36px;
 }
+
 .nav-buttons {
     display: flex;
-    gap:6px;
-}
-.nav-btn {
-    background:#09a64b;
-    border:none;
-    padding:6px 12px;
-    border-radius:12px;
-    color:white;
-    cursor:pointer;
-}
-.nav-btn.active {
-    background:white;
-    color:#05702e;
-    font-weight:bold;
-}
-.logout-btn {
-    background:white;
-    color:#05702e;
-    padding:6px 12px;
-    border-radius:12px;
-    text-decoration:none;
+    gap: 6px;
 }
 
-/* =======================================================
-   COLLAPSED SIDEBAR (ICON STRIP)
-   ALWAYS VISIBLE
-   ======================================================= */
+.nav-btn {
+    background: #09a64b;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+}
+
+.nav-btn.active {
+    background: white;
+    color: #05702e;
+    font-weight: bold;
+}
+
+.logout-btn {
+    background: white;
+    color: #05702e;
+    padding: 6px 12px;
+    border-radius: 12px;
+    text-decoration: none;
+}
+
+/* =====================
+   COLLAPSED SIDEBAR
+===================== */
 .sidebar-collapsed {
     position: fixed;
     left: 0;
@@ -83,7 +93,7 @@ body {
     align-items: center;
     padding-top: 12px;
     gap: 22px;
-    z-index: 12;
+    z-index: 30;
 }
 
 .sidebar-collapsed .icon-btn {
@@ -92,7 +102,7 @@ body {
     background: none;
     border: none;
     cursor: pointer;
-    transition: .25s;
+    transition: transform .25s ease, opacity .25s ease;
 }
 
 .sidebar-collapsed .icon-btn:hover {
@@ -100,33 +110,32 @@ body {
     opacity: 0.85;
 }
 
-/* Logout icon colored red */
 .sidebar-collapsed .logout {
     color: #ff4d4d;
 }
 
-/* =======================================================
-   EXPANDED SIDEBAR (TEXT + ICONS)
-   ======================================================= */
+/* =====================
+   EXPANDED SIDEBAR (SMOOTH)
+===================== */
 .sidebar {
     width: 260px;
-    height: 100vh;
+    height: calc(100vh - 55px);
     background: white;
     position: fixed;
-    top: 0;
-    left: -260px; /* hidden by default */
-    transition: 0.30s ease;
-    padding-top: 60px;
-    border-right: 1px solid #dcdcdc;
-    z-index: 20;
-}
-
-/* When expanded, position it beside collapsed icons */
-.sidebar.active {
+    top: 55px;
     left: 60px;
+    transform: translateX(-260px);
+    transition: transform 0.35s ease;
+    padding-top: 20px;
+    border-right: 1px solid #dcdcdc;
+    box-shadow: 6px 0 18px rgba(0,0,0,0.08);
+    z-index: 40;
 }
 
-/* Sidebar title */
+.sidebar.active {
+    transform: translateX(0);
+}
+
 .side-title {
     padding: 12px 20px;
     font-weight: bold;
@@ -134,7 +143,6 @@ body {
     color: #006622;
 }
 
-/* Sidebar menu items */
 .side-item {
     width: 100%;
     padding: 12px 18px;
@@ -147,7 +155,7 @@ body {
     align-items: center;
     gap: 12px;
     color: #014d1e;
-    transition: 0.25s;
+    transition: background 0.25s ease, padding-left 0.25s ease;
 }
 
 .side-item i {
@@ -155,86 +163,89 @@ body {
     min-width: 26px;
 }
 
-/* Highlight active sidebar item */
+.side-item:hover {
+    background: #f3fff3;
+    padding-left: 22px;
+}
+
 .side-item.active {
     background: #e6ffe6;
     font-weight: bold;
     border-right: 4px solid #05702e;
 }
 
-/* Hover effect */
-.side-item:hover {
-    background: #f3fff3;
-}
-
-/* Logout button inside sidebar */
 .side-item.logout {
     color: #c00000;
     font-weight: bold;
     margin-top: 25px;
 }
 
-/* Hide text label when sidebar is in collapsed mode */
-.sidebar.collapsed .side-item span {
-    display: none;
-}
-
-/* =======================================================
-   SIDEBAR OVERLAY — MOBILE EXPERIENCE
-   ======================================================= */
+/* =====================
+   SIDEBAR OVERLAY (SMOOTH)
+===================== */
 .sidebar-overlay {
-    display:none;
-    position:fixed;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.45);
-    z-index:15;
-    top:0;
-    left:0;
-}
-.sidebar-overlay.active {
-    display:block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 35;
 }
 
-/* =======================================================
+.sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* =====================
    MAIN CONTENT AREA
-   ======================================================= */
+===================== */
 .dashboard-container {
     height: calc(100vh - 55px);
     overflow: hidden;
-    margin-left: 60px; /* space for collapsed sidebar */
+    margin-left: 60px;
+    transition: transform 0.35s ease;
 }
 
-/* =======================================================
+.dashboard-container.shifted {
+    transform: translateX(260px);
+}
+
+/* =====================
    CUSTOM SCROLLBARS
-   ======================================================= */
+===================== */
 .chat-right-panel::-webkit-scrollbar,
 .chat-left-panel::-webkit-scrollbar {
     width: 6px;
 }
+
 .chat-right-panel::-webkit-scrollbar-thumb,
 .chat-left-panel::-webkit-scrollbar-thumb {
-    background:#0ba34d;
-    border-radius:8px;
+    background: #0ba34d;
+    border-radius: 8px;
 }
 
-/* =======================================================
-   ANIMATION SUPPORT
-   ======================================================= */
+/* =====================
+   FADE-IN SUPPORT
+===================== */
 @keyframes fadeInUp {
-    from { opacity:0; transform:translateY(10px); }
-    to { opacity:1; transform:translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* =======================================================
+/* =====================
    GLOBAL LOADING OVERLAY
-   ======================================================= */
+===================== */
 #loadingOverlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background: rgba(255,255,255,0.8);
     display: none;
     align-items: center;
@@ -252,5 +263,7 @@ body {
 }
 
 @keyframes spin {
-    100% { transform: rotate(360deg); }
+    100% {
+        transform: rotate(360deg);
+    }
 }
