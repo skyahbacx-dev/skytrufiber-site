@@ -321,7 +321,12 @@
   color: #103810;
   border-radius: 20px 20px 20px 4px;
 }
-
+.message-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+}
 /* ===========================================================
    MESSAGE META
 =========================================================== */
