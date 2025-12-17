@@ -432,40 +432,91 @@
   color: #c62828;
 }
 /* ===============================
-   CLIENT LIST STATUS COLORS
+   CLIENT STATUS BADGES
 ================================ */
 
-.client-status {
-    font-size: 12px;
-    font-weight: 700;
+.badge {
     padding: 4px 10px;
-    border-radius: 14px;
-    display: inline-block;
-    min-width: 92px;
-    text-align: center;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
     letter-spacing: 0.3px;
+    text-transform: uppercase;
 }
 
 /* UNRESOLVED */
-.client-status.unresolved {
+.badge.unresolved {
     background: #ffe1e1;
     color: #b10000;
-    border: 1px solid #f5bcbc;
+    border: 1px solid #ffb3b3;
 }
 
 /* PENDING */
-.client-status.pending {
-    background: #fff3cd;
-    color: #b26a00;
+.badge.pending {
+    background: #fff4cc;
+    color: #b87400;
     border: 1px solid #ffe08a;
 }
 
 /* RESOLVED */
-.client-status.resolved {
-    background: #d7ffe1;
+.badge.resolved {
+    background: #d9fbe2;
     color: #007a1f;
-    border: 1px solid #9fe4b0;
+    border: 1px solid #9be7b0;
 }
-.client-item:hover .client-status {
-    box-shadow: 0 0 0 4px rgba(0,0,0,0.04);
+/* ===============================
+   CLIENT LIST ACTION BUTTONS
+================================ */
+
+.assign-btn,
+.unassign-btn,
+.locked-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+}
+
+/* ASSIGN (+) */
+.assign-btn {
+    background: #e6f4ff;
+    color: #0066cc;
+    border: 1px solid #b6ddff;
+    cursor: pointer;
+}
+
+.assign-btn:hover {
+    background: #cfe9ff;
+    transform: scale(1.08);
+}
+
+/* UNASSIGN (−) */
+.unassign-btn {
+    background: #fff3cd;
+    color: #b26a00;
+    border: 1px solid #ffe08a;
+    cursor: pointer;
+}
+
+.unassign-btn:hover {
+    background: #ffe7a3;
+    transform: scale(1.08);
+}
+
+/* LOCKED 🔒 */
+.locked-icon {
+    background: #f2f2f2;
+    color: #888;
+    border: 1px solid #ddd;
+    cursor: not-allowed;
+    opacity: 0.9;
+}
+.assign-btn:active,
+.unassign-btn:active {
+    transform: scale(0.92);
 }
