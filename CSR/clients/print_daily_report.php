@@ -1,10 +1,16 @@
 <?php
-if (!isset($_SESSION)) session_start();
-if (!isset($_SESSION['csr_user'])) {
-    die("Unauthorized access");
+ini_set("session.name", "CSRSESSID");
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (empty($_SESSION['csr_user'])) {
+    header("HTTP/1.1 403 Forbidden");
+    exit("Unauthorized access");
 }
 
 require __DIR__ . "/../../db_connect.php";
+
 
 $csrUser   = $_SESSION["csr_user"];
 $todayDate = date("Y-m-d");
