@@ -176,7 +176,7 @@ body {
 }
 
 .sidebar.active .side-item.active {
-    background: #e6ffe6;
+    background: white;
     font-weight: bold;
     border-right: 4px solid #05702e;
 }
