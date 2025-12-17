@@ -1,5 +1,5 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — FINAL, HARDENED VERSION (FIXED)
+// SkyTruFiber CSR Chat System — FINAL, HARDENED VERSION
 // ============================================================
 
 let currentClientID = null;
@@ -86,11 +86,15 @@ $(document).ready(function () {
     /* =======================
        SCROLL HANDLING
     ======================= */
-    $("#chat-messages").on("scroll", handleScrollButton);
+    $("#chat-messages").on("scroll", function () {
+        handleScrollButton();
+        closeActionPopup(); // 🔥 close popup on scroll
+    });
+
     $(document).on("click", ".scroll-bottom-btn", scrollToBottom);
 
     /* =======================
-       ACTION POPUP CLOSE
+       CLOSE ACTION POPUP
     ======================= */
     $(document).on("click", function (e) {
         if (!$(e.target).closest("#msg-action-popup, .message-more-btn").length) {
@@ -291,7 +295,7 @@ function handleScrollButton() {
 
 
 /* ============================================================
-   TICKET STATUS CHANGE — FIXED
+   TICKET STATUS CHANGE
 ============================================================ */
 $(document).on("change", "#ticket-status-dropdown", function () {
 
@@ -316,22 +320,18 @@ $(document).on("change", "#ticket-status-dropdown", function () {
         ticket_id: currentTicketID,
         status: newStatus,
         nocache: Date.now()
-    })
+    }, "json")
     .done(res => {
-
         if (!res || res.ok !== true) {
             alert("Failed to update ticket status: " + (res?.msg || "Unknown error"));
-
             dropdown
                 .removeClass("saving " + newStatus)
                 .addClass(oldStatus)
                 .val(oldStatus)
                 .data("current", oldStatus);
-
             animateTicketBadge(oldStatus);
             return;
         }
-
         dropdown.removeClass("saving");
         loadClients(false);
     });
@@ -351,31 +351,54 @@ function animateTicketBadge(status) {
         .addClass(status)
         .addClass("status-updated");
 
-    setTimeout(() => {
-        badge.removeClass("status-updated");
-    }, 300);
+    setTimeout(() => badge.removeClass("status-updated"), 300);
 }
 
 
 /* ============================================================
-   ACTION MENU
+   ACTION MENU — POSITIONED BESIDE BUBBLE
 ============================================================ */
 function bindActionButtons() {
     $(".message-more-btn").off("click").on("click", function (e) {
         e.stopPropagation();
-        const id = $(this).data("id");
-        const rect = this.getBoundingClientRect();
-        openActionPopup(id, rect);
+
+        const msg = $(this).closest(".message");
+        const bubble = msg.find(".message-bubble");
+        if (!bubble.length) return;
+
+        openActionPopup(msg, bubble);
     });
 }
 
-function openActionPopup(id, rect) {
-    $("#msg-action-popup")
-        .data("msg-id", id)
-        .css({
-            top: rect.bottom + window.scrollY + 6,
-            left: rect.left + window.scrollX - 120
-        })
+function openActionPopup(messageEl, bubbleEl) {
+
+    const popup = $("#msg-action-popup");
+    const container = $("#chat-messages");
+
+    const bubbleRect = bubbleEl[0].getBoundingClientRect();
+    const containerRect = container[0].getBoundingClientRect();
+
+    const popupWidth = popup.outerWidth();
+    const popupHeight = popup.outerHeight();
+
+    let top = bubbleRect.top - containerRect.top + container.scrollTop();
+    let left;
+
+    if (messageEl.hasClass("sent")) {
+        left = bubbleRect.left - containerRect.left - popupWidth - 12;
+    } else {
+        left = bubbleRect.right - containerRect.left + 12;
+    }
+
+    // Flip if overflowing
+    if (left + popupWidth > container[0].scrollWidth) {
+        left = container[0].scrollWidth - popupWidth - 12;
+    }
+    if (left < 8) left = 8;
+
+    popup
+        .data("msg-id", messageEl.data("msg-id"))
+        .css({ top, left })
         .show();
 }
 
@@ -391,7 +414,6 @@ $(document).on("click", "#msg-action-popup button", function () {
 
     const action = $(this).data("action");
     const msgId = $("#msg-action-popup").data("msg-id");
-
     if (!action || !msgId) return;
 
     if (action === "delete") {
@@ -421,7 +443,6 @@ function startEditMessage(msgId) {
     if (!bubble.length) return;
 
     editingMessageId = msgId;
-
     $("#chat-input").val(bubble.text().trim()).focus();
     $("#send-btn").text("Update");
 }
@@ -437,10 +458,8 @@ function updateMessage(msgId) {
     }, () => {
 
         editingMessageId = null;
-
         $("#chat-input").val("");
         $("#send-btn").text("Send");
-
         loadMessages(true);
     });
 }
