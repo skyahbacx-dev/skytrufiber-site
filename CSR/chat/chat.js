@@ -1,5 +1,5 @@
 // ============================================================
-// SkyTruFiber CSR Chat System — FINAL, HARDENED VERSION
+// SkyTruFiber CSR Chat System — FINAL, HARDENED VERSION (STABLE)
 // ============================================================
 
 let currentClientID = null;
@@ -64,10 +64,12 @@ $(document).ready(function () {
 
         const chatBox = $("#chat-messages");
 
-        chatBox.addClass("loading");
-        chatBox.empty();          // clear old messages
-        lastMessageID = 0;
+        chatBox
+            .addClass("is-loading")
+            .removeClass("is-ready")
+            .empty();
 
+        lastMessageID = 0;
 
         loadClientInfo(currentClientID, true);
 
@@ -92,7 +94,7 @@ $(document).ready(function () {
     ======================= */
     $("#chat-messages").on("scroll", function () {
         handleScrollButton();
-        closeActionPopup(); // 🔥 close popup on scroll
+        closeActionPopup();
     });
 
     $(document).on("click", ".scroll-bottom-btn", scrollToBottom);
@@ -143,7 +145,7 @@ function loadClientInfo(id, loadMessagesNow = false) {
         const meta = $("#client-meta");
         if (!meta.length) return;
 
-        currentTicketID = parseInt(meta.data("ticket-id")) || null;
+        currentTicketID = parseInt(meta.data("ticket-id"), 10) || null;
 
         const assignedToMe = meta.data("assigned") === "yes";
         const locked = meta.data("locked") === "true";
@@ -160,6 +162,22 @@ function loadClientInfo(id, loadMessagesNow = false) {
 
         handleChatPermission(assignedToMe, locked, ticketStatus);
 
+        /* =======================
+           RESOLVED — STOP CHAT
+        ======================= */
+        if (ticketStatus === "resolved") {
+            $("#chat-messages")
+                .removeClass("is-loading")
+                .addClass("is-ready")
+                .html(`
+                    <div class="chat-resolved-notice">
+                        <strong>This ticket has been resolved.</strong><br>
+                        Chat history is available in <b>My Clients → Chat History</b>.
+                    </div>
+                `);
+            return;
+        }
+
         if (loadMessagesNow) loadMessages(true);
     });
 }
@@ -173,6 +191,8 @@ function loadMessages(scrollBottom = false) {
 
     const chatBox = $("#chat-messages");
 
+    chatBox.removeClass("is-ready").addClass("is-loading");
+
     $.post("/CSR/chat/load_messages.php", {
         ticket_id: currentTicketID,
         nocache: Date.now()
@@ -181,24 +201,25 @@ function loadMessages(scrollBottom = false) {
         chatBox.html(html);
 
         const last = chatBox.find(".message").last();
-        lastMessageID = last.length ? parseInt(last.data("msg-id")) : 0;
+        lastMessageID = last.length ? parseInt(last.data("msg-id"), 10) : 0;
 
         bindActionButtons();
 
-        // 🔥 Fade messages back in
         requestAnimationFrame(() => {
-            chatBox.removeClass("loading");
+            chatBox.removeClass("is-loading").addClass("is-ready");
+            if (scrollBottom) scrollToBottom();
         });
-
-        if (scrollBottom) scrollToBottom();
     });
 }
+
 
 /* ============================================================
    FETCH NEW MESSAGES
 ============================================================ */
 function fetchNewMessages() {
-    if (!currentTicketID || $("#chat-messages").hasClass("loading")) return;
+    if (!currentTicketID) return;
+    if ($("#ticket-status-dropdown").val() === "resolved") return;
+    if ($("#chat-messages").hasClass("is-loading")) return;
 
     $.post("/CSR/chat/load_messages.php", {
         ticket_id: currentTicketID,
@@ -210,7 +231,6 @@ function fetchNewMessages() {
 
         temp.find(".message").each(function () {
             const id = parseInt($(this).data("msg-id"), 10);
-
             if (id > lastMessageID) {
                 $("#chat-messages").append($(this).css("opacity", 0));
                 lastMessageID = id;
@@ -230,7 +250,6 @@ function fetchNewMessages() {
 }
 
 
-
 /* ============================================================
    SEND MESSAGE / EDIT MESSAGE
 ============================================================ */
@@ -238,6 +257,7 @@ function sendMessage() {
 
     const msg = $("#chat-input").val().trim();
     if (!msg || !currentClientID || !currentTicketID) return;
+    if ($("#ticket-status-dropdown").val() === "resolved") return;
 
     if (editingMessageId) {
         updateMessage(editingMessageId);
@@ -342,8 +362,9 @@ $(document).on("change", "#ticket-status-dropdown", function () {
         nocache: Date.now()
     }, "json")
     .done(res => {
+
         if (!res || res.ok !== true) {
-            alert("Failed to update ticket status: " + (res?.msg || "Unknown error"));
+            alert("Failed to update ticket status.");
             dropdown
                 .removeClass("saving " + newStatus)
                 .addClass(oldStatus)
@@ -352,8 +373,10 @@ $(document).on("change", "#ticket-status-dropdown", function () {
             animateTicketBadge(oldStatus);
             return;
         }
+
         dropdown.removeClass("saving");
         loadClients(false);
+        loadClientInfo(currentClientID, false);
     });
 });
 
@@ -398,22 +421,15 @@ function openActionPopup(messageEl, bubbleEl) {
     const bubbleRect = bubbleEl[0].getBoundingClientRect();
     const containerRect = container[0].getBoundingClientRect();
 
-    const popupWidth = popup.outerWidth();
-    const popupHeight = popup.outerHeight();
-
     let top = bubbleRect.top - containerRect.top + container.scrollTop();
     let left;
 
     if (messageEl.hasClass("sent")) {
-        left = bubbleRect.left - containerRect.left - popupWidth - 12;
+        left = bubbleRect.left - containerRect.left - popup.outerWidth() - 12;
     } else {
         left = bubbleRect.right - containerRect.left + 12;
     }
 
-    // Flip if overflowing
-    if (left + popupWidth > container[0].scrollWidth) {
-        left = container[0].scrollWidth - popupWidth - 12;
-    }
     if (left < 8) left = 8;
 
     popup
