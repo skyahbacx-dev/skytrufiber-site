@@ -238,6 +238,8 @@
   background-position: center;
   background-size: 320px auto;
   background-attachment: fixed;
+    opacity: 1;
+  transition: opacity 0.25s ease;
 }
 
 .chat-messages::before {
@@ -252,7 +254,13 @@
   position: relative;
   z-index: 1;
 }
-
+.chat-messages.loading {
+  opacity: 0;
+  pointer-events: none;
+}
+.chat-messages.loading .date-separator {
+  display: none;
+}
 /* ===========================================================
    DATE SEPARATORS
 =========================================================== */
@@ -348,7 +356,6 @@
     transform: translateY(0);
   }
 }
-
 /* ===========================================================
    MESSAGE META
 =========================================================== */
