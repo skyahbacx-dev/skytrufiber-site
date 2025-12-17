@@ -431,39 +431,21 @@
 .msg-action-popup button[data-action="delete"] {
   color: #c62828;
 }
-/* ===============================
-   CLIENT STATUS BADGES
-================================ */
-
-.badge {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
+.status.UNRESOLVED {
+  background: #ffe1e1;
+  color: #b10000;
 }
 
-/* UNRESOLVED */
-.badge.unresolved {
-    background: #ffe1e1;
-    color: #b10000;
-    border: 1px solid #ffb3b3;
+.status.PENDING {
+  background: #fff3cd;
+  color: #c98200;
 }
 
-/* PENDING */
-.badge.pending {
-    background: #fff4cc;
-    color: #b87400;
-    border: 1px solid #ffe08a;
+.status.RESOLVED {
+  background: #d7ffe1;
+  color: #007a1f;
 }
 
-/* RESOLVED */
-.badge.resolved {
-    background: #d9fbe2;
-    color: #007a1f;
-    border: 1px solid #9be7b0;
-}
 /* ===============================
    CLIENT LIST ACTION BUTTONS
 ================================ */
