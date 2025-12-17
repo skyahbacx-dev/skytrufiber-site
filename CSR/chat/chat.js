@@ -195,20 +195,29 @@ function fetchNewMessages() {
     }, html => {
 
         const temp = $("<div>").html(html);
+        let added = false;
 
         temp.find(".message").each(function () {
-            const id = parseInt($(this).data("msg-id"));
+            const id = parseInt($(this).data("msg-id"), 10);
+
             if (id > lastMessageID) {
-                $(".temp-msg").remove();
-                $("#chat-messages").append($(this));
+                $("#chat-messages").append($(this).css("opacity", 0));
                 lastMessageID = id;
-                scrollToBottom();
+                added = true;
             }
         });
+
+        if (added) {
+            requestAnimationFrame(() => {
+                $("#chat-messages .message").slice(-5).css("opacity", 1);
+                scrollToBottom();
+            });
+        }
 
         bindActionButtons();
     });
 }
+
 
 
 /* ============================================================
