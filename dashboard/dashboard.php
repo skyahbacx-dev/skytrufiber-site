@@ -36,29 +36,30 @@
   <!-- NAV -->
   <nav id="mobileNav" role="navigation" aria-label="Main Navigation">
     <a href="javascript:void(0)" onclick="smoothScroll('#home'); toggleMenu()" data-tooltip="Home">
-      <i class="fa-regular fa-house"></i><span>Home</span>
+      <i class="fa-solid fa-house"></i><span>Home</span>
     </a>
 
     <a href="javascript:void(0)" onclick="smoothScroll('#about'); toggleMenu()" data-tooltip="About Us">
-      <i class="fa-regular fa-circle-info"></i><span>About</span>
+      <i class="fa-solid fa-circle-info"></i><span>About</span>
     </a>
 
     <a href="javascript:void(0)" onclick="smoothScroll('#services'); toggleMenu()" data-tooltip="Services">
-      <i class="fa-regular fa-briefcase"></i><span>Services</span>
+      <i class="fa-solid fa-briefcase"></i><span>Services</span>
     </a>
 
     <a href="javascript:void(0)" onclick="smoothScroll('#management'); toggleMenu()" data-tooltip="Management">
-      <i class="fa-regular fa-users"></i><span>Management</span>
+      <i class="fa-solid fa-users"></i><span>Management</span>
     </a>
 
     <a href="javascript:void(0)" onclick="smoothScroll('#gallery'); toggleMenu()" data-tooltip="Gallery">
-      <i class="fa-regular fa-image"></i><span>Gallery</span>
+      <i class="fa-solid fa-image"></i><span>Gallery</span>
     </a>
 
     <a href="javascript:void(0)" onclick="smoothScroll('#contact'); toggleMenu()" data-tooltip="Contact">
-      <i class="fa-regular fa-envelope"></i><span>Contact</span>
+      <i class="fa-solid fa-envelope"></i><span>Contact</span>
     </a>
   </nav>
+
 </header>
 
 <!-- ================= HOME ================= -->
