@@ -29,6 +29,14 @@ window.addEventListener("resize", () => {
   }
 });
 
+/* Close mobile nav on ESC */
+window.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    const nav = document.getElementById("mobileNav");
+    if (nav) nav.classList.remove("open");
+  }
+});
+
 /* ================= REVEAL ANIMATION ================= */
 
 const revealElements = document.querySelectorAll(".reveal");
@@ -169,3 +177,76 @@ function closeModal() {
 window.addEventListener("keydown", e => {
   if (e.key === "Escape") closeModal();
 });
+
+/* ================= ACTIVE NAV HIGHLIGHT ================= */
+
+const sections = document.querySelectorAll("section");
+const navLinks = document.querySelectorAll("#mobileNav a");
+
+function setActiveNav() {
+  let current = "";
+
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop - 160;
+    if (window.pageYOffset >= sectionTop) {
+      current = section.getAttribute("id");
+    }
+  });
+
+  navLinks.forEach(link => {
+    link.classList.remove("active");
+    if (link.getAttribute("onclick")?.includes(`#${current}`)) {
+      link.classList.add("active");
+    }
+  });
+}
+
+window.addEventListener("scroll", setActiveNav);
+window.addEventListener("load", setActiveNav);
+
+/* ================= HEADER SHRINK ================= */
+
+const header = document.querySelector("header");
+
+window.addEventListener("scroll", () => {
+  if (!header) return;
+
+  if (window.scrollY > 80) {
+    header.classList.add("shrink");
+  } else {
+    header.classList.remove("shrink");
+  }
+});
+
+/* ================= KEYBOARD ACCESSIBILITY ================= */
+
+/* Activate nav links with ENTER */
+navLinks.forEach(link => {
+  link.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      link.click();
+    }
+  });
+});
+
+/* ================= MICRO FADE BETWEEN SECTIONS ================= */
+
+const allSections = document.querySelectorAll("section");
+
+function fadeSections() {
+  let current = "";
+
+  allSections.forEach(section => {
+    const sectionTop = section.offsetTop - 200;
+    if (window.scrollY >= sectionTop) {
+      current = section.id;
+    }
+  });
+
+  allSections.forEach(section => {
+    section.classList.toggle("inactive", section.id !== current);
+  });
+}
+
+window.addEventListener("scroll", fadeSections);
+window.addEventListener("load", fadeSections);
