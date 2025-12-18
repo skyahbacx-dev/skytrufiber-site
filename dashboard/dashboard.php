@@ -7,6 +7,10 @@
 
   <!-- CSS -->
   <link rel="stylesheet" href="/dashboard/style.css">
+
+  <!-- Font Awesome (Icons) -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
 <body>
@@ -23,20 +27,37 @@
   </div>
 
   <!-- HAMBURGER (MOBILE) -->
-  <div class="hamburger" onclick="toggleMenu()">
+  <div class="hamburger" onclick="toggleMenu()" aria-label="Toggle navigation" role="button" tabindex="0">
     <span></span>
     <span></span>
     <span></span>
   </div>
 
   <!-- NAV -->
-  <nav id="mobileNav">
-    <a href="javascript:void(0)" onclick="smoothScroll('#home'); toggleMenu()">HOME</a>
-    <a href="javascript:void(0)" onclick="smoothScroll('#about'); toggleMenu()">ABOUT</a>
-    <a href="javascript:void(0)" onclick="smoothScroll('#services'); toggleMenu()">SERVICES</a>
-    <a href="javascript:void(0)" onclick="smoothScroll('#management'); toggleMenu()">MANAGEMENT</a>
-    <a href="javascript:void(0)" onclick="smoothScroll('#gallery'); toggleMenu()">GALLERY</a>
-    <a href="javascript:void(0)" onclick="smoothScroll('#contact'); toggleMenu()">CONTACT</a>
+  <nav id="mobileNav" role="navigation" aria-label="Main Navigation">
+    <a href="javascript:void(0)" onclick="smoothScroll('#home'); toggleMenu()" data-tooltip="Home">
+      <i class="fa-regular fa-house"></i><span>Home</span>
+    </a>
+
+    <a href="javascript:void(0)" onclick="smoothScroll('#about'); toggleMenu()" data-tooltip="About Us">
+      <i class="fa-regular fa-circle-info"></i><span>About</span>
+    </a>
+
+    <a href="javascript:void(0)" onclick="smoothScroll('#services'); toggleMenu()" data-tooltip="Services">
+      <i class="fa-regular fa-briefcase"></i><span>Services</span>
+    </a>
+
+    <a href="javascript:void(0)" onclick="smoothScroll('#management'); toggleMenu()" data-tooltip="Management">
+      <i class="fa-regular fa-users"></i><span>Management</span>
+    </a>
+
+    <a href="javascript:void(0)" onclick="smoothScroll('#gallery'); toggleMenu()" data-tooltip="Gallery">
+      <i class="fa-regular fa-image"></i><span>Gallery</span>
+    </a>
+
+    <a href="javascript:void(0)" onclick="smoothScroll('#contact'); toggleMenu()" data-tooltip="Contact">
+      <i class="fa-regular fa-envelope"></i><span>Contact</span>
+    </a>
   </nav>
 </header>
 
@@ -65,24 +86,26 @@
       <b>A. Halili Business Aid Professional Services Inc.</b> (AHBA Development)
       is committed to delivering high-quality, value-added services nationwide.
       <br><br>
-      SEC Reg. <b>CS200902226</b> | DOLE Reg. <b>NCR-MPFO-72600-5-15-12-016-LR</b> | TIN <b>007-246-379-000</b>
+      SEC Reg. <b>CS200902226</b> |
+      DOLE Reg. <b>NCR-MPFO-72600-5-15-12-016-LR</b> |
+      TIN <b>007-246-379-000</b>
     </p>
   </div>
 
   <div class="stats-row reveal">
-    <div class="stat-card reveal">
+    <div class="stat-card">
       <div class="icon-circle">🏆</div>
       <h3 class="counter" data-target="20">0</h3>
       <p>Years Experience</p>
     </div>
 
-    <div class="stat-card reveal">
+    <div class="stat-card">
       <div class="icon-circle">👷</div>
       <h3 class="counter" data-target="10000">0</h3>
       <p>Workers Deployed</p>
     </div>
 
-    <div class="stat-card reveal">
+    <div class="stat-card">
       <div class="icon-circle">🌐</div>
       <h3 class="counter" data-target="300">0</h3>
       <p>Business Partners</p>
@@ -237,17 +260,12 @@
 </section>
 
 <footer>
-  📍 1454 Newton Street, Barangay San Isidro, Makati City | ✉️ ahbadevelopment@ahba.ph
+  📍 1454 Newton Street, Barangay San Isidro, Makati City |
+  ✉️ ahbadevelopment@ahba.ph
 </footer>
 
 <!-- JS -->
 <script src="/dashboard/script.js"></script>
-
-<script>
-function toggleMenu() {
-  document.getElementById("mobileNav").classList.toggle("open");
-}
-</script>
 
 </body>
 </html>
