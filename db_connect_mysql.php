@@ -1,6 +1,6 @@
 <?php
 try {
-    $pdo_mysql = new PDO(
+    $conn = new PDO(
         "mysql:host=localhost;dbname=skytrufiber_db;charset=utf8mb4",
         "root",
         "",
@@ -10,5 +10,5 @@ try {
         ]
     );
 } catch (PDOException $e) {
-    die("MySQL connection failed: " . $e->getMessage());
+    die("Local MySQL connection failed: " . $e->getMessage());
 }
