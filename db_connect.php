@@ -36,3 +36,7 @@ function db_execute(string $sql, array $params = []) {
         return false;
     }
 }
+function db_last_insert_id() {
+    global $pdo_mysql;
+    return $pdo_mysql->lastInsertId();
+}
