@@ -14,6 +14,9 @@ $tab = $GLOBALS["CSR_TAB"] ?? ($_GET["tab"] ?? "CHAT");
 /* History params */
 $clientID = intval($_GET["client"] ?? 0);
 $ticketID = intval($_GET["ticket"] ?? 0);
+
+/* Is this CSR a supervisor/admin? (controls the All Concerns button) */
+require_once __DIR__ . "/../concerns/admin_guard.php";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -84,6 +87,11 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
         <button class="nav-btn <?= $tab==='SURVEY'?'active':'' ?>"
                 onclick="navigateEncrypted('csr_survey')">📄 SURVEY</button>
 
+        <?php if (!empty($GLOBALS['CSR_IS_ADMIN'])): ?>
+        <button class="nav-btn"
+                onclick="window.location='/CSR/concerns/all_concerns.php'">🗂 ALL CONCERNS</button>
+        <?php endif; ?>
+
         <a href="/csr/logout" class="logout-btn">Logout</a>
     </div>
 </div>
@@ -118,6 +126,14 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
             data-tooltip="Survey Responses">
         📄 <span>Survey Responses</span>
     </button>
+
+    <?php if (!empty($GLOBALS['CSR_IS_ADMIN'])): ?>
+    <button class="side-item"
+            onclick="window.location='/CSR/concerns/all_concerns.php'"
+            data-tooltip="All Concerns">
+        🗂 <span>All Concerns</span>
+    </button>
+    <?php endif; ?>
 
     <button class="side-item logout"
             data-tooltip="Logout"
