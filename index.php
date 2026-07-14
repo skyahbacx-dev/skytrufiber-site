@@ -25,6 +25,17 @@ function decrypt_route($token) {
 
 $uri = strtok($_SERVER["REQUEST_URI"], "?"); // remove query string
 
+/* ============================================================
+   CSR SUBDOMAIN
+   When the site is opened via csr.ahbadevt.com, send the bare
+   root straight to the CSR login instead of the fiber dashboard.
+============================================================ */
+$host = strtolower($_SERVER["HTTP_HOST"] ?? "");
+if ($host === "csr.ahbadevt.com" && ($uri === "/" || $uri === "")) {
+    header("Location: /csr");
+    exit;
+}
+
 /* --------------------------
    SKYTRUFIBER ROUTES
 --------------------------- */
