@@ -92,6 +92,11 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
                 onclick="window.location='/CSR/concerns/all_concerns.php'">🗂 ALL CONCERNS</button>
         <?php endif; ?>
 
+        <?php if (!empty($GLOBALS['CSR_IS_SUPERADMIN'])): ?>
+        <button class="nav-btn"
+                onclick="window.location='/CSR/superadmin/users.php'">🛡 USERS</button>
+        <?php endif; ?>
+
         <a href="/csr/logout" class="logout-btn">Logout</a>
     </div>
 </div>
@@ -132,6 +137,14 @@ const csrFullname = "<?= htmlspecialchars($csrFullName, ENT_QUOTES) ?>";
             onclick="window.location='/CSR/concerns/all_concerns.php'"
             data-tooltip="All Concerns">
         🗂 <span>All Concerns</span>
+    </button>
+    <?php endif; ?>
+
+    <?php if (!empty($GLOBALS['CSR_IS_SUPERADMIN'])): ?>
+    <button class="side-item"
+            onclick="window.location='/CSR/superadmin/users.php'"
+            data-tooltip="User Management">
+        🛡 <span>User Management</span>
     </button>
     <?php endif; ?>
 
