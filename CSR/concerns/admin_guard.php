@@ -10,7 +10,7 @@
      $CSR_ADMIN_USERS = ['admin', 'supervisor_jen'];
    ============================================================ */
 
-$CSR_ADMIN_USERS = ['admin'];
+$CSR_ADMIN_USERS = ['AHBA_CSR01'];
 
 $__csrUser = $_SESSION['csr_user'] ?? '';
 $GLOBALS['CSR_IS_ADMIN'] = ($__csrUser !== '' && in_array($__csrUser, $CSR_ADMIN_USERS, true));
