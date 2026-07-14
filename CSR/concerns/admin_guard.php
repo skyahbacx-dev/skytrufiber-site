@@ -13,4 +13,9 @@
 $CSR_ADMIN_USERS = ['AHBA_CSR01'];
 
 $__csrUser = $_SESSION['csr_user'] ?? '';
-$GLOBALS['CSR_IS_ADMIN'] = ($__csrUser !== '' && in_array($__csrUser, $CSR_ADMIN_USERS, true));
+$__inWhitelist = ($__csrUser !== '' && in_array($__csrUser, $CSR_ADMIN_USERS, true));
+
+/* Super admins are automatically All Concerns admins too */
+require_once __DIR__ . "/../superadmin/superadmin_guard.php";
+
+$GLOBALS['CSR_IS_ADMIN'] = ($__inWhitelist || !empty($GLOBALS['CSR_IS_SUPERADMIN']));
