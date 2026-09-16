@@ -30,6 +30,10 @@ $csrUser = $_SESSION["csr_user"];
 <!-- FIXED CHAT CSS — Absolute path -->
 <link rel="stylesheet" href="/CSR/chat/chat.css?v=<?= time(); ?>">
 
+<!-- Visual redesign layer: restyles the panels/classes above using shared
+     Sky tokens. Does not change any of the working AJAX logic in chat.js. -->
+<link rel="stylesheet" href="/assets/css/inbox.css">
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <style>
@@ -104,6 +108,7 @@ $csrUser = $_SESSION["csr_user"];
 
             <div class="chat-header">
                 <div class="chat-with">
+                    <button class="chat-back-btn" id="inboxBackBtn" title="Back to conversations">←</button>
                     <h3 id="chat-client-name">Select a Client</h3>
                     <span id="client-status" class="status-dot offline"></span>
                 </div>
@@ -168,6 +173,32 @@ $csrUser = $_SESSION["csr_user"];
 </div>
 
 <input type="hidden" id="csr-username" value="<?= htmlspecialchars($csrUser, ENT_QUOTES) ?>">
+
+<script>
+/* Mobile-only: shows one panel (list vs. thread) at a time on small
+   screens, matching inbox.css's [data-mobile-view] rules. Purely a
+   display toggle - does not touch chat.js, its AJAX calls, or any
+   send/assign/lock/edit logic. */
+(function () {
+    const container = document.getElementById("chat-container");
+    const backBtn = document.getElementById("inboxBackBtn");
+    if (!container) return;
+
+    container.setAttribute("data-mobile-view", "list");
+
+    document.addEventListener("click", function (e) {
+        if (e.target.closest(".client-item")) {
+            container.setAttribute("data-mobile-view", "thread");
+        }
+    });
+
+    if (backBtn) {
+        backBtn.addEventListener("click", function () {
+            container.setAttribute("data-mobile-view", "list");
+        });
+    }
+})();
+</script>
 
 
 

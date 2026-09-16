@@ -1,0 +1,135 @@
+/* ==========================================================================
+   INBOX REDESIGN
+   Restyles the existing 3-panel chat layout (chat.php / chat.js /
+   load_clients.php / load_client_info.php / load_messages.php) using the
+   shared Sky design tokens. Deliberately does NOT rename any class or id
+   those PHP/JS files already emit or bind to - this file only changes how
+   things look, not how the working AJAX (send, assign, lock, edit, delete,
+   status updates) behaves. Loaded after chat.css, so these rules win.
+   ========================================================================== */
+
+#chat-container {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr) 300px;
+  gap: 16px;
+  height: calc(100vh - var(--topbar-h) - 48px);
+  min-height: 480px;
+}
+
+/* ---------- LEFT: conversation list ---------- */
+.chat-left-panel {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.left-header {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--gray-200);
+  flex-shrink: 0;
+}
+.left-header h3 { margin: 0 0 10px; font-size: 15px; font-weight: 700; }
+
+.ticket-filter-buttons { display: flex; gap: 6px; margin-bottom: 10px; }
+.ticket-filter {
+  flex: 1; font-size: 11px; font-weight: 700; text-transform: uppercase;
+  padding: 6px 4px; border-radius: var(--radius-sm); border: 1px solid var(--gray-300);
+  background: var(--white); color: var(--gray-700); cursor: pointer;
+}
+.ticket-filter.active { background: var(--sky-blue-600); border-color: var(--sky-blue-600); color: var(--white); }
+
+#client-search {
+  width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md); font-size: 13px; font-family: inherit;
+}
+#client-search:focus { outline: none; border-color: var(--sky-blue-500); box-shadow: 0 0 0 3px var(--sky-blue-100); }
+
+.client-list { flex: 1; overflow-y: auto; padding: var(--space-2); }
+
+.client-item {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+  padding: 10px; border-radius: var(--radius-md); cursor: pointer; margin-bottom: 2px;
+}
+.client-item:hover { background: var(--gray-100); }
+.client-item.active-client { background: var(--sky-blue-100); }
+.client-info strong { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+.last-msg { font-size: 12px; color: var(--gray-500); margin-top: 2px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Status pills emitted by load_clients.php (.status.UNRESOLVED etc.) and
+   load_client_info.php (.ticket-badge.unresolved etc.) - restyled in place. */
+.status, .ticket-badge {
+  display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .02em; padding: 3px 8px; border-radius: 999px; border: none !important;
+}
+.status.UNRESOLVED, .ticket-badge.unresolved { background: var(--danger-100) !important; color: var(--danger-600) !important; }
+.status.PENDING, .ticket-badge.pending       { background: var(--warning-100) !important; color: var(--warning-600) !important; }
+.status.RESOLVED, .ticket-badge.resolved     { background: var(--sky-green-100) !important; color: var(--sky-green-700) !important; }
+
+.assign-btn, .unassign-btn {
+  width: 22px; height: 22px; border-radius: 999px; border: none; font-weight: 700; cursor: pointer;
+}
+.assign-btn { background: var(--sky-blue-100); color: var(--sky-blue-700); }
+.unassign-btn { background: var(--danger-100); color: var(--danger-600); }
+
+/* ---------- MIDDLE: active thread ---------- */
+.chat-middle-panel {
+  background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg);
+  display: flex; flex-direction: column; overflow: hidden; position: relative;
+}
+.chat-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 14px var(--space-4); border-bottom: 1px solid var(--gray-200); flex-shrink: 0;
+}
+.chat-with { display: flex; align-items: center; gap: 8px; }
+.chat-with h3 { margin: 0; font-size: 15px; font-weight: 700; }
+.chat-back-btn { display: none; background: none; border: none; font-size: 16px; cursor: pointer; margin-right: 4px; }
+
+#ticket-status-dropdown {
+  font-family: inherit; font-size: 12px; font-weight: 700; text-transform: uppercase;
+  padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--gray-300); background: var(--white);
+}
+#ticket-status-dropdown.unresolved { border-color: var(--danger-600); color: var(--danger-600); }
+#ticket-status-dropdown.pending    { border-color: var(--warning-600); color: var(--warning-600); }
+#ticket-status-dropdown.resolved   { border-color: var(--sky-green-600, var(--sky-green-700)); color: var(--sky-green-700); }
+
+.chat-messages { flex: 1; overflow-y: auto; padding: var(--space-4); background: var(--gray-100); }
+
+.message-bubble { border-radius: var(--radius-md); font-size: 13px; }
+.message.sent .message-bubble { background: var(--sky-blue-600); color: var(--white); }
+.message.received .message-bubble { background: var(--white); color: var(--gray-900); border: 1px solid var(--gray-200); }
+.date-separator span { background: var(--white); border: 1px solid var(--gray-200); color: var(--gray-500); font-size: 11px; }
+
+.chat-input-area, #chat-input-wrapper {
+  border-top: 1px solid var(--gray-200); background: var(--white); flex-shrink: 0;
+}
+#chat-input { border: 1px solid var(--gray-300) !important; border-radius: var(--radius-md) !important; font-family: inherit; }
+#chat-input:focus { outline: none; border-color: var(--sky-blue-500) !important; }
+.chat-send-btn { background: var(--sky-blue-600) !important; border-radius: var(--radius-md) !important; }
+.chat-send-btn:hover { background: var(--sky-blue-700) !important; }
+
+/* ---------- RIGHT: customer context ---------- */
+.chat-right-panel {
+  background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg);
+  overflow-y: auto; padding: var(--space-4);
+}
+.client-info-panel h3 { margin: 0 0 10px; font-size: 15px; font-weight: 700; }
+.client-info-panel p { font-size: 13px; margin: 6px 0; color: var(--gray-700); }
+.client-info-panel p strong { color: var(--gray-900); }
+
+/* ---------- responsive: single column with a back button ---------- */
+@media (max-width: 980px) {
+  #chat-container {
+    grid-template-columns: 1fr;
+    height: calc(100vh - var(--topbar-h) - 32px);
+  }
+  .chat-right-panel { display: none; }
+  .chat-left-panel, .chat-middle-panel { display: none; }
+  /* JS (see inline script in chat.php) toggles one of these visible via
+     data-mobile-view on #chat-container, so exactly one panel shows at a time. */
+  #chat-container[data-mobile-view="list"] .chat-left-panel { display: flex; }
+  #chat-container[data-mobile-view="thread"] .chat-middle-panel { display: flex; }
+  #chat-container:not([data-mobile-view]) .chat-left-panel { display: flex; }
+  .chat-back-btn { display: inline-block; }
+}
