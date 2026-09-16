@@ -1,0 +1,167 @@
+/* ============================
+   GENERAL STYLING
+============================ */
+h1 {
+    margin: 10px 0;
+}
+
+/* Tabs */
+.survey-tabs {
+    margin-bottom: 15px;
+}
+.survey-tabs a {
+    padding: 6px 12px;
+    background: #cce7d8;
+    margin-right: 5px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #05702e;
+}
+.survey-tabs a.active {
+    background: #05702e;
+    color: #fff;
+}
+
+/* ============================
+   FILTER BAR
+============================ */
+.filter-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.filter-bar input,
+.filter-bar select {
+    padding: 7px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+/* ============================
+   TABLE
+============================ */
+.table-wrapper {
+    overflow-x: auto;
+    margin-top: 12px;
+}
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.styled-table th {
+    background: #05702e;
+    color: white;
+    cursor: pointer;
+    padding: 8px;
+}
+
+.styled-table td {
+    background: white;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+/* ============================
+   PAGINATION
+============================ */
+.pagination {
+    margin-top: 15px;
+}
+
+.pagination a {
+    padding: 6px 12px;
+    background: #ddd;
+    margin-right: 4px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: black;
+}
+
+.pagination a.active {
+    background: #05702e;
+    color: white;
+}
+
+/* ============================
+   ANALYTICS CARDS
+============================ */
+.metric-card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 22px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Base Canvas Styling */
+canvas {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+/* ============================
+   SURVEY ANALYTICS CONTAINER
+============================ */
+.survey-analytics-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 25px;
+}
+
+/* ============================
+   SIDE-BY-SIDE CHART ROW
+============================ */
+.analytics-row {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 25px;
+    margin-top: 25px;
+    flex-wrap: wrap; /* Responsive */
+}
+
+/* White card container for each chart */
+.analytics-box {
+    width: 400px;
+    height: 350px;
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Force charts to stay in their box */
+.analytics-box canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Remove old charts block to avoid conflicts */
+.charts {
+    display: none; /* No longer used */
+}
+.export-buttons {
+    margin-bottom: 12px;
+}
+
+.export-btn {
+    background: #05702e;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    margin-right: 10px;
+    font-size: 14px;
+}
+.export-btn:hover {
+    background: #045a25;
+}

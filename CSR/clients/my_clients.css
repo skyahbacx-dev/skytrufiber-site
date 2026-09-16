@@ -1,0 +1,202 @@
+/* ===========================
+   PAGE CONTAINER & HEADERS
+=========================== */
+.clients-container {
+    padding: 20px;
+}
+
+h1 {
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+/* ===========================
+   SUMMARY BOXES (NEW)
+=========================== */
+.summary-container {
+    display: flex;
+    gap: 12px;
+    margin: 15px 0 20px;
+    flex-wrap: wrap;
+}
+
+.summary-box {
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    min-width: 180px;
+    display: inline-block;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+.summary-box.total { background: #007bff; }
+.summary-box.unresolved { background: #d9534f; }
+.summary-box.pending { background: #f0ad4e; }
+.summary-box.resolved { background: #5cb85c; }
+
+/* ===========================
+   EXPORT PANEL (NEW)
+=========================== */
+.export-panel {
+    margin: 10px 0 20px;
+}
+
+.export-btn {
+    padding: 10px 18px;
+    background: #444;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: 0.25s ease;
+}
+
+.export-btn:hover {
+    background: #000;
+}
+
+/* ===========================
+   SEARCH BAR
+=========================== */
+.search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.search-bar input {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    flex: 1;
+    font-size: 14px;
+}
+
+.search-bar button {
+    padding: 8px 14px;
+    background: #05702e;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s ease;
+}
+
+.search-bar button:hover {
+    background: #045a24;
+}
+
+/* ===========================
+   TABLE
+=========================== */
+.table-wrapper {
+    overflow-x: auto;
+    margin-top: 10px;
+}
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.styled-table th {
+    background: #05702e;
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-size: 14px;
+}
+
+.styled-table td {
+    background: white;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+}
+
+.styled-table tr:hover td {
+    background: #f6f6f6;
+}
+
+/* ===========================
+   EMPTY STATE
+=========================== */
+.empty {
+    text-align: center;
+    padding: 14px;
+    color: #777;
+    font-size: 14px;
+}
+
+/* ===========================
+   CHAT BUTTON
+=========================== */
+.chat-btn {
+    background: #05702e;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    display: inline-block;
+    transition: 0.2s ease;
+}
+
+.chat-btn:hover {
+    background: #045a24;
+}
+
+/* ===========================
+   HISTORY BUTTON
+=========================== */
+.history-btn {
+    background: #0a4787;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    display: inline-block;
+    transition: 0.2s ease;
+}
+
+.history-btn:hover {
+    background: #083a6e;
+}
+
+/* ===========================
+   ACTION CELL (WRAPPING)
+=========================== */
+.action-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* ===========================
+   RESPONSIVE FIXES
+=========================== */
+@media (max-width: 768px) {
+    .summary-box {
+        min-width: 48%;
+    }
+
+    .styled-table th,
+    .styled-table td {
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    .chat-btn, .history-btn {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+}
