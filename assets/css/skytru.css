@@ -1,0 +1,206 @@
+/* ==========================================================================
+   SKYTRU DESIGN SYSTEM
+   One shared stylesheet for the whole app (CSR + customer portal) so every
+   page/tab looks and behaves consistently instead of each module shipping
+   its own CSS file. Old per-module CSS files still load for now (for
+   anything not yet migrated) but should be retired as pages adopt this.
+   ========================================================================== */
+
+:root {
+  /* Brand palette, pulled from the SkyTruFiber / AHBA logos */
+  --sky-blue-900: #0a2a6b;
+  --sky-blue-700: #123a91;
+  --sky-blue-600: #1a4fc4;
+  --sky-blue-500: #2f6fe0;
+  --sky-blue-100: #e8eefc;
+
+  --sky-green-700: #046a2e;
+  --sky-green-500: #0c8f3f;
+  --sky-green-100: #e5f7ec;
+
+  --gray-900: #1a1d24;
+  --gray-700: #45495a;
+  --gray-500: #737a8c;
+  --gray-300: #d7dbe4;
+  --gray-200: #e9ecf2;
+  --gray-100: #f4f6fa;
+  --white: #ffffff;
+
+  --danger-600: #c0342b;
+  --danger-100: #fbe7e5;
+  --warning-600: #a6660a;
+  --warning-100: #fdf1de;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --shadow-sm: 0 1px 2px rgba(20, 24, 40, 0.06);
+  --shadow-md: 0 4px 16px rgba(20, 24, 40, 0.08);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --sidebar-w: 232px;
+  --topbar-h: 60px;
+}
+
+/* ---------- base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+body.sky-app {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--gray-900);
+  background: var(--gray-100);
+  -webkit-font-smoothing: antialiased;
+}
+
+.sky-app a { color: var(--sky-blue-600); text-decoration: none; }
+.sky-app a:hover { text-decoration: underline; }
+
+/* ---------- app shell layout ---------- */
+.sky-topbar {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h);
+  display: flex; align-items: center; gap: var(--space-3);
+  background: var(--white); border-bottom: 1px solid var(--gray-200);
+  padding: 0 var(--space-4); z-index: 40;
+}
+.sky-topbar__logo { height: 30px; width: auto; }
+.sky-topbar__title { font-weight: 600; font-size: 15px; color: var(--gray-900); }
+.sky-topbar__spacer { flex: 1; }
+.sky-topbar__hamburger {
+  display: none; background: none; border: none; font-size: 20px; cursor: pointer;
+  padding: var(--space-2); color: var(--gray-700);
+}
+
+.sky-sidebar {
+  position: fixed; top: var(--topbar-h); bottom: 0; left: 0; width: var(--sidebar-w);
+  background: var(--white); border-right: 1px solid var(--gray-200);
+  padding: var(--space-4) var(--space-2); overflow-y: auto; z-index: 30;
+}
+.sky-nav-item {
+  display: flex; align-items: center; gap: var(--space-3);
+  width: 100%; padding: 10px var(--space-3); margin-bottom: 2px;
+  background: none; border: none; border-radius: var(--radius-md);
+  font-size: 14px; font-weight: 500; color: var(--gray-700);
+  cursor: pointer; text-align: left; position: relative;
+}
+.sky-nav-item:hover { background: var(--gray-100); }
+.sky-nav-item.active { background: var(--sky-blue-100); color: var(--sky-blue-700); }
+.sky-nav-item__icon { width: 18px; text-align: center; }
+.sky-nav-item__badge {
+  margin-left: auto; background: var(--sky-blue-600); color: var(--white);
+  font-size: 11px; font-weight: 700; border-radius: 999px;
+  padding: 1px 7px; min-width: 18px; text-align: center;
+}
+.sky-nav-divider { height: 1px; background: var(--gray-200); margin: var(--space-3) var(--space-2); }
+.sky-nav-item.logout { color: var(--danger-600); }
+
+.sky-content {
+  margin-left: var(--sidebar-w); margin-top: var(--topbar-h);
+  padding: var(--space-5); min-height: calc(100vh - var(--topbar-h));
+}
+
+.sky-sidebar-overlay {
+  display: none; position: fixed; inset: 0; top: var(--topbar-h);
+  background: rgba(10, 12, 20, 0.4); z-index: 25;
+}
+
+/* ---------- page header ---------- */
+.sky-page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-5); flex-wrap: wrap; gap: var(--space-3); }
+.sky-page-header h1 { font-size: 20px; margin: 0; font-weight: 700; }
+.sky-page-header p { margin: 2px 0 0; color: var(--gray-500); font-size: 13px; }
+
+/* ---------- cards ---------- */
+.sky-card {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg); padding: var(--space-4); box-shadow: var(--shadow-sm);
+}
+.sky-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-4); }
+.sky-stat-card .sky-stat-label { font-size: 12px; color: var(--gray-500); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+.sky-stat-card .sky-stat-value { font-size: 28px; font-weight: 700; margin-top: 6px; }
+.sky-stat-card .sky-stat-sub { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+
+/* ---------- buttons ---------- */
+.sky-btn {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  font-family: inherit; font-size: 13px; font-weight: 600;
+  padding: 9px 16px; border-radius: var(--radius-md); border: 1px solid transparent;
+  cursor: pointer; line-height: 1;
+}
+.sky-btn-primary { background: var(--sky-blue-600); color: var(--white); }
+.sky-btn-primary:hover { background: var(--sky-blue-700); text-decoration: none; }
+.sky-btn-secondary { background: var(--white); border-color: var(--gray-300); color: var(--gray-900); }
+.sky-btn-secondary:hover { background: var(--gray-100); text-decoration: none; }
+.sky-btn-danger { background: var(--danger-100); color: var(--danger-600); }
+.sky-btn-sm { padding: 6px 12px; font-size: 12px; }
+
+/* ---------- badges / status pills ---------- */
+.sky-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: .02em; }
+.sky-badge-success { background: var(--sky-green-100); color: var(--sky-green-700); }
+.sky-badge-warning { background: var(--warning-100); color: var(--warning-600); }
+.sky-badge-danger  { background: var(--danger-100); color: var(--danger-600); }
+.sky-badge-neutral { background: var(--gray-200); color: var(--gray-700); }
+.sky-badge-info    { background: var(--sky-blue-100); color: var(--sky-blue-700); }
+
+/* ---------- table ---------- */
+.sky-table-wrap { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); overflow: hidden; }
+.sky-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.sky-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--gray-500); padding: 12px 16px; background: var(--gray-100); border-bottom: 1px solid var(--gray-200); }
+.sky-table td { padding: 12px 16px; border-bottom: 1px solid var(--gray-200); vertical-align: middle; }
+.sky-table tr:last-child td { border-bottom: none; }
+.sky-table tr:hover td { background: var(--gray-100); }
+
+/* Mobile: tables become stacked cards */
+@media (max-width: 720px) {
+  .sky-table thead { display: none; }
+  .sky-table, .sky-table tbody, .sky-table tr, .sky-table td { display: block; width: 100%; }
+  .sky-table tr { border: 1px solid var(--gray-200); border-radius: var(--radius-md); margin-bottom: var(--space-3); overflow: hidden; }
+  .sky-table td { border-bottom: 1px solid var(--gray-100); padding: 8px 14px; }
+  .sky-table td::before { content: attr(data-label); display: block; font-size: 10px; text-transform: uppercase; color: var(--gray-500); font-weight: 700; margin-bottom: 2px; }
+}
+
+/* ---------- tabs ---------- */
+.sky-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--gray-200); margin-bottom: var(--space-4); overflow-x: auto; }
+.sky-tab { padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--gray-500); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; }
+.sky-tab.active { color: var(--sky-blue-700); border-bottom-color: var(--sky-blue-600); }
+
+/* ---------- forms ---------- */
+.sky-field { margin-bottom: var(--space-4); }
+.sky-field label { display: block; font-size: 12px; font-weight: 600; color: var(--gray-700); margin-bottom: 4px; }
+.sky-input, .sky-select, .sky-textarea {
+  width: 100%; font-family: inherit; font-size: 14px; padding: 9px 12px;
+  border: 1px solid var(--gray-300); border-radius: var(--radius-md); background: var(--white);
+}
+.sky-input:focus, .sky-select:focus, .sky-textarea:focus { outline: none; border-color: var(--sky-blue-500); box-shadow: 0 0 0 3px var(--sky-blue-100); }
+
+/* ---------- empty state ---------- */
+.sky-empty { text-align: center; padding: var(--space-6) var(--space-4); color: var(--gray-500); }
+.sky-empty__icon { font-size: 32px; margin-bottom: var(--space-2); }
+
+/* ---------- toast ---------- */
+.sky-toast-stack { position: fixed; bottom: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+.sky-toast { background: var(--gray-900); color: var(--white); padding: 10px 16px; border-radius: var(--radius-md); font-size: 13px; box-shadow: var(--shadow-md); }
+.sky-toast.success { background: var(--sky-green-700); }
+.sky-toast.error { background: var(--danger-600); }
+
+/* ---------- rating stars (survey) ---------- */
+.sky-rating { display: flex; gap: 4px; font-size: 26px; }
+.sky-rating button { background: none; border: none; cursor: pointer; opacity: .35; padding: 2px; line-height: 1; }
+.sky-rating button.selected, .sky-rating button:hover { opacity: 1; }
+
+/* ---------- responsive shell ---------- */
+@media (max-width: 900px) {
+  .sky-topbar__hamburger { display: inline-block; }
+  .sky-sidebar { transform: translateX(-100%); transition: transform .18s ease; box-shadow: var(--shadow-md); }
+  .sky-sidebar.open { transform: translateX(0); }
+  .sky-sidebar.open ~ .sky-sidebar-overlay { display: block; }
+  .sky-content { margin-left: 0; padding: var(--space-4); }
+}
