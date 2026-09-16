@@ -1,0 +1,14 @@
+name: Daily Reminder Cron
+
+on:
+  schedule:
+    - cron: "0 8 * * *"   # Runs daily at 8 AM Philippine time (adjust if needed)
+  workflow_dispatch:        # Allows you to run it manually
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Reminder Script
+        run: |
+          curl -s "https://ahbadevt.com/cron/send_due_reminders.php?token=AE92JF83HF82HSLA29FD"
