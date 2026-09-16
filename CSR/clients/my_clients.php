@@ -195,12 +195,13 @@ function openHistory(id) {
             <th>Status</th>
             <th>Chat</th>
             <th>History</th>
+            <th>Workspace</th>
         </tr>
     </thead>
     <tbody>
 
     <?php if ($total == 0): ?>
-        <tr><td colspan="9" style="text-align:center;">No clients found</td></tr>
+        <tr><td colspan="10" style="text-align:center;">No clients found</td></tr>
     <?php endif; ?>
 
     <?php foreach ($clients as $c):
@@ -221,6 +222,7 @@ function openHistory(id) {
             <td><?= $badge ?></td>
             <td><button class="chat-btn" onclick="openChat(<?= $c['id'] ?>)">💬 Chat</button></td>
             <td><button class="history-btn" onclick="openHistory(<?= $c['id'] ?>)">📜 History</button></td>
+            <td><button class="chat-btn" onclick="Sky.goTab('customer', {id: <?= $c['id'] ?>})">🗂 Workspace</button></td>
         </tr>
     <?php endforeach; ?>
 

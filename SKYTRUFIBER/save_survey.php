@@ -10,6 +10,7 @@ $district       = trim($_POST['district']       ?? '');
 $location       = trim($_POST['location']       ?? ''); // barangay
 $date_installed = trim($_POST['date_installed'] ?? '');
 $feedback       = trim($_POST['feedback']       ?? '');
+$rating         = isset($_POST['rating']) && $_POST['rating'] !== '' ? (int)$_POST['rating'] : null;
 
 if (!$account_number || !$client_name || !$email || !$district || !$location || !$date_installed || !$feedback) {
   echo "<script>alert('⚠️ Please complete all fields.'); history.back();</script>"; exit;
@@ -40,15 +41,16 @@ try {
 
   // Write to survey_responses
  $conn->prepare("
-  INSERT INTO survey_responses (client_name, account_number, email, district, location, feedback, created_at)
-  VALUES (:c, :a, :e, :d, :l, :f, NOW())
+  INSERT INTO survey_responses (client_name, account_number, email, district, location, feedback, rating, created_at)
+  VALUES (:c, :a, :e, :d, :l, :f, :r, NOW())
 ")->execute([
   ':c' => $client_name,
   ':a' => $account_number,
   ':e' => $email,          // <-- added email here
   ':d' => $district,
   ':l' => $location,
-  ':f' => $feedback
+  ':f' => $feedback,
+  ':r' => $rating
 ]);
 
   $conn->commit();

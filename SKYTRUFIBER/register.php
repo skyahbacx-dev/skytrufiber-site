@@ -27,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $barangay       = trim($_POST['location']);
     $date_installed = trim($_POST['date_installed']);
     $remarks        = trim($_POST['remarks']);
+    $rating         = isset($_POST['rating']) && $_POST['rating'] !== '' ? (int)$_POST['rating'] : null;
     $password       = $account_number;
     $source         = trim($_POST['source']);
 
@@ -54,12 +55,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $conn->beginTransaction();
                 $hash = password_hash($password, PASSWORD_BCRYPT);
 
-                /* Insert user */
+                /* Insert user. RETURNING id is used instead of
+                   PDO::lastInsertId() because that call is unreliable on
+                   Postgres without an explicit sequence name. */
                 $stmt = $conn->prepare("
                     INSERT INTO users 
                         (account_number, full_name, email, password, district, barangay, date_installed, privacy_consent, source, created_at)
                     VALUES 
                         (:acc, :name, :email, :pw, :district, :barangay, :installed, 'yes', :source, NOW())
+                    RETURNING id
                 ");
                 $stmt->execute([
                     ':acc'      => $account_number,
@@ -71,14 +75,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':installed'=> $date_installed,
                     ':source'   => $source
                 ]);
+                $newUserId = (int)$stmt->fetchColumn();
 
-                /* Insert optional feedback */
-                if ($remarks) {
+                /* Insert survey response: the rating is now required by the
+                   form, feedback text stays optional. user_id is now linked
+                   (previously left NULL, which is why the admin survey view's
+                   join to users could come up empty for new signups). */
+                if ($rating !== null || $remarks) {
                     $stmt2 = $conn->prepare("
                         INSERT INTO survey_responses 
-                            (client_name, account_number, district, location, feedback, source, created_at)
+                            (client_name, account_number, district, location, feedback, rating, source, user_id, created_at)
                         VALUES 
-                            (:name, :acc, :district, :barangay, :feedback, :source, NOW())
+                            (:name, :acc, :district, :barangay, :feedback, :rating, :source, :uid, NOW())
                     ");
                     $stmt2->execute([
                         ':name'     => $full_name,
@@ -86,7 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ':district' => $district,
                         ':barangay' => $barangay,
                         ':feedback' => $remarks,
-                        ':source'   => $source
+                        ':rating'   => $rating,
+                        ':source'   => $source,
+                        ':uid'      => $newUserId
                     ]);
                 }
 
@@ -220,6 +230,28 @@ button:hover { background: #007a99; }
 .dropdown-item:hover {
     background: #e8f4ff;
 }
+.rating-scale {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    margin: 6px 0 14px;
+}
+.rating-option {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+    padding: 8px 4px;
+    border-radius: 10px;
+    border: 1px solid #d7dbe4;
+    font-size: 26px;
+    transition: border-color .15s, background .15s;
+}
+.rating-option input { position: absolute; opacity: 0; width: 0; height: 0; }
+.rating-option:has(input:checked) {
+    border-color: #1a4fc4;
+    background: #e8eefc;
+}
+.rating-option:hover { border-color: #1a4fc4; }
 </style>
 
 </head>
@@ -262,6 +294,17 @@ button:hover { background: #007a99; }
 
     <label>Date Installed:</label>
     <input type="date" id="date_installed" name="date_installed" required>
+
+    <label>How satisfied are you with your service?</label>
+    <div class="rating-scale" role="radiogroup" aria-label="Satisfaction rating">
+        <?php $ratingFaces = [1 => '😡', 2 => '😕', 3 => '😐', 4 => '🙂', 5 => '😍']; ?>
+        <?php foreach ($ratingFaces as $val => $face): ?>
+            <label class="rating-option">
+                <input type="radio" name="rating" value="<?= $val ?>" required>
+                <span><?= $face ?></span>
+            </label>
+        <?php endforeach; ?>
+    </div>
 
     <label>Feedback / Comments (Optional):</label>
     <textarea name="remarks" placeholder="Your feedback helps us improve"></textarea>
