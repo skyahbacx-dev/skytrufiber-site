@@ -3,113 +3,120 @@ session_start();
 require_once __DIR__ . '/../db_connect.php';
 
 $message = '';
+$source = $_GET['source'] ?? '';
 
 /* ============================================================
-   LOGIN HANDLER
+   VALIDATE ONE-TIME REGISTRATION TOKEN
 ============================================================ */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['password'])) {
+$tokenProvided = $_GET['rt'] ?? '';
+$tokenStored   = $_SESSION['registration_token'] ?? null;
 
-    $input    = trim($_POST['full_name']);
-    $password = $_POST['password'];
+if (!$tokenStored || $tokenProvided !== $tokenStored) {
+    die("Invalid or expired registration token.");
+}
 
-    /* Proper concern handling */
-    $concern = "";
-    if (!empty($_POST['concern_text'])) {
-        $concern = trim($_POST['concern_text']);
-    } elseif (!empty($_POST['concern_dropdown']) && $_POST['concern_dropdown'] !== "others") {
-        $concern = trim($_POST['concern_dropdown']);
-    }
+/* ============================================================
+   FORM SUBMISSION HANDLER
+============================================================ */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    if ($input && $password) {
+    $account_number = trim($_POST['account_number']);
+    $full_name      = trim($_POST['full_name']);
+    $email          = trim($_POST['email']);
+    $district       = trim($_POST['district']);
+    $barangay       = trim($_POST['location']);
+    $date_installed = trim($_POST['date_installed']);
+    $remarks        = trim($_POST['remarks']);
+    $rating         = isset($_POST['rating']) && $_POST['rating'] !== '' ? (int)$_POST['rating'] : null;
+    $password       = $account_number;
+    $source         = trim($_POST['source']);
+
+    if ($account_number && $full_name && $email && $district && $barangay && $date_installed) {
 
         try {
-            /* Fetch user */
-            $stmt = $conn->prepare("
-                SELECT *
-                FROM users
-                WHERE email = :input OR full_name = :input
+            /* Prevent duplicates */
+            $check = $conn->prepare("
+                SELECT id FROM users 
+                WHERE account_number = :acc 
+                OR email = :email
+                OR full_name = :name
                 LIMIT 1
             ");
-            $stmt->execute([':input' => $input]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $check->execute([
+                ':acc'   => $account_number,
+                ':email' => $email,
+                ':name'  => $full_name
+            ]);
 
-            if ($user && password_verify($password, $user['password'])) {
+            if ($check->fetch()) {
+                $message = "⚠ This account number, email, or name is already registered.";
+            } else {
 
-                session_regenerate_id(true);
+                $conn->beginTransaction();
+                $hash = password_hash($password, PASSWORD_BCRYPT);
 
-                /* Fetch last ticket */
-                $ticketStmt = $conn->prepare("
-                    SELECT id, status
-                    FROM tickets
-                    WHERE client_id = :cid
-                    ORDER BY created_at DESC
-                    LIMIT 1
+                /* Insert user. RETURNING id is used instead of
+                   PDO::lastInsertId() because that call is unreliable on
+                   Postgres without an explicit sequence name. */
+                $stmt = $conn->prepare("
+                    INSERT INTO users 
+                        (account_number, full_name, email, password, district, barangay, date_installed, privacy_consent, source, created_at)
+                    VALUES 
+                        (:acc, :name, :email, :pw, :district, :barangay, :installed, 'yes', :source, NOW())
+                    RETURNING id
                 ");
-                $ticketStmt->execute([':cid' => $user['id']]);
-                $lastTicket = $ticketStmt->fetch(PDO::FETCH_ASSOC);
+                $stmt->execute([
+                    ':acc'      => $account_number,
+                    ':name'     => $full_name,
+                    ':email'    => $email,
+                    ':pw'       => $hash,
+                    ':district' => $district,
+                    ':barangay' => $barangay,
+                    ':installed'=> $date_installed,
+                    ':source'   => $source
+                ]);
+                $newUserId = (int)$stmt->fetchColumn();
 
-                /* ============================================================
-                   CREATE NEW TICKET + INSERT CSR GREETING
-                ============================================================ */
-                if (!$lastTicket || $lastTicket['status'] === 'resolved') {
-
-                    $newTicket = $conn->prepare("
-                        INSERT INTO tickets (client_id, status, created_at)
-                        VALUES (:cid, 'pending', NOW())
+                /* Insert survey response: the rating is now required by the
+                   form, feedback text stays optional. user_id is now linked
+                   (previously left NULL, which is why the admin survey view's
+                   join to users could come up empty for new signups). */
+                if ($rating !== null || $remarks) {
+                    $stmt2 = $conn->prepare("
+                        INSERT INTO survey_responses 
+                            (client_name, account_number, district, location, feedback, rating, source, user_id, created_at)
+                        VALUES 
+                            (:name, :acc, :district, :barangay, :feedback, :rating, :source, :uid, NOW())
                     ");
-                    $newTicket->execute([':cid' => $user['id']]);
-                    $ticketId = $conn->lastInsertId();
-
-                    /* Personalized CSR Greeting (FULL NAME) */
-                 $csrGreeting = "Hello {$user['full_name']}! This is SkyTruFiber Support. How may I assist you today?";
-
-                  $greet = $conn->prepare("
-                   INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, seen, created_at)
-                   VALUES (:tid, NULL, 'csr', :msg, TRUE, TRUE, NOW())
-                  ");
-
-                  $greet->execute([
-                   ':tid' => $ticketId,
-                   ':msg' => $csrGreeting
-                  ]);
-
-
-                    $_SESSION['show_suggestions'] = true;
-
-                } else {
-                    $ticketId = $lastTicket['id'];
-                }
-
-                /* Save session */
-                $_SESSION['client_id'] = $user['id'];
-                $_SESSION['ticket_id'] = $ticketId;
-
-                /* Insert Client Inquiry */
-                if (!empty($concern)) {
-                    $insert = $conn->prepare("
-                        INSERT INTO chat (ticket_id, client_id, sender_type, message, delivered, created_at)
-                        VALUES (:tid, :cid, 'client', :msg, TRUE, NOW())
-                    ");
-                    $insert->execute([
-                        ':tid' => $ticketId,
-                        ':cid' => $user['id'],
-                        ':msg' => $concern
+                    $stmt2->execute([
+                        ':name'     => $full_name,
+                        ':acc'      => $account_number,
+                        ':district' => $district,
+                        ':barangay' => $barangay,
+                        ':feedback' => $remarks,
+                        ':rating'   => $rating,
+                        ':source'   => $source,
+                        ':uid'      => $newUserId
                     ]);
                 }
 
-                header("Location: /fiber/chat?ticket=$ticketId");
-                exit;
+                $conn->commit();
 
-            } else {
-                $message = "❌ Invalid login credentials.";
+                /* Clear used token */
+                unset($_SESSION['registration_token']);
+
+                /* Redirect to success page */
+                header("Location: /fiber/register/success");
+                exit;
             }
 
         } catch (PDOException $e) {
-            $message = "⚠ Database error: " . htmlspecialchars($e->getMessage());
+            $conn->rollBack();
+            $message = "❌ Database error: " . htmlspecialchars($e->getMessage());
         }
 
     } else {
-        $message = "⚠ Please fill in all fields.";
+        $message = "⚠ Please fill in all required fields.";
     }
 }
 ?>
@@ -117,224 +124,292 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SkyTruFiber Customer Portal</title>
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<title>Customer Registration – SkyTruFiber</title>
+<link rel="stylesheet" href="/assets/css/skytru.css">
 
 <style>
-body{
-    margin:0;
-    font-family:"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial;
-    background:linear-gradient(135deg, #e8eefc, #f4f6fa);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
+body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #e8eefc, #f4f6fa);
+    margin: 0;
+    padding-top: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-.container{
-    background:white;
-    padding:32px;
-    border-radius:20px;
-    box-shadow:0 10px 28px rgba(20,24,40,.14);
-    width:380px;
-    text-align:center;
-    position:relative;
-    overflow:hidden;
+/* Form */
+form {
+    background: #fff;
+    padding: 35px;
+    border-radius: 20px;
+    width: 450px;
+    max-width: 92%;
+    box-shadow: 0 10px 28px rgba(20,24,40,0.14);
+    position: relative;
 }
 
-.container img{
-    width:150px;
-    margin-bottom:15px;
+/* Logo inside form */
+.logo-inside {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+.logo-inside img {
+    width: 140px;
+    border-radius: 50%;
+    background: white;
+    padding: 10px;
+    border: 3px solid #1a4fc4;
 }
 
+h2 {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+/* Labels */
+label {
+    display: block;
+    margin-top: 12px;
+    margin-bottom: 3px;
+    font-weight: bold;
+}
+
+/* Inputs */
 input, select, textarea {
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    border-radius:10px;
-    border:1px solid #d7dbe4;
-    font-size:15px;
-    font-family:inherit;
-    box-sizing:border-box;
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #d7dbe4;
+    font-size: 15px;
+    font-family: inherit;
+    box-sizing: border-box;
 }
 
 input:focus, select:focus, textarea:focus {
-    outline:none;
-    border-color:#2f6fe0;
-    box-shadow:0 0 0 3px #e8eefc;
+    outline: none;
+    border-color: #2f6fe0;
+    box-shadow: 0 0 0 3px #e8eefc;
 }
 
-textarea{
-    height:80px;
-    resize:none;
-    display:none;
+/* Account number formatting */
+input[name='account_number'] {
+    letter-spacing: 1px;
 }
 
-button{
-    width:100%;
-    padding:12px;
-    background:#1a4fc4;
-    color:white;
-    border:none;
-    border-radius:50px;
-    cursor:pointer;
-    font-size:16px;
-    font-weight:700;
+button {
+    width: 100%;
+    padding: 12px;
+    background: #1a4fc4;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-top: 20px;
+    font-size: 17px;
+    font-weight: bold;
+}
+button:hover { background: #123a91; }
+
+.message {
+    color: red;
+    text-align: center;
+    margin-top: 10px;
 }
 
-button:hover{ background:#123a91; }
-
-.small-links{
-    margin-top:12px;
-    font-size:14px;
+/* Barangay dropdown */
+.dropdown-wrapper { position: relative; }
+.searchable-select { cursor: pointer; }
+.dropdown-list {
+    position: absolute;
+    width: 100%;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    display: none;
+    z-index: 999;
 }
-
-.small-links a{
-    color:#123a91;
-    text-decoration:none;
-    font-weight:600;
+.dropdown-item {
+    padding: 10px;
+    cursor: pointer;
 }
-
-.small-links a:hover{
-    text-decoration:underline;
+.dropdown-item:hover {
+    background: #e8f4ff;
 }
-
-.message{
-    color:#c0342b;
-    font-size:0.9em;
-    margin-bottom:8px;
+.rating-scale {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    margin: 6px 0 14px;
 }
-
-/* Animation */
-.form-box {
-    transition: opacity .3s ease, transform .3s ease, height .3s ease;
+.rating-option {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+    padding: 8px 4px;
+    border-radius: 10px;
+    border: 1px solid #d7dbe4;
+    font-size: 26px;
+    transition: border-color .15s, background .15s;
 }
-
-.hidden {
-    opacity: 0;
-    transform: translateY(20px);
-    height: 0;
-    overflow: hidden;
-    pointer-events: none;
+.rating-option input { position: absolute; opacity: 0; width: 0; height: 0; }
+.rating-option:has(input:checked) {
+    border-color: #1a4fc4;
+    background: #e8eefc;
 }
-
-.visible {
-    opacity: 1;
-    transform: translateY(0);
-    height: auto;
-    pointer-events: auto;
-}
+.rating-option:hover { border-color: #1a4fc4; }
 </style>
-</head>
 
+</head>
 <body>
 
-<div class="container">
+<form method="POST">
 
-    <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+    <div class="logo-inside">
+        <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+    </div>
 
-    <h2>Customer Service Portal</h2>
+    <h2>Customer Registration & Feedback</h2>
 
-<?php if ($message): ?>
-<p class="message"><?= htmlspecialchars($message) ?></p>
-<?php endif; ?>
+    <input type="hidden" name="source" value="<?= htmlspecialchars($source) ?>">
 
-<!-- LOGIN FORM -->
-<form id="loginForm" class="form-box visible" method="POST">
+    <label>Account Number:</label>
+    <input type="text" name="account_number" minlength="9" maxlength="13"
+           pattern="[0-9]{9,13}" placeholder="Enter 9–13 digit account number" required>
 
-    <input type="text" name="full_name" placeholder="Email or Full Name" required>
-    <input type="password" name="password" placeholder="Password" required>
+    <label>Full Name:</label>
+    <input type="text" name="full_name" placeholder="Enter full name" required>
 
-    <select name="concern_dropdown" id="concernSelect">
-        <option value="">Select Concern / Inquiry</option>
-        <option>Slow Internet</option>
-        <option>No Connection</option>
-        <option>Router LOS Light On</option>
-        <option>Intermittent Internet</option>
-        <option>Billing Concern</option>
-        <option>Account Verification</option>
-        <option value="others">Others…</option>
+    <label>Email:</label>
+    <input type="email" name="email" placeholder="example@email.com" required>
+
+    <label>District:</label>
+    <select id="district" name="district" required>
+        <option value="">Select District</option>
+        <option value="District 1">District 1</option>
+        <option value="District 3">District 3</option>
+        <option value="District 4">District 4</option>
     </select>
 
-    <textarea id="concernText" name="concern_text" placeholder="Type your concern here..."></textarea>
+    <label>Barangay:</label>
+    <div class="dropdown-wrapper">
+        <input type="text" id="barangaySelector" class="searchable-select" placeholder="Search or select barangay..." autocomplete="off">
+        <input type="hidden" id="location" name="location" required>
+        <div id="dropdownList" class="dropdown-list"></div>
+    </div>
+
+    <label>Date Installed:</label>
+    <input type="date" id="date_installed" name="date_installed" required>
+
+    <label>How satisfied are you with your service?</label>
+    <div class="rating-scale" role="radiogroup" aria-label="Satisfaction rating">
+        <?php $ratingFaces = [1 => '😡', 2 => '😕', 3 => '😐', 4 => '🙂', 5 => '😍']; ?>
+        <?php foreach ($ratingFaces as $val => $face): ?>
+            <label class="rating-option">
+                <input type="radio" name="rating" value="<?= $val ?>" required>
+                <span><?= $face ?></span>
+            </label>
+        <?php endforeach; ?>
+    </div>
+
+    <label>Feedback / Comments (Optional):</label>
+    <textarea name="remarks" placeholder="Your feedback helps us improve"></textarea>
 
     <button type="submit">Submit</button>
+
+    <?php if ($message): ?>
+        <p class="message"><?= htmlspecialchars($message) ?></p>
+    <?php endif; ?>
+
+    <p style="text-align:center;">Already registered?
+        <a href="/fiber">Login here</a>
+    </p>
+
 </form>
-
-<!-- FORGOT PASSWORD FORM -->
-<form id="forgotForm" class="form-box hidden" onsubmit="return false;">
-
-    <h2>Forgot Password</h2>
-    <p style="font-size:14px;">Enter your email and we will send your account number.</p>
-
-    <input type="email" id="forgotEmail" placeholder="Your Email">
-
-    <button id="sendForgotBtn">Send Email</button>
-
-    <div class="small-links" style="margin-top:15px;">
-        <a href="#" id="backToLogin">← Back to Login</a>
-    </div>
-</form>
-
-<div class="small-links">
-    <a href="/fiber/consent">Register here</a> |
-    <a href="#" id="forgotLink">Forgot Password?</a>
-</div>
-
-</div>
 
 <script>
-// Concern toggle
-document.getElementById("concernSelect").addEventListener("change", function(){
-    concernText.style.display = (this.value === "others") ? "block" : "none";
+/* ---------- BARANGAY SEARCH SYSTEM ---------- */
+const barangays = {
+  "District 1": [
+"Alicia (Bago Bantay)","Bagong Pag-asa","Bahay Toro","Balingasa","Bungad","Damar","Damayan",
+"Del Monte","Katipunan","Lourdes","Maharlika","Manresa","Mariblo","Masambong",
+"N.S. Amoranto","Nayong Kanluran","Paang Bundok","Pag-ibig sa Nayon","Paltok","Paraiso",
+"Phil-Am","Project 6","Ramon Magsaysay","Saint Peter","Salvacion","San Antonio",
+"San Isidro Labrador","San Jose","Santa Cruz","Santa Teresita","Santo Domingo","Siena",
+"Sto. Cristo","Talayan","Vasra","Veterans Village","West Triangle"
+  ],
+  "District 3": [
+"Camp Aguinaldo","Pansol","Mangga","San Roque","Silangan","Socorro","Bagumbayan","Libis","Ugong Norte",
+"Masagana","Loyola Heights","Matandang Balara","East Kamias","Quirino 2-A","Quirino 2-B","Quirino 2-C",
+"Amihan","Claro","Duyan-duyan","Quirino 3-A","Bagumbuhay","Bayanihan","Blue Ridge A","Blue Ridge B",
+"Dioquino Zobel","Escopa I","Escopa II","Escopa III","Escopa IV","Marilag","Milagrosa","Tagumpay",
+"Villa Maria Clara","E. Rodriguez","West Kamias","St. Ignatius","White Plains"
+  ],
+  "District 4": [
+"Bagong Lipunan ng Crame","Botocan","Central","Damayang Lagi","Don Manuel","Doña Aurora","Doña Imelda",
+"Doña Josefa","Horseshoe","Immaculate Concepcion","Kalusugan","Kamuning","Kaunlaran","Kristong Hari",
+"Krus na Ligas","Laging Handa","Malaya","Mariana","Obrero","Old Capitol Site","Paligsahan",
+"Pinagkaisahan","Pinyahan","Roxas","Sacred Heart","San Isidro Galas","San Martin de Porres",
+"San Vicente","Santol","Sikatuna Village","South Triangle","Sto. Niño","Tatalon",
+"Teacher's Village East","Teacher's Village West","U.P. Campus","U.P. Village","Valencia"
+  ]
+};
+
+const districtSelect = document.getElementById("district");
+const searchInput = document.getElementById("barangaySelector");
+const dropdownList = document.getElementById("dropdownList");
+const hiddenBarangay = document.getElementById("location");
+
+function populateDropdown(filter) {
+    dropdownList.innerHTML = "";
+    const district = districtSelect.value;
+    if (!barangays[district]) return;
+
+    barangays[district]
+        .filter(b => b.toLowerCase().includes(filter))
+        .forEach(brgy => {
+            let div = document.createElement("div");
+            div.className = "dropdown-item";
+            div.textContent = brgy;
+            div.onclick = () => {
+                searchInput.value = brgy;
+                hiddenBarangay.value = brgy;
+                dropdownList.style.display = "none";
+            };
+            dropdownList.appendChild(div);
+        });
+}
+
+/* Show dropdown */
+searchInput.addEventListener("focus", () => {
+    populateDropdown("");
+    dropdownList.style.display = "block";
 });
 
-// Show forgot form
-forgotLink.onclick = e => {
-    e.preventDefault();
-    loginForm.classList.replace("visible","hidden");
-    forgotForm.classList.replace("hidden","visible");
-};
+/* Live search */
+searchInput.addEventListener("input", () => {
+    populateDropdown(searchInput.value.toLowerCase());
+    dropdownList.style.display = "block";
+});
 
-// Back to login
-backToLogin.onclick = e => {
-    e.preventDefault();
-    forgotForm.classList.replace("visible","hidden");
-    loginForm.classList.replace("hidden","visible");
-};
-
-// AJAX: Send email
-sendForgotBtn.onclick = async () => {
-
-    let email = forgotEmail.value.trim();
-    if (!email) {
-        Swal.fire("Missing Email","Please enter your email.","warning");
-        return;
+/* Close when clicking outside */
+document.addEventListener("click", (e) => {
+    if (!dropdownList.contains(e.target) && e.target !== searchInput) {
+        dropdownList.style.display = "none";
     }
+});
 
-    Swal.fire({
-        title:"Sending...",
-        text:"Please wait...",
-        allowOutsideClick:false,
-        didOpen:()=>Swal.showLoading()
-    });
-
-    let response = await fetch("/fiber/forgot_password.php", {
-        method:"POST",
-        headers:{ "Content-Type":"application/x-www-form-urlencoded" },
-        body:"email=" + encodeURIComponent(email)
-    });
-
-    let data = await response.json();
-
-    if (data.success){
-        Swal.fire("Success!", data.message, "success");
-        forgotEmail.value = "";
-    } else {
-        Swal.fire("Error", data.message, "error");
-    }
-};
+/* Auto-fill date today */
+document.addEventListener("DOMContentLoaded", () => {
+    const d = new Date();
+    document.getElementById("date_installed").value =
+        d.getFullYear() + "-" +
+        String(d.getMonth()+1).padStart(2,"0") + "-" +
+        String(d.getDate()).padStart(2,"0");
+});
 </script>
 
 </body>

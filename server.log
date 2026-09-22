@@ -1,955 +1,301 @@
-[Tue Sep 22 08:05:29 2026] PHP 8.3.6 Development Server (http://0.0.0.0:8080) started
-[Tue Sep 22 08:05:56 2026] 127.0.0.1:60368 Accepted
-[Tue Sep 22 08:05:56 2026] 127.0.0.1:60368 [302]: GET /home.php
-[Tue Sep 22 08:05:56 2026] 127.0.0.1:60368 Closing
-[Tue Sep 22 08:05:56 2026] 127.0.0.1:60384 Accepted
-[Tue Sep 22 08:05:57 2026] 127.0.0.1:60384 [200]: GET /home.php?v=Y3NyX2xvZ2lufDE3OTAwNjQzNTY%3D
-[Tue Sep 22 08:05:57 2026] 127.0.0.1:60384 Closing
-[Tue Sep 22 08:06:22 2026] 127.0.0.1:48264 Accepted
-[Tue Sep 22 08:06:24 2026] 127.0.0.1:48264 [302]: POST /home.php?v=Y3NyX2xvZ2lufDE3OTAwNjQzNTY%3D
-[Tue Sep 22 08:06:24 2026] 127.0.0.1:48264 Closing
-[Tue Sep 22 08:06:24 2026] 127.0.0.1:44822 Accepted
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44822 [200]: GET /home.php?v=Y3NyX2Rhc2hib2FyZHwxNzkwMDY0Mzg0
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44822 Closing
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44838 Accepted
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44852 Accepted
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44838 [200]: GET /CSR/dashboard/csr_dashboard.js?v=3
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44864 Accepted
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44852 [200]: GET /CSR/history/history.js?v=3
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44838 Closing
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44852 Closing
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44874 Accepted
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44864 [200]: GET /AHBALOGO.png
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44864 Closing
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44874 [200]: GET /CSR/chat/chat.css?v=3
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44874 Closing
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44880 Accepted
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44890 Accepted
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44900 Accepted
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44916 Accepted
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44918 Accepted
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44880 [200]: GET /CSR/chat/chat.js?v=3
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44880 Closing
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44890 [200]: GET /CSR/vendor/js/Sortable.min.js
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44890 Closing
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44900 [200]: GET /CSR/chat/chat.css?v=1790064386
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44900 Closing
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44916 [200]: GET /CSR/history/history.css?v=3
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44916 Closing
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44918 [200]: GET /CSR/dashboard/csr_dashboard.css
-[Tue Sep 22 08:06:26 2026] 127.0.0.1:44918 Closing
-[Tue Sep 22 08:06:27 2026] 127.0.0.1:44928 Accepted
-[Tue Sep 22 08:06:27 2026] 127.0.0.1:44930 Accepted
-[Tue Sep 22 08:06:28 2026] 127.0.0.1:44930 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:06:28 2026] 127.0.0.1:44930 Closing
-[Tue Sep 22 08:06:28 2026] 127.0.0.1:44928 [200]: GET /CSR/AHBALOGO.png
-[Tue Sep 22 08:06:28 2026] 127.0.0.1:44928 Closing
-[Tue Sep 22 08:06:31 2026] 127.0.0.1:44932 Accepted
-[Tue Sep 22 08:06:32 2026] 127.0.0.1:44932 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:06:33 2026] 127.0.0.1:44932 Closing
-[Tue Sep 22 08:06:33 2026] 127.0.0.1:44948 Accepted
-[Tue Sep 22 08:06:33 2026] 127.0.0.1:44950 Accepted
-[Tue Sep 22 08:06:34 2026] 127.0.0.1:44948 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:06:34 2026] 127.0.0.1:44948 Closing
-[Tue Sep 22 08:06:34 2026] 127.0.0.1:44966 Accepted
-[Tue Sep 22 08:06:36 2026] 127.0.0.1:44950 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:06:36 2026] 127.0.0.1:44950 Closing
-[Tue Sep 22 08:06:36 2026] 127.0.0.1:57072 Accepted
-[Tue Sep 22 08:06:38 2026] 127.0.0.1:44966 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:06:38 2026] 127.0.0.1:44966 Closing
-[Tue Sep 22 08:06:40 2026] 127.0.0.1:57072 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:06:40 2026] 127.0.0.1:57072 Closing
-[Tue Sep 22 08:06:40 2026] 127.0.0.1:57078 Accepted
-[Tue Sep 22 08:06:40 2026] 127.0.0.1:57080 Accepted
-[Tue Sep 22 08:06:40 2026] 127.0.0.1:57078 [200]: GET /upload/default-avatar.png
-[Tue Sep 22 08:06:40 2026] 127.0.0.1:57096 Accepted
-[Tue Sep 22 08:06:41 2026] 127.0.0.1:57080 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:06:41 2026] 127.0.0.1:57080 Closing
-[Tue Sep 22 08:06:41 2026] 127.0.0.1:57106 Accepted
-[Tue Sep 22 08:06:43 2026] 127.0.0.1:57096 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:06:43 2026] 127.0.0.1:57096 Closing
-[Tue Sep 22 08:06:43 2026] 127.0.0.1:57116 Accepted
-[Tue Sep 22 08:06:43 2026] 127.0.0.1:57078 Closing
-[Tue Sep 22 08:06:45 2026] 127.0.0.1:57106 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:06:45 2026] 127.0.0.1:57106 Closing
-[Tue Sep 22 08:06:45 2026] 127.0.0.1:57132 Accepted
-[Tue Sep 22 08:06:47 2026] 127.0.0.1:57116 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:06:47 2026] 127.0.0.1:57116 Closing
-[Tue Sep 22 08:06:47 2026] 127.0.0.1:57148 Accepted
-[Tue Sep 22 08:06:49 2026] 127.0.0.1:57132 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:06:49 2026] 127.0.0.1:57132 Closing
-[Tue Sep 22 08:06:49 2026] 127.0.0.1:57164 Accepted
-[Tue Sep 22 08:06:51 2026] 127.0.0.1:57148 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:06:51 2026] 127.0.0.1:57148 Closing
-[Tue Sep 22 08:06:51 2026] 127.0.0.1:57178 Accepted
-[Tue Sep 22 08:06:53 2026] 127.0.0.1:57164 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:06:53 2026] 127.0.0.1:57164 Closing
-[Tue Sep 22 08:06:53 2026] 127.0.0.1:33928 Accepted
-[Tue Sep 22 08:06:55 2026] 127.0.0.1:57178 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:06:55 2026] 127.0.0.1:57178 Closing
-[Tue Sep 22 08:06:55 2026] 127.0.0.1:33934 Accepted
-[Tue Sep 22 08:06:57 2026] 127.0.0.1:33928 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:06:57 2026] 127.0.0.1:33928 Closing
-[Tue Sep 22 08:06:57 2026] 127.0.0.1:33942 Accepted
-[Tue Sep 22 08:06:58 2026] 127.0.0.1:33934 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:06:58 2026] 127.0.0.1:33934 Closing
-[Tue Sep 22 08:06:58 2026] 127.0.0.1:33958 Accepted
-[Tue Sep 22 08:07:00 2026] 127.0.0.1:33942 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:07:00 2026] 127.0.0.1:33942 Closing
-[Tue Sep 22 08:07:00 2026] 127.0.0.1:33972 Accepted
-[Tue Sep 22 08:07:02 2026] 127.0.0.1:33958 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:02 2026] 127.0.0.1:33958 Closing
-[Tue Sep 22 08:07:02 2026] 127.0.0.1:33982 Accepted
-[Tue Sep 22 08:07:04 2026] 127.0.0.1:33972 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:04 2026] 127.0.0.1:33972 Closing
-[Tue Sep 22 08:07:04 2026] 127.0.0.1:33988 Accepted
-[Tue Sep 22 08:07:06 2026] 127.0.0.1:33982 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:06 2026] 127.0.0.1:33982 Closing
-[Tue Sep 22 08:07:06 2026] 127.0.0.1:33992 Accepted
-[Tue Sep 22 08:07:08 2026] 127.0.0.1:33988 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:08 2026] 127.0.0.1:33988 Closing
-[Tue Sep 22 08:07:08 2026] 127.0.0.1:34006 Accepted
-[Tue Sep 22 08:07:10 2026] 127.0.0.1:33992 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:07:10 2026] 127.0.0.1:33992 Closing
-[Tue Sep 22 08:07:10 2026] 127.0.0.1:34014 Accepted
-[Tue Sep 22 08:07:12 2026] 127.0.0.1:34006 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:12 2026] 127.0.0.1:34006 Closing
-[Tue Sep 22 08:07:12 2026] 127.0.0.1:34024 Accepted
-[Tue Sep 22 08:07:14 2026] 127.0.0.1:34014 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:14 2026] 127.0.0.1:34014 Closing
-[Tue Sep 22 08:07:14 2026] 127.0.0.1:34026 Accepted
-[Tue Sep 22 08:07:16 2026] 127.0.0.1:34024 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:07:16 2026] 127.0.0.1:34024 Closing
-[Tue Sep 22 08:07:16 2026] 127.0.0.1:34028 Accepted
-[Tue Sep 22 08:07:17 2026] 127.0.0.1:34026 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:07:17 2026] 127.0.0.1:34026 Closing
-[Tue Sep 22 08:07:17 2026] 127.0.0.1:34038 Accepted
-[Tue Sep 22 08:07:19 2026] 127.0.0.1:34028 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:19 2026] 127.0.0.1:34028 Closing
-[Tue Sep 22 08:07:19 2026] 127.0.0.1:34042 Accepted
-[Tue Sep 22 08:07:21 2026] 127.0.0.1:34038 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:21 2026] 127.0.0.1:34038 Closing
-[Tue Sep 22 08:07:21 2026] 127.0.0.1:59716 Accepted
-[Tue Sep 22 08:07:23 2026] 127.0.0.1:34042 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:23 2026] 127.0.0.1:34042 Closing
-[Tue Sep 22 08:07:23 2026] 127.0.0.1:59718 Accepted
-[Tue Sep 22 08:07:25 2026] 127.0.0.1:59716 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:07:25 2026] 127.0.0.1:59716 Closing
-[Tue Sep 22 08:07:25 2026] 127.0.0.1:59724 Accepted
-[Tue Sep 22 08:07:27 2026] 127.0.0.1:59718 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:27 2026] 127.0.0.1:59718 Closing
-[Tue Sep 22 08:07:27 2026] 127.0.0.1:59734 Accepted
-[Tue Sep 22 08:07:29 2026] 127.0.0.1:59724 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:29 2026] 127.0.0.1:59724 Closing
-[Tue Sep 22 08:07:29 2026] 127.0.0.1:59748 Accepted
-[Tue Sep 22 08:07:31 2026] 127.0.0.1:59734 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:31 2026] 127.0.0.1:59734 Closing
-[Tue Sep 22 08:07:31 2026] 127.0.0.1:59760 Accepted
-[Tue Sep 22 08:07:32 2026] 127.0.0.1:59748 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:07:32 2026] 127.0.0.1:59748 Closing
-[Tue Sep 22 08:07:32 2026] 127.0.0.1:59762 Accepted
-[Tue Sep 22 08:07:34 2026] 127.0.0.1:59760 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:34 2026] 127.0.0.1:59760 Closing
-[Tue Sep 22 08:07:34 2026] 127.0.0.1:59776 Accepted
-[Tue Sep 22 08:07:36 2026] 127.0.0.1:59762 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:07:36 2026] 127.0.0.1:59762 Closing
-[Tue Sep 22 08:07:36 2026] 127.0.0.1:59790 Accepted
-[Tue Sep 22 08:07:38 2026] 127.0.0.1:59776 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:38 2026] 127.0.0.1:59776 Closing
-[Tue Sep 22 08:07:38 2026] 127.0.0.1:59802 Accepted
-[Tue Sep 22 08:07:40 2026] 127.0.0.1:59790 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:40 2026] 127.0.0.1:59790 Closing
-[Tue Sep 22 08:07:40 2026] 127.0.0.1:59804 Accepted
-[Tue Sep 22 08:07:42 2026] 127.0.0.1:59802 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:42 2026] 127.0.0.1:59802 Closing
-[Tue Sep 22 08:07:42 2026] 127.0.0.1:59818 Accepted
-[Tue Sep 22 08:07:44 2026] 127.0.0.1:59804 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:07:44 2026] 127.0.0.1:59804 Closing
-[Tue Sep 22 08:07:44 2026] 127.0.0.1:59828 Accepted
-[Tue Sep 22 08:07:46 2026] 127.0.0.1:59818 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:46 2026] 127.0.0.1:59818 Closing
-[Tue Sep 22 08:07:46 2026] 127.0.0.1:59840 Accepted
-[Tue Sep 22 08:07:48 2026] 127.0.0.1:59828 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:48 2026] 127.0.0.1:59828 Closing
-[Tue Sep 22 08:07:48 2026] 127.0.0.1:59848 Accepted
-[Tue Sep 22 08:07:49 2026] 127.0.0.1:59840 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:07:49 2026] 127.0.0.1:59840 Closing
-[Tue Sep 22 08:07:49 2026] 127.0.0.1:59850 Accepted
-[Tue Sep 22 08:07:51 2026] 127.0.0.1:59848 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:07:51 2026] 127.0.0.1:59848 Closing
-[Tue Sep 22 08:07:51 2026] 127.0.0.1:54504 Accepted
-[Tue Sep 22 08:07:53 2026] 127.0.0.1:59850 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:53 2026] 127.0.0.1:59850 Closing
-[Tue Sep 22 08:07:53 2026] 127.0.0.1:54514 Accepted
-[Tue Sep 22 08:07:55 2026] 127.0.0.1:54504 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:55 2026] 127.0.0.1:54504 Closing
-[Tue Sep 22 08:07:55 2026] 127.0.0.1:54516 Accepted
-[Tue Sep 22 08:07:57 2026] 127.0.0.1:54514 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:07:57 2026] 127.0.0.1:54514 Closing
-[Tue Sep 22 08:07:57 2026] 127.0.0.1:54526 Accepted
-[Tue Sep 22 08:07:59 2026] 127.0.0.1:54516 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:07:59 2026] 127.0.0.1:54516 Closing
-[Tue Sep 22 08:07:59 2026] 127.0.0.1:54540 Accepted
-[Tue Sep 22 08:08:01 2026] 127.0.0.1:54526 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:01 2026] 127.0.0.1:54526 Closing
-[Tue Sep 22 08:08:01 2026] 127.0.0.1:54542 Accepted
-[Tue Sep 22 08:08:03 2026] 127.0.0.1:54540 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:03 2026] 127.0.0.1:54540 Closing
-[Tue Sep 22 08:08:03 2026] 127.0.0.1:54546 Accepted
-[Tue Sep 22 08:08:05 2026] 127.0.0.1:54542 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:05 2026] 127.0.0.1:54542 Closing
-[Tue Sep 22 08:08:05 2026] 127.0.0.1:54552 Accepted
-[Tue Sep 22 08:08:07 2026] 127.0.0.1:54546 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:07 2026] 127.0.0.1:54546 Closing
-[Tue Sep 22 08:08:07 2026] 127.0.0.1:54558 Accepted
-[Tue Sep 22 08:08:08 2026] 127.0.0.1:54552 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:08:08 2026] 127.0.0.1:54552 Closing
-[Tue Sep 22 08:08:08 2026] 127.0.0.1:54572 Accepted
-[Tue Sep 22 08:08:10 2026] 127.0.0.1:54558 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:08:10 2026] 127.0.0.1:54558 Closing
-[Tue Sep 22 08:08:10 2026] 127.0.0.1:54582 Accepted
-[Tue Sep 22 08:08:12 2026] 127.0.0.1:54572 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:12 2026] 127.0.0.1:54572 Closing
-[Tue Sep 22 08:08:12 2026] 127.0.0.1:54594 Accepted
-[Tue Sep 22 08:08:14 2026] 127.0.0.1:54582 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:14 2026] 127.0.0.1:54582 Closing
-[Tue Sep 22 08:08:14 2026] 127.0.0.1:54602 Accepted
-[Tue Sep 22 08:08:16 2026] 127.0.0.1:54594 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:08:16 2026] 127.0.0.1:54594 Closing
-[Tue Sep 22 08:08:16 2026] 127.0.0.1:54608 Accepted
-[Tue Sep 22 08:08:18 2026] 127.0.0.1:54602 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:18 2026] 127.0.0.1:54602 Closing
-[Tue Sep 22 08:08:18 2026] 127.0.0.1:47760 Accepted
-[Tue Sep 22 08:08:20 2026] 127.0.0.1:54608 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:20 2026] 127.0.0.1:54608 Closing
-[Tue Sep 22 08:08:20 2026] 127.0.0.1:47764 Accepted
-[Tue Sep 22 08:08:22 2026] 127.0.0.1:47760 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:22 2026] 127.0.0.1:47760 Closing
-[Tue Sep 22 08:08:22 2026] 127.0.0.1:47780 Accepted
-[Tue Sep 22 08:08:24 2026] 127.0.0.1:47764 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:24 2026] 127.0.0.1:47764 Closing
-[Tue Sep 22 08:08:24 2026] 127.0.0.1:47796 Accepted
-[Tue Sep 22 08:08:26 2026] 127.0.0.1:47780 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:08:26 2026] 127.0.0.1:47780 Closing
-[Tue Sep 22 08:08:26 2026] 127.0.0.1:47810 Accepted
-[Tue Sep 22 08:08:27 2026] 127.0.0.1:47796 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:08:27 2026] 127.0.0.1:47796 Closing
-[Tue Sep 22 08:08:27 2026] 127.0.0.1:47824 Accepted
-[Tue Sep 22 08:08:29 2026] 127.0.0.1:47810 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:29 2026] 127.0.0.1:47810 Closing
-[Tue Sep 22 08:08:29 2026] 127.0.0.1:47834 Accepted
-[Tue Sep 22 08:08:31 2026] 127.0.0.1:47824 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:31 2026] 127.0.0.1:47824 Closing
-[Tue Sep 22 08:08:31 2026] 127.0.0.1:47846 Accepted
-[Tue Sep 22 08:08:33 2026] 127.0.0.1:47834 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:08:33 2026] 127.0.0.1:47834 Closing
-[Tue Sep 22 08:08:33 2026] 127.0.0.1:47848 Accepted
-[Tue Sep 22 08:08:35 2026] 127.0.0.1:47846 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:35 2026] 127.0.0.1:47846 Closing
-[Tue Sep 22 08:08:35 2026] 127.0.0.1:47856 Accepted
-[Tue Sep 22 08:08:37 2026] 127.0.0.1:47848 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:37 2026] 127.0.0.1:47848 Closing
-[Tue Sep 22 08:08:37 2026] 127.0.0.1:47866 Accepted
-[Tue Sep 22 08:08:39 2026] 127.0.0.1:47856 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:39 2026] 127.0.0.1:47856 Closing
-[Tue Sep 22 08:08:39 2026] 127.0.0.1:47874 Accepted
-[Tue Sep 22 08:08:40 2026] 127.0.0.1:47866 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:08:40 2026] 127.0.0.1:47866 Closing
-[Tue Sep 22 08:08:40 2026] 127.0.0.1:47882 Accepted
-[Tue Sep 22 08:08:42 2026] 127.0.0.1:47874 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:42 2026] 127.0.0.1:47874 Closing
-[Tue Sep 22 08:08:42 2026] 127.0.0.1:47892 Accepted
-[Tue Sep 22 08:08:44 2026] 127.0.0.1:47882 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:08:44 2026] 127.0.0.1:47882 Closing
-[Tue Sep 22 08:08:44 2026] 127.0.0.1:47908 Accepted
-[Tue Sep 22 08:08:46 2026] 127.0.0.1:47892 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:46 2026] 127.0.0.1:47892 Closing
-[Tue Sep 22 08:08:46 2026] 127.0.0.1:50974 Accepted
-[Tue Sep 22 08:08:48 2026] 127.0.0.1:47908 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:48 2026] 127.0.0.1:47908 Closing
-[Tue Sep 22 08:08:48 2026] 127.0.0.1:50988 Accepted
-[Tue Sep 22 08:08:50 2026] 127.0.0.1:50974 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:50 2026] 127.0.0.1:50974 Closing
-[Tue Sep 22 08:08:50 2026] 127.0.0.1:50992 Accepted
-[Tue Sep 22 08:08:52 2026] 127.0.0.1:50988 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:08:52 2026] 127.0.0.1:50988 Closing
-[Tue Sep 22 08:08:52 2026] 127.0.0.1:50994 Accepted
-[Tue Sep 22 08:08:54 2026] 127.0.0.1:50992 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:54 2026] 127.0.0.1:50992 Closing
-[Tue Sep 22 08:08:54 2026] 127.0.0.1:51002 Accepted
-[Tue Sep 22 08:08:56 2026] 127.0.0.1:50994 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:56 2026] 127.0.0.1:50994 Closing
-[Tue Sep 22 08:08:56 2026] 127.0.0.1:51004 Accepted
-[Tue Sep 22 08:08:57 2026] 127.0.0.1:51002 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:08:57 2026] 127.0.0.1:51002 Closing
-[Tue Sep 22 08:08:57 2026] 127.0.0.1:51008 Accepted
-[Tue Sep 22 08:08:59 2026] 127.0.0.1:51004 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:08:59 2026] 127.0.0.1:51004 Closing
-[Tue Sep 22 08:08:59 2026] 127.0.0.1:51012 Accepted
-[Tue Sep 22 08:09:01 2026] 127.0.0.1:51008 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:09:01 2026] 127.0.0.1:51008 Closing
-[Tue Sep 22 08:09:01 2026] 127.0.0.1:51026 Accepted
-[Tue Sep 22 08:09:03 2026] 127.0.0.1:51012 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:03 2026] 127.0.0.1:51012 Closing
-[Tue Sep 22 08:09:03 2026] 127.0.0.1:51028 Accepted
-[Tue Sep 22 08:09:05 2026] 127.0.0.1:51026 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:05 2026] 127.0.0.1:51026 Closing
-[Tue Sep 22 08:09:05 2026] 127.0.0.1:51038 Accepted
-[Tue Sep 22 08:09:07 2026] 127.0.0.1:51028 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:09:07 2026] 127.0.0.1:51028 Closing
-[Tue Sep 22 08:09:07 2026] 127.0.0.1:51042 Accepted
-[Tue Sep 22 08:09:09 2026] 127.0.0.1:51038 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:09 2026] 127.0.0.1:51038 Closing
-[Tue Sep 22 08:09:09 2026] 127.0.0.1:51050 Accepted
-[Tue Sep 22 08:09:11 2026] 127.0.0.1:51042 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:11 2026] 127.0.0.1:51042 Closing
-[Tue Sep 22 08:09:11 2026] 127.0.0.1:51052 Accepted
-[Tue Sep 22 08:09:13 2026] 127.0.0.1:51050 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:13 2026] 127.0.0.1:51050 Closing
-[Tue Sep 22 08:09:13 2026] 127.0.0.1:51066 Accepted
-[Tue Sep 22 08:09:15 2026] 127.0.0.1:51052 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:15 2026] 127.0.0.1:51052 Closing
-[Tue Sep 22 08:09:15 2026] 127.0.0.1:51076 Accepted
-[Tue Sep 22 08:09:16 2026] 127.0.0.1:51066 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:09:16 2026] 127.0.0.1:51066 Closing
-[Tue Sep 22 08:09:16 2026] 127.0.0.1:36844 Accepted
-[Tue Sep 22 08:09:18 2026] 127.0.0.1:51076 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:09:18 2026] 127.0.0.1:51076 Closing
-[Tue Sep 22 08:09:18 2026] 127.0.0.1:36856 Accepted
-[Tue Sep 22 08:09:20 2026] 127.0.0.1:36844 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:20 2026] 127.0.0.1:36844 Closing
-[Tue Sep 22 08:09:20 2026] 127.0.0.1:36868 Accepted
-[Tue Sep 22 08:09:22 2026] 127.0.0.1:36856 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:22 2026] 127.0.0.1:36856 Closing
-[Tue Sep 22 08:09:22 2026] 127.0.0.1:36870 Accepted
-[Tue Sep 22 08:09:24 2026] 127.0.0.1:36868 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:09:24 2026] 127.0.0.1:36868 Closing
-[Tue Sep 22 08:09:24 2026] 127.0.0.1:36880 Accepted
-[Tue Sep 22 08:09:26 2026] 127.0.0.1:36870 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:26 2026] 127.0.0.1:36870 Closing
-[Tue Sep 22 08:09:26 2026] 127.0.0.1:36882 Accepted
-[Tue Sep 22 08:09:28 2026] 127.0.0.1:36880 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:28 2026] 127.0.0.1:36880 Closing
-[Tue Sep 22 08:09:28 2026] 127.0.0.1:36894 Accepted
-[Tue Sep 22 08:09:30 2026] 127.0.0.1:36882 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:30 2026] 127.0.0.1:36882 Closing
-[Tue Sep 22 08:09:30 2026] 127.0.0.1:36900 Accepted
-[Tue Sep 22 08:09:31 2026] 127.0.0.1:36894 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:09:31 2026] 127.0.0.1:36894 Closing
-[Tue Sep 22 08:09:31 2026] 127.0.0.1:36906 Accepted
-[Tue Sep 22 08:09:33 2026] 127.0.0.1:36900 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:09:33 2026] 127.0.0.1:36900 Closing
-[Tue Sep 22 08:09:33 2026] 127.0.0.1:36910 Accepted
-[Tue Sep 22 08:09:35 2026] 127.0.0.1:36906 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:35 2026] 127.0.0.1:36906 Closing
-[Tue Sep 22 08:09:35 2026] 127.0.0.1:36922 Accepted
-[Tue Sep 22 08:09:37 2026] 127.0.0.1:36910 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:37 2026] 127.0.0.1:36910 Closing
-[Tue Sep 22 08:09:37 2026] 127.0.0.1:36936 Accepted
-[Tue Sep 22 08:09:39 2026] 127.0.0.1:36922 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:39 2026] 127.0.0.1:36922 Closing
-[Tue Sep 22 08:09:39 2026] 127.0.0.1:36946 Accepted
-[Tue Sep 22 08:09:41 2026] 127.0.0.1:36936 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:41 2026] 127.0.0.1:36936 Closing
-[Tue Sep 22 08:09:41 2026] 127.0.0.1:36962 Accepted
-[Tue Sep 22 08:09:43 2026] 127.0.0.1:36946 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:09:43 2026] 127.0.0.1:36946 Closing
-[Tue Sep 22 08:09:43 2026] 127.0.0.1:33830 Accepted
-[Tue Sep 22 08:09:45 2026] 127.0.0.1:36962 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:45 2026] 127.0.0.1:36962 Closing
-[Tue Sep 22 08:09:45 2026] 127.0.0.1:33834 Accepted
-[Tue Sep 22 08:09:47 2026] 127.0.0.1:33830 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:47 2026] 127.0.0.1:33830 Closing
-[Tue Sep 22 08:09:47 2026] 127.0.0.1:33836 Accepted
-[Tue Sep 22 08:09:48 2026] 127.0.0.1:33834 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:09:48 2026] 127.0.0.1:33834 Closing
-[Tue Sep 22 08:09:48 2026] 127.0.0.1:33846 Accepted
-[Tue Sep 22 08:09:50 2026] 127.0.0.1:33836 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:50 2026] 127.0.0.1:33836 Closing
-[Tue Sep 22 08:09:50 2026] 127.0.0.1:33850 Accepted
-[Tue Sep 22 08:09:52 2026] 127.0.0.1:33846 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:09:52 2026] 127.0.0.1:33846 Closing
-[Tue Sep 22 08:09:52 2026] 127.0.0.1:33866 Accepted
-[Tue Sep 22 08:09:54 2026] 127.0.0.1:33850 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:54 2026] 127.0.0.1:33850 Closing
-[Tue Sep 22 08:09:54 2026] 127.0.0.1:50246 Accepted
-[Tue Sep 22 08:09:56 2026] 127.0.0.1:33866 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:09:56 2026] 127.0.0.1:33866 Closing
-[Tue Sep 22 08:09:56 2026] 127.0.0.1:50260 Accepted
-[Tue Sep 22 08:09:58 2026] 127.0.0.1:50246 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:09:58 2026] 127.0.0.1:50246 Closing
-[Tue Sep 22 08:09:58 2026] 127.0.0.1:50274 Accepted
-[Tue Sep 22 08:10:00 2026] 127.0.0.1:50260 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:10:00 2026] 127.0.0.1:50260 Closing
-[Tue Sep 22 08:10:00 2026] 127.0.0.1:52208 Accepted
-[Tue Sep 22 08:10:01 2026] 127.0.0.1:50274 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:02 2026] 127.0.0.1:50274 Closing
-[Tue Sep 22 08:10:02 2026] 127.0.0.1:52210 Accepted
-[Tue Sep 22 08:10:03 2026] 127.0.0.1:52208 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:10:04 2026] 127.0.0.1:52208 Closing
-[Tue Sep 22 08:10:04 2026] 127.0.0.1:52220 Accepted
-[Tue Sep 22 08:10:05 2026] 127.0.0.1:52210 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:10:05 2026] 127.0.0.1:52210 Closing
-[Tue Sep 22 08:10:05 2026] 127.0.0.1:52228 Accepted
-[Tue Sep 22 08:10:07 2026] 127.0.0.1:52220 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:07 2026] 127.0.0.1:52220 Closing
-[Tue Sep 22 08:10:07 2026] 127.0.0.1:52232 Accepted
-[Tue Sep 22 08:10:08 2026] 127.0.0.1:52228 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:10:08 2026] 127.0.0.1:52228 Closing
-[Tue Sep 22 08:10:08 2026] 127.0.0.1:52246 Accepted
-[Tue Sep 22 08:10:10 2026] 127.0.0.1:52232 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:10:10 2026] 127.0.0.1:52232 Closing
-[Tue Sep 22 08:10:10 2026] 127.0.0.1:52248 Accepted
-[Tue Sep 22 08:10:12 2026] 127.0.0.1:52246 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:12 2026] 127.0.0.1:52246 Closing
-[Tue Sep 22 08:10:12 2026] 127.0.0.1:52264 Accepted
-[Tue Sep 22 08:10:14 2026] 127.0.0.1:52248 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:14 2026] 127.0.0.1:52248 Closing
-[Tue Sep 22 08:10:14 2026] 127.0.0.1:42298 Accepted
-[Tue Sep 22 08:10:16 2026] 127.0.0.1:52264 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:16 2026] 127.0.0.1:52264 Closing
-[Tue Sep 22 08:10:16 2026] 127.0.0.1:42300 Accepted
-[Tue Sep 22 08:10:18 2026] 127.0.0.1:42298 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:10:18 2026] 127.0.0.1:42298 Closing
-[Tue Sep 22 08:10:18 2026] 127.0.0.1:42316 Accepted
-[Tue Sep 22 08:10:20 2026] 127.0.0.1:42300 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:20 2026] 127.0.0.1:42300 Closing
-[Tue Sep 22 08:10:20 2026] 127.0.0.1:42326 Accepted
-[Tue Sep 22 08:10:22 2026] 127.0.0.1:42316 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:22 2026] 127.0.0.1:42316 Closing
-[Tue Sep 22 08:10:22 2026] 127.0.0.1:42342 Accepted
-[Tue Sep 22 08:10:24 2026] 127.0.0.1:42326 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:24 2026] 127.0.0.1:42326 Closing
-[Tue Sep 22 08:10:24 2026] 127.0.0.1:42352 Accepted
-[Tue Sep 22 08:10:25 2026] 127.0.0.1:42342 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:10:25 2026] 127.0.0.1:42342 Closing
-[Tue Sep 22 08:10:25 2026] 127.0.0.1:42368 Accepted
-[Tue Sep 22 08:10:27 2026] 127.0.0.1:42352 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:10:27 2026] 127.0.0.1:42352 Closing
-[Tue Sep 22 08:10:27 2026] 127.0.0.1:42378 Accepted
-[Tue Sep 22 08:10:29 2026] 127.0.0.1:42368 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:29 2026] 127.0.0.1:42368 Closing
-[Tue Sep 22 08:10:29 2026] 127.0.0.1:42384 Accepted
-[Tue Sep 22 08:10:31 2026] 127.0.0.1:42378 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:31 2026] 127.0.0.1:42378 Closing
-[Tue Sep 22 08:10:31 2026] 127.0.0.1:42400 Accepted
-[Tue Sep 22 08:10:33 2026] 127.0.0.1:42384 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:33 2026] 127.0.0.1:42384 Closing
-[Tue Sep 22 08:10:33 2026] 127.0.0.1:42406 Accepted
-[Tue Sep 22 08:10:35 2026] 127.0.0.1:42400 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:10:35 2026] 127.0.0.1:42400 Closing
-[Tue Sep 22 08:10:35 2026] 127.0.0.1:42410 Accepted
-[Tue Sep 22 08:10:37 2026] 127.0.0.1:42406 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:37 2026] 127.0.0.1:42406 Closing
-[Tue Sep 22 08:10:37 2026] 127.0.0.1:42412 Accepted
-[Tue Sep 22 08:10:41 2026] 127.0.0.1:42410 [200]: GET /home.php?v=Y3NyX2NsaWVudHN8MTc5MDA2NDU0MDU0NA==
-[Tue Sep 22 08:10:42 2026] 127.0.0.1:42410 Closing
-[Tue Sep 22 08:10:42 2026] 127.0.0.1:42418 Accepted
-[Tue Sep 22 08:10:44 2026] 127.0.0.1:42412 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:44 2026] 127.0.0.1:42412 Closing
-[Tue Sep 22 08:10:44 2026] 127.0.0.1:42432 Accepted
-[Tue Sep 22 08:10:46 2026] 127.0.0.1:42418 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:46 2026] 127.0.0.1:42418 Closing
-[Tue Sep 22 08:10:46 2026] 127.0.0.1:42444 Accepted
-[Tue Sep 22 08:10:48 2026] 127.0.0.1:42432 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:10:48 2026] 127.0.0.1:42432 Closing
-[Tue Sep 22 08:10:48 2026] 127.0.0.1:42448 Accepted
-[Tue Sep 22 08:10:49 2026] 127.0.0.1:42444 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:10:49 2026] 127.0.0.1:42444 Closing
-[Tue Sep 22 08:10:49 2026] 127.0.0.1:51518 Accepted
-[Tue Sep 22 08:10:51 2026] 127.0.0.1:42448 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:51 2026] 127.0.0.1:42448 Closing
-[Tue Sep 22 08:10:51 2026] 127.0.0.1:51532 Accepted
-[Tue Sep 22 08:10:53 2026] 127.0.0.1:51518 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:53 2026] 127.0.0.1:51518 Closing
-[Tue Sep 22 08:10:53 2026] 127.0.0.1:51534 Accepted
-[Tue Sep 22 08:10:55 2026] 127.0.0.1:51532 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:55 2026] 127.0.0.1:51532 Closing
-[Tue Sep 22 08:10:55 2026] 127.0.0.1:51538 Accepted
-[Tue Sep 22 08:10:57 2026] 127.0.0.1:51534 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:10:57 2026] 127.0.0.1:51534 Closing
-[Tue Sep 22 08:10:57 2026] 127.0.0.1:51540 Accepted
-[Tue Sep 22 08:10:59 2026] 127.0.0.1:51538 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:10:59 2026] 127.0.0.1:51538 Closing
-[Tue Sep 22 08:10:59 2026] 127.0.0.1:51556 Accepted
-[Tue Sep 22 08:11:01 2026] 127.0.0.1:51540 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:01 2026] 127.0.0.1:51540 Closing
-[Tue Sep 22 08:11:01 2026] 127.0.0.1:51564 Accepted
-[Tue Sep 22 08:11:03 2026] 127.0.0.1:51556 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:03 2026] 127.0.0.1:51556 Closing
-[Tue Sep 22 08:11:03 2026] 127.0.0.1:51576 Accepted
-[Tue Sep 22 08:11:05 2026] 127.0.0.1:51564 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:11:05 2026] 127.0.0.1:51564 Closing
-[Tue Sep 22 08:11:05 2026] 127.0.0.1:51588 Accepted
-[Tue Sep 22 08:11:06 2026] 127.0.0.1:51576 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:11:07 2026] 127.0.0.1:51576 Closing
-[Tue Sep 22 08:11:07 2026] 127.0.0.1:51590 Accepted
-[Tue Sep 22 08:11:08 2026] 127.0.0.1:51588 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:08 2026] 127.0.0.1:51588 Closing
-[Tue Sep 22 08:11:08 2026] 127.0.0.1:51596 Accepted
-[Tue Sep 22 08:11:10 2026] 127.0.0.1:51590 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:10 2026] 127.0.0.1:51590 Closing
-[Tue Sep 22 08:11:10 2026] 127.0.0.1:51602 Accepted
-[Tue Sep 22 08:11:10 2026] 127.0.0.1:51596 [302]: GET /fiber
-[Tue Sep 22 08:11:10 2026] 127.0.0.1:51596 Closing
-[Tue Sep 22 08:11:10 2026] 127.0.0.1:51610 Accepted
-[Tue Sep 22 08:11:12 2026] 127.0.0.1:51602 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:12 2026] 127.0.0.1:51602 Closing
-[Tue Sep 22 08:11:12 2026] 127.0.0.1:51626 Accepted
-[Tue Sep 22 08:11:14 2026] 127.0.0.1:51610 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:11:14 2026] 127.0.0.1:51610 Closing
-[Tue Sep 22 08:11:14 2026] 127.0.0.1:51630 Accepted
-[Tue Sep 22 08:11:16 2026] 127.0.0.1:51626 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:16 2026] 127.0.0.1:51626 Closing
-[Tue Sep 22 08:11:16 2026] 127.0.0.1:55738 Accepted
-[Tue Sep 22 08:11:18 2026] 127.0.0.1:51630 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:18 2026] 127.0.0.1:51630 Closing
-[Tue Sep 22 08:11:18 2026] 127.0.0.1:55746 Accepted
-[Tue Sep 22 08:11:20 2026] 127.0.0.1:55738 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:20 2026] 127.0.0.1:55738 Closing
-[Tue Sep 22 08:11:20 2026] 127.0.0.1:55756 Accepted
-[Tue Sep 22 08:11:21 2026] 127.0.0.1:55746 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:11:22 2026] 127.0.0.1:55746 Closing
-[Tue Sep 22 08:11:22 2026] 127.0.0.1:55764 Accepted
-[Tue Sep 22 08:11:23 2026] 127.0.0.1:55756 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:24 2026] 127.0.0.1:55756 Closing
-[Tue Sep 22 08:11:24 2026] 127.0.0.1:55776 Accepted
-[Tue Sep 22 08:11:25 2026] 127.0.0.1:55764 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:11:26 2026] 127.0.0.1:55764 Closing
-[Tue Sep 22 08:11:26 2026] 127.0.0.1:55782 Accepted
-[Tue Sep 22 08:11:27 2026] 127.0.0.1:55776 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:27 2026] 127.0.0.1:55776 Closing
-[Tue Sep 22 08:11:27 2026] 127.0.0.1:55788 Accepted
-[Tue Sep 22 08:11:29 2026] 127.0.0.1:55782 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:29 2026] 127.0.0.1:55782 Closing
-[Tue Sep 22 08:11:29 2026] 127.0.0.1:55794 Accepted
-[Tue Sep 22 08:11:31 2026] 127.0.0.1:55788 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:31 2026] 127.0.0.1:55788 Closing
-[Tue Sep 22 08:11:31 2026] 127.0.0.1:55806 Accepted
-[Tue Sep 22 08:11:33 2026] 127.0.0.1:55794 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:11:33 2026] 127.0.0.1:55794 Closing
-[Tue Sep 22 08:11:33 2026] 127.0.0.1:55808 Accepted
-[Tue Sep 22 08:11:35 2026] 127.0.0.1:55806 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:35 2026] 127.0.0.1:55806 Closing
-[Tue Sep 22 08:11:35 2026] 127.0.0.1:55818 Accepted
-[Tue Sep 22 08:11:37 2026] 127.0.0.1:55808 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:37 2026] 127.0.0.1:55808 Closing
-[Tue Sep 22 08:11:37 2026] 127.0.0.1:55830 Accepted
-[Tue Sep 22 08:11:39 2026] 127.0.0.1:55818 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:11:39 2026] 127.0.0.1:55818 Closing
-[Tue Sep 22 08:11:39 2026] 127.0.0.1:55836 Accepted
-[Tue Sep 22 08:11:41 2026] 127.0.0.1:55830 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:11:41 2026] 127.0.0.1:55830 Closing
-[Tue Sep 22 08:11:41 2026] 127.0.0.1:55842 Accepted
-[Tue Sep 22 08:11:43 2026] 127.0.0.1:55836 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:43 2026] 127.0.0.1:55836 Closing
-[Tue Sep 22 08:11:43 2026] 127.0.0.1:55846 Accepted
-[Tue Sep 22 08:11:44 2026] 127.0.0.1:55842 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:45 2026] 127.0.0.1:55842 Closing
-[Tue Sep 22 08:11:45 2026] 127.0.0.1:39944 Accepted
-[Tue Sep 22 08:11:46 2026] 127.0.0.1:55846 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:47 2026] 127.0.0.1:55846 Closing
-[Tue Sep 22 08:11:47 2026] 127.0.0.1:39954 Accepted
-[Tue Sep 22 08:11:48 2026] 127.0.0.1:39944 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:49 2026] 127.0.0.1:39944 Closing
-[Tue Sep 22 08:11:49 2026] 127.0.0.1:39960 Accepted
-[Tue Sep 22 08:11:50 2026] 127.0.0.1:39954 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:11:50 2026] 127.0.0.1:39954 Closing
-[Tue Sep 22 08:11:50 2026] 127.0.0.1:39962 Accepted
-[Tue Sep 22 08:11:52 2026] 127.0.0.1:39960 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:52 2026] 127.0.0.1:39960 Closing
-[Tue Sep 22 08:11:52 2026] 127.0.0.1:39978 Accepted
-[Tue Sep 22 08:11:54 2026] 127.0.0.1:39962 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:54 2026] 127.0.0.1:39962 Closing
-[Tue Sep 22 08:11:54 2026] 127.0.0.1:39988 Accepted
-[Tue Sep 22 08:11:56 2026] 127.0.0.1:39978 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:11:56 2026] 127.0.0.1:39978 Closing
-[Tue Sep 22 08:11:56 2026] 127.0.0.1:39992 Accepted
-[Tue Sep 22 08:11:58 2026] 127.0.0.1:39988 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:11:58 2026] 127.0.0.1:39988 Closing
-[Tue Sep 22 08:11:58 2026] 127.0.0.1:40000 Accepted
-[Tue Sep 22 08:12:00 2026] 127.0.0.1:39992 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:12:00 2026] 127.0.0.1:39992 Closing
-[Tue Sep 22 08:12:00 2026] 127.0.0.1:40010 Accepted
-[Tue Sep 22 08:12:02 2026] 127.0.0.1:40000 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:02 2026] 127.0.0.1:40000 Closing
-[Tue Sep 22 08:12:02 2026] 127.0.0.1:40020 Accepted
-[Tue Sep 22 08:12:04 2026] 127.0.0.1:40010 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:04 2026] 127.0.0.1:40010 Closing
-[Tue Sep 22 08:12:04 2026] 127.0.0.1:40026 Accepted
-[Tue Sep 22 08:12:06 2026] 127.0.0.1:40020 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:12:06 2026] 127.0.0.1:40020 Closing
-[Tue Sep 22 08:12:06 2026] 127.0.0.1:40040 Accepted
-[Tue Sep 22 08:12:07 2026] 127.0.0.1:40026 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:08 2026] 127.0.0.1:40026 Closing
-[Tue Sep 22 08:12:08 2026] 127.0.0.1:40046 Accepted
-[Tue Sep 22 08:12:09 2026] 127.0.0.1:40040 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:10 2026] 127.0.0.1:40040 Closing
-[Tue Sep 22 08:12:10 2026] 127.0.0.1:40056 Accepted
-[Tue Sep 22 08:12:11 2026] 127.0.0.1:40046 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:12 2026] 127.0.0.1:40046 Closing
-[Tue Sep 22 08:12:12 2026] 127.0.0.1:40064 Accepted
-[Tue Sep 22 08:12:13 2026] 127.0.0.1:40056 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:12:13 2026] 127.0.0.1:40056 Closing
-[Tue Sep 22 08:12:13 2026] 127.0.0.1:40080 Accepted
-[Tue Sep 22 08:12:15 2026] 127.0.0.1:40064 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:15 2026] 127.0.0.1:40064 Closing
-[Tue Sep 22 08:12:15 2026] 127.0.0.1:44194 Accepted
-[Tue Sep 22 08:12:17 2026] 127.0.0.1:40080 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:12:17 2026] 127.0.0.1:40080 Closing
-[Tue Sep 22 08:12:17 2026] 127.0.0.1:44204 Accepted
-[Tue Sep 22 08:12:19 2026] 127.0.0.1:44194 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:19 2026] 127.0.0.1:44194 Closing
-[Tue Sep 22 08:12:19 2026] 127.0.0.1:44220 Accepted
-[Tue Sep 22 08:12:21 2026] 127.0.0.1:44204 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:21 2026] 127.0.0.1:44204 Closing
-[Tue Sep 22 08:12:21 2026] 127.0.0.1:44230 Accepted
-[Tue Sep 22 08:12:23 2026] 127.0.0.1:44220 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:23 2026] 127.0.0.1:44220 Closing
-[Tue Sep 22 08:12:23 2026] 127.0.0.1:44234 Accepted
-[Tue Sep 22 08:12:25 2026] 127.0.0.1:44230 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:12:25 2026] 127.0.0.1:44230 Closing
-[Tue Sep 22 08:12:25 2026] 127.0.0.1:44240 Accepted
-[Tue Sep 22 08:12:27 2026] 127.0.0.1:44234 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:27 2026] 127.0.0.1:44234 Closing
-[Tue Sep 22 08:12:27 2026] 127.0.0.1:44244 Accepted
-[Tue Sep 22 08:12:29 2026] 127.0.0.1:44240 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:29 2026] 127.0.0.1:44240 Closing
-[Tue Sep 22 08:12:29 2026] 127.0.0.1:44260 Accepted
-[Tue Sep 22 08:12:30 2026] 127.0.0.1:44244 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:12:30 2026] 127.0.0.1:44244 Closing
-[Tue Sep 22 08:12:30 2026] 127.0.0.1:44274 Accepted
-[Tue Sep 22 08:12:32 2026] 127.0.0.1:44260 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:12:32 2026] 127.0.0.1:44260 Closing
-[Tue Sep 22 08:12:32 2026] 127.0.0.1:44290 Accepted
-[Tue Sep 22 08:12:34 2026] 127.0.0.1:44274 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:34 2026] 127.0.0.1:44274 Closing
-[Tue Sep 22 08:12:34 2026] 127.0.0.1:44296 Accepted
-[Tue Sep 22 08:12:36 2026] 127.0.0.1:44290 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:36 2026] 127.0.0.1:44290 Closing
-[Tue Sep 22 08:12:36 2026] 127.0.0.1:44298 Accepted
-[Tue Sep 22 08:12:38 2026] 127.0.0.1:44296 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:38 2026] 127.0.0.1:44296 Closing
-[Tue Sep 22 08:12:38 2026] 127.0.0.1:44300 Accepted
-[Tue Sep 22 08:12:40 2026] 127.0.0.1:44298 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:40 2026] 127.0.0.1:44298 Closing
-[Tue Sep 22 08:12:40 2026] 127.0.0.1:44316 Accepted
-[Tue Sep 22 08:12:42 2026] 127.0.0.1:44300 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:12:42 2026] 127.0.0.1:44300 Closing
-[Tue Sep 22 08:12:42 2026] 127.0.0.1:44798 Accepted
-[Tue Sep 22 08:12:44 2026] 127.0.0.1:44316 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:44 2026] 127.0.0.1:44316 Closing
-[Tue Sep 22 08:12:44 2026] 127.0.0.1:44810 Accepted
-[Tue Sep 22 08:12:46 2026] 127.0.0.1:44798 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:46 2026] 127.0.0.1:44798 Closing
-[Tue Sep 22 08:12:46 2026] 127.0.0.1:44826 Accepted
-[Tue Sep 22 08:12:47 2026] 127.0.0.1:44810 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:12:47 2026] 127.0.0.1:44810 Closing
-[Tue Sep 22 08:12:47 2026] 127.0.0.1:44840 Accepted
-[Tue Sep 22 08:12:49 2026] 127.0.0.1:44826 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:12:49 2026] 127.0.0.1:44826 Closing
-[Tue Sep 22 08:12:49 2026] 127.0.0.1:44852 Accepted
-[Tue Sep 22 08:12:51 2026] 127.0.0.1:44840 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:51 2026] 127.0.0.1:44840 Closing
-[Tue Sep 22 08:12:51 2026] 127.0.0.1:44860 Accepted
-[Tue Sep 22 08:12:53 2026] 127.0.0.1:44852 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:53 2026] 127.0.0.1:44852 Closing
-[Tue Sep 22 08:12:53 2026] 127.0.0.1:44862 Accepted
-[Tue Sep 22 08:12:55 2026] 127.0.0.1:44860 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:55 2026] 127.0.0.1:44860 Closing
-[Tue Sep 22 08:12:55 2026] 127.0.0.1:44864 Accepted
-[Tue Sep 22 08:12:57 2026] 127.0.0.1:44862 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:12:57 2026] 127.0.0.1:44862 Closing
-[Tue Sep 22 08:12:57 2026] 127.0.0.1:44868 Accepted
-[Tue Sep 22 08:12:59 2026] 127.0.0.1:44864 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:12:59 2026] 127.0.0.1:44864 Closing
-[Tue Sep 22 08:12:59 2026] 127.0.0.1:44870 Accepted
-[Tue Sep 22 08:13:01 2026] 127.0.0.1:44868 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:01 2026] 127.0.0.1:44868 Closing
-[Tue Sep 22 08:13:01 2026] 127.0.0.1:44886 Accepted
-[Tue Sep 22 08:13:03 2026] 127.0.0.1:44870 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:03 2026] 127.0.0.1:44870 Closing
-[Tue Sep 22 08:13:03 2026] 127.0.0.1:44890 Accepted
-[Tue Sep 22 08:13:05 2026] 127.0.0.1:44886 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:13:05 2026] 127.0.0.1:44886 Closing
-[Tue Sep 22 08:13:05 2026] 127.0.0.1:44902 Accepted
-[Tue Sep 22 08:13:07 2026] 127.0.0.1:44890 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:07 2026] 127.0.0.1:44890 Closing
-[Tue Sep 22 08:13:07 2026] 127.0.0.1:44906 Accepted
-[Tue Sep 22 08:13:08 2026] 127.0.0.1:44902 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:13:08 2026] 127.0.0.1:44902 Closing
-[Tue Sep 22 08:13:08 2026] 127.0.0.1:44918 Accepted
-[Tue Sep 22 08:13:10 2026] 127.0.0.1:44906 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:10 2026] 127.0.0.1:44906 Closing
-[Tue Sep 22 08:13:10 2026] 127.0.0.1:59434 Accepted
-[Tue Sep 22 08:13:12 2026] 127.0.0.1:44918 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:12 2026] 127.0.0.1:44918 Closing
-[Tue Sep 22 08:13:12 2026] 127.0.0.1:59444 Accepted
-[Tue Sep 22 08:13:14 2026] 127.0.0.1:59434 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:14 2026] 127.0.0.1:59434 Closing
-[Tue Sep 22 08:13:14 2026] 127.0.0.1:59456 Accepted
-[Tue Sep 22 08:13:16 2026] 127.0.0.1:59444 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:13:16 2026] 127.0.0.1:59444 Closing
-[Tue Sep 22 08:13:16 2026] 127.0.0.1:59464 Accepted
-[Tue Sep 22 08:13:18 2026] 127.0.0.1:59456 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:18 2026] 127.0.0.1:59456 Closing
-[Tue Sep 22 08:13:18 2026] 127.0.0.1:59476 Accepted
-[Tue Sep 22 08:13:20 2026] 127.0.0.1:59464 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:20 2026] 127.0.0.1:59464 Closing
-[Tue Sep 22 08:13:20 2026] 127.0.0.1:59482 Accepted
-[Tue Sep 22 08:13:21 2026] 127.0.0.1:59476 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:13:21 2026] 127.0.0.1:59476 Closing
-[Tue Sep 22 08:13:21 2026] 127.0.0.1:59488 Accepted
-[Tue Sep 22 08:13:23 2026] 127.0.0.1:59482 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:23 2026] 127.0.0.1:59482 Closing
-[Tue Sep 22 08:13:23 2026] 127.0.0.1:59504 Accepted
-[Tue Sep 22 08:13:25 2026] 127.0.0.1:59488 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:13:25 2026] 127.0.0.1:59488 Closing
-[Tue Sep 22 08:13:25 2026] 127.0.0.1:59508 Accepted
-[Tue Sep 22 08:13:27 2026] 127.0.0.1:59504 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:27 2026] 127.0.0.1:59504 Closing
-[Tue Sep 22 08:13:27 2026] 127.0.0.1:59520 Accepted
-[Tue Sep 22 08:13:29 2026] 127.0.0.1:59508 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:29 2026] 127.0.0.1:59508 Closing
-[Tue Sep 22 08:13:29 2026] 127.0.0.1:59524 Accepted
-[Tue Sep 22 08:13:31 2026] 127.0.0.1:59520 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:13:31 2026] 127.0.0.1:59520 Closing
-[Tue Sep 22 08:13:31 2026] 127.0.0.1:59536 Accepted
-[Tue Sep 22 08:13:33 2026] 127.0.0.1:59524 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:33 2026] 127.0.0.1:59524 Closing
-[Tue Sep 22 08:13:33 2026] 127.0.0.1:59550 Accepted
-[Tue Sep 22 08:13:35 2026] 127.0.0.1:59536 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:35 2026] 127.0.0.1:59536 Closing
-[Tue Sep 22 08:13:35 2026] 127.0.0.1:59564 Accepted
-[Tue Sep 22 08:13:37 2026] 127.0.0.1:59550 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:37 2026] 127.0.0.1:59550 Closing
-[Tue Sep 22 08:13:37 2026] 127.0.0.1:59578 Accepted
-[Tue Sep 22 08:13:39 2026] 127.0.0.1:59564 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:39 2026] 127.0.0.1:59564 Closing
-[Tue Sep 22 08:13:39 2026] 127.0.0.1:59584 Accepted
-[Tue Sep 22 08:13:40 2026] 127.0.0.1:59578 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:13:40 2026] 127.0.0.1:59578 Closing
-[Tue Sep 22 08:13:40 2026] 127.0.0.1:53204 Accepted
-[Tue Sep 22 08:13:42 2026] 127.0.0.1:59584 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:13:42 2026] 127.0.0.1:59584 Closing
-[Tue Sep 22 08:13:42 2026] 127.0.0.1:53216 Accepted
-[Tue Sep 22 08:13:44 2026] 127.0.0.1:53204 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:44 2026] 127.0.0.1:53204 Closing
-[Tue Sep 22 08:13:44 2026] 127.0.0.1:53218 Accepted
-[Tue Sep 22 08:13:46 2026] 127.0.0.1:53216 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:46 2026] 127.0.0.1:53216 Closing
-[Tue Sep 22 08:13:46 2026] 127.0.0.1:53224 Accepted
-[Tue Sep 22 08:13:48 2026] 127.0.0.1:53218 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:13:48 2026] 127.0.0.1:53218 Closing
-[Tue Sep 22 08:13:48 2026] 127.0.0.1:53232 Accepted
-[Tue Sep 22 08:13:50 2026] 127.0.0.1:53224 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:50 2026] 127.0.0.1:53224 Closing
-[Tue Sep 22 08:13:50 2026] 127.0.0.1:53244 Accepted
-[Tue Sep 22 08:13:52 2026] 127.0.0.1:53232 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:52 2026] 127.0.0.1:53232 Closing
-[Tue Sep 22 08:13:52 2026] 127.0.0.1:53248 Accepted
-[Tue Sep 22 08:13:54 2026] 127.0.0.1:53244 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:54 2026] 127.0.0.1:53244 Closing
-[Tue Sep 22 08:13:54 2026] 127.0.0.1:53260 Accepted
-[Tue Sep 22 08:13:55 2026] 127.0.0.1:53248 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:13:55 2026] 127.0.0.1:53248 Closing
-[Tue Sep 22 08:13:55 2026] 127.0.0.1:53264 Accepted
-[Tue Sep 22 08:13:57 2026] 127.0.0.1:53260 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:13:57 2026] 127.0.0.1:53260 Closing
-[Tue Sep 22 08:13:57 2026] 127.0.0.1:53274 Accepted
-[Tue Sep 22 08:13:59 2026] 127.0.0.1:53264 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:13:59 2026] 127.0.0.1:53264 Closing
-[Tue Sep 22 08:13:59 2026] 127.0.0.1:53282 Accepted
-[Tue Sep 22 08:14:01 2026] 127.0.0.1:53274 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:14:01 2026] 127.0.0.1:53274 Closing
-[Tue Sep 22 08:14:01 2026] 127.0.0.1:53292 Accepted
-[Tue Sep 22 08:14:03 2026] 127.0.0.1:53282 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:14:03 2026] 127.0.0.1:53282 Closing
-[Tue Sep 22 08:14:03 2026] 127.0.0.1:53298 Accepted
-[Tue Sep 22 08:14:05 2026] 127.0.0.1:53292 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:14:05 2026] 127.0.0.1:53292 Closing
-[Tue Sep 22 08:14:05 2026] 127.0.0.1:53300 Accepted
-[Tue Sep 22 08:14:07 2026] 127.0.0.1:53298 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:14:07 2026] 127.0.0.1:53298 Closing
-[Tue Sep 22 08:14:07 2026] 127.0.0.1:34142 Accepted
-[Tue Sep 22 08:14:09 2026] 127.0.0.1:53300 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:14:09 2026] 127.0.0.1:53300 Closing
-[Tue Sep 22 08:14:09 2026] 127.0.0.1:34146 Accepted
-[Tue Sep 22 08:14:11 2026] 127.0.0.1:34142 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:14:11 2026] 127.0.0.1:34142 Closing
-[Tue Sep 22 08:14:11 2026] 127.0.0.1:34162 Accepted
-[Tue Sep 22 08:14:12 2026] 127.0.0.1:34146 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:14:12 2026] 127.0.0.1:34146 Closing
-[Tue Sep 22 08:14:12 2026] 127.0.0.1:34172 Accepted
-[Tue Sep 22 08:14:14 2026] 127.0.0.1:34162 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:14:14 2026] 127.0.0.1:34162 Closing
-[Tue Sep 22 08:14:14 2026] 127.0.0.1:34184 Accepted
-[Tue Sep 22 08:14:16 2026] 127.0.0.1:34172 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:14:16 2026] 127.0.0.1:34172 Closing
-[Tue Sep 22 08:14:16 2026] 127.0.0.1:34188 Accepted
-[Tue Sep 22 08:14:18 2026] 127.0.0.1:34184 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:14:18 2026] 127.0.0.1:34184 Closing
-[Tue Sep 22 08:14:18 2026] 127.0.0.1:34194 Accepted
-[Tue Sep 22 08:14:20 2026] 127.0.0.1:34188 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:14:20 2026] 127.0.0.1:34188 Closing
-[Tue Sep 22 08:14:20 2026] 127.0.0.1:34204 Accepted
-[Tue Sep 22 08:14:22 2026] 127.0.0.1:34194 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:14:22 2026] 127.0.0.1:34194 Closing
-[Tue Sep 22 08:14:22 2026] 127.0.0.1:34206 Accepted
-[Tue Sep 22 08:14:24 2026] 127.0.0.1:34204 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:14:24 2026] 127.0.0.1:34204 Closing
-[Tue Sep 22 08:14:24 2026] 127.0.0.1:43050 Accepted
-[Tue Sep 22 08:14:25 2026] 127.0.0.1:34206 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:14:26 2026] 127.0.0.1:34206 Closing
-[Tue Sep 22 08:14:26 2026] 127.0.0.1:43058 Accepted
-[Tue Sep 22 08:14:27 2026] 127.0.0.1:43050 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:14:28 2026] 127.0.0.1:43050 Closing
-[Tue Sep 22 08:14:28 2026] 127.0.0.1:43070 Accepted
-[Tue Sep 22 08:14:29 2026] 127.0.0.1:43058 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:14:29 2026] 127.0.0.1:43058 Closing
-[Tue Sep 22 08:14:29 2026] 127.0.0.1:43082 Accepted
-[Tue Sep 22 08:14:31 2026] 127.0.0.1:43070 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:14:31 2026] 127.0.0.1:43070 Closing
-[Tue Sep 22 08:14:31 2026] 127.0.0.1:43096 Accepted
-[Tue Sep 22 08:14:33 2026] 127.0.0.1:43082 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:14:33 2026] 127.0.0.1:43082 Closing
-[Tue Sep 22 08:14:33 2026] 127.0.0.1:56328 Accepted
-[Tue Sep 22 08:14:35 2026] 127.0.0.1:43096 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:14:35 2026] 127.0.0.1:43096 Closing
-[Tue Sep 22 08:14:35 2026] 127.0.0.1:56336 Accepted
-[Tue Sep 22 08:14:37 2026] 127.0.0.1:56328 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:14:37 2026] 127.0.0.1:56328 Closing
-[Tue Sep 22 08:14:37 2026] 127.0.0.1:56338 Accepted
-[Tue Sep 22 08:14:39 2026] 127.0.0.1:56336 [200]: POST /CSR/chat/load_messages.php
-[Tue Sep 22 08:14:39 2026] 127.0.0.1:56336 Closing
-[Tue Sep 22 08:14:39 2026] 127.0.0.1:56340 Accepted
-[Tue Sep 22 08:14:40 2026] 127.0.0.1:56338 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:14:40 2026] 127.0.0.1:56338 Closing
-[Tue Sep 22 08:14:40 2026] 127.0.0.1:56356 Accepted
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:56340 [200]: POST /CSR/chat/load_client_info.php
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:56340 Closing
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:56372 Accepted
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:56356 Closed without sending a request; it was probably just an unused speculative preconnection
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:56356 Closing
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:56376 Accepted
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:56372 Closed without sending a request; it was probably just an unused speculative preconnection
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:56372 Closing
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:48240 Accepted
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:56376 Closed without sending a request; it was probably just an unused speculative preconnection
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:56376 Closing
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:54754 Accepted
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:48240 [302]: GET /fiber
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:48240 Closing
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:54754 [302]: GET /fiber
-[Tue Sep 22 08:14:42 2026] 127.0.0.1:54754 Closing
-[Tue Sep 22 08:30:41 2026] 127.0.0.1:53496 Accepted
-[Tue Sep 22 08:30:41 2026] 127.0.0.1:53496 [302]: GET /fiber
-[Tue Sep 22 08:30:41 2026] 127.0.0.1:53496 Closing
-[Tue Sep 22 08:30:41 2026] 127.0.0.1:53508 Accepted
-[Tue Sep 22 08:30:43 2026] 127.0.0.1:53508 [200]: GET /?v=ZmliZXJ8MTc5MDA2NTg0MQ%3D%3D
-[Tue Sep 22 08:30:43 2026] 127.0.0.1:53508 Closing
-[Tue Sep 22 08:30:43 2026] 127.0.0.1:53510 Accepted
-[Tue Sep 22 08:30:43 2026] 127.0.0.1:53510 [200]: GET /SKYTRUFIBER.png
-[Tue Sep 22 08:30:43 2026] 127.0.0.1:53510 Closing
-[Tue Sep 22 08:30:56 2026] 127.0.0.1:33010 Accepted
-[Tue Sep 22 08:30:56 2026] 127.0.0.1:33010 [302]: GET /home.php
-[Tue Sep 22 08:30:56 2026] 127.0.0.1:33010 Closing
-[Tue Sep 22 08:30:56 2026] 127.0.0.1:33018 Accepted
-[Tue Sep 22 08:30:57 2026] 127.0.0.1:33018 [302]: GET /home.php?v=Y3NyX2xvZ2lufDE3OTAwNjU4NTY%3D
-[Tue Sep 22 08:30:57 2026] 127.0.0.1:33018 Closing
-[Tue Sep 22 08:30:58 2026] 127.0.0.1:33030 Accepted
-[Tue Sep 22 08:30:59 2026] 127.0.0.1:33030 [200]: GET /home.php?v=Y3NyX2Rhc2hib2FyZHwxNzkwMDY1ODU3
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33030 Closing
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33042 Accepted
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33046 Accepted
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33042 [200]: GET /CSR/chat/chat.css?v=3
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33060 Accepted
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33046 [200]: GET /CSR/history/history.css?v=3
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33068 Accepted
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33060 [200]: GET /CSR/dashboard/csr_dashboard.css
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33084 Accepted
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33042 Closing
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33068 [200]: GET /CSR/vendor/js/Sortable.min.js
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33046 Closing
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33084 [200]: GET /AHBALOGO.png
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33060 Closing
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33068 Closing
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33084 Closing
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33098 Accepted
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33108 Accepted
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33112 Accepted
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33116 Accepted
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33098 [200]: GET /CSR/chat/chat.js?v=3
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33098 Closing
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33108 [200]: GET /CSR/dashboard/csr_dashboard.js?v=3
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33112 [200]: GET /CSR/history/history.js?v=3
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33108 Closing
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33112 Closing
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33116 [200]: GET /CSR/chat/chat.css?v=1790065859
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33116 Closing
-[Tue Sep 22 08:31:00 2026] 127.0.0.1:33132 Accepted
-[Tue Sep 22 08:31:02 2026] 127.0.0.1:33132 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:31:02 2026] 127.0.0.1:33132 Closing
-[Tue Sep 22 08:31:02 2026] 127.0.0.1:33144 Accepted
-[Tue Sep 22 08:31:02 2026] 127.0.0.1:33144 [200]: GET /CSR/AHBALOGO.png
-[Tue Sep 22 08:31:02 2026] 127.0.0.1:33144 Closing
-[Tue Sep 22 08:31:06 2026] 127.0.0.1:38540 Accepted
-[Tue Sep 22 08:31:08 2026] 127.0.0.1:38540 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:31:08 2026] 127.0.0.1:38540 Closing
-[Tue Sep 22 08:31:12 2026] 127.0.0.1:38552 Accepted
-[Tue Sep 22 08:31:14 2026] 127.0.0.1:38552 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:31:14 2026] 127.0.0.1:38552 Closing
-[Tue Sep 22 08:31:18 2026] 127.0.0.1:51160 Accepted
-[Tue Sep 22 08:31:20 2026] 127.0.0.1:51160 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:31:20 2026] 127.0.0.1:51160 Closing
-[Tue Sep 22 08:31:24 2026] 127.0.0.1:37796 Accepted
-[Tue Sep 22 08:31:26 2026] 127.0.0.1:37796 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:31:26 2026] 127.0.0.1:37796 Closing
-[Tue Sep 22 08:31:30 2026] 127.0.0.1:37798 Accepted
-[Tue Sep 22 08:31:32 2026] 127.0.0.1:37798 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:31:32 2026] 127.0.0.1:37798 Closing
-[Tue Sep 22 08:31:36 2026] 127.0.0.1:35542 Accepted
-[Tue Sep 22 08:31:38 2026] 127.0.0.1:35542 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:31:38 2026] 127.0.0.1:35542 Closing
-[Tue Sep 22 08:31:42 2026] 127.0.0.1:35546 Accepted
-[Tue Sep 22 08:31:44 2026] 127.0.0.1:35546 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:31:44 2026] 127.0.0.1:35546 Closing
-[Tue Sep 22 08:31:49 2026] 127.0.0.1:46910 Accepted
-[Tue Sep 22 08:31:50 2026] 127.0.0.1:46910 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:31:50 2026] 127.0.0.1:46910 Closing
-[Tue Sep 22 08:31:55 2026] 127.0.0.1:34942 Accepted
-[Tue Sep 22 08:31:56 2026] 127.0.0.1:34942 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:31:56 2026] 127.0.0.1:34942 Closing
-[Tue Sep 22 08:32:01 2026] 127.0.0.1:34952 Accepted
-[Tue Sep 22 08:32:02 2026] 127.0.0.1:34952 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:32:02 2026] 127.0.0.1:34952 Closing
-[Tue Sep 22 08:32:07 2026] 127.0.0.1:58616 Accepted
-[Tue Sep 22 08:32:08 2026] 127.0.0.1:58616 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:32:08 2026] 127.0.0.1:58616 Closing
-[Tue Sep 22 08:32:13 2026] 127.0.0.1:58628 Accepted
-[Tue Sep 22 08:32:14 2026] 127.0.0.1:58628 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:32:14 2026] 127.0.0.1:58628 Closing
-[Tue Sep 22 08:32:19 2026] 127.0.0.1:49556 Accepted
-[Tue Sep 22 08:32:20 2026] 127.0.0.1:49556 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:32:20 2026] 127.0.0.1:49556 Closing
-[Tue Sep 22 08:32:25 2026] 127.0.0.1:35320 Accepted
-[Tue Sep 22 08:32:26 2026] 127.0.0.1:35320 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:32:26 2026] 127.0.0.1:35320 Closing
-[Tue Sep 22 08:32:31 2026] 127.0.0.1:35322 Accepted
-[Tue Sep 22 08:32:32 2026] 127.0.0.1:35322 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:32:32 2026] 127.0.0.1:35322 Closing
-[Tue Sep 22 08:32:37 2026] 127.0.0.1:44958 Accepted
-[Tue Sep 22 08:32:38 2026] 127.0.0.1:44958 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:32:38 2026] 127.0.0.1:44958 Closing
-[Tue Sep 22 08:32:43 2026] 127.0.0.1:44970 Accepted
-[Tue Sep 22 08:32:44 2026] 127.0.0.1:44970 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:32:44 2026] 127.0.0.1:44970 Closing
-[Tue Sep 22 08:33:23 2026] 127.0.0.1:38912 Accepted
-[Tue Sep 22 08:33:24 2026] 127.0.0.1:38912 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:33:24 2026] 127.0.0.1:38912 Closing
-[Tue Sep 22 08:34:23 2026] 127.0.0.1:52556 Accepted
-[Tue Sep 22 08:34:24 2026] 127.0.0.1:52556 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:34:24 2026] 127.0.0.1:52556 Closing
-[Tue Sep 22 08:35:23 2026] 127.0.0.1:41504 Accepted
-[Tue Sep 22 08:35:24 2026] 127.0.0.1:41504 [200]: POST /CSR/chat/load_clients.php
-[Tue Sep 22 08:35:25 2026] 127.0.0.1:41504 Closing
+[Tue Sep 22 08:45:48 2026] PHP 8.3.6 Development Server (http://0.0.0.0:8080) started
+[Tue Sep 22 08:45:59 2026] 127.0.0.1:55818 Accepted
+[Tue Sep 22 08:45:59 2026] 127.0.0.1:55818 [302]: GET /
+[Tue Sep 22 08:45:59 2026] 127.0.0.1:55818 Closing
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55834 Accepted
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55834 [200]: GET /?v=ZGFzaGJvYXJkfDE3OTAwNjY3NTk%3D
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55834 Closing
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55848 Accepted
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55860 Accepted
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55848 [200]: GET /dashboard/gallery/4.jpg
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55848 Closing
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55860 [404]: GET /dashboard/gallery/5.jpg - No such file or directory
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55860 Closing
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55866 Accepted
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55876 Accepted
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55882 Accepted
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55886 Accepted
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55900 Accepted
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55904 Accepted
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55866 [200]: GET /dashboard/style.css
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55866 Closing
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55876 [404]: GET /dashboard/gallery/6.jpg - No such file or directory
+[Tue Sep 22 08:46:00 2026] 127.0.0.1:55876 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55882 [200]: GET /AHBALOGO.png
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55882 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55920 Accepted
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55886 [404]: GET /dashboard/gallery/7.jpg - No such file or directory
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55886 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55926 Accepted
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55900 [200]: GET /SKYTRUFIBER.png
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55900 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55934 Accepted
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55950 Accepted
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55904 [404]: GET /dashboard/gallery/8.jpg - No such file or directory
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55904 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55956 Accepted
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55960 Accepted
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55970 Accepted
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55974 Accepted
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55984 Accepted
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55998 Accepted
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:56006 Accepted
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:56020 Accepted
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:56030 Accepted
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55920 [200]: GET /dashboard/alex.jpg
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55920 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55926 [200]: GET /dashboard/amy.jpg
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55926 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55934 [404]: GET /dashboard/gallery/9.jpg - No such file or directory
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55934 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55950 [404]: GET /dashboard/gallery/11.jpg - No such file or directory
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55950 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55956 [404]: GET /dashboard/gallery/10.jpg - No such file or directory
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55956 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55960 [404]: GET /dashboard/gallery/12.jpg - No such file or directory
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55960 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55970 [404]: GET /dashboard/gallery/video.mp4 - No such file or directory
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55970 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55974 [200]: GET /dashboard/gallery/2.jpg
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55974 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55984 [200]: GET /dashboard/script.js
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55984 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55998 [200]: GET /dashboard/allec.jpg
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:55998 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:56006 [200]: GET /dashboard/gallery/1.jpg
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:56006 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:56020 [200]: GET /dashboard/gallery/3.jpg
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:56020 Closing
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:56030 [404]: GET /dashboard/AHBALOGO.png - No such file or directory
+[Tue Sep 22 08:46:01 2026] 127.0.0.1:56030 Closing
+[Tue Sep 22 08:46:03 2026] 127.0.0.1:56042 Accepted
+[Tue Sep 22 08:46:03 2026] 127.0.0.1:56042 [302]: GET /fiber
+[Tue Sep 22 08:46:03 2026] 127.0.0.1:56042 Closing
+[Tue Sep 22 08:46:03 2026] 127.0.0.1:56054 Accepted
+[Tue Sep 22 08:46:05 2026] 127.0.0.1:56054 [200]: GET /?v=ZmliZXJ8MTc5MDA2Njc2Mw%3D%3D
+[Tue Sep 22 08:46:05 2026] 127.0.0.1:56054 Closing
+[Tue Sep 22 08:46:05 2026] 127.0.0.1:47926 Accepted
+[Tue Sep 22 08:46:05 2026] 127.0.0.1:47926 [200]: GET /SKYTRUFIBER.png
+[Tue Sep 22 08:46:05 2026] 127.0.0.1:47926 Closing
+[Tue Sep 22 08:46:11 2026] 127.0.0.1:47936 Accepted
+[Tue Sep 22 08:46:11 2026] 127.0.0.1:47936 [302]: GET /fiber/consent
+[Tue Sep 22 08:46:11 2026] 127.0.0.1:47936 Closing
+[Tue Sep 22 08:46:11 2026] 127.0.0.1:47948 Accepted
+[Tue Sep 22 08:46:11 2026] 127.0.0.1:47948 [200]: GET /?v=ZmliZXJfY29uc2VudHwxNzkwMDY2Nzcx
+[Tue Sep 22 08:46:11 2026] 127.0.0.1:47948 Closing
+[Tue Sep 22 08:46:11 2026] 127.0.0.1:47964 Accepted
+[Tue Sep 22 08:46:11 2026] 127.0.0.1:47964 [200]: GET /SKYTRUFIBER.png
+[Tue Sep 22 08:46:11 2026] 127.0.0.1:47964 Closing
+[Tue Sep 22 08:46:16 2026] 127.0.0.1:34746 Accepted
+[Tue Sep 22 08:46:16 2026] 127.0.0.1:34746 [302]: GET /fiber/register?source=QR%20Code
+[Tue Sep 22 08:46:16 2026] 127.0.0.1:34746 Closing
+[Tue Sep 22 08:46:16 2026] 127.0.0.1:34762 Accepted
+[Tue Sep 22 08:46:17 2026] 127.0.0.1:34762 [200]: GET /?v=ZmliZXJfcmVnaXN0ZXJ8MTc5MDA2Njc3Ng%3D%3D&rt=51eb8667215435c4e2cb45e9decf725b
+[Tue Sep 22 08:46:17 2026] 127.0.0.1:34762 Closing
+[Tue Sep 22 08:46:17 2026] 127.0.0.1:34766 Accepted
+[Tue Sep 22 08:46:17 2026] 127.0.0.1:34766 [200]: GET /SKYTRUFIBER.png
+[Tue Sep 22 08:46:17 2026] 127.0.0.1:34766 Closing
+[Tue Sep 22 08:46:41 2026] 127.0.0.1:57910 Accepted
+[Tue Sep 22 08:46:42 2026] 127.0.0.1:57910 [200]: GET /?v=ZmliZXJfcmVnaXN0ZXJ8MTc5MDA2Njc3Ng%3D%3D&rt=51eb8667215435c4e2cb45e9decf725b
+[Tue Sep 22 08:46:42 2026] 127.0.0.1:57910 Closing
+[Tue Sep 22 08:46:42 2026] 127.0.0.1:57924 Accepted
+[Tue Sep 22 08:46:42 2026] 127.0.0.1:57924 [200]: GET /SKYTRUFIBER.png
+[Tue Sep 22 08:46:42 2026] 127.0.0.1:57924 Closing
+[Tue Sep 22 08:46:44 2026] 127.0.0.1:53786 Accepted
+[Tue Sep 22 08:46:44 2026] 127.0.0.1:53786 [302]: GET /fiber
+[Tue Sep 22 08:46:44 2026] 127.0.0.1:53786 Closing
+[Tue Sep 22 08:46:44 2026] 127.0.0.1:53790 Accepted
+[Tue Sep 22 08:46:45 2026] 127.0.0.1:53790 [200]: GET /?v=ZmliZXJ8MTc5MDA2NjgwNA%3D%3D
+[Tue Sep 22 08:46:45 2026] 127.0.0.1:53790 Closing
+[Tue Sep 22 08:46:45 2026] 127.0.0.1:53800 Accepted
+[Tue Sep 22 08:46:45 2026] 127.0.0.1:53800 [200]: GET /SKYTRUFIBER.png
+[Tue Sep 22 08:46:45 2026] 127.0.0.1:53800 Closing
+[Tue Sep 22 08:46:53 2026] 127.0.0.1:34290 Accepted
+[Tue Sep 22 08:46:53 2026] 127.0.0.1:34290 [302]: GET /fiber
+[Tue Sep 22 08:46:53 2026] 127.0.0.1:34290 Closing
+[Tue Sep 22 08:46:53 2026] 127.0.0.1:34292 Accepted
+[Tue Sep 22 08:46:54 2026] 127.0.0.1:34292 [200]: GET /?v=ZmliZXJ8MTc5MDA2NjgxMw%3D%3D
+[Tue Sep 22 08:46:54 2026] 127.0.0.1:34292 Closing
+[Tue Sep 22 08:46:54 2026] 127.0.0.1:34294 Accepted
+[Tue Sep 22 08:46:55 2026] 127.0.0.1:34294 [200]: GET /SKYTRUFIBER.png
+[Tue Sep 22 08:46:55 2026] 127.0.0.1:34294 Closing
+[Tue Sep 22 08:46:59 2026] 127.0.0.1:34310 Accepted
+[Tue Sep 22 08:46:59 2026] 127.0.0.1:34310 [302]: GET /home.php
+[Tue Sep 22 08:46:59 2026] 127.0.0.1:34310 Closing
+[Tue Sep 22 08:46:59 2026] 127.0.0.1:34312 Accepted
+[Tue Sep 22 08:47:00 2026] 127.0.0.1:34312 [302]: GET /home.php?v=Y3NyX2xvZ2lufDE3OTAwNjY4MTk%3D
+[Tue Sep 22 08:47:00 2026] 127.0.0.1:34312 Closing
+[Tue Sep 22 08:47:00 2026] 127.0.0.1:34318 Accepted
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34318 [200]: GET /home.php?v=Y3NyX2Rhc2hib2FyZHwxNzkwMDY2ODIw
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34318 Closing
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34324 Accepted
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34340 Accepted
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34324 [200]: GET /CSR/dashboard/csr_dashboard.css
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34356 Accepted
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34340 [200]: GET /AHBALOGO.png
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34364 Accepted
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34356 [200]: GET /CSR/history/history.js?v=3
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34366 Accepted
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34324 Closing
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34364 [200]: GET /CSR/history/history.css?v=3
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34374 Accepted
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34340 Closing
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34366 [200]: GET /CSR/chat/chat.css?v=1790066822
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34388 Accepted
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34374 [200]: GET /CSR/dashboard/csr_dashboard.js?v=3
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34356 Closing
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34394 Accepted
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34388 [200]: GET /CSR/chat/chat.js?v=3
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34364 Closing
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34396 Accepted
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34394 [200]: GET /CSR/vendor/js/Sortable.min.js
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34366 Closing
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34396 [200]: GET /CSR/chat/chat.css?v=3
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34374 Closing
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34388 Closing
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34394 Closing
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34396 Closing
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34410 Accepted
+[Tue Sep 22 08:47:02 2026] 127.0.0.1:34416 Accepted
+[Tue Sep 22 08:47:04 2026] 127.0.0.1:34410 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:47:04 2026] 127.0.0.1:34410 Closing
+[Tue Sep 22 08:47:04 2026] 127.0.0.1:34416 [200]: GET /CSR/AHBALOGO.png
+[Tue Sep 22 08:47:04 2026] 127.0.0.1:34416 Closing
+[Tue Sep 22 08:47:08 2026] 127.0.0.1:44960 Accepted
+[Tue Sep 22 08:47:10 2026] 127.0.0.1:44960 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:47:10 2026] 127.0.0.1:44960 Closing
+[Tue Sep 22 08:47:14 2026] 127.0.0.1:33104 Accepted
+[Tue Sep 22 08:47:16 2026] 127.0.0.1:33104 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:47:16 2026] 127.0.0.1:33104 Closing
+[Tue Sep 22 08:47:16 2026] 127.0.0.1:33116 Accepted
+[Tue Sep 22 08:47:18 2026] 127.0.0.1:33116 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:47:18 2026] 127.0.0.1:33116 Closing
+[Tue Sep 22 08:47:18 2026] 127.0.0.1:33128 Accepted
+[Tue Sep 22 08:47:19 2026] 127.0.0.1:33128 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:47:20 2026] 127.0.0.1:33128 Closing
+[Tue Sep 22 08:47:20 2026] 127.0.0.1:33136 Accepted
+[Tue Sep 22 08:47:21 2026] 127.0.0.1:33136 [200]: POST /CSR/chat/load_messages.php
+[Tue Sep 22 08:47:22 2026] 127.0.0.1:33136 Closing
+[Tue Sep 22 08:47:22 2026] 127.0.0.1:33152 Accepted
+[Tue Sep 22 08:47:22 2026] 127.0.0.1:33156 Accepted
+[Tue Sep 22 08:47:23 2026] 127.0.0.1:33152 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:47:23 2026] 127.0.0.1:33152 Closing
+[Tue Sep 22 08:47:23 2026] 127.0.0.1:33164 Accepted
+[Tue Sep 22 08:47:25 2026] 127.0.0.1:33156 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:47:25 2026] 127.0.0.1:33156 Closing
+[Tue Sep 22 08:47:25 2026] 127.0.0.1:46802 Accepted
+[Tue Sep 22 08:47:25 2026] 127.0.0.1:33164 [200]: GET /upload/default-avatar.png
+[Tue Sep 22 08:47:27 2026] 127.0.0.1:46802 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:47:27 2026] 127.0.0.1:46802 Closing
+[Tue Sep 22 08:47:27 2026] 127.0.0.1:33164 Closing
+[Tue Sep 22 08:47:27 2026] 127.0.0.1:46814 Accepted
+[Tue Sep 22 08:47:27 2026] 127.0.0.1:46816 Accepted
+[Tue Sep 22 08:47:28 2026] 127.0.0.1:46814 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:47:28 2026] 127.0.0.1:46814 Closing
+[Tue Sep 22 08:47:30 2026] 127.0.0.1:46816 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:47:30 2026] 127.0.0.1:46816 Closing
+[Tue Sep 22 08:47:30 2026] 127.0.0.1:46826 Accepted
+[Tue Sep 22 08:47:32 2026] 127.0.0.1:46826 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:47:32 2026] 127.0.0.1:46826 Closing
+[Tue Sep 22 08:47:33 2026] 127.0.0.1:46836 Accepted
+[Tue Sep 22 08:47:33 2026] 127.0.0.1:46838 Accepted
+[Tue Sep 22 08:47:35 2026] 127.0.0.1:46838 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:47:35 2026] 127.0.0.1:46838 Closing
+[Tue Sep 22 08:47:36 2026] 127.0.0.1:46836 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:47:36 2026] 127.0.0.1:46836 Closing
+[Tue Sep 22 08:47:36 2026] 127.0.0.1:55180 Accepted
+[Tue Sep 22 08:47:38 2026] 127.0.0.1:55180 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:47:38 2026] 127.0.0.1:55180 Closing
+[Tue Sep 22 08:47:39 2026] 127.0.0.1:55196 Accepted
+[Tue Sep 22 08:47:39 2026] 127.0.0.1:55198 Accepted
+[Tue Sep 22 08:47:41 2026] 127.0.0.1:55198 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:47:41 2026] 127.0.0.1:55198 Closing
+[Tue Sep 22 08:47:42 2026] 127.0.0.1:55196 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:47:42 2026] 127.0.0.1:55196 Closing
+[Tue Sep 22 08:47:42 2026] 127.0.0.1:55212 Accepted
+[Tue Sep 22 08:47:44 2026] 127.0.0.1:55212 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:47:44 2026] 127.0.0.1:55212 Closing
+[Tue Sep 22 08:47:45 2026] 127.0.0.1:35034 Accepted
+[Tue Sep 22 08:47:45 2026] 127.0.0.1:35038 Accepted
+[Tue Sep 22 08:47:46 2026] 127.0.0.1:35034 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:47:46 2026] 127.0.0.1:35034 Closing
+[Tue Sep 22 08:47:48 2026] 127.0.0.1:35038 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:47:48 2026] 127.0.0.1:35038 Closing
+[Tue Sep 22 08:47:48 2026] 127.0.0.1:35054 Accepted
+[Tue Sep 22 08:47:50 2026] 127.0.0.1:35054 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:47:50 2026] 127.0.0.1:35054 Closing
+[Tue Sep 22 08:47:51 2026] 127.0.0.1:35070 Accepted
+[Tue Sep 22 08:47:52 2026] 127.0.0.1:35070 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:47:52 2026] 127.0.0.1:35070 Closing
+[Tue Sep 22 08:47:52 2026] 127.0.0.1:35076 Accepted
+[Tue Sep 22 08:47:54 2026] 127.0.0.1:35076 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:47:54 2026] 127.0.0.1:35076 Closing
+[Tue Sep 22 08:47:54 2026] 127.0.0.1:38484 Accepted
+[Tue Sep 22 08:47:56 2026] 127.0.0.1:38484 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:47:56 2026] 127.0.0.1:38484 Closing
+[Tue Sep 22 08:47:57 2026] 127.0.0.1:38498 Accepted
+[Tue Sep 22 08:47:57 2026] 127.0.0.1:38500 Accepted
+[Tue Sep 22 08:47:58 2026] 127.0.0.1:38498 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:47:58 2026] 127.0.0.1:38498 Closing
+[Tue Sep 22 08:48:00 2026] 127.0.0.1:38500 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:48:00 2026] 127.0.0.1:38500 Closing
+[Tue Sep 22 08:48:00 2026] 127.0.0.1:38512 Accepted
+[Tue Sep 22 08:48:02 2026] 127.0.0.1:38512 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:48:02 2026] 127.0.0.1:38512 Closing
+[Tue Sep 22 08:48:03 2026] 127.0.0.1:38522 Accepted
+[Tue Sep 22 08:48:03 2026] 127.0.0.1:38530 Accepted
+[Tue Sep 22 08:48:04 2026] 127.0.0.1:38522 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:48:04 2026] 127.0.0.1:38522 Closing
+[Tue Sep 22 08:48:06 2026] 127.0.0.1:38530 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:48:06 2026] 127.0.0.1:38530 Closing
+[Tue Sep 22 08:48:06 2026] 127.0.0.1:59444 Accepted
+[Tue Sep 22 08:48:08 2026] 127.0.0.1:59444 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:48:08 2026] 127.0.0.1:59444 Closing
+[Tue Sep 22 08:48:09 2026] 127.0.0.1:59460 Accepted
+[Tue Sep 22 08:48:09 2026] 127.0.0.1:59472 Accepted
+[Tue Sep 22 08:48:10 2026] 127.0.0.1:59460 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:48:10 2026] 127.0.0.1:59460 Closing
+[Tue Sep 22 08:48:12 2026] 127.0.0.1:59472 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:48:12 2026] 127.0.0.1:59472 Closing
+[Tue Sep 22 08:48:12 2026] 127.0.0.1:59480 Accepted
+[Tue Sep 22 08:48:14 2026] 127.0.0.1:59480 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:48:14 2026] 127.0.0.1:59480 Closing
+[Tue Sep 22 08:48:15 2026] 127.0.0.1:51350 Accepted
+[Tue Sep 22 08:48:16 2026] 127.0.0.1:51350 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:48:16 2026] 127.0.0.1:51350 Closing
+[Tue Sep 22 08:48:16 2026] 127.0.0.1:51366 Accepted
+[Tue Sep 22 08:48:18 2026] 127.0.0.1:51366 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:48:18 2026] 127.0.0.1:51366 Closing
+[Tue Sep 22 08:48:18 2026] 127.0.0.1:51374 Accepted
+[Tue Sep 22 08:48:20 2026] 127.0.0.1:51374 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:48:20 2026] 127.0.0.1:51374 Closing
+[Tue Sep 22 08:48:23 2026] 127.0.0.1:51380 Accepted
+[Tue Sep 22 08:48:23 2026] 127.0.0.1:51382 Accepted
+[Tue Sep 22 08:48:25 2026] 127.0.0.1:51382 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:48:25 2026] 127.0.0.1:51382 Closing
+[Tue Sep 22 08:48:26 2026] 127.0.0.1:51380 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:48:26 2026] 127.0.0.1:51380 Closing
+[Tue Sep 22 08:49:23 2026] 127.0.0.1:58752 Accepted
+[Tue Sep 22 08:49:25 2026] 127.0.0.1:58752 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:49:25 2026] 127.0.0.1:58752 Closing
+[Tue Sep 22 08:49:25 2026] 127.0.0.1:58766 Accepted
+[Tue Sep 22 08:49:26 2026] 127.0.0.1:58766 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:49:26 2026] 127.0.0.1:58766 Closing
+[Tue Sep 22 08:50:23 2026] 127.0.0.1:54708 Accepted
+[Tue Sep 22 08:50:23 2026] 127.0.0.1:54710 Accepted
+[Tue Sep 22 08:50:25 2026] 127.0.0.1:54708 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:50:25 2026] 127.0.0.1:54708 Closing
+[Tue Sep 22 08:50:26 2026] 127.0.0.1:54710 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:50:26 2026] 127.0.0.1:54710 Closing
+[Tue Sep 22 08:51:23 2026] 127.0.0.1:50788 Accepted
+[Tue Sep 22 08:51:25 2026] 127.0.0.1:50788 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:51:25 2026] 127.0.0.1:50788 Closing
+[Tue Sep 22 08:51:25 2026] 127.0.0.1:50796 Accepted
+[Tue Sep 22 08:51:26 2026] 127.0.0.1:50796 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:51:26 2026] 127.0.0.1:50796 Closing
+[Tue Sep 22 08:52:23 2026] 127.0.0.1:52042 Accepted
+[Tue Sep 22 08:52:25 2026] 127.0.0.1:52042 [200]: POST /CSR/chat/load_client_info.php
+[Tue Sep 22 08:52:25 2026] 127.0.0.1:52042 Closing
+[Tue Sep 22 08:52:25 2026] 127.0.0.1:52056 Accepted
+[Tue Sep 22 08:52:26 2026] 127.0.0.1:52056 [200]: POST /CSR/chat/load_clients.php
+[Tue Sep 22 08:52:26 2026] 127.0.0.1:52056 Closing
