@@ -73,30 +73,34 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-:root{ --green:#007c3c; --green-dark:#015f2e; }
+:root{ --green:#1a4fc4; --green-dark:#123a91; }
 body{
     margin:0;height:100vh;display:flex;justify-content:center;align-items:center;
-    font-family:"Segoe UI",Arial;background:linear-gradient(to right,#dffff0,#f2fff7);
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial;
+    background:linear-gradient(135deg,#e8eefc,#f4f6fa);
 }
 .login-box{
-    width:350px;padding:28px;background:#fff;border-radius:18px;
-    box-shadow:0 10px 28px rgba(0,0,0,.18);text-align:center;
+    width:360px;padding:32px;background:#fff;border-radius:18px;
+    box-shadow:0 10px 28px rgba(20,24,40,.12);text-align:center;
 }
-h2{margin-bottom:15px;font-weight:800;color:var(--green-dark);}
+.login-box img{height:44px;margin-bottom:14px;}
+h2{margin:0 0 20px;font-weight:800;color:var(--green-dark);font-size:18px;letter-spacing:.02em;}
 .field{text-align:left;margin-bottom:14px;}
-label{font-size:12px;font-weight:700;color:var(--green-dark);margin-bottom:6px;display:block;}
+label{font-size:12px;font-weight:700;color:#45495a;margin-bottom:6px;display:block;}
 input[type=text],input[type=password]{
-    width:100%;padding:12px;border-radius:12px;border:1px solid #d8e6dd;
+    width:100%;padding:12px;border-radius:10px;border:1px solid #d7dbe4;font-size:14px;font-family:inherit;
+    box-sizing:border-box;
 }
+input[type=text]:focus,input[type=password]:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px #e8eefc;}
 button{
-    width:100%;padding:12px;border:none;border-radius:12px;background:var(--green);
-    color:#fff;font-weight:800;font-size:15px;cursor:pointer;
+    width:100%;padding:12px;border:none;border-radius:10px;background:var(--green);
+    color:#fff;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;
 }
 button:hover{background:var(--green-dark);}
 .error{
-    background:#ffdede;color:#b40000;padding:8px;border-radius:8px;margin-top:12px;
+    background:#fbe7e5;color:#c0342b;padding:9px;border-radius:8px;margin-top:12px;font-size:13px;
 }
-.footer{margin-top:14px;font-size:12px;}
+.footer{margin-top:16px;font-size:12px;color:#737a8c;}
 .footer a{font-weight:700;color:var(--green-dark);text-decoration:none;}
 </style>
 </head>
@@ -104,7 +108,8 @@ button:hover{background:var(--green-dark);}
 <body>
 
 <div class="login-box">
-    <h2>CSR LOGIN</h2>
+    <img src="/AHBALOGO.png" alt="" onerror="this.style.display='none'">
+    <h2>CSR Sky — Agent Login</h2>
 
     <form method="POST">
         <div class="field">

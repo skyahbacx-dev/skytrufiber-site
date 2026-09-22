@@ -171,15 +171,15 @@ if ($CONCERNS_JSON === false) $CONCERNS_JSON = "[]";
 <title>All Concerns — CSR Console</title>
 <style>
 :root{
-  --green:#007c3c; --green-dark:#015f2e; --green-soft:#e8f7ee;
-  --ink:#1f2b25; --muted:#6b7d73; --line:#e2ece6; --bg:#f4f8f5;
-  --amber-bg:#fdf1d8; --amber-tx:#8a5b06;
-  --blue-bg:#e6f1fb; --blue-tx:#0c447c;
-  --grey-bg:#eef2f0; --grey-tx:#5f6f66;
-  --green-bg:#e6f6ec; --green-tx:#1c6b3a;
+  --green:#1a4fc4; --green-dark:#123a91; --green-soft:#e8eefc;
+  --ink:#1a1d24; --muted:#737a8c; --line:#e9ecf2; --bg:#f4f6fa;
+  --amber-bg:#fdf1de; --amber-tx:#a6660a;
+  --blue-bg:#e8eefc; --blue-tx:#123a91;
+  --grey-bg:#e9ecf2; --grey-tx:#45495a;
+  --green-bg:#e5f7ec; --green-tx:#046a2e;
 }
 *{box-sizing:border-box;}
-body{margin:0;font-family:"Segoe UI",system-ui,Arial,sans-serif;color:var(--ink);background:var(--bg);}
+body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Arial,sans-serif;color:var(--ink);background:var(--bg);}
 .ac-top{display:flex;align-items:center;gap:14px;background:var(--green);color:#fff;padding:10px 18px;flex-wrap:wrap;}
 .ac-top img{height:34px;width:34px;border-radius:8px;background:#fff;padding:3px;object-fit:contain;}
 .ac-top h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.3px;}

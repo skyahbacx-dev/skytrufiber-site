@@ -29,51 +29,58 @@ $sql .= " ORDER BY sent_at DESC";
 $stmt = $conn->prepare($sql);
 $stmt->execute($params);
 $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$sentCount = count(array_filter($logs, fn($l) => $l['status'] === 'sent'));
+$failedCount = count($logs) - $sentCount;
 ?>
 
-<link rel="stylesheet" href="../reminders/reminders.css">
+<link rel="stylesheet" href="/assets/css/skytru.css">
 
-<h1>🔔 Billing Reminder Notifications</h1>
+<div class="sky-page-header">
+    <div>
+        <h1>Reminders</h1>
+        <p><?= count($logs) ?> reminders<?= $today ? " sent today" : "" ?> — <?= $sentCount ?> sent, <?= $failedCount ?> failed</p>
+    </div>
+</div>
 
-<form method="GET" class="reminder-search">
-    <input type="text" name="account" placeholder="Search by account #" value="<?= htmlspecialchars($account) ?>">
-    <input type="text" name="email" placeholder="Search by email" value="<?= htmlspecialchars($email) ?>">
-
-    <label class="today-checkbox">
+<form method="GET" class="sky-card" style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin-bottom:20px;">
+    <div class="sky-field" style="margin:0; flex:1; min-width:180px;">
+        <label>Account #</label>
+        <input type="text" name="account" class="sky-input" placeholder="Search by account #" value="<?= htmlspecialchars($account) ?>">
+    </div>
+    <div class="sky-field" style="margin:0; flex:1; min-width:180px;">
+        <label>Email</label>
+        <input type="text" name="email" class="sky-input" placeholder="Search by email" value="<?= htmlspecialchars($email) ?>">
+    </div>
+    <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--gray-700); padding-bottom:10px;">
         <input type="checkbox" name="today" value="1" <?= $today ? "checked" : "" ?>>
-        Today's reminders
+        Today only
     </label>
-
-    <button type="submit">Filter</button>
+    <button type="submit" class="sky-btn sky-btn-primary">Filter</button>
 </form>
 
-<div class="reminder-container">
-<?php if(empty($logs)): ?>
-    <div class="no-reminders">No reminders found.</div>
+<?php if (empty($logs)): ?>
+    <div class="sky-card">
+        <div class="sky-empty">
+            <div class="sky-empty__icon">🔔</div>
+            No reminders found.
+        </div>
+    </div>
+<?php else: ?>
+    <div class="sky-card-grid">
+        <?php foreach ($logs as $l): ?>
+            <div class="sky-card">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                    <span style="font-weight:700; font-size:13px;">🔔 <?= htmlspecialchars(strtoupper(str_replace("_", " ", $l['reminder_type']))) ?></span>
+                    <span class="sky-badge <?= $l['status'] === 'sent' ? 'sky-badge-success' : 'sky-badge-danger' ?>">
+                        <?= $l['status'] === 'sent' ? "✔ Sent" : "✖ Failed" ?>
+                    </span>
+                </div>
+                <p style="margin:4px 0; font-size:13px;"><strong>Account:</strong> <?= htmlspecialchars($l['account_number']) ?></p>
+                <p style="margin:4px 0; font-size:13px;"><strong>Email:</strong> <?= htmlspecialchars($l['email']) ?></p>
+                <p style="margin:4px 0; font-size:13px;"><strong>Due:</strong> <?= htmlspecialchars($l['due_date']) ?></p>
+                <p style="margin:10px 0 0; font-size:12px; color:var(--gray-500);"><?= date("M j, Y g:i A", strtotime($l['sent_at'])) ?></p>
+            </div>
+        <?php endforeach; ?>
+    </div>
 <?php endif; ?>
-
-<?php foreach($logs as $l): ?>
-<div class="reminder-card">
-    
-    <div class="reminder-header">
-        <span class="reminder-icon">🔔</span>
-        <span class="reminder-title"><?= strtoupper(str_replace("_", " ", $l['reminder_type'])) ?> REMINDER</span>
-    </div>
-
-    <div class="reminder-body">
-        <p><b>Account #:</b> <?= htmlspecialchars($l['account_number']) ?></p>
-        <p><b>Email:</b> <?= htmlspecialchars($l['email']) ?></p>
-        <p><b>Due Date:</b> <?= htmlspecialchars($l['due_date']) ?></p>
-    </div>
-
-    <div class="reminder-footer">
-        <span class="status-badge <?= $l['status'] === 'sent' ? 'sent' : 'failed' ?>">
-            <?= $l['status'] === 'sent' ? "✔ SENT" : "❌ FAILED" ?>
-        </span>
-
-        <span class="timestamp"><?= date("M d, Y h:i A", strtotime($l['sent_at'])) ?></span>
-    </div>
-
-</div>
-<?php endforeach; ?>
-</div>

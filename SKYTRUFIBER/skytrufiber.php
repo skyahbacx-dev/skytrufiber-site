@@ -124,8 +124,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 <style>
 body{
     margin:0;
-    font-family:"Segoe UI", Arial;
-    background:linear-gradient(to bottom right, #cceeff, #e6f7ff);
+    font-family:"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial;
+    background:linear-gradient(135deg, #e8eefc, #f4f6fa);
     display:flex;
     justify-content:center;
     align-items:center;
@@ -136,7 +136,7 @@ body{
     background:white;
     padding:32px;
     border-radius:20px;
-    box-shadow:0 5px 18px rgba(0,0,0,.18);
+    box-shadow:0 10px 28px rgba(20,24,40,.14);
     width:380px;
     text-align:center;
     position:relative;
@@ -153,8 +153,16 @@ input, select, textarea {
     padding:12px;
     margin:10px 0;
     border-radius:10px;
-    border:1px solid #ccc;
+    border:1px solid #d7dbe4;
     font-size:15px;
+    font-family:inherit;
+    box-sizing:border-box;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline:none;
+    border-color:#2f6fe0;
+    box-shadow:0 0 0 3px #e8eefc;
 }
 
 textarea{
@@ -166,16 +174,16 @@ textarea{
 button{
     width:100%;
     padding:12px;
-    background:#00a6b6;
+    background:#1a4fc4;
     color:white;
     border:none;
     border-radius:50px;
     cursor:pointer;
     font-size:16px;
-    font-weight:bold;
+    font-weight:700;
 }
 
-button:hover{ background:#008c96; }
+button:hover{ background:#123a91; }
 
 .small-links{
     margin-top:12px;
@@ -183,8 +191,9 @@ button:hover{ background:#008c96; }
 }
 
 .small-links a{
-    color:#0077a3;
+    color:#123a91;
     text-decoration:none;
+    font-weight:600;
 }
 
 .small-links a:hover{
@@ -192,7 +201,7 @@ button:hover{ background:#008c96; }
 }
 
 .message{
-    color:red;
+    color:#c0342b;
     font-size:0.9em;
     margin-bottom:8px;
 }

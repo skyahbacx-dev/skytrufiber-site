@@ -101,9 +101,9 @@ if (!empty($GLOBALS['CSR_IS_SUPERADMIN'])) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>User Management — Super Admin</title>
 <style>
-:root{ --green:#007c3c; --green-dark:#015f2e; --line:#e2ece6; --bg:#f4f8f5; --muted:#6b7d73; }
+:root{ --green:#1a4fc4; --green-dark:#123a91; --line:#e9ecf2; --bg:#f4f6fa; --muted:#737a8c; }
 *{box-sizing:border-box;}
-body{margin:0;font-family:"Segoe UI",system-ui,Arial,sans-serif;color:#1f2b25;background:var(--bg);}
+body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Arial,sans-serif;color:#1a1d24;background:var(--bg);}
 .top{display:flex;align-items:center;gap:14px;background:var(--green);color:#fff;padding:10px 18px;flex-wrap:wrap;}
 .top img{height:34px;width:34px;border-radius:8px;background:#fff;padding:3px;object-fit:contain;}
 .top h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.3px;}
@@ -114,7 +114,7 @@ body{margin:0;font-family:"Segoe UI",system-ui,Arial,sans-serif;color:#1f2b25;ba
 .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:16px;}
 .card h3{margin:0 0 12px;color:var(--green-dark);font-size:15px;}
 .flash{padding:11px 14px;border-radius:10px;margin-bottom:14px;font-size:14px;}
-.flash.ok{background:#e6f6ec;color:#1c6b3a;}
+.flash.ok{background:#e5f7ec;color:#046a2e;}
 .flash.err{background:#ffe1e1;color:#a12020;}
 label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:8px 0 3px;}
 input,select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-size:13px;background:#fff;}
@@ -127,10 +127,10 @@ table{width:100%;border-collapse:collapse;}
 th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle;}
 th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;}
 .badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:700;}
-.b-sa{background:#e6f1fb;color:#0c447c;}
-.b-csr{background:#eef2f0;color:#5f6f66;}
-.b-active{background:#e6f6ec;color:#1c6b3a;}
-.b-inactive{background:#fdf1d8;color:#8a5b06;}
+.b-sa{background:#e8eefc;color:#123a91;}
+.b-csr{background:#e9ecf2;color:#45495a;}
+.b-active{background:#e5f7ec;color:#046a2e;}
+.b-inactive{background:#fdf1de;color:#a6660a;}
 .manage{display:none;background:var(--bg);border-radius:10px;padding:12px;margin-top:8px;}
 .manage .row2{display:flex;gap:16px;flex-wrap:wrap;}
 .manage form{flex:1;min-width:240px;}
