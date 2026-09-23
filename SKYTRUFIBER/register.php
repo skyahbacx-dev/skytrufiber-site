@@ -125,11 +125,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <title>Customer Registration – SkyTruFiber</title>
+<link rel="stylesheet" href="/assets/css/skytru.css">
 
 <style>
 body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(to bottom right, #cceeff, #e6f7ff);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #e8eefc, #f4f6fa);
     margin: 0;
     padding-top: 25px;
     display: flex;
@@ -144,7 +145,7 @@ form {
     border-radius: 20px;
     width: 450px;
     max-width: 92%;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    box-shadow: 0 10px 28px rgba(20,24,40,0.14);
     position: relative;
 }
 
@@ -159,7 +160,7 @@ form {
     border-radius: 50%;
     background: white;
     padding: 10px;
-    border: 3px solid #0099cc;
+    border: 3px solid #1a4fc4;
 }
 
 h2 {
@@ -180,8 +181,16 @@ input, select, textarea {
     width: 100%;
     padding: 12px;
     border-radius: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid #d7dbe4;
     font-size: 15px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #2f6fe0;
+    box-shadow: 0 0 0 3px #e8eefc;
 }
 
 /* Account number formatting */
@@ -192,7 +201,7 @@ input[name='account_number'] {
 button {
     width: 100%;
     padding: 12px;
-    background: #0099cc;
+    background: #1a4fc4;
     color: white;
     border: none;
     border-radius: 12px;
@@ -201,7 +210,7 @@ button {
     font-size: 17px;
     font-weight: bold;
 }
-button:hover { background: #007a99; }
+button:hover { background: #123a91; }
 
 .message {
     color: red;
@@ -297,10 +306,13 @@ button:hover { background: #007a99; }
 
     <label>How satisfied are you with your service?</label>
     <div class="rating-scale" role="radiogroup" aria-label="Satisfaction rating">
-        <?php $ratingFaces = [1 => '😡', 2 => '😕', 3 => '😐', 4 => '🙂', 5 => '😍']; ?>
+        <?php
+        $ratingFaces = [1 => '😡', 2 => '😕', 3 => '😐', 4 => '🙂', 5 => '😍'];
+        $ratingWords = [1 => 'Very dissatisfied', 2 => 'Dissatisfied', 3 => 'Neutral', 4 => 'Satisfied', 5 => 'Very satisfied'];
+        ?>
         <?php foreach ($ratingFaces as $val => $face): ?>
             <label class="rating-option">
-                <input type="radio" name="rating" value="<?= $val ?>" required>
+                <input type="radio" name="rating" value="<?= $val ?>" aria-label="<?= $val ?> - <?= $ratingWords[$val] ?>" required>
                 <span><?= $face ?></span>
             </label>
         <?php endforeach; ?>

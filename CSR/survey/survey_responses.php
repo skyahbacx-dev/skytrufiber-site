@@ -130,15 +130,15 @@ $dList = $conn->query("
     <input type="hidden" name="tab" value="survey">
 
     <div class="sky-field" style="margin:0; flex:2; min-width:200px;">
-        <label>Search</label>
-        <input type="text" name="search" class="sky-input"
+        <label for="sv-search">Search</label>
+        <input type="text" id="sv-search" name="search" class="sky-input"
                value="<?= htmlspecialchars($search) ?>"
                placeholder="Name, account #, email…">
     </div>
 
     <div class="sky-field" style="margin:0; min-width:160px;">
-        <label>District</label>
-        <select name="district" class="sky-select">
+        <label for="sv-district">District</label>
+        <select id="sv-district" name="district" class="sky-select">
             <option value="">All Districts</option>
             <?php foreach ($dList as $d): ?>
                 <option value="<?= htmlspecialchars($d) ?>" <?= $district == $d ? 'selected' : '' ?>>
@@ -149,12 +149,12 @@ $dList = $conn->query("
     </div>
 
     <div class="sky-field" style="margin:0;">
-        <label>From</label>
-        <input type="date" name="date_from" class="sky-input" value="<?= htmlspecialchars($date_from) ?>">
+        <label for="sv-from">From</label>
+        <input type="date" id="sv-from" name="date_from" class="sky-input" value="<?= htmlspecialchars($date_from) ?>">
     </div>
     <div class="sky-field" style="margin:0;">
-        <label>To</label>
-        <input type="date" name="date_to" class="sky-input" value="<?= htmlspecialchars($date_to) ?>">
+        <label for="sv-to">To</label>
+        <input type="date" id="sv-to" name="date_to" class="sky-input" value="<?= htmlspecialchars($date_to) ?>">
     </div>
 
     <button class="sky-btn sky-btn-primary">Apply</button>
