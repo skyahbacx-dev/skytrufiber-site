@@ -337,6 +337,55 @@ function handleScrollButton() {
 /* ============================================================
    TICKET STATUS CHANGE
 ============================================================ */
+/* ============================================================
+   ASSIGN / UNASSIGN CLIENT
+   (assign_client.php already existed and fully worked - this
+   click wiring was simply missing, so the buttons did nothing.)
+============================================================ */
+$(document).on("click", ".assign-btn, .unassign-btn", function (e) {
+    e.stopPropagation(); // don't also trigger the client-item's own "open chat" click
+    const btn = $(this);
+    const clientId = btn.data("id");
+    const action = btn.hasClass("assign-btn") ? "assign" : "unassign";
+
+    btn.prop("disabled", true);
+
+    $.post("/CSR/chat/assign_client.php", {
+        client_id: clientId,
+        action: action
+    }, "json")
+    .done(function (res) {
+        if (!res) { alert("Assignment failed - no response from server."); return; }
+
+        if (res.status === "ok" || res.status === "already") {
+            loadClients(false);
+            if (currentClientID == clientId) loadClientInfo(currentClientID, false);
+            return;
+        }
+
+        if (res.status === "transfer_required") {
+            if (confirm(res.msg + "\n\nRequest a transfer?")) {
+                $.post("/CSR/chat/assign_client.php", {
+                    client_id: clientId,
+                    action: "request_transfer"
+                }, "json").done(function (r2) {
+                    alert(r2 && r2.msg ? r2.msg : "Transfer request sent.");
+                    loadClients(false);
+                });
+            }
+            return;
+        }
+
+        alert(res.msg || "Could not update assignment.");
+    })
+    .fail(function () {
+        alert("Could not reach the server. Please try again.");
+    })
+    .always(function () {
+        btn.prop("disabled", false);
+    });
+});
+
 $(document).on("change", "#ticket-status-dropdown", function () {
 
     if (!currentTicketID || !currentClientID) return;
