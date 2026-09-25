@@ -96,6 +96,15 @@ function sky_status_badge(string $status): string {
     [$style, $label] = $map[$status] ?? ['neutral', ucfirst($status)];
     return "<span class=\"sky-badge sky-badge-{$style}\">{$label}</span>";
 }
+
+/* Initials + a stable color pick for the avatar bubble, so the same
+   customer always gets the same color (based on their id, not random). */
+function sky_avatar(string $name, int $seed): string {
+    $parts = preg_split('/\s+/', trim($name));
+    $initials = strtoupper(($parts[0][0] ?? '?') . ($parts[1][0] ?? ''));
+    $variant = $seed % 5;
+    return "<div class=\"sky-avatar sky-avatar-{$variant}\">" . htmlspecialchars($initials) . "</div>";
+}
 ?>
 <div class="sky-page-header">
     <div>
@@ -132,30 +141,26 @@ function sky_status_badge(string $status): string {
     <button class="sky-btn sky-btn-secondary sky-btn-sm" onclick="Sky.goTab('customers')">View all customers →</button>
 </div>
 
-<div class="sky-table-wrap">
+<div class="sky-card" style="padding:0;">
 <?php if (empty($queue)): ?>
     <div class="sky-empty">
         <div class="sky-empty__icon">✅</div>
         <div>No customers waiting on you right now.</div>
     </div>
 <?php else: ?>
-    <table class="sky-table">
-        <thead>
-            <tr><th>Customer</th><th>Account #</th><th>Status</th><th>Survey</th><th></th></tr>
-        </thead>
-        <tbody>
-        <?php foreach ($queue as $c): ?>
-            <tr>
-                <td data-label="Customer"><?= htmlspecialchars($c['full_name'] ?? '—') ?></td>
-                <td data-label="Account #"><?= htmlspecialchars($c['account_number'] ?? '—') ?></td>
-                <td data-label="Status"><?= sky_status_badge($c['ticket_status']) ?></td>
-                <td data-label="Survey"><?= $c['latest_survey_id'] ? '<span class="sky-badge sky-badge-info">Submitted</span>' : '<span class="sky-badge sky-badge-neutral">Pending</span>' ?></td>
-                <td data-label="">
-                    <button class="sky-btn sky-btn-primary sky-btn-sm" onclick="Sky.goTab('customer', {id: <?= (int)$c['id'] ?>})">Open</button>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
+    <?php foreach ($queue as $c): ?>
+        <div class="sky-queue-row">
+            <?= sky_avatar($c['full_name'] ?? '?', (int)$c['id']) ?>
+            <div class="sky-queue-row__main">
+                <div class="sky-queue-row__name"><?= htmlspecialchars($c['full_name'] ?? 'Unknown') ?></div>
+                <div class="sky-queue-row__meta">Account #<?= htmlspecialchars($c['account_number'] ?? '—') ?></div>
+            </div>
+            <div class="sky-queue-row__badges">
+                <?= sky_status_badge($c['ticket_status']) ?>
+                <?= $c['latest_survey_id'] ? '<span class="sky-badge sky-badge-info">Survey ✔</span>' : '<span class="sky-badge sky-badge-neutral">No survey</span>' ?>
+            </div>
+            <button class="sky-btn sky-btn-primary sky-btn-sm" onclick="Sky.goTab('customer', {id: <?= (int)$c['id'] ?>})">Open</button>
+        </div>
+    <?php endforeach; ?>
 <?php endif; ?>
 </div>
