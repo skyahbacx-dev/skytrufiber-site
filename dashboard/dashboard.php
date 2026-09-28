@@ -39,6 +39,10 @@
       <i class="fa-solid fa-house"></i><span>Home</span>
     </a>
 
+    <a href="javascript:void(0)" onclick="smoothScroll('#audiences'); toggleMenu()" data-tooltip="Get Started">
+      <i class="fa-solid fa-hand-pointer"></i><span>Get Started</span>
+    </a>
+
     <a href="javascript:void(0)" onclick="smoothScroll('#about'); toggleMenu()" data-tooltip="About Us">
       <i class="fa-solid fa-circle-info"></i><span>About</span>
     </a>
@@ -64,12 +68,70 @@
 
 <!-- ================= HOME ================= -->
 
-<section id="home" class="section">
+<section id="home" class="section hero-section">
   <div class="hero-content reveal">
-    <p>Welcome to</p>
-    <h1>A. Halili Business Aid Professional Services Inc.</h1>
-    <p>All-in-one business solutions</p>
-    <a href="javascript:void(0)" onclick="smoothScroll('#experience')" class="btn">Learn More</a>
+    <p class="eyebrow">A. Halili Business Aid Professional Services Inc.</p>
+    <h1>Trusted business solutions.<br>Nationwide connectivity.</h1>
+    <p class="hero-sub">AHBA Development delivers workforce, outsourcing, and compliance solutions for businesses — and powers homes and communities through SkyTruFiber internet.</p>
+
+    <div class="hero-cta-row">
+      <a href="javascript:void(0)" onclick="smoothScroll('#audiences')" class="btn btn-primary">For Business Clients</a>
+      <a href="/fiber" class="btn btn-outline">For SkyTruFiber Subscribers</a>
+    </div>
+
+    <div class="trust-badges">
+      <span>SEC Reg. CS200902226</span>
+      <span>DOLE Reg. NCR-MPFO-72600-5-15-12-016-LR</span>
+      <span>TIN 007-246-379-000</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= AUDIENCES: CLIENTS + SUBSCRIBERS ================= -->
+
+<section id="audiences" class="section reveal audiences-section">
+  <div class="audiences-wrap">
+    <div class="audiences-head reveal">
+      <p class="eyebrow-dark">Get started</p>
+      <h2>How can we help you today?</h2>
+      <p>Whether you are a business looking for a workforce partner or a household connected through SkyTruFiber, start here.</p>
+    </div>
+
+    <div class="audience-grid">
+
+      <!-- BUSINESS CLIENTS -->
+      <article class="audience-card reveal">
+        <div class="audience-icon"><i class="fa-solid fa-briefcase"></i></div>
+        <h3>For Business Clients</h3>
+        <p>Outsourcing, recruitment, payroll and compliance handled by a team with 20+ years of experience.</p>
+        <ul>
+          <li>Full outsourcing &amp; manpower solutions</li>
+          <li>Recruitment, pre-screening &amp; interviews</li>
+          <li>Payroll processing &amp; training programs</li>
+        </ul>
+        <div class="audience-actions">
+          <a href="mailto:admin@ahba.ph?subject=Business%20inquiry" class="btn btn-primary">Request a consultation</a>
+          <a href="javascript:void(0)" onclick="smoothScroll('#services')" class="btn btn-ghost">View services</a>
+        </div>
+      </article>
+
+      <!-- SKYTRUFIBER SUBSCRIBERS -->
+      <article class="audience-card audience-card--dark reveal">
+        <div class="audience-icon audience-icon--gold"><i class="fa-solid fa-wifi"></i></div>
+        <h3>For SkyTruFiber Subscribers</h3>
+        <p>Manage your concerns and talk to our support team directly through the subscriber portal.</p>
+        <ul>
+          <li>Log in with your account number</li>
+          <li>Send a concern and chat with a support agent</li>
+          <li>New subscriber? Register in minutes</li>
+        </ul>
+        <div class="audience-actions">
+          <a href="/fiber" class="btn btn-primary">Log in to portal</a>
+          <a href="/fiber/register" class="btn btn-outline">Register</a>
+        </div>
+      </article>
+
+    </div>
   </div>
 </section>
 
@@ -86,10 +148,6 @@
       With over 20 years of experience in the industry,
       <b>A. Halili Business Aid Professional Services Inc.</b> (AHBA Development)
       is committed to delivering high-quality, value-added services nationwide.
-      <br><br>
-      SEC Reg. <b>CS200902226</b> |
-      DOLE Reg. <b>NCR-MPFO-72600-5-15-12-016-LR</b> |
-      TIN <b>007-246-379-000</b>
     </p>
   </div>
 
