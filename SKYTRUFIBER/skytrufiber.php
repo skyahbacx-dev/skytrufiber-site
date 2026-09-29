@@ -118,43 +118,146 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 <head>
 <meta charset="UTF-8">
 <title>SkyTruFiber Customer Portal</title>
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
+:root{
+  --green-main:#0f6b4d;
+  --green-dark:#0a2e22;
+  --gold:#d4a34a;
+  --gold-dark:#b8862f;
+}
+
+*{ box-sizing:border-box; }
+
 body{
     margin:0;
-    font-family:"Segoe UI", Arial;
-    background:linear-gradient(to bottom right, #cceeff, #e6f7ff);
+    font-family:"Plus Jakarta Sans","Segoe UI",Arial,sans-serif;
+    min-height:100vh;
     display:flex;
     justify-content:center;
     align-items:center;
-    min-height:100vh;
+    background:#f2f6f4;
+    padding:24px;
 }
 
-.container{
-    background:white;
-    padding:32px;
-    border-radius:20px;
-    box-shadow:0 5px 18px rgba(0,0,0,.18);
-    width:380px;
-    text-align:center;
+.portal-wrap{
+    display:flex;
+    width:100%;
+    max-width:900px;
+    min-height:560px;
+    background:#fff;
+    border-radius:28px;
+    overflow:hidden;
+    box-shadow:0 30px 70px rgba(10,46,34,.18);
+}
+
+/* ---------- LEFT: brand panel ---------- */
+.portal-brand{
+    flex:1;
     position:relative;
     overflow:hidden;
+    background:radial-gradient(ellipse 120% 100% at 30% 0%, #123d2c 0%, var(--green-dark) 55%, #061a13 100%);
+    color:#fff;
+    padding:44px 38px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
 }
 
-.container img{
-    width:150px;
-    margin-bottom:15px;
+.portal-brand::before{
+    content:"";
+    position:absolute; top:-15%; right:-20%;
+    width:320px; height:320px;
+    background:radial-gradient(circle, rgba(212,163,74,.35), transparent 70%);
+    filter:blur(10px);
+    pointer-events:none;
+}
+.portal-brand::after{
+    content:"";
+    position:absolute; bottom:-20%; left:-15%;
+    width:280px; height:280px;
+    background:radial-gradient(circle, rgba(15,107,77,.55), transparent 70%);
+    filter:blur(6px);
+    pointer-events:none;
+}
+
+.portal-brand img{ width:120px; z-index:1; }
+
+.portal-brand h1{
+    font-size:24px;
+    font-weight:800;
+    line-height:1.3;
+    margin:26px 0 12px;
+    z-index:1;
+}
+
+.portal-brand p{
+    font-size:14px;
+    color:rgba(255,255,255,.78);
+    z-index:1;
+    max-width:280px;
+}
+
+.portal-perks{ list-style:none; margin-top:28px; z-index:1; }
+.portal-perks li{
+    display:flex; align-items:center; gap:10px;
+    font-size:13px; color:rgba(255,255,255,.85);
+    padding:8px 0;
+}
+.portal-perks li::before{
+    content:"✓";
+    display:flex; align-items:center; justify-content:center;
+    width:20px; height:20px; border-radius:50%;
+    background:rgba(212,163,74,.25); color:var(--gold);
+    font-size:11px; font-weight:800; flex-shrink:0;
+}
+
+.portal-back{
+    z-index:1;
+    font-size:12px;
+    color:rgba(255,255,255,.6);
+    text-decoration:none;
+}
+.portal-back:hover{ color:var(--gold); }
+
+/* ---------- RIGHT: form panel ---------- */
+.portal-form-panel{
+    flex:1.1;
+    padding:44px 40px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+
+.portal-form-panel h2{
+    font-size:22px;
+    font-weight:800;
+    color:var(--green-dark);
+    margin-bottom:4px;
+}
+.portal-form-panel > p.subtitle{
+    font-size:13px;
+    color:#6b7280;
+    margin-bottom:20px;
 }
 
 input, select, textarea {
     width:100%;
-    padding:12px;
-    margin:10px 0;
-    border-radius:10px;
-    border:1px solid #ccc;
-    font-size:15px;
+    padding:13px 14px;
+    margin:8px 0;
+    border-radius:12px;
+    border:1.5px solid #e2e8e5;
+    font-size:14px;
+    font-family:inherit;
+    transition:border-color .2s ease, box-shadow .2s ease;
+}
+input:focus, select:focus, textarea:focus{
+    outline:none;
+    border-color:var(--green-main);
+    box-shadow:0 0 0 3px rgba(15,107,77,.12);
 }
 
 textarea{
@@ -165,36 +268,42 @@ textarea{
 
 button{
     width:100%;
-    padding:12px;
-    background:#00a6b6;
-    color:white;
+    padding:13px;
+    background:var(--gold);
+    color:var(--green-dark);
     border:none;
-    border-radius:50px;
+    border-radius:999px;
     cursor:pointer;
-    font-size:16px;
-    font-weight:bold;
+    font-size:15px;
+    font-weight:700;
+    margin-top:10px;
+    transition:background .2s ease, transform .2s ease, box-shadow .2s ease;
+    box-shadow:0 8px 18px rgba(212,163,74,.3);
 }
-
-button:hover{ background:#008c96; }
+button:hover{ background:var(--gold-dark); transform:translateY(-2px); }
 
 .small-links{
-    margin-top:12px;
-    font-size:14px;
+    margin-top:14px;
+    font-size:13px;
+    color:#6b7280;
+    text-align:center;
 }
 
 .small-links a{
-    color:#0077a3;
+    color:var(--green-main);
+    font-weight:600;
     text-decoration:none;
 }
 
-.small-links a:hover{
-    text-decoration:underline;
-}
+.small-links a:hover{ color:var(--gold-dark); text-decoration:underline; }
 
 .message{
-    color:red;
-    font-size:0.9em;
-    margin-bottom:8px;
+    color:#c0342b;
+    background:#fbe7e5;
+    padding:10px 14px;
+    border-radius:10px;
+    font-size:13.5px;
+    margin-bottom:10px;
 }
 
 /* Animation */
@@ -216,16 +325,37 @@ button:hover{ background:#008c96; }
     height: auto;
     pointer-events: auto;
 }
+
+@media (max-width:760px){
+    .portal-wrap{ flex-direction:column; max-width:420px; min-height:0; }
+    .portal-brand{ padding:32px 28px; }
+    .portal-perks{ display:none; }
+}
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="portal-wrap">
 
-    <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+    <div class="portal-brand">
+        <div>
+            <img src="/SKYTRUFIBER.png" alt="SkyTruFiber">
+            <h1>Fast, reliable fiber internet for your home.</h1>
+            <p>Manage your account and get support from our team, anytime.</p>
+            <ul class="portal-perks">
+                <li>Track your concern in real time</li>
+                <li>Chat directly with a support agent</li>
+                <li>Backed by AHBA Development</li>
+            </ul>
+        </div>
+        <a href="/" class="portal-back">← Back to AHBA Development</a>
+    </div>
 
-    <h2>Customer Service Portal</h2>
+    <div class="portal-form-panel">
+
+        <h2>Customer Service Portal</h2>
+        <p class="subtitle">Log in to send a concern or check your account.</p>
 
 <?php if ($message): ?>
 <p class="message"><?= htmlspecialchars($message) ?></p>
@@ -273,6 +403,7 @@ button:hover{ background:#008c96; }
     <a href="#" id="forgotLink">Forgot Password?</a>
 </div>
 
+    </div>
 </div>
 
 <script>
