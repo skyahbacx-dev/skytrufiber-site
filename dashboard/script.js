@@ -6,6 +6,14 @@
   function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
   function ease(x) { x = clamp(x, 0, 1); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
 
+  /* Start every visit at the top so the film plays. The browser's restored scroll
+     position (after a refresh) would otherwise count as "scrolled" and skip it.
+     A #link in the address still jumps straight to its section. */
+  try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) {}
+  if (!location.hash && window.scrollY > 0) {
+    try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (e) { window.scrollTo(0, 0); }
+  }
+
   /* ---------- page UI ---------- */
   document.querySelectorAll('[data-go]').forEach(function (a) {
     a.addEventListener('click', function (e) {
@@ -74,6 +82,7 @@
     T = 0; playing = true;
     if (window.scrollY > 4) { waitTop = true; window.scrollTo({ top: 0, behavior: 'smooth' }); }
   });
+  if (reduce) document.getElementById('replay').textContent = 'Play intro';
   svcItems.forEach(function (li, i) {
     li.addEventListener('pointerenter', function () { hoverIdx = i; });
     li.addEventListener('pointerleave', function () { hoverIdx = -1; });
@@ -91,6 +100,7 @@
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
   } catch (err) { renderer = null; }
   if (!renderer) {
+    if (window.console) console.warn('AHBA: the 3D scene did not start. three.js did not load, or WebGL is unavailable. Add /dashboard/three.min.js to fix this.');
     fallbackEl.hidden = false; canvas.style.display = 'none';
     T = END; playing = false; setCaption(N);
     document.getElementById('ctl').hidden = true;
