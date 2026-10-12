@@ -130,8 +130,9 @@
   </div>
 </footer>
 
-<!-- 3D library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- 3D library: your own copy first, the CDN only if that file is missing -->
+<script src="/dashboard/three.min.js"></script>
+<script>window.THREE || document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
 <!-- JS -->
 <script src="/dashboard/script.js"></script>
 
