@@ -117,6 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SkyTruFiber Customer Portal</title>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -125,7 +126,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 body{
     margin:0;
     font-family:"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial;
-    background:linear-gradient(135deg, #e8eefc, #f4f6fa);
+    background:radial-gradient(ellipse at 50% 45%, #14327a 0%, #08142f 58%, #050c1e 100%);
+    background-attachment:fixed;
     display:flex;
     justify-content:center;
     align-items:center;
@@ -137,11 +139,26 @@ body{
     padding:32px;
     border-radius:20px;
     box-shadow:0 10px 28px rgba(20,24,40,.14);
-    width:380px;
+    box-sizing:border-box;
+    width:min(444px, calc(100vw - 32px));
     text-align:center;
     position:relative;
+    z-index:1;
     overflow:hidden;
 }
+
+/* 3D fibre background (decorative) */
+#fx{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:0;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity 1.2s ease;
+}
+#fx.on{ opacity:1; }
 
 .container img{
     width:150px;
@@ -229,6 +246,8 @@ button:hover{ background:#123a91; }
 </head>
 
 <body>
+
+<canvas id="fx" aria-hidden="true"></canvas>
 
 <div class="container">
 
@@ -335,6 +354,156 @@ sendForgotBtn.onclick = async () => {
         Swal.fire("Error", data.message, "error");
     }
 };
+</script>
+
+<!-- 3D background: three.js from jsDelivr, cdnjs as backup -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script>window.THREE || document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
+<script>
+/* SkyTruFiber login: fibre-optic light scene behind the card.
+   Purely decorative: if three.js or WebGL is unavailable the page keeps its gradient. */
+(function () {
+  var cv = document.getElementById('fx');
+  if (!cv) return;
+  if (!window.THREE) { console.warn('[fiber3d] three.js not loaded - using gradient background'); return; }
+  var T = THREE, renderer;
+  try {
+    renderer = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, powerPreference: 'high-performance' });
+  } catch (e) { console.warn('[fiber3d] WebGL unavailable - using gradient background', e); return; }
+
+  // Reduced-motion users get a much slower scene instead of a frozen one.
+  var slow = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var SPEED = slow ? 0.3 : 1;
+  var mobile = (window.matchMedia && matchMedia('(max-width:700px)').matches) || /Mobi|Android/i.test(navigator.userAgent);
+
+  var scene = new T.Scene();
+  var cam = new T.PerspectiveCamera(50, 1, 0.1, 100);
+  cam.position.set(0, 0, 10);
+  var root = new T.Group();
+  scene.add(root);
+
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+
+  // soft round sprite for the light pulses
+  var sc = document.createElement('canvas'); sc.width = sc.height = 64;
+  var g = sc.getContext('2d');
+  var rg = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  rg.addColorStop(0, 'rgba(255,255,255,1)');
+  rg.addColorStop(0.25, 'rgba(255,255,255,.7)');
+  rg.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = rg; g.fillRect(0, 0, 64, 64);
+  var sprite = new T.CanvasTexture(sc);
+
+  var N = mobile ? 38 : 84;          // strands
+  var PU = 3;                        // pulses per strand
+  var SEG = 140;                     // samples per strand
+  var palette = [0x2f6fe0, 0x4fb3ff, 0x35d07f, 0x9fd2ff].map(function (c) { return new T.Color(c); });
+  var strands = [];
+  var addBlend = T.AdditiveBlending;
+
+  for (var i = 0; i < N; i++) {
+    var by = rnd(-3.4, 3.4), bz = rnd(-5, 2.5), ph = rnd(0, 6.28), amp = rnd(0.4, 1.1);
+    var pts = [];
+    for (var k = 0; k < 7; k++) {
+      var x = -17 + k * (34 / 6);
+      var spread = 0.22 + Math.pow(Math.abs(x) / 17, 1.6) * 1.25;   // pinches near the middle, fans out at the sides
+      pts.push(new T.Vector3(
+        x,
+        by * spread + Math.sin(x * 0.33 + ph) * amp,
+        bz * spread + Math.cos(x * 0.29 + ph) * amp - 1
+      ));
+    }
+    var curve = new T.CatmullRomCurve3(pts);
+    var samples = curve.getPoints(SEG - 1);
+    var col = palette[i % palette.length];
+
+    var pos = new Float32Array(SEG * 3), colr = new Float32Array(SEG * 3);
+    for (var s = 0; s < SEG; s++) {
+      var p = samples[s], u = s / (SEG - 1), fade = 0.15 + 0.85 * Math.sin(Math.PI * u);
+      pos[s * 3] = p.x; pos[s * 3 + 1] = p.y; pos[s * 3 + 2] = p.z;
+      colr[s * 3] = col.r * fade; colr[s * 3 + 1] = col.g * fade; colr[s * 3 + 2] = col.b * fade;
+    }
+    var geo = new T.BufferGeometry();
+    geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new T.BufferAttribute(colr, 3));
+    root.add(new T.Line(geo, new T.LineBasicMaterial({
+      vertexColors: true, transparent: true, opacity: 0.6, blending: addBlend, depthWrite: false
+    })));
+    strands.push({ samples: samples, col: col });
+  }
+
+  // travelling light pulses
+  var PN = N * PU;
+  var ppos = new Float32Array(PN * 3), pcol = new Float32Array(PN * 3), pulses = [];
+  for (var a = 0; a < N; a++) for (var b = 0; b < PU; b++) {
+    var c = strands[a].col, idx = a * PU + b;
+    pcol[idx * 3] = Math.min(1, c.r + 0.35); pcol[idx * 3 + 1] = Math.min(1, c.g + 0.35); pcol[idx * 3 + 2] = Math.min(1, c.b + 0.35);
+    pulses.push({ strand: a, u0: Math.random(), v: rnd(0.035, 0.1) });
+  }
+  var pgeo = new T.BufferGeometry();
+  var pAttr = new T.BufferAttribute(ppos, 3);
+  pgeo.setAttribute('position', pAttr);
+  pgeo.setAttribute('color', new T.BufferAttribute(pcol, 3));
+  root.add(new T.Points(pgeo, new T.PointsMaterial({
+    size: mobile ? 0.42 : 0.34, map: sprite, vertexColors: true, transparent: true,
+    blending: addBlend, depthWrite: false, sizeAttenuation: true
+  })));
+
+  // faint dust for depth
+  var DN = mobile ? 90 : 220, dpos = new Float32Array(DN * 3);
+  for (var d = 0; d < DN; d++) { dpos[d * 3] = rnd(-16, 16); dpos[d * 3 + 1] = rnd(-8, 8); dpos[d * 3 + 2] = rnd(-9, 4); }
+  var dgeo = new T.BufferGeometry();
+  dgeo.setAttribute('position', new T.BufferAttribute(dpos, 3));
+  root.add(new T.Points(dgeo, new T.PointsMaterial({
+    size: 0.11, map: sprite, color: 0x8fb8ff, transparent: true, opacity: 0.45,
+    blending: addBlend, depthWrite: false, sizeAttenuation: true
+  })));
+
+  function resize() {
+    var w = window.innerWidth, h = window.innerHeight;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2));
+    renderer.setSize(w, h, false);
+    cam.aspect = w / h;
+    cam.position.z = cam.aspect < 1 ? 14 : 10;
+    cam.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  var mx = 0, my = 0;
+  window.addEventListener('pointermove', function (e) {
+    mx = (e.clientX / window.innerWidth - 0.5) * 2;
+    my = (e.clientY / window.innerHeight - 0.5) * 2;
+  }, { passive: true });
+
+  var clock = new T.Clock(), t = 0, shown = false;
+  function frame() {
+    requestAnimationFrame(frame);
+    if (document.hidden) return;
+    var dt = Math.min(clock.getDelta(), 0.05) * SPEED;
+    t += dt;
+
+    for (var n = 0; n < PN; n++) {
+      var pu = pulses[n], u = (pu.u0 + t * pu.v) % 1, f = u * (SEG - 1), i0 = Math.floor(f), fr = f - i0;
+      var sm = strands[pu.strand].samples, p0 = sm[i0], p1 = sm[Math.min(i0 + 1, SEG - 1)];
+      ppos[n * 3] = p0.x + (p1.x - p0.x) * fr;
+      ppos[n * 3 + 1] = p0.y + (p1.y - p0.y) * fr;
+      ppos[n * 3 + 2] = p0.z + (p1.z - p0.z) * fr;
+    }
+    pAttr.needsUpdate = true;
+
+    root.rotation.y = Math.sin(t * 0.12) * 0.12;
+    root.rotation.x = Math.sin(t * 0.09) * 0.05;
+    cam.position.x += (mx * 0.9 - cam.position.x) * 0.04;
+    cam.position.y += (-my * 0.6 - cam.position.y) * 0.04;
+    cam.lookAt(0, 0, 0);
+
+    renderer.render(scene, cam);
+    if (!shown) { shown = true; cv.classList.add('on'); }
+  }
+  frame();
+  console.info('[fiber3d] running: ' + N + ' strands, ' + PN + ' pulses' + (mobile ? ' (mobile)' : '') + (slow ? ' (reduced motion: slowed)' : ''));
+})();
 </script>
 
 </body>
