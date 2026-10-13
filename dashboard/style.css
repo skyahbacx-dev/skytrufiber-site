@@ -15,6 +15,7 @@ img { max-width: 100%; }
   --olive: #6B6A0A;
   --scene-bg: #F4F8F2;
   --edge: #0D2A15;
+  --flow: #06240E;
   --shade: #0A3A12;
   --shade-op: 0.28;
   --amb: 0.95;
@@ -36,6 +37,7 @@ img { max-width: 100%; }
     --olive: #C9C73A;
     --scene-bg: #04100A;
     --edge: #CFF7D6;
+    --flow: #D6FFE0;
     --shade: #1EC84A;
     --shade-op: 0.3;
     --amb: 0.6;
@@ -53,6 +55,7 @@ img { max-width: 100%; }
   --olive: #C9C73A;
   --scene-bg: #04100A;
   --edge: #CFF7D6;
+  --flow: #D6FFE0;
   --shade: #1EC84A;
   --shade-op: 0.3;
   --amb: 0.6;
@@ -69,6 +72,7 @@ img { max-width: 100%; }
   --olive: #6B6A0A;
   --scene-bg: #F4F8F2;
   --edge: #0D2A15;
+  --flow: #06240E;
   --shade: #0A3A12;
   --shade-op: 0.28;
   --amb: 0.95;
