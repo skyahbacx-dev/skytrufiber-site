@@ -138,11 +138,29 @@
   function Ws(arr) { return arr.map(function (p) { return Wv(p[0], p[1]); }); }
   function mk(color) { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.42, metalness: 0.12, emissive: 0x03300a, emissiveIntensity: 0.6 }); }
   var matBarR = mk(0x087a1c), matBarL = mk(0x0c8f23), matSw = mk(0x16a832), matSw2 = mk(0x1fb83a), matAr = mk(0x0d8a22);
-  function solid(shape, depth, mat) {
+  function solid(shape, depth, mat, tFn) {
     var g = new THREE.ExtrudeGeometry(shape, { depth: depth, bevelEnabled: true, bevelThickness: 0.07, bevelSize: 0.07, bevelSegments: 2, curveSegments: 14 });
     g.translate(0, 0, -depth / 2);
+    if (tFn) {
+      var pa = g.attributes.position, tA = new Float32Array(pa.count);
+      for (var i = 0; i < pa.count; i++) tA[i] = tFn(pa.getX(i), pa.getY(i));
+      g.setAttribute('aT', new THREE.BufferAttribute(tA, 1));
+    }
     return new THREE.Mesh(g, mat);
   }
+  /* "draw-on" reveal: each vertex knows how far along its path it is (aT, 0 to 1);
+     anything further along than uReveal is not drawn yet */
+  var swReveal = { value: 0 }, arReveal = { value: 0 };
+  function revealMat(mat, u) {
+    mat.onBeforeCompile = function (sh) {
+      sh.uniforms.uReveal = u;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aT;\nvarying float vT;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvT = aT;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vT;\nuniform float uReveal;').replace('void main() {', 'void main() {\nif (vT > uReveal) discard;');
+    };
+    mat.customProgramCacheKey = function () { return 'ahba-reveal'; };
+    return mat;
+  }
+  revealMat(matSw, swReveal); revealMat(matSw2, swReveal); revealMat(matAr, arReveal);
 
   /* right bar of the A */
   var shR = new THREE.Shape();
@@ -166,6 +184,12 @@
   /* swoosh: three nested ribbons that taper to points at both ends */
   var center = Ws([[770, 1130], [1050, 1055], [1300, 900], [1500, 700], [1620, 520], [1640, 390], [1560, 300], [1380, 278], [1150, 335], [920, 452]]);
   var ctr = Wv(1150, 700);
+  var swPts0 = new THREE.SplineCurve(center).getPoints(90);
+  function swT(x, y) {
+    var best = 0, bd = 1e9;
+    for (var i = 0; i < swPts0.length; i++) { var dx = swPts0[i].x - x, dy = swPts0[i].y - y, d = dx * dx + dy * dy; if (d < bd) { bd = d; best = i; } }
+    return best / (swPts0.length - 1);
+  }
   function ribbon(offPx, widPx, depth, mat) {
     var pts = new THREE.SplineCurve(center).getPoints(90), L = [], Rr = [], n = pts.length;
     for (var i = 0; i < n; i++) {
@@ -176,7 +200,7 @@
       L.push(c.clone().addScaledVector(nm, h)); Rr.push(c.clone().addScaledVector(nm, -h));
     }
     var sh = new THREE.Shape(L.concat(Rr.reverse()));
-    return solid(sh, depth, mat);
+    return solid(sh, depth, mat, swT);
   }
   var gSw = new THREE.Group();
   gSw.add(ribbon(0, 88, 0.5, matSw)); gSw.add(ribbon(66, 28, 0.4, matSw2)); gSw.add(ribbon(112, 17, 0.32, matSw2));
@@ -187,10 +211,33 @@
   (function () {
     var p0 = Wv(830, 492), p1 = Wv(392, 905), d = p1.clone().sub(p0).normalize(), nm = new THREE.Vector2(-d.y, d.x), w0 = 11 * S, w1 = 6 * S;
     var shaft = new THREE.Shape([p0.clone().addScaledVector(nm, w0), p1.clone().addScaledVector(nm, w1), p1.clone().addScaledVector(nm, -w1), p0.clone().addScaledVector(nm, -w0)]);
-    gAr.add(solid(shaft, 0.35, matAr));
-    gAr.add(solid(new THREE.Shape(Ws([[343, 943], [372, 880], [394, 903], [433, 895]])), 0.35, matAr));
+    var len = p1.distanceTo(p0);
+    gAr.add(solid(shaft, 0.35, matAr, function (x, y) { return clamp(((x - p0.x) * d.x + (y - p0.y) * d.y) / len, 0, 0.97); }));
+    gAr.add(solid(new THREE.Shape(Ws([[343, 943], [372, 880], [394, 903], [433, 895]])), 0.35, matAr, function () { return 1; }));
   })();
   scene.add(gAr);
+
+  /* the running arrow: one path from the swoosh tail, round the arch and on into the arrow */
+  var flowPts = center.map(function (v) { return new THREE.Vector3(v.x, v.y, -0.05); })
+    .concat(Ws([[830, 492], [610, 700], [392, 905], [343, 943]]).map(function (v, i) { return new THREE.Vector3(v.x, v.y, i === 0 ? 0.25 : 0.55); }));
+  var flowCurve = new THREE.CatmullRomCurve3(flowPts, false, 'centripetal');
+  var uSwEnd = new THREE.CatmullRomCurve3(flowPts.slice(0, center.length), false, 'centripetal').getLength() / flowCurve.getLength();
+  var flowMat = new THREE.MeshBasicMaterial({ color: 0xd6ffe0, transparent: true, opacity: 1, depthTest: false });
+  var UP = new THREE.Vector3(0, 1, 0), COMETS = 3, TR = 24, comets = [];
+  var coneG = new THREE.ConeGeometry(0.32, 0.95, 4);
+  for (var cm = 0; cm < COMETS; cm++) { var cn = new THREE.Mesh(coneG, flowMat); cn.frustumCulled = false; cn.visible = false; scene.add(cn); comets.push(cn); }
+  var trPos = new Float32Array(COMETS * TR * 3), trA = new Float32Array(COMETS * TR), trS = new Float32Array(COMETS * TR);
+  var trailGeo = new THREE.BufferGeometry();
+  trailGeo.setAttribute('position', new THREE.BufferAttribute(trPos, 3));
+  trailGeo.setAttribute('aA', new THREE.BufferAttribute(trA, 1));
+  trailGeo.setAttribute('aS', new THREE.BufferAttribute(trS, 1));
+  var trailU = { uColor: { value: new THREE.Color(0xd6ffe0) }, uScale: { value: 800 } };
+  var trail = new THREE.Points(trailGeo, new THREE.ShaderMaterial({
+    uniforms: trailU, transparent: true, depthWrite: false, depthTest: false,
+    vertexShader: 'uniform float uScale; attribute float aA; attribute float aS; varying float vA; void main() { vA = aA; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = max(1.0, aS * uScale / max(0.5, -mv.z)); gl_Position = projectionMatrix * mv; }',
+    fragmentShader: 'uniform vec3 uColor; varying float vA; void main() { float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard; gl_FragColor = vec4(uColor, vA * (1.0 - smoothstep(0.15, 0.5, d))); }'
+  }));
+  trail.frustumCulled = false; scene.add(trail);
 
   /* wordmark as a textured plane in front of the logo */
   var wmCanvas = document.createElement('canvas'); wmCanvas.width = 2048; wmCanvas.height = 512;
@@ -298,6 +345,7 @@
     pointMat.color.set(accent); ringMat.color.set(accent);
     shadeMat.color.set(css('--shade')); shadeMat.opacity = parseFloat(css('--shade-op')) || 0.28;
     mods.forEach(function (m) { m.em.color.set(css('--edge')); });
+    var fc = css('--flow') || '#d6ffe0'; flowMat.color.set(fc); trailU.uColor.value.set(fc);
     hemi.intensity = parseFloat(css('--amb')) || 0.9;
     var dk = hemi.intensity < 0.8;
     hemi.groundColor.set(dk ? 0x0a1a10 : 0x7f9f86);
@@ -337,6 +385,7 @@
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
     renderer.setSize(w, h, false);
     camera.aspect = w / h; camera.fov = w / h < 1 ? 62 : 42; camera.updateProjectionMatrix();
+    trailU.uScale.value = (h * renderer.getPixelRatio()) / (2 * Math.tan(camera.fov * Math.PI / 360));
     measure();
   }
   window.addEventListener('resize', resize);
@@ -345,6 +394,7 @@
   if (window.ResizeObserver) new ResizeObserver(measure).observe(document.body);
 
   var clock = 0;
+  var tmpV = new THREE.Vector3(), tmpT = new THREE.Vector3();
   var cp = new THREE.Vector3(), lp = new THREE.Vector3(), tp = new THREE.Vector3(), tl = new THREE.Vector3(), tmp = new THREE.Vector3(), mp = new THREE.Vector3();
   var camInit = false;
   function modPos(i, o) {
@@ -371,8 +421,10 @@
     /* logo assembles; every pose is a function of T */
     var eR = ease((T - 0.4) / 1.4); gRight.position.set(0, (1 - eR) * 16, 0.3); gRight.rotation.z = (1 - eR) * 0.5; gRight.visible = eR > 0.001;
     var eL = ease((T - 0.8) / 1.4); gLeft.position.set(0, -(1 - eL) * 16, 0); gLeft.rotation.z = -(1 - eL) * 0.5; gLeft.visible = eL > 0.001;
-    var eS = ease((T - 1.3) / 1.7); gSw.rotation.y = -(1 - eS) * Math.PI * 1.2; gSw.scale.setScalar(0.3 + 0.7 * eS); gSw.position.z = -0.4; gSw.visible = eS > 0.001;
-    var eA = ease((T - 2.1) / 1.0); gAr.position.set((1 - eA) * 8, (1 - eA) * 6, 0.3); gAr.visible = eA > 0.001;
+    var DRAW0 = 1.3, DRAW1 = 3.7, uDraw = ease((T - DRAW0) / (DRAW1 - DRAW0));
+    swReveal.value = clamp(uDraw / uSwEnd, 0, 1);
+    arReveal.value = clamp((uDraw - uSwEnd) / (1 - uSwEnd), 0, 1);
+    gSw.position.z = -0.4; gAr.position.set(0, 0, 0.3);
     wmMat.opacity = ease((T - 2.7) / 0.9);
     plan.scale.setScalar(Math.max(0.001, ease(T / 1.6)));
     pointMat.opacity = 0.9 - 0.5 * ease((T - 3) / 1);
@@ -385,6 +437,29 @@
       arr[p * 3 + 2] = pS[p * 3 + 2] + (pE[p * 3 + 2] - pS[p * 3 + 2]) * e;
     }
     pGeo.attributes.position.needsUpdate = true;
+
+    /* the arrow leads the drawing of the arch, then keeps running round it and on into the logo's arrow */
+    var drawingNow = T < DRAW1 + 0.05;
+    for (var k2 = 0; k2 < COMETS; k2++) {
+      var cu, sc;
+      if (drawingNow) { cu = k2 === 0 ? uDraw : 0; sc = (k2 === 0 && T > DRAW0) ? clamp(uDraw * 14, 0, 1) : 0; }
+      else { cu = (clock * 0.085 + k2 / COMETS) % 1; sc = clamp(cu * 14, 0, 1) * clamp((1 - cu) * 14, 0, 1); }
+      if (reduce) sc = 0;
+      var cone = comets[k2];
+      if (sc > 0.01) {
+        flowCurve.getPointAt(clamp(cu, 0, 1), tmpV); flowCurve.getTangentAt(clamp(cu, 0, 1), tmpT);
+        cone.position.copy(tmpV); cone.quaternion.setFromUnitVectors(UP, tmpT); cone.scale.setScalar(sc); cone.visible = true;
+      } else cone.visible = false;
+      for (var j = 0; j < TR; j++) {
+        var ix = k2 * TR + j, uj = cu - (j + 1) * 0.0065, f = 1 - j / TR;
+        if (sc > 0.01 && uj > 0) {
+          flowCurve.getPointAt(uj, tmpV);
+          trPos[ix * 3] = tmpV.x; trPos[ix * 3 + 1] = tmpV.y; trPos[ix * 3 + 2] = tmpV.z;
+          trA[ix] = sc * Math.pow(f, 1.6) * 0.9; trS[ix] = 0.07 + 0.3 * f;
+        } else trA[ix] = 0;
+      }
+    }
+    trailGeo.attributes.position.needsUpdate = true; trailGeo.attributes.aA.needsUpdate = true; trailGeo.attributes.aS.needsUpdate = true;
 
     /* service forms */
     for (var m = 0; m < N; m++) {
