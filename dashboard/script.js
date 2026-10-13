@@ -1,6 +1,11 @@
 (function () {
   var root = document.documentElement;
-  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* RESPECT_REDUCED_MOTION: when true, visitors whose device asks for reduced motion
+     skip the opening film and see the finished logo. When false, the film plays for
+     everyone and the Skip button is always available. */
+  var RESPECT_REDUCED_MOTION = false;
+  var deviceReduces = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduce = RESPECT_REDUCED_MOTION && deviceReduces;
   var darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
   var TAU = Math.PI * 2;
   function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
@@ -99,6 +104,7 @@
     if (typeof THREE === 'undefined') throw new Error('no three');
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
   } catch (err) { renderer = null; }
+  if (window.console) console.info('AHBA scene check:', { deviceReducedMotion: deviceReduces, threeLoaded: typeof THREE !== 'undefined', webglStarted: !!renderer });
   if (!renderer) {
     if (window.console) console.warn('AHBA: the 3D scene did not start. three.js did not load, or WebGL is unavailable. Add /dashboard/three.min.js to fix this.');
     fallbackEl.hidden = false; canvas.style.display = 'none';
