@@ -118,6 +118,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_name'], $_POST['
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+/* no scrollbar flash while the card rises into view */
+document.documentElement.classList.add('intro');
+setTimeout(function(){ document.documentElement.classList.remove('intro'); }, 3600);
+</script>
 <title>SkyTruFiber Customer Portal</title>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -129,10 +134,14 @@ body{
     background:radial-gradient(ellipse at 50% 45%, #14327a 0%, #08142f 58%, #050c1e 100%);
     background-attachment:fixed;
     display:flex;
+    flex-direction:column;
     justify-content:center;
     align-items:center;
     min-height:100vh;
+    box-sizing:border-box;
+    padding:12px 0;
 }
+html.intro, html.intro body{ overflow:hidden; }
 
 .container{
     background:white;
@@ -145,7 +154,21 @@ body{
     position:relative;
     z-index:1;
     overflow:hidden;
+    --pd:1.5s;                       /* delay before the card rises (coin goes first) */
+    animation:cardPop 1s cubic-bezier(.2,.8,.2,1) var(--pd) both;
 }
+
+/* 3D coin sits here: the canvas draws the coin over this empty box */
+.coin-anchor{
+    display:none;
+    flex:none;
+    width:clamp(120px, 22vh, 200px);
+    height:clamp(120px, 22vh, 200px);
+    margin-bottom:6px;
+    pointer-events:none;
+}
+.fx-on .coin-anchor{ display:block; }
+.fx-on .logo-fb{ display:none; }
 
 /* 3D fibre background (decorative) */
 #fx{
@@ -159,6 +182,30 @@ body{
     transition:opacity 1.2s ease;
 }
 #fx.on{ opacity:1; }
+
+/* form rises from the bottom, then the fields follow one by one */
+@keyframes cardPop{
+    0%  { opacity:0; transform:translateY(85vh) scale(.94); animation-timing-function:cubic-bezier(.16,.84,.3,1); }
+    60% { opacity:1; transform:translateY(-16px) scale(1.01); animation-timing-function:ease-in-out; }
+    80% { transform:translateY(6px) scale(1); animation-timing-function:ease-in-out; }
+    100%{ opacity:1; transform:translateY(0) scale(1); }
+}
+@keyframes rise{
+    from{ opacity:0; transform:translateY(26px); }
+    to  { opacity:1; transform:translateY(0); }
+}
+.container > h2,
+.container > .message,
+.container > .small-links,
+#loginForm > :not(textarea){
+    animation:rise .6s cubic-bezier(.2,.8,.2,1) both;
+    animation-delay:calc(var(--pd) + .55s);
+}
+#loginForm > :nth-child(1){ animation-delay:calc(var(--pd) + .65s); }
+#loginForm > :nth-child(2){ animation-delay:calc(var(--pd) + .73s); }
+#loginForm > :nth-child(3){ animation-delay:calc(var(--pd) + .81s); }
+#loginForm > :nth-child(5){ animation-delay:calc(var(--pd) + .89s); }
+.container > .small-links{ animation-delay:calc(var(--pd) + .97s); }
 
 .container img{
     width:150px;
@@ -248,10 +295,11 @@ button:hover{ background:#123a91; }
 <body>
 
 <canvas id="fx" aria-hidden="true"></canvas>
+<div class="coin-anchor" id="coinAnchor"></div>
 
 <div class="container">
 
-    <img src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
+    <img class="logo-fb" src="../SKYTRUFIBER.png" alt="SkyTruFiber Logo">
 
     <h2>Customer Service Portal</h2>
 
@@ -356,7 +404,7 @@ sendForgotBtn.onclick = async () => {
 };
 </script>
 
-<!-- 3D background: three.js from jsDelivr, cdnjs as backup -->
+<!-- 3D background + coin: three.js from jsDelivr, cdnjs as backup -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>window.THREE || document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
 <script>
@@ -370,6 +418,12 @@ sendForgotBtn.onclick = async () => {
   try {
     renderer = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, powerPreference: 'high-performance' });
   } catch (e) { console.warn('[fiber3d] WebGL unavailable - using gradient background', e); return; }
+
+  renderer.autoClear = false;
+  var root_el = document.documentElement;
+  root_el.classList.add('fx-on');     // shows the coin anchor, hides the flat logo
+  var card = document.querySelector('.container');
+  var anchor = document.getElementById('coinAnchor');
 
   // Reduced-motion users get a much slower scene instead of a frozen one.
   var slow = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -459,6 +513,93 @@ sendForgotBtn.onclick = async () => {
     blending: addBlend, depthWrite: false, sizeAttenuation: true
   })));
 
+  /* ---------- the coin ---------- */
+  var coinScene = new T.Scene();
+  var coinCam = new T.PerspectiveCamera(50, 1, 0.1, 100);
+  coinScene.add(new T.AmbientLight(0xffffff, 0.6));
+  var key = new T.DirectionalLight(0xffffff, 0.5); key.position.set(-3, 4, 6); coinScene.add(key);
+  var rimL = new T.PointLight(0x4fb3ff, 1.1, 30); rimL.position.set(5, 2, -3); coinScene.add(rimL);
+  var fillL = new T.PointLight(0x35d07f, 0.7, 30); fillL.position.set(-5, -3, 3); coinScene.add(fillL);
+
+  var coin = new T.Group();
+  coinScene.add(coin);
+  coin.visible = false;
+  var TH = 0.16, RR = 1.07;             // thickness, outer radius incl. rim
+
+  var edgeMat = new T.MeshPhongMaterial({ color: 0x1a3f9e, specular: 0xcfe3ff, shininess: 90 });
+  var rimMat = new T.MeshPhongMaterial({ color: 0x2f6fe0, specular: 0xffffff, shininess: 120 });
+  var body = new T.Mesh(new T.CylinderGeometry(1.03, 1.03, TH + 0.1, 80, 1, true), edgeMat);
+  body.rotation.x = Math.PI / 2;
+  coin.add(body);
+  [1, -1].forEach(function (sd) {
+    var rim = new T.Mesh(new T.TorusGeometry(1.0, 0.05, 14, 80), rimMat);
+    rim.position.z = sd * (TH / 2 + 0.0);
+    coin.add(rim);
+  });
+
+  var tex = new T.TextureLoader().load('/SKYTRUFIBER.png', function () { texReady = true; }, undefined, function () {
+    console.warn('[fiber3d] could not load /SKYTRUFIBER.png - showing flat logo');
+    root_el.classList.remove('fx-on');
+    if (card) card.style.setProperty('--pd', '0.15s');
+  });
+  // crop the 500x500 PNG to the logo circle (measured: centre 249.5,256 / diameter 468)
+  tex.repeat.set(0.936, 0.936);
+  tex.offset.set(0.031, 0.020);
+  tex.wrapS = tex.wrapT = T.ClampToEdgeWrapping;
+  if (renderer.capabilities && renderer.capabilities.getMaxAnisotropy) tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+  var faceMat = new T.MeshPhongMaterial({
+    map: tex, alphaTest: 0.4, shininess: 55, specular: 0x444444,
+    emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.18
+  });
+  var faceGeo = new T.CircleGeometry(0.97, 80);
+  var front = new T.Mesh(faceGeo, faceMat); front.position.z = TH / 2 + 0.002; coin.add(front);
+  var back = new T.Mesh(faceGeo, faceMat); back.position.z = -(TH / 2 + 0.002); back.rotation.y = Math.PI; coin.add(back);
+
+  var glow = new T.Sprite(new T.SpriteMaterial({
+    map: sprite, color: 0x2f7bff, transparent: true, opacity: 0.5, blending: addBlend, depthWrite: false
+  }));
+  coinScene.add(glow);
+
+  var texReady = false, coinT0 = -1, tiltX = 0, tiltY = 0, boost = 0, spinExtra = 0;
+  window.addEventListener('submit', function () { boost = 1; }, true);   // coin spins faster while the form submits
+
+  function easeOutBack(x) { var c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); }
+  function easeInOut(x) { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
+  function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+  var W = 1, H = 1, D = 10;
+
+  function updateCoin(dt) {
+    if (!texReady || !anchor) return false;
+    if (coinT0 < 0) { coinT0 = t; coin.visible = true; }
+    var ct = t - coinT0;
+    var r = anchor.getBoundingClientRect();
+    if (r.width < 10) return false;
+    var wpp = 2 * D * Math.tan(25 * Math.PI / 180) / H;       // world units per CSS pixel on the coin's plane
+    var bx = (r.left + r.width / 2 - W / 2) * wpp;
+    var by = -(r.top + r.height / 2 - H / 2) * wpp;
+    var bs = (r.width / 2) * wpp / RR;
+
+    var p = clamp01(ct / 2.0), e = 1 - Math.pow(1 - p, 3);
+    var sc = bs * Math.max(0.001, easeOutBack(clamp01(ct / 1.1)));
+    var flip = 0;
+    if (ct > 3.4) { var cyc = (ct - 3.4) % 7; if (cyc < 1.4) flip = easeInOut(cyc / 1.4) * Math.PI * 2; }
+    if (boost) spinExtra += dt * 12;
+
+    tiltY += (mx * 0.5 - tiltY) * 0.06;
+    tiltX += (my * 0.35 - tiltX) * 0.06;
+
+    coin.scale.set(sc, sc, sc);
+    coin.position.set(bx, by + (1 - e) * 2.4 * bs + Math.sin(ct * 1.4) * 0.035 * bs, 0);
+    coin.rotation.set(tiltX, (1 - e) * Math.PI * 6 + flip + tiltY + spinExtra, 0);
+
+    var gs = bs * RR * 4.2 * (0.95 + 0.05 * Math.sin(ct * 2));
+    glow.position.set(bx, by, -0.6 * bs);
+    glow.scale.set(gs, gs, 1);
+    glow.material.opacity = 0.5 * e;
+    return true;
+  }
+
   function resize() {
     var w = window.innerWidth, h = window.innerHeight;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2));
@@ -466,6 +607,10 @@ sendForgotBtn.onclick = async () => {
     cam.aspect = w / h;
     cam.position.z = cam.aspect < 1 ? 14 : 10;
     cam.updateProjectionMatrix();
+    W = w; H = h; D = cam.position.z;
+    coinCam.aspect = cam.aspect;
+    coinCam.position.set(0, 0, D);
+    coinCam.updateProjectionMatrix();
   }
   window.addEventListener('resize', resize);
   resize();
@@ -498,7 +643,9 @@ sendForgotBtn.onclick = async () => {
     cam.position.y += (-my * 0.6 - cam.position.y) * 0.04;
     cam.lookAt(0, 0, 0);
 
+    renderer.clear();
     renderer.render(scene, cam);
+    if (updateCoin(dt)) { renderer.clearDepth(); renderer.render(coinScene, coinCam); }
     if (!shown) { shown = true; cv.classList.add('on'); }
   }
   frame();
