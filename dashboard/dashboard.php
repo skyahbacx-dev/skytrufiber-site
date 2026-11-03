@@ -22,7 +22,7 @@
 
 <header class="bar">
   <a class="brand" href="#home" data-go="home" aria-label="AHBA Development, back to top"><img src="/AHBALOGO.png" alt="AHBA Development logo" height="34"></a>
-  <a class="brand partner" id="partner" href="/fiber" target="_blank" rel="noopener">
+  <a class="brand partner" id="partner" href="https://customer.ahbadevt.com" target="_blank" rel="noopener">
     <img src="/SKYTRUFIBER.png" height="60" alt="SkyTruFiber">
   </a>
   <nav class="links" aria-label="Main navigation">
