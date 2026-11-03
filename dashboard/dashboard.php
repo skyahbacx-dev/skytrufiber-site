@@ -83,12 +83,12 @@
         <p>With over 20 years of experience in the industry, <b>A. Halili Business Aid Professional Services Inc.</b> (AHBA Development) is committed to delivering high-quality, value-added services nationwide.</p>
         <div class="stats">
           <div class="stat"><strong>20<em>+</em></strong><span>Years experience</span></div>
-          <div class="stat"><strong>10,000<em>+</em></strong><span>Workers deployed</span></div>
-          <div class="stat"><strong>300<em>+</em></strong><span>Business partners</span></div>
+          <div class="stat"><strong>1,000<em>+</em></strong><span>Workers deployed</span></div>
+          <div class="stat"><strong>Multiple</strong><span>Business partners</span></div>
         </div>
         <ol class="timeline">
-          <li><time datetime="2003">2003</time><span>Established, with a reputation for reliability and compliance.</span></li>
-          <li><time datetime="2015">2015</time><span>Became a licensed and fully compliant service provider.</span></li>
+          <li><time datetime="2003">2003</time><span>Established, beginning our commitment to reliable business solutions.</span></li>
+          <li><time datetime="2009">2009</time><span>Incorporated as A. Halili Business Aid Professional Services Inc.</span></li>
         </ol>
         <p class="statement">Customized service is our core approach, ensuring efficient, scalable operations.</p>
         <dl class="creds">
