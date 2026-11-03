@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="icon" type="image/png" href="/AHBALOGO.png">
+  <link rel="apple-touch-icon" href="/AHBALOGO.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="A. Halili Business Aid Professional Services Inc. (AHBA Development): outsourcing, recruitment, payroll, training and contracting services in Makati City.">
