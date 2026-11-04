@@ -544,4 +544,12 @@
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+  // Clean section URLs: /services, /about, /management and /contact.
+  var publicSection = ({ '/services': 'services', '/about': 'about', '/management': 'management', '/contact': 'contact' })[location.pathname];
+  if (publicSection) {
+    window.addEventListener('load', function () {
+      var target = document.getElementById(publicSection);
+      if (target) window.setTimeout(function () { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120);
+    }, { once: true });
+  }
 })();
