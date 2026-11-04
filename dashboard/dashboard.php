@@ -119,7 +119,7 @@
         <p class="eyebrow">Contact</p>
         <h2>Get in Touch</h2>
         <dl class="contact-list">
-          <div><dt>Head Office</dt><dd>2607 Cityland 10 Tower 1, HV Dela Costa Ave., Bel Air, Makati City <a class="maplink" href="https://www.google.com/maps/search/?api=1&amp;query=Cityland+10+Tower+1+HV+Dela+Costa+Ave+Bel+Air+Makati+City" target="_blank" rel="noopener">Open map</a></dd></div>
+          <div><dt>Head Office</dt><dd>2F 3497 Honda St., Brgy. Pinagkaisahan, Makati City <a class="maplink" href="https://www.google.com/maps/search/?api=1&amp;query=2F+3497+Honda+St+Brgy+Pinagkaisahan+Makati+City" target="_blank" rel="noopener">Open map</a></dd></div>
           <div><dt>Email</dt><dd><span id="emailTxt">admin@ahba.ph</span><button class="copy" type="button" data-copy="admin@ahba.ph" data-target="emailTxt">Copy</button></dd></div>
           <div><dt>Phone</dt><dd><span id="phoneTxt">+63 998 961 5050</span><button class="copy" type="button" data-copy="+63 998 961 5050" data-target="phoneTxt">Copy</button></dd></div>
         </dl>
@@ -130,7 +130,7 @@
 
 <footer>
   <div class="wrap">
-    <div class="foot"><span>1454 Newton Street, Barangay San Isidro, Makati City</span><span>ahbadevelopment@ahba.ph</span></div>
+    <div class="foot"><span>ahbadevelopment@ahba.ph</span></div>
   </div>
 </footer>
 
