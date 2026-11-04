@@ -430,11 +430,23 @@
     return o.set(b.x, b.y + Math.sin(clock * 0.9 + i) * 0.18, 1.7 + Math.cos(clock * 0.7 + i * 1.3) * 0.15);
   }
 
-  var last = performance.now(), act = -1;
+  var last = performance.now(), lastFrame = last, act = -1;
   function frame(now) {
+    var sy = window.scrollY;
+    if (document.hidden) {
+      last = now;
+      lastFrame = now;
+      requestAnimationFrame(frame);
+      return;
+    }
+    var minFrameMs = sy > heroH * 0.6 ? (1000 / 30) : (1000 / 60);
+    if (now - lastFrame < minFrameMs) {
+      requestAnimationFrame(frame);
+      return;
+    }
     var dt = Math.min((now - last) / 1000, 0.05);
     last = now;
-    var sy = window.scrollY;
+    lastFrame = now;
 
     if (waitTop) { if (sy < 4) waitTop = false; }
     else if (playing) {
