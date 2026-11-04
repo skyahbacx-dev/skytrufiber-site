@@ -144,6 +144,21 @@
   </div>
 </footer>
 
+<!-- Keep navigation responsive while the optional 3D library loads. -->
+<script>
+(function () {
+  var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('[data-go]').forEach(function (link) {
+    link.addEventListener('click', function (event) {
+      var target = document.getElementById(link.getAttribute('data-go'));
+      if (!target) return;
+      event.preventDefault();
+      target.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+    });
+  });
+})();
+</script>
+
 <!-- Load Three.js without document.write (which browsers may block after parsing). -->
 <script>
 (function () {
