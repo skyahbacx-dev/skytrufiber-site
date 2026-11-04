@@ -138,8 +138,9 @@ if (isset($_GET["v"])) {
 }
 
 /* ============================================================
-   🏠 DEFAULT LANDING → ALWAYS ENCRYPT DASHBOARD
+   🏠 PUBLIC HOME
+   The public marketing homepage does not need an encrypted route token.
+   Private/customer flows above retain their existing routing and checks.
 ============================================================ */
-$token = encrypt_route("dashboard");
-header("Location: /?v=$token");
+require __DIR__ . "/dashboard/dashboard.php";
 exit;
