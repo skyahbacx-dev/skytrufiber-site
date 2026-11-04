@@ -224,7 +224,8 @@
   var uSwEnd = new THREE.CatmullRomCurve3(flowPts.slice(0, center.length), false, 'centripetal').getLength() / flowCurve.getLength();
   var flowMat = new THREE.MeshBasicMaterial({ color: 0xd6ffe0, transparent: true, opacity: 1, depthTest: false });
   var UP = new THREE.Vector3(0, 1, 0), COMETS = 3, TR = 24, comets = [];
-  var coneG = new THREE.ConeGeometry(0.32, 0.95, 4);
+  // The moving highlight is also a diamond, not a cone.
+  var coneG = new THREE.OctahedronGeometry(0.42);
   for (var cm = 0; cm < COMETS; cm++) { var cn = new THREE.Mesh(coneG, flowMat); cn.frustumCulled = false; cn.visible = false; scene.add(cn); comets.push(cn); }
   var trPos = new Float32Array(COMETS * TR * 3), trA = new Float32Array(COMETS * TR), trS = new Float32Array(COMETS * TR);
   var trailGeo = new THREE.BufferGeometry();
@@ -235,7 +236,7 @@
   var trail = new THREE.Points(trailGeo, new THREE.ShaderMaterial({
     uniforms: trailU, transparent: true, depthWrite: false, depthTest: false,
     vertexShader: 'uniform float uScale; attribute float aA; attribute float aS; varying float vA; void main() { vA = aA; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = max(1.0, aS * uScale / max(0.5, -mv.z)); gl_Position = projectionMatrix * mv; }',
-    fragmentShader: 'uniform vec3 uColor; varying float vA; void main() { float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard; gl_FragColor = vec4(uColor, vA * (1.0 - smoothstep(0.15, 0.5, d))); }'
+    fragmentShader: 'uniform vec3 uColor; varying float vA; void main() { vec2 p = abs(gl_PointCoord - 0.5); float d = p.x + p.y; if (d > 0.5) discard; gl_FragColor = vec4(uColor, vA * (1.0 - smoothstep(0.38, 0.5, d))); }'
   }));
   trail.frustumCulled = false; scene.add(trail);
 
@@ -284,10 +285,11 @@
   scene.add(plan);
 
   /* seven forms riding the swoosh, one per service */
+  // Every floating service marker uses the same diamond silhouette.
   var geos = [
-    new THREE.OctahedronGeometry(0.95), new THREE.IcosahedronGeometry(0.85), new THREE.TorusGeometry(0.7, 0.24, 12, 40),
-    new THREE.DodecahedronGeometry(0.85), new THREE.BoxGeometry(1.1, 1.1, 1.1), new THREE.ConeGeometry(0.8, 1.6, 5),
-    new THREE.TorusKnotGeometry(0.55, 0.17, 72, 8)
+    new THREE.OctahedronGeometry(0.95), new THREE.OctahedronGeometry(0.85), new THREE.OctahedronGeometry(0.9),
+    new THREE.OctahedronGeometry(0.85), new THREE.OctahedronGeometry(1.0), new THREE.OctahedronGeometry(0.9),
+    new THREE.OctahedronGeometry(0.8)
   ];
   var modCurve = new THREE.CatmullRomCurve3(center.map(function (v) { return new THREE.Vector3(v.x, v.y, 0); }));
   var modBase = [], mods = [], tagWrap = document.getElementById('tags');
