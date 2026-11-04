@@ -20,14 +20,6 @@
   }
 
   /* ---------- page UI ---------- */
-  document.querySelectorAll('[data-go]').forEach(function (a) {
-    a.addEventListener('click', function (e) {
-      var el = document.getElementById(a.getAttribute('data-go'));
-      if (!el) return;
-      e.preventDefault();
-      el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-    });
-  });
   document.getElementById('themeBtn').addEventListener('click', function () {
     var attr = root.getAttribute('data-theme');
     var isDark = attr ? attr === 'dark' : darkQuery.matches;
