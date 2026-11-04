@@ -115,14 +115,25 @@
 
   <section id="contact" class="page">
     <div class="wrap">
-      <div class="panel">
-        <p class="eyebrow">Contact</p>
-        <h2>Get in Touch</h2>
-        <dl class="contact-list">
-          <div><dt>Head Office</dt><dd>2F 3497 Honda St., Brgy. Pinagkaisahan, Makati City <a class="maplink" href="https://www.google.com/maps/search/?api=1&amp;query=2F+3497+Honda+St+Brgy+Pinagkaisahan+Makati+City" target="_blank" rel="noopener">Open map</a></dd></div>
-          <div><dt>Email</dt><dd><span id="emailTxt">admin@ahba.ph</span><button class="copy" type="button" data-copy="admin@ahba.ph" data-target="emailTxt">Copy</button></dd></div>
-          <div><dt>Phone</dt><dd><span id="phoneTxt">+63 998 961 5050</span><button class="copy" type="button" data-copy="+63 998 961 5050" data-target="phoneTxt">Copy</button></dd></div>
-        </dl>
+      <div class="contact-layout">
+        <div class="panel contact-panel">
+          <p class="eyebrow">Contact</p>
+          <h2>Get in Touch</h2>
+          <p class="contact-intro">We'd love to hear from you. Visit our head office or get in touch with our team.</p>
+          <dl class="contact-list">
+            <div><dt>Head Office</dt><dd>2F 3497 Honda St., Brgy. Pinagkaisahan, Makati City <a class="maplink" href="https://www.google.com/maps/search/?api=1&amp;query=2F+3497+Honda+St+Brgy+Pinagkaisahan+Makati+City" target="_blank" rel="noopener">Get directions ↗</a></dd></div>
+            <div><dt>Email</dt><dd><span id="emailTxt">admin@ahba.ph</span><button class="copy" type="button" data-copy="admin@ahba.ph" data-target="emailTxt">Copy</button></dd></div>
+            <div><dt>Phone</dt><dd><span id="phoneTxt">+63 998 961 5050</span><button class="copy" type="button" data-copy="+63 998 961 5050" data-target="phoneTxt">Copy</button></dd></div>
+          </dl>
+        </div>
+        <aside class="map-card" aria-label="Map showing AHBA Development head office location">
+          <div class="map-card-top"><span class="map-pin">⌖</span><div><strong>Find our office</strong><small>Makati City, Philippines</small></div><span class="map-live"><i></i> LOCATION</span></div>
+          <div class="map-frame">
+            <iframe title="Map to 2F 3497 Honda Street, Barangay Pinagkaisahan, Makati City" src="https://maps.google.com/maps?q=2F%203497%20Honda%20St.%2C%20Brgy.%20Pinagkaisahan%2C%20Makati%20City&t=&z=16&ie=UTF8&iwloc=&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+            <div class="map-float-label"><span>AHBA</span><small>Head Office</small></div>
+          </div>
+          <div class="map-card-bottom"><div><strong>2F 3497 Honda St.</strong><small>Brgy. Pinagkaisahan, Makati City</small></div><a href="https://www.google.com/maps/search/?api=1&amp;query=2F+3497+Honda+St+Brgy+Pinagkaisahan+Makati+City" target="_blank" rel="noopener" aria-label="Open office location in Google Maps">Open in Maps <span>↗</span></a></div>
+        </aside>
       </div>
     </div>
   </section>
