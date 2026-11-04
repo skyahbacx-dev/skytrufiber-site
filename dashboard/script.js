@@ -335,7 +335,33 @@
   }
   var pGeo = new THREE.BufferGeometry();
   pGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(PC * 3), 3));
-  var pointMat = new THREE.PointsMaterial({ color: 0x0a7a1d, size: 0.11, transparent: true, opacity: 0.9, depthWrite: false });
+  // Diamond-only particles: use a crisp diamond alpha texture instead of round point sprites.
+  var diamondCanvas = document.createElement('canvas');
+  diamondCanvas.width = diamondCanvas.height = 64;
+  var diamondCtx = diamondCanvas.getContext('2d');
+  diamondCtx.clearRect(0, 0, 64, 64);
+  diamondCtx.beginPath();
+  diamondCtx.moveTo(32, 2);
+  diamondCtx.lineTo(62, 32);
+  diamondCtx.lineTo(32, 62);
+  diamondCtx.lineTo(2, 32);
+  diamondCtx.closePath();
+  diamondCtx.fillStyle = '#ffffff';
+  diamondCtx.fill();
+  diamondCtx.beginPath();
+  diamondCtx.moveTo(32, 9);
+  diamondCtx.lineTo(55, 32);
+  diamondCtx.lineTo(32, 32);
+  diamondCtx.closePath();
+  diamondCtx.fillStyle = 'rgba(255,255,255,0.24)';
+  diamondCtx.fill();
+  var diamondTexture = new THREE.CanvasTexture(diamondCanvas);
+  diamondTexture.needsUpdate = true;
+  var pointMat = new THREE.PointsMaterial({
+    color: 0x0a7a1d, size: 0.16, map: diamondTexture,
+    transparent: true, alphaTest: 0.12, opacity: 0.9,
+    depthWrite: false, sizeAttenuation: true
+  });
   scene.add(new THREE.Points(pGeo, pointMat));
 
   function applyTheme() {
