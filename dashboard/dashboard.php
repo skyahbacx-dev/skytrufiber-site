@@ -145,10 +145,48 @@
   </div>
 </footer>
 
-<!-- 3D library: your own copy first, the CDN only if that file is missing -->
-<script src="/dashboard/three.min.js"></script>
-<script>window.THREE || document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
-<!-- JS -->
+<!-- Load Three.js without document.write (which browsers may block after parsing). -->
+<script>
+(function () {
+  var sources = [
+    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+    'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'
+  ];
+  var index = 0;
+
+  function loadApp() {
+    var app = document.createElement('script');
+    app.src = '/dashboard/script.js';
+    app.async = false;
+    document.body.appendChild(app);
+  }
+
+  function loadThree() {
+    if (window.THREE) {
+      loadApp();
+      return;
+    }
+    if (index >= sources.length) {
+      console.error('AHBA: Three.js could not be loaded from either CDN. Starting the built-in fallback.');
+      loadApp();
+      return;
+    }
+
+    var library = document.createElement('script');
+    library.src = sources[index++];
+    library.async = true;
+    library.onload = function () {
+      if (window.THREE) loadApp();
+      else loadThree();
+    };
+    library.onerror = loadThree;
+    document.head.appendChild(library);
+  }
+
+  loadThree();
+})();
+</script>
+
 <script src="/dashboard/script.js"></script>
 
 </body>
