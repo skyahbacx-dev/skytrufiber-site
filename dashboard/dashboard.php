@@ -67,7 +67,6 @@
         <ul class="svc" id="svc">
           <li tabindex="0"><h3>Recruitment &amp; prescreening</h3><p>Candidates sourced and screened before they reach you.</p></li>
           <li tabindex="0"><h3>Interview processing</h3><p>Interviews arranged and handled end to end.</p></li>
-          <li tabindex="0"><h3>Psychological examinations &amp; evaluation</h3><p>Structured assessment to match people to roles.</p></li>
           <li tabindex="0"><h3>Training &amp; development programs</h3><p>Workers prepared for the job before day one.</p></li>
           <li tabindex="0"><h3>Payroll processing</h3><p>Pay runs handled accurately and on schedule.</p></li>
           <li tabindex="0"><h3>Industrial &amp; construction contracting</h3><p>Skilled crews for plants and building sites.</p></li>
