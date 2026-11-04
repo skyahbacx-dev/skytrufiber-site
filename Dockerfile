@@ -10,4 +10,4 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 COPY . .
 
-CMD ["php", "-S", "0.0.0.0:8080", "-t", "."]
+CMD ["php", "-S", "0.0.0.0:8080", "router.php"]
